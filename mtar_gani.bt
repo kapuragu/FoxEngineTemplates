@@ -1,0 +1,356 @@
+//--------------------------------------
+//--- 010 Editor v5.0 Binary Template
+//
+// File:
+// Author:
+// Revision:
+// Purpose:
+//--------------------------------------
+
+typedef struct(int arraySize)
+{
+    local int size = arraySize;
+    byte array[arraySize];
+    //ushort array[arraySize/2]; //hfloat
+}ByteArray;
+
+typedef struct(int trackSz, int bitSz)
+{
+    local int firstPass = 1;
+    local int totalFrames = 0;
+    local int sz = (int)((((float)bitSz)/8.0f)* 3.0f);
+    while(trackSz >= bitSz)
+    {
+       
+        if(firstPass == 0)
+        {
+            byte frameStep;
+            totalFrames += (int)frameStep;
+        }
+        ByteArray bits(sz); //xyz
+        trackSz -= bitSz * 3;
+        firstPass = 0;
+    }
+    Printf("\nTotal Frames: %d", totalFrames);
+}VTrack;
+
+typedef struct
+{
+    byte xyz[6];
+}VArray<read=ReadVect>;
+string ReadVect(VArray &v)
+{
+    hfloat x = (v.xyz[1] << 8) | (v.xyz[0] & 0xff);
+    hfloat y = (v.xyz[3] << 8) | (v.xyz[2] & 0xff);
+    hfloat z = (v.xyz[5] << 8) | (v.xyz[4] & 0xff);
+    hfloat t =  Sqrt( (x*x) + (y*y) + (z*z) );
+    string s;
+    SPrintf(s, "(%ff, %ff, %ff)", x,y,z);
+    if(t < 1)
+    {
+        SPrintf(s, "%s - (%ff, %ff, %ff, %ff)", s,x,y,z,1-t);
+    }
+    return s;
+}
+
+//Euler?
+typedef struct
+{
+    byte xyzw[6];
+}QArray<read=ReadQuat>;
+string ReadQuat(QArray &v)
+{
+    hfloat x = (v.xyzw[1] << 8) | (v.xyzw[0] & 0xff);
+    hfloat y = (v.xyzw[3] << 8) | (v.xyzw[2] & 0xff);
+    hfloat z = (v.xyzw[5] << 8) | (v.xyzw[4] & 0xff);
+    hfloat t =  Sqrt( (x*x) + (y*y) + (z*z) );
+    string s;
+    SPrintf(s, "(%ff, %ff, %ff)", x,y,z);
+    if(t < 1)
+    {
+        SPrintf(s, "%s - (%ff, %ff, %ff, %ff)", s,x,y,z,1-t);
+    }
+    return s;
+}
+
+
+typedef struct(int arraySize)
+{
+    VArray array[arraySize/6];
+}VByteArray;
+
+typedef struct(int arraySize)
+{
+    //QArray array[arraySize/6];
+    VArray array[arraySize/6];
+}QByteArray;
+
+local int addrDiff =0;
+local int counter = 0;
+
+local int rootPos = 0;
+local int rootRot = 0;
+local int boneRot = 0;
+local int bonePos = 0;
+
+
+typedef struct 
+{
+    uint sig; //9c a8 ff 0b
+    uint fileCount; //296 size?
+    short us0;  //bones 
+    short us1; //channels
+    uint padd[5]; //pad[5] pes, pad[1] mgs
+}MTAR_HDR;
+
+local int idxMin = -1;
+local int idxMax = -1;
+local int i = -1;
+local int szMin = 9999999;
+local int szMax = 0;
+local int minB = 999999;
+local int maxB = -1;
+
+typedef struct
+{
+    //a/b = id or name
+    uint hash;
+    int b; //Definitely not frame count. maybe index
+    int addr;
+    int size; 
+}MTAR_ENTRY<optimize=false, read=ReadMtar>;
+string ReadMtar(MTAR_ENTRY& m)
+{
+    local string s2; 
+    SPrintf(s2, "Hash: %8d  b: %d Size: %8d ", m.hash, m.b, m.size );
+    return s2;  
+} 
+
+
+local int subEntAddr[60];
+local int subEntSz[60];
+
+string FlagReader(int flag)
+{
+    /*
+    0x80 bit indicating that its not last entry in the set
+    other bits are track type, 
+    0 - rotation
+    3 - position
+    5 - root rotation
+    6 - root position
+    */
+    local string s0;
+    local int f = flag & ~0x80; //remove 0x80
+    switch(f)
+    {
+    case 0x0:
+        s0 = "rotation";
+        boneRot+= 1;
+        break;
+    case 0x3:
+        s0 = "position";
+        bonePos+= 1;
+        break;
+    case 0x5:
+        s0 = "Root_rot";
+        rootRot = rootRot + 1;
+        break;
+    case 0x6:
+        s0 = "Root_pos";
+        rootPos = rootPos + 1;
+        break;
+    }
+    local string s2; 
+    SPrintf(s2, " (0x%02x)",flag);
+    return s0 +s2;  
+}
+
+local int TotalSubEntryCount = 0;
+typedef struct
+{
+    local int addrbac = FTell();
+    int addr; //OFFSET
+    short index; //references an index in based on size
+
+    subEntAddr[index] = addr+addrbac;
+
+    ubyte typeFlag<read=FlagReader, bgcolor=cYellow>; //this is an enum flag bit
+    ubyte bitSz< bgcolor=cYellow>;
+    subEntSz[index] =bitSz;
+}SubEntry<bgcolor=cLtBlue,optimize=false>;
+
+
+//Group
+typedef struct
+{
+    counter += 1;
+    uint _hash; //constant across all animations (bone group?)
+    byte subCount; //int
+    short unkn;
+    byte pad;
+    if(subCount > 4)
+    {
+        SubEntry sEntry<optimize=false>;
+    }
+    else
+    {
+        SubEntry sEntry[subCount]<optimize=false>;
+    }
+}Entryx<optimize=false,bgcolor=cLtRed,read=ReadEntryX>;
+string ReadEntryX(Entryx &e)
+{
+    local string s2; 
+    SPrintf(s2, "subCount: %8d", e.subCount);
+    return s2;  
+}
+
+//Generic container?
+typedef struct
+{
+    int sig;
+    int a; //size a?
+    int fileSize;
+    // b[2] = number of files?
+    int b[5];
+    int hash2;
+
+    //c[0] = //size b?
+    //c[5] = motion headr size (skip char name)
+    int c[11];
+    //size of header = size a + size b
+}GaniHdr;
+
+typedef struct
+{
+    char sig[16];
+    int64 hash_;
+    int a,b; 
+    int size;
+    int unkn;
+    int __[6];
+
+}GaniInfo;
+
+typedef struct
+{
+    local int ganiOffset = FTell();
+    GaniHdr ganiHdr;
+    GaniInfo ganiInfo;
+
+    int entryCount; //defonitley
+    int subEntryCount; //subEntryCount is another count (refereneced by entry) Bones?
+    int _fpsInterval; //time between frames (60)
+    int _unkn0; //frame count?
+    int c;  
+    int entryAddr[entryCount]; //definitley
+    local int i = 0;
+    local int sum = 0;
+
+    //default to -1
+    for(i =0; i < 60; ++i)
+    {
+        subEntAddr[i] = -1;
+    }
+    //a hack to make calculating subEntry sizes easier
+    subEntAddr[subEntryCount] = ganiOffset + ganiHdr.fileSize; //FileSize(); 
+    int pad[4];
+
+    //byte data[sum+16];
+    for(i = 0; i < entryCount; i++)
+    {
+        //caches sub entry address in dataX constuctor
+        Entryx dataX;
+    }
+
+    local int j = 0;
+    local int addrOff = FTell() - dataX[0].sEntry[0].addr;
+    local int idx =0;
+    local int fSize = 0;
+    local float maxFrame = -1;
+    local float frameC = 0;
+    local float floatCount = 0;
+    local long startAdd = 0;
+    local long endAdd = 0;
+    local int frameIdx = 0;
+
+    local float xMin0 = 999.0;
+    local float xMax0 = -999.0;
+    local float yMin0 = 999.0;
+    local float yMax0 = -999.0;
+    local float zMin0 = 999.0;
+    local float zMax0 = -999.0;
+
+    local float xMin1 = 999.0;
+    local float xMax1 = -999.0;
+    local float yMin1 = 999.0;
+    local float yMax1 = -999.0;
+    local float zMin1 = 999.0;
+    local float zMax1 = -999.0;
+
+    for(i = 0; i < subEntryCount; i++)
+    {
+        fSize = subEntAddr[i+1]-subEntAddr[i];
+        //Printf("\n%d - %d : %d",subEntAddr[i],subEntAddr[i+1], fSize);
+
+        if(subEntSz[i] == 12)
+        {
+            ByteArray _track(fSize)<bgcolor=cLtGreen>;
+        }
+        else
+        {
+            startAdd = FTell();
+            ByteArray _track(fSize)<bgcolor=cLtPurple>;
+            endAdd = FTell();
+            FSeek(startAdd);
+            frameIdx = 0;
+            do
+            {
+                hfloat vX<hidden=true>;
+                hfloat vY<hidden=true>;
+                hfloat vZ<hidden=true>;
+                byte f<hidden=true>;
+
+                if( i == 1)
+                {
+                    xMin0 = Min(xMin0, vX);
+                    yMin0 = Min(yMin0, vY);
+                    zMin0 = Min(zMin0, vZ);
+                    xMax0 = Max(xMax0, vX);
+                    yMax0 = Max(yMax0, vY);
+                    zMax0 = Max(zMax0, vZ);
+                }
+                else if( i == 3)
+                {
+                    xMin1 = Min(xMin1, vX);
+                    yMin1 = Min(yMin1, vY);
+                    zMin1 = Min(zMin1, vZ);
+                    xMax1 = Max(xMax1, vX);
+                    yMax1 = Max(yMax1, vY);
+                    zMax1 = Max(zMax1, vZ);
+                }
+                //Printf("\nV[%d] = (%f, %f, %f)",frameIdx, vX, vY, vZ);
+                frameIdx += (int)f;
+            }while(frameIdx < _unkn0 && FTell() < endAdd);
+            FSeek(endAdd);
+
+
+        }
+        //ByteArray bArr(fSize)<bgcolor=cLtGreen>;
+    }
+    Printf("\nPosition Range\n\tRoot: (%f, %f, %f) - (%f, %f, %f)", xMin0,yMin0,zMin0,xMax0,yMax0,zMax0);
+    Printf("\n\tsk_Hip (%f, %f, %f) - (%f, %f, %f)", xMin1,yMin1,zMin1,xMax1,yMax1,zMax1);
+}GANI;
+
+
+struct Mtar
+{
+    MTAR_HDR header;
+    MTAR_ENTRY entry[header.fileCount];
+    local int i = 0;
+    for(i = 0; i < header.fileCount; i++)
+    {
+        FSeek(entry[i].addr);
+        GANI gani;
+    }
+}mtar;

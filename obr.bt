@@ -1,0 +1,73 @@
+//------------------------------------------------
+//--- 010 Editor v7.0.2 Binary Template
+//
+//      File: obr.bt
+//   Authors: youarebritish
+//   Version: 0.2
+//------------------------------------------------
+struct Header
+{
+    uint u1;						// Always 3? rlc now a uint
+    uint u2;						// Always 32? rlc now a uint
+    uint fileSize;
+    uint ObjectBrush <hidden=true>; // Hash for "ObjectBrush"
+    uint ObjectBrushOffset;         // Points to the text "ObjectBrush"
+
+    FSkip(5*4);
+
+    uint u3;                        // Always 1?
+    uint numBlocksHOffset;
+    uint offset1;                   // Near the bottom if there are objects
+
+    FSkip(4*4);
+
+    uint u4;
+
+    FSkip(8);
+    FSkip(16);
+    
+    struct HeaderMetadata0
+    {
+        ushort u1;
+        ushort u2;
+        uint variableNameHash <hidden=true>;
+        uint u3 <hidden=true>;                    // Always 76?
+        uint value;					// numBlocksWmetadata and numBlocksHmetadata - Block count in height/width of block field. Even if dataset numBlocks is 0, it can be 2 here.
+    };
+    
+    struct HeaderMetadata1
+    {
+        ushort u1;
+        ushort u2;
+        uint variableNameHash <hidden=true>;
+        uint u3 <hidden=true>;                    // Always 76?
+        float value;				// block size in meters
+    };
+
+    HeaderMetadata1 blockSizeWMetadata;
+    HeaderMetadata1 blockSizeHMetadata;
+    HeaderMetadata0 numBlocksWMetadata;
+    HeaderMetadata0 numBlocksHMetadata;
+    HeaderMetadata0 numObjectsMetadata;
+	
+} header <bgcolor=0x7E846B>;
+
+FSkip (80);
+
+struct Object
+{
+    float yTranslation;
+    local float xTranslation = header.blockSizeWMetadata.value*((float)(ReadUShort(FTell() + 12 % header.numBlocksWMetadata.value) + 0.5 - (float)header.numBlocksWMetadata.value / 2) + header.blockSizeWMetadata.value * (float)ReadShort() / 32767;
+    FSkip(2);
+    local float zTranslation = header.blockSizeHMetadata.value*((float)(blockID / header.numBlocksHMetadata.value) + 0.5 - (float)header.numBlocksHMetadata.value / 2) + header.blockSizeHMetadata.value * (float)ReadShort()/ 32767;
+    FSkip(2);
+    hfloat xQuat;
+    hfloat yQuat;
+    hfloat zQuat;
+    hfloat wQuat;
+    ushort blockID;
+    ubyte brushID;
+    ubyte yScale;
+    uint id;
+	
+} objects[header.numObjectsMetadata.value] <bgcolor=0x8CAF5A>;

@@ -1,0 +1,118 @@
+//------------------------------------------------
+
+typedef struct
+{
+    //bones[2-3 seq in id] - tracks[2-3 seq in id] - other
+    short a[8]<hidden=true>;
+}ChannelInfo<optimize=false,bgcolor=cLtPurple, read=ReadChannelInfo>; //eg x, y, z pos/rot
+string ReadChannelInfo(ChannelInfo& c)
+{
+    string s = " |";  
+    local int i = 0; 
+    for( i =0; i < 8; i++)
+    {
+        SPrintf( s, "%s %2d  |", s, c.a[i]);
+    }
+    return s;
+}
+
+typedef struct
+{
+    //Track Ids
+    short a[16]<hidden=true>;
+    //a[3] tells us number of bones in track and fills out the bottom gaps
+    if(a[3] > 1)
+    {
+        float f[4]<bgcolor=cLtPurple>;
+        ChannelInfo channelInfo[a[2]/a[3]];
+    }
+}TrackInfo<bgcolor=cLtBlue, read=ReadTrackInfo>;
+string ReadTrackInfo(TrackInfo& t)
+{
+    string s = " |";  
+    local int i = 0; 
+    for( i =0; i < 16; i++)
+    {
+        SPrintf( s, "%s %2d:>%2d  |", s, i,t.a[i]);
+    }
+    return s;
+}
+
+typedef struct
+{
+    uint hash;
+    char name[12]<hidden=true>;
+    float trackWeight[15];
+}RigMaskGroup<read=ReadRigMaskGroup, bgcolor=cLtGreen>;
+string ReadRigMaskGroup(RigMaskGroup& b)
+{
+    string name = "";
+    int i = 0;
+    for( i =0; i < 12; i++)
+    {
+        name += b.name[i];
+        if(b.name[i] == '\0')
+        {
+            return name;
+        }
+    }
+    return name;
+}
+
+typedef struct
+{
+    int trackID<hidden=true>; //the track that contains this bone
+    //float unknF;
+    //FSkip(-4);
+    uint hash<hidden=true>;
+}BoneInfo<bgcolor=cLtRed, read=ReadBoneInfo>;
+string ReadBoneInfo(BoneInfo& b)
+{
+    string s;   
+    SPrintf( s, "id: %2d\t\thash: %u", b.trackID, b.hash);
+    return s;
+}
+
+
+struct FRigFile
+{
+    uint hash;
+
+
+    int typeStrAddr; //start Name
+    int endOfStr; //end of Name
+    
+    int groupCount;
+    int trackCount;
+    int fileSz;
+    int endOfRigData;
+    int startOfRigData;
+    
+    int groupAddr[groupCount]; //points to a 32byte data structure
+    
+    char Name[20]; //"HumanBody"
+
+    local int i = 0;
+    for( i =0; i < groupCount; i++)
+    {
+        FSeek(groupAddr[i]);
+        TrackInfo trackInfo;
+    }
+
+    FSeek(startOfRigData);
+
+    int totalGrpCount;
+    int definedCount; //The number of groups we store data for
+    int defindGrpOffset[definedCount]; //offset from startOfRigData
+    //RBDef rigidBodyDef[definedCount]; // works just as well as loop
+    for( i =0; i < definedCount; i++)
+    {
+        FSeek(startOfRigData + defindGrpOffset[i]);
+        RigMaskGroup rigMaskGroup;
+    }
+
+    int boneCount;
+    BoneInfo boneInfo[boneCount]<optimize=false>;
+    
+}rig<bgcolor=cLtGray>;
+

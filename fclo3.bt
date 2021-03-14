@@ -1,0 +1,86 @@
+#define TEXT_COLOR 0xF6F7ED
+#define COLOR_HEADER 0xA46026
+#define COLOR_SECTION0 0x5399F1
+#define COLOR_SECTION2 0x3573C4
+#define COLOR_SECTION3 0x1E3556
+#define COLOR_SECTION3B 0x018FF1
+#define COLOR_SECTION3C 0xA88B04
+#define COLOR_SECTION4 0xA741D7
+#define COLOR_SECTION5 0x73173A
+
+LittleEndian();
+
+struct Header
+{
+    uint signature;
+    Assert(signature == 1717791855);    
+       
+    FSkip(12);
+    
+    uint section0Count;
+    uint section1Count;
+    uint section2Count;
+    uint section3Count;
+    uint section4Count;
+} header <bgcolor=COLOR_HEADER, fgcolor=TEXT_COLOR>;
+
+local long section2Offset = 36 + (header.section0Count + header.section1Count) * 16;
+local long section3Offset = section2Offset + ((header.section0Count + header.section1Count) * 32);
+local long section4Offset = section3Offset + (header.section2Count * 8);
+local long section5Offset = section4Offset + (header.section3Count * 16);
+
+struct Section0
+{
+    float x;
+    float y;
+    float z;
+    uint boneNameHash;
+} section0Entries[header.section0Count + header.section1Count] <bgcolor=COLOR_SECTION0, fgcolor=TEXT_COLOR>;
+
+
+FSeek(section2Offset);
+/*struct Section2
+{
+    // Entry size: 32 bytes
+    uint indices[32/4];
+} section2Entries[header.section2Count] <bgcolor=COLOR_SECTION2, fgcolor=TEXT_COLOR>;*/
+
+local uint section3EntryCount = header.section2Count;
+if (section3EntryCount >= 4)
+{
+    section3EntryCount = ((section3EntryCount - 4) >> 2) + 1;
+}
+
+FSeek(section3Offset);
+struct Section3B
+{
+    // These indices refer to a section 0 entry.
+    uint indexA;
+    uint indexB;
+
+    uint indexC;
+    uint indexD;
+
+    uint indexE;
+    uint indexF;
+
+    uint indexG;
+    uint indexH;
+} section3bEntries[section3EntryCount] <bgcolor=COLOR_SECTION3B, fgcolor=TEXT_COLOR>;
+
+if ((section3EntryCount * 4) < header.section2Count)
+{
+    struct Section3C
+    {
+        // These indices refer to a section 0 entry.
+        uint indexA;
+        uint indexB;
+    } section3cEntries[header.section2Count - (4 * section3EntryCount)] <bgcolor=COLOR_SECTION3C, fgcolor=TEXT_COLOR>;
+}
+
+FSeek(section4Offset);
+struct Section4
+{
+    // Entry size: 16 bytes
+    uint vals[4];
+} section4Entries[header.section3Count] <bgcolor=COLOR_SECTION4, fgcolor=TEXT_COLOR>;
