@@ -1,0 +1,170 @@
+// TRAP - GeoTrapFile
+// By RLC - inspired by other FOX templates by the researchers of Modders' Heaven!
+// https://metalgearmodding.fandom.com/wiki/TRAP
+// Special thanks to Joey, BobDoleOwndU and OldBanana!
+LittleEndian();
+
+struct Vector4
+{
+	float x;
+	float y;
+	float z;
+	float w;
+};
+
+struct Matrix4
+{
+	float x1;
+	float y1;
+	float z1;
+	float w1;
+
+	float x2;
+	float y2;
+	float z2;
+	float w2;
+
+	float x3;
+	float y3;
+	float z3;
+	float w3;
+};
+
+struct Header
+{
+    uint fileVersionDate;      		 // TPP/SSD is 201406020; February 6th, 2014
+	if (fileVersionDate==1144389900) // if big endian, big endian
+	{
+		BigEndian();
+	}
+    uint version;               // TPP/SSD is 20.
+    uint fileSize;
+    uint dataSetPathCode32Hash; // PathCode32 hash of the path to the .fox2, same name as the file.
+
+	FSkip(24);
+	uint unknown0;				// always 1
+	uint headerSize;			// always 48, headers always are?
+
+    uint extraFileSize;         // fileSize + 16
+    FSkip(12);
+
+    FSkip(4);
+    uint entryCount;
+    FSkip(8);
+	
+} header <bgcolor=0x9EADC8>;    // coolor
+
+struct Offsets
+{
+	struct Offset
+	{
+		uint offset;
+		
+	} entries[header.entryCount] <optimize=false>;
+	
+	// Special thanks to BobDoleOwndU and OldBanana!
+	if (FTell() % 16 != 0)
+	{
+		FSkip(16 - (FTell() % 16));
+	}
+	
+} offsets <bgcolor=0xB9E28C>;
+
+struct Shapes
+{
+    struct Entry
+	{
+		// Special thanks to Joey and OldBanana!
+		if (header.fileVersionDate!=1144389900)
+		{
+			uint shapeType : 8;
+			uint shapeDefinition1 : 8 <hidden=true>;
+			uint shapeDefinition2 : 8 <hidden=true>;
+			uint shapeCount : 8;
+		}
+		else
+		{
+			uint shapeCount : 8;
+			uint shapeDefinition2 : 8 <hidden=true>;
+			uint shapeDefinition1 : 8 <hidden=true>;
+			uint shapeType : 8;
+		}
+		FSkip(12);
+		
+		// According to PS3/PC endianness difference, it's an int64
+		if (header.fileVersionDate!=1144389900)
+		{
+			uint64 tagValue0 : 4; // tagValues that define the functions of the trigger	
+			uint64 tagValue1 : 4;
+			uint64 tagValue2 : 4;
+			uint64 tagValue3 : 4;
+			uint64 tagValue4 : 4;
+			uint64 tagValue5 : 4;
+			uint64 tagValue6 : 4; // always 2
+			uint64 tagValue7 : 4;
+			uint64 tagValue8 : 8 <hidden=true>;
+			uint64 tagValue9 : 8 <hidden=true>;
+			uint64 tagValueA : 8 <hidden=true>;
+			uint64 tagValueB : 8 <hidden=true>;
+		}
+		else
+		{
+			uint64 tagValueB : 8 <hidden=true>;
+			uint64 tagValueA : 8 <hidden=true>;
+			uint64 tagValue9 : 8 <hidden=true>;
+			uint64 tagValue8 : 8 <hidden=true>;
+			uint64 tagValue7 : 4;
+			uint64 tagValue6 : 4; // always 2
+			uint64 tagValue5 : 4;
+			uint64 tagValue4 : 4;
+			uint64 tagValue3 : 4;
+			uint64 tagValue2 : 4;
+			uint64 tagValue1 : 4;
+			uint64 tagValue0 : 4; // tagValues that define the functions of the trigger	
+		}
+		
+		uint entryName;	
+		FSkip(4);
+		
+		
+		
+		if (shapeType == 19)
+		{
+			struct shapeTypeBox
+			{
+				Vector4 scale;	// I seem to remember Intrude triggers needing to be scaled up by two, but I don't remember if it applies to all boxes
+				
+				FSkip(16);
+				
+				Matrix4 rotation;
+				
+				Vector4 translation;
+				
+			} shapes[shapeCount] <optimize=false>;
+			
+			FSkip(16);
+			
+		}
+		else if (shapeType == 27)
+		{
+			struct shapeTypeVector
+			{
+				float yMinimum;	// Can't prove this but that's what the values suggest
+				float yMaximum;
+				uint pointsCount;
+				uint unknown6;
+
+				FSkip(16);
+				
+				Vector4 points[pointsCount] <optimize=false>;
+				
+			} shapes[shapeCount] <optimize=false>;
+		}
+		else
+		{
+			Assert(FTell() == FileSize(), "Unknown Shape!!!");
+		};
+		
+    } entry[header.entryCount] <optimize=false>;
+	
+} shapes <bgcolor=0xD6D84F>;

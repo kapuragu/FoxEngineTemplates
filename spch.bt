@@ -1,0 +1,37 @@
+// SPCH - TppSpeechData
+// By RLC - inspired by other FOX templates by the researchers of Modders' Heaven!
+// https://metalgearmodding.fandom.com/wiki/SPCH
+LittleEndian();
+
+struct Header
+{
+    char signature[4] <hidden=true>; // "spch"
+    ushort endianness;               // PS3 files have a 01 here.
+    if (endianness != 0)
+    {
+        BigEndian();
+    }
+    ushort labelCount;
+    FSkip(8 * header.labelCount);    // 8 bytes of padding per label entry. Was it ever used? Who knows!
+} header <bgcolor=0x5B507A>;         // coolor
+
+struct Section
+{
+    struct labelEntries
+    {
+        uint labelNameHash;  // StrCode32 hash of the label's name, used by .lua and .frt.
+        uint sbpListId;      // Voice clips list id. .sbp stuff.
+        uint voiceClipCount; // Number of voice clip entries in this label.
+        struct voiceClipSubEntry
+        {
+            uint speakerNameHash;     // StrCode32 of the speaker's voice type.
+            uint sbpVoiceClipId;      // Voice clip id. .sbp stuff.
+            uint animationNameHash;   // StrCode32 hashes of an animation to do.
+            float beforePauseSeconds; // [pause before the line is said] [says line] It's always been empty, just a guess.
+            float afterPauseSeconds;  // [says line] [pause this long before next line is said]
+			
+        } subEntries[voiceClipCount] <optimize=false>;
+		
+    } entries[header.labelCount] <optimize=false>;
+	
+} section <bgcolor=0x5B618A>;

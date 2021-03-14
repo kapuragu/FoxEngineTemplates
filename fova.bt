@@ -1,0 +1,56 @@
+// FOVA - FormVariation
+// By RLC - inspired by other FOX templates by the researchers of Modders' Heaven!
+// https://metalgearmodding.fandom.com/wiki/FV2#Ground_Zeroes_.FOVA
+LittleEndian();
+
+struct Header
+{
+	char signature[7];
+	if (signature=="FOVAps3")
+	{
+		BigEndian();
+	}
+	byte version;
+	int offsetToEntries <comment="Offset to entries section">;
+	int entryCount;
+	int seven <comment="Seven">; Assert(seven==7);
+	
+} header <bgcolor=0xCAE7B9>;
+
+struct Entries
+{
+	Assert(header.offsetToEntries==FTell());
+	
+	struct Entry
+	{
+		byte type <comment="Some types pick only one entry in it">;
+		byte visibility <comment="Hide or show mesh groups">;
+		byte meshCount;
+		byte textureCount;
+		
+		if (meshCount>0)
+		{
+			struct MeshGroups
+			{
+				uint meshGroup <comment="StrCode32 hash (example: MESH_eqhd_a)">;
+				
+			} meshGroups[meshCount] <optimize=false, bgcolor=0x7E7F9A>;
+		}
+		
+		if (textureCount>0)
+		{
+			struct Textures
+			{
+				uint materialInstance <comment="StrCode32 hash (examples vary)">;
+				uint textureType <comment="StrCode32 hash (example: BaseTex_SRGB)">;
+				byte texturePathLength;
+				char texturePath[texturePathLength-1] <comment="PC hashes are screwed up.">; // Someone who worked on FPK Tool back in the day might know how to handle them.
+				
+			} textures[textureCount] <optimize=false, bgcolor=0xEB9486>;
+		}
+		
+	} entry[header.entryCount] <optimize=false, bgcolor=0x97A7B3>;
+	
+} entries;
+
+Assert(FTell() == FileSize(), "Failed to reach EoF.");

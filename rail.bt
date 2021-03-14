@@ -1,0 +1,123 @@
+// FRL - FoxRailData
+// By RLC - inspired by other FOX templates by the researchers of Modders' Heaven!
+// Based on notes from Ventos!
+LittleEndian();
+
+struct Vector4
+{
+	float x;
+	float y;
+	float z;
+	float w;
+};
+
+struct Vector3
+{
+	float x;
+	float y;
+	float z;
+	FSkip(4);
+};
+
+struct Header
+{
+	char signature[4] <hidden=true>;
+	short version <hidden=true>;
+	if (version!=2)
+	{
+		BigEndian();
+	}
+	short railsCount;
+	
+} header <bgcolor=0x8694EB>;
+
+if ( FileSize() == ( FTell() + ( header.railsCount * 4 ) ) )
+{
+	struct RailIds
+	{
+		uint railHash;
+
+	} railIds[header.railsCount] <bgcolor=0xB9E7CA, optimize=true>;
+}
+else
+{
+	FSkip(8);
+	
+	struct Rails
+	{
+		struct RailDefinition
+		{
+			Vector3 startPoint;
+			Vector3 endPoint;
+			int offsetToStartOfRailNodes;
+			int offsetToConnect0;
+			int offsetToConnect1;
+			short nodeCount;
+			short connectCount;
+			
+		} railDefinition[header.railsCount] <bgcolor=0x01062F, optimize=true>;
+		
+		local int nodeCountTotal = 0;
+		local int i = 0;
+		
+		for (i=0;i<header.railsCount;i++)
+		{
+			nodeCountTotal+=railDefinition[i].nodeCount;
+		}
+		
+		struct RailNode
+		{
+			Vector4 coordinates;
+			Vector4 parameters;
+		} railNodes[nodeCountTotal] <bgcolor=0x8ADEF3, optimize=true>; 
+		
+	} rails;
+	
+	// Not ready yet
+	struct Connect
+	{
+		local int connectCountTotal = 0;
+		local int n = 0;
+		
+		for (n=0;n<header.railsCount;n++)
+		{
+			if (rails.railDefinition[n].connectCount>0)
+			{
+				connectCountTotal+=1;
+			}
+		}
+		
+		struct ConnectDefinition
+		{
+			FSkip(6);
+			ubyte byte0;
+			ubyte byte1;
+			FSkip(4);
+			ushort short0;
+			ubyte byte2;
+			ubyte byte3;
+			
+			uint railName0;
+			FSkip(2);
+			ubyte byte4;
+			ubyte byte5;
+			uint railName1;
+			ushort short1;
+			ubyte byte6;
+			ubyte byte7;
+			
+		} connectDefinition[connectCountTotal] <bgcolor=0xCAE7B9, optimize=true>;
+		
+		struct Connects
+		{
+			int int0;
+			int int1;
+			FSkip(24);
+			
+		} connects[connectCountTotal] <bgcolor=0x97A7B3, optimize=true>;
+		
+	} connect;
+	
+}
+
+Assert(FTell() == FileSize(), "Failed to reach EoF.");

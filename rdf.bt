@@ -1,0 +1,250 @@
+// RDF - RadioDataFile
+// By RLC - inspired by other FOX templates by the researchers of Modders' Heaven!
+// https://metalgearmodding.fandom.com/wiki/RDF
+// Special thanks to Joey for the flag parsing parts!
+LittleEndian();
+
+struct Header
+{
+	ubyte version;
+	
+	if (version == 3)	//TPP
+	{
+		ubyte sbpValuesSetCount0;
+		
+		ushort labelCount;		
+		// short labelCount;		
+		// if (labelCount<0)
+		// {
+			// BigEndian();
+			// labelCount ?
+		// }
+		// If one were to make it check for endianness, it would need to check if this signed short is negative
+		// but how does one tun the short value back into a positive short?
+		ushort optionSetCount;
+		ushort variationSetCount;
+		
+		ubyte sbpValuesSetCount1;
+	}
+	else if (version == 1)
+	{
+		FSkip(1);
+		ushort labelCount;	
+		uint offsetToGzSection1;
+	}
+	
+} header <bgcolor=0x69626D>;
+
+if (header.version == 3) // if TPP
+{
+	if (header.sbpValuesSetCount0+header.sbpValuesSetCount1 > 0)
+	{
+		struct tppSection0
+		{
+			struct sbpValueList0
+			{
+				uint sbpValue0;	// These values are followed up by 64 02 in the HIRC.dat file in the .sbp
+				
+			} sbpValues0[header.sbpValuesSetCount0] <optimize=false>;
+			
+			struct sbpValueList1
+			{
+				uint sbpValue1; // These values are at the start of the lists, between the list entries and the sbpValue0 values
+				
+			} sbpValues1[header.sbpValuesSetCount1] <optimize=false>;
+			
+		} sbpSection <bgcolor=0xBCAF9C>;
+	}
+
+	if (header.labelCount > 0)
+	{
+		struct tppSection1
+		{
+			struct radioLabel
+			{
+				uint labelName;
+
+				// The flags must also somehow define whether the entries are all played in order or if it should randomly pick one to play, and more
+			
+				uint flag0 : 4;
+				uint flag1 : 4;
+				uint flag2 : 4;
+				uint flag3 : 4;
+				uint flag4 : 4;
+				uint flag5 : 4;
+				uint flag6 : 4;
+				uint flag7 : 4;
+
+				local ubyte labelClipCount = (ubyte)flag4;
+				
+				if (flag5>8)		// RadioData_comn2000 case: an entry at 0x1337 has 17 voice clips
+				{
+					labelClipCount = ( labelClipCount + ( ( flag5 - 8 ) * 16) );
+				}
+				else if (flag5<4)	// RadioData_comn6000 case: an entry at 0x1FE has 18 voice clips
+				{
+					labelClipCount = ( labelClipCount + ( flag5 * 16 ) );
+				}
+				
+				FSkip(2);
+				
+				struct voiceClipSubEntry
+				{
+					uint sbpVoiceClipId;	// Sometimes isn't a voice clip id, but a variationSetName; check section 3
+					
+					ubyte flag0 : 4;	// No idea
+					ubyte flag1 : 4;
+					ubyte flag2 : 4;
+					ubyte flag3 : 4;
+					ubyte flag6 : 4;
+					ubyte flag7 : 4;
+						
+				} voiceClipSubEntries[labelClipCount] <optimize=false>;
+				
+			} radioLabels[header.labelCount] <optimize=false>;
+			
+		} labelsSection <bgcolor=0xCBBEB3>;
+	}
+
+	if (header.optionSetCount > 0)
+	{
+		struct tppSection2
+		{
+			struct optionSet
+			{
+				uint setName;
+				ubyte labelsCount;
+				struct voiceClip
+				{
+					uint labelName;
+					
+				} voiceClips[labelsCount] <optimize=false>;
+				
+				//lua assigns sets to memory, and each label plays in order when the radio button is pressed with no intel radio target picked
+				
+			} optionSets[header.optionSetCount] <optimize=false>;
+			
+		} optionalSection <bgcolor=0xD9BDC5>;
+	}
+
+	if (header.variationSetCount > 0)
+	{
+		struct tppSection3
+		{
+			struct variationSetEntry
+			{
+				uint variationSetName;
+				ubyte variationClipsCount;
+				struct variationVoiceClip
+				{
+					uint sbpVoiceId;
+					
+					ubyte flag0 : 4;
+					ubyte flag1 : 4;
+					ubyte flag2 : 4;
+					ubyte flag3 : 4;
+					ubyte flag6 : 4;
+					ubyte flag7 : 4;
+					
+				} variationVoiceClips[variationClipsCount] <optimize=false>;
+				
+				// Here's an example
+				
+				// RadioData_comn1000.rdf
+				// label D7 5E 23 63
+				// variationSetName A4 0E 86 4F
+				// sbpVoiceId 85 72 1E 84 - That's it. You've made it out of the hot zone.
+				// sbpVoiceId 73 8A 37 41 - No sign of the enemy. Mission complete, Boss.
+				// variationSetName 76 19 01 B6
+				// sbpVoiceId 72 8A 37 41 - All right. You're out of the hot zone.
+				// sbpVoiceId CC DF 48 49 - No enemy forces in pursuit. Mission complete.
+				
+				// The label randomly picks one of the variation sets
+				
+			} variationSetEntries[header.variationSetCount] <optimize=false>;
+			
+		} variationSection <bgcolor=0xE8C7DE>;
+	}
+}
+else if (header.version == 1) // if GZ
+{
+	if (header.labelCount>0)
+	{
+		struct gzSection0
+		{
+			struct labelNameAndOffset
+			{
+				uint labelName;		// StrCode32 hash of label name used by lua, ex "e0010_rtrg0090"
+				uint labelOffset;	// Global
+				
+			} labelOffsets[header.labelCount] <optimize=false>;
+			
+			struct labelParamEntry
+			{
+				ubyte someFlag0;
+				ubyte someFlag1;
+				ushort someShort0;
+				FSkip(2);
+				ushort someShort1;
+				
+				ubyte someFlag2;
+				ubyte someFlag3;
+				ubyte someFlag4;
+				ubyte voiceClipCount;
+				ubyte someFlag5;
+				ubyte someFlag6;
+				FSkip(2);
+				
+				struct gzVoiceClipEntry
+				{
+					uint sbpVoiceClipListId0;	// .sbp HIRC.dat voice clip list, value before 0x6402
+					uint sbpVoiceClipListId1;	// .sbp HIRC.dat voice clip list, top entry
+					uint sbpVoiceClipId;		// .sbp HIRC.dat voice clip id
+					ubyte someFlag7;			// Usually 0x64
+					ubyte someFlag8;			// Sometimes 0x00, sometimes 0x02, sometimes 0x04
+					FSkip(2);
+					
+				} gzVoiceClips[voiceClipCount] <optimize=false>;
+				
+			} labelEntries[header.labelCount] <optimize=false>;
+			
+		} labelNamesAndOffsets <bgcolor=0xBCAF9C>;
+		
+		struct gzSection1
+		{
+			Assert(header.offsetToGzSection1==FTell(),"Offset to GzSection 1 is wrong!!");
+			ubyte entriesCount;
+			if (entriesCount>0)
+			{
+				FSkip(3);
+				struct sec2Entry
+				{
+					uint sec2Name;				// Not sure what these are, some sort of radio label sets?
+					uint sec2EntryOffset;		// Local (Section 2 start) offset to Section 3 entry
+				} sec2Entries[entriesCount] <optimize=false>;
+				
+				struct sec2OffsetSetEntry
+				{
+					ushort sec2OffsetEntryCount;
+					FSkip(2);
+					struct sec2OffsetEntry
+					{
+						uint sec2SubEntryOffset;	// Global offset to a Section 1 entry
+						
+					} sec2OffsetEntries[sec2OffsetEntryCount] <optimize=false>;
+					
+				} sec2OffsetSetEntries[entriesCount] <optimize=false>;
+				
+			};
+			
+		} someSection2 <bgcolor=0xD9BDC5>;
+		
+	}
+};
+
+// Special thanks to BobDoleOwndU and OldBanana and Joey!
+if (FTell() % 16 != 0)
+{
+	FSkip(16 - (FTell() % 16));
+    Assert(FTell() == FileSize(), "Failed  to reach EoF.");
+}
