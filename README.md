@@ -1,2 +1,2 @@
-# FoxStreamMovie
-Fox Engine .fsm file 010 Editor template
+# Fox Engine Templates
+Fox Engine file format templates.
