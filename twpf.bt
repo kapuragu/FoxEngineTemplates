@@ -1,0 +1,259 @@
+/**
+* Note: The tags seem to be referenced in TppRequestWeatherTagTrapExecDataElement entities in fox2
+*/
+
+LittleEndian();
+
+struct Header
+{
+    char format[7];
+    byte version;
+    int magicNumber1;
+
+    Assert(magicNumber1 == 12);
+
+    int section1EntryCount;
+    int tagCount;
+
+    int section1EntryOffsets[section1EntryCount - 1];
+    ushort fogSettingsEntryCount;
+    ushort magicNumber2;
+    Assert(magicNumber2 == 1);
+
+    uint fogSettingsEntryOffsets[fogSettingsEntryCount];
+} header <bgcolor=0x6741DA>;
+
+struct Color
+{
+    float r;
+    float g;
+    float b;
+};
+
+enum<ubyte> ColorMode
+{
+    Alpha = 1,
+    RGB = 2,
+    Unknown = 3,
+    LUT = 4
+};
+
+// Defines fog strength curves.
+struct TppGlobalVolumetricFog
+{
+    struct FogSettings
+    {
+        ubyte entryCount;
+        ColorMode fogColorMode;    
+        ushort parameterEnum;
+    
+        uint entryOffsets[entryCount];
+    
+        struct TagFogSettings
+        {
+            uint tagOffset <fgcolor=0xFFFFFF>;
+            ubyte numFogCurves;
+            ushort tagIndex;
+
+            ubyte padding <hidden=true>;
+            Assert(padding == 0);
+
+            uint fogCurveOffsets[numFogCurves] <optimize=false>;
+    
+            struct FogCurves
+            {
+                ushort weatherId;
+                ushort numCurveValues;
+    
+                uint curveValueOffsets[numCurveValues] <optimize=false>;
+    
+                struct FogCurveValue
+                {
+                    uint time;
+
+                    if (fogColorMode == RGB)
+                    {
+                        Color color;
+                    }
+                    else
+                    {
+                        float strength;
+                    }
+                } fogCurveValue[numCurveValues] <optimize=false>;
+            } fogCurves[numFogCurves] <optimize=false>;
+        } tagFogSettings[entryCount] <name=GetTag, comment=GetTag, optimize=false>;
+    } fogSettings[header.fogSettingsEntryCount] <bgcolor=0xBAB366, optimize=false>;
+} tppGlobalVolumetricFog;
+
+string GetTag(TagFogSettings &entry)
+{
+    local int position = FTell();
+    string tag = ReadString(entry.tagOffset);
+    FSeek(position);
+    return tag;
+}
+
+struct Section1
+{
+    struct ParameterChunk
+    {
+        ushort entryCount;
+    
+        // Might specify the type of the struct (cross-reference across files)
+        // Yep, across TPP files, this seems to hold
+        // What confuses me though is that there are often two entries of value 2
+        // Maybe this should be taken as a uint and you merely extract the count from it
+        ushort maybeAnEnum;
+    
+        uint entryOffsets[entryCount];
+    
+        // Each entry is linked to a parameter (e.g., shadowRange) and contains curves for tags
+        struct Section1Entry
+        {
+            ubyte numDefinitions;
+            ColorMode colorMode;
+
+            // Probably a parameter enum
+            // TppAtmosphere
+            // 2 is TppAtmosphere.daySkyAmbientScale or skyEnable
+
+            // 4 is TppAtmosphere.starLight
+            // 5 is ???
+            // 6 is TppAtmosphere.skyColorSunScale
+            // 7 is either skyLightSunScale or skyLightSunScaleOcean
+
+            // 9 is ???
+            // 10 is TppAtmosphere.shadowRange
+            // 11 is TppAtmosphere.shadowRangeExtra
+            // 12 is TppAtmosphere.hiResShadowRange
+            // 13 is TppAtmosphere.shadowProjectionRange
+            // 14 is TppAtmosphere.shadowfadeRange
+            // 15 is TppAtmosphere.selfShadowBias
+            // 16 is TppAtmosphere.shadowRangeLimit
+            // 17 is TppAtmosphere.shadowRangeFocalLengthConnectionScale
+            // 18 is either TppAtmosphere.influenceOfFog or TppAtmosphere.fogFalloff
+
+            // 37 is TppAtmosphere.dirLightFadeStart
+            // 38 is TppAtmosphere.dirLightFadeLength
+            // 39 is TppAtmosphere.dirLightFadeEnable
+
+            // 40 is TppAtmosphere.fogFalloff
+            // 41 is TppAtmosphere.fogFalloffStart
+
+            // 44 is ??? (followCameraEnable?)
+            // 45 is TppAtmosphere.offsetPosY
+            // 46 is TppAtmosphere.skyColor
+            // 47 is TppAtmosphere.daySkyAmbientScale or skyEnable
+
+            // 48 is TppAtmosphere.environmentSpecular_ShScale0
+            // 49 is TppAtmosphere.environmentSpecular_ShScale0_Ev
+            // 50 is TppAtmosphere.environmentSpecular_ShScale1
+            // 49 is TppAtmosphere.environmentSpecular_ShScale1_Ev
+            // 52 is TppAtmosphere.environmentSpecular_ShScale2
+            // 53 is TppAtmosphere.environmentSpecular_ShScale2_Ev
+            // 54 is TppAtmosphere.environmentSpecular_minFrontReflectionRate
+            // 55 is TppAtmosphere.environmentSpecular_Color
+            // 56 is ???
+            // 57 is TppAtmosphere.divisionNumOfSteppedMove
+            // 58 is ???
+
+            // 64 is TppAtmosphere.starLuminanceScale
+            // 65 is TppAtmosphere.skyLightSunScale or skyLightSunScaleOcean
+            // 66 is ???
+
+            // ---
+            // TppSky
+            // ---
+            // 129 is TppSky.diffusion
+            // 130 is TppSky.cloudDensity
+            // 131 is TppSky.dirLightGain
+            // 132 is TppSky.inCloudScatterGain
+            // 133 is TppSky.ambLightGain
+            // 134 is TppSky.cylCloudDensity
+            // 135 is TppSky.cylBackScatGain
+            // 136 is TppSky.cylFrontDirGain
+            // 137 is TppSky.cylfrontAmbGain
+
+            // 141 is TppSky.dom2Density
+            // 142 is TppSky.dom3Density
+
+            // etc
+
+            // ---
+            // GrPluginSettings
+            // ---
+            // 1 is GrPluginSettings.minExposure
+            // 2 is GrPluginSettings.maxExposure
+            // 3 is GrPluginSettings.keyValue
+            // etc
+
+
+            // ---
+            // ColorCorrection
+            // ---
+            // 1 is ColorCorrection.colorScale
+            // 8 is ColorCorrection.colorScale2
+            // etc
+
+            ushort parameterEnum;
+            uint definitionOffsets[numDefinitions] <optimize=false>;
+    
+            struct Section1Subentry
+            {
+                uint tagOffset <fgcolor=0xFFFFFF>;
+    
+                ubyte numWeathers;
+                ushort tagIndex;
+
+                ubyte padding <hidden=true>;
+                Assert(padding == 0);
+
+                uint subsubEntryOffsets[numWeathers];
+    
+                struct ColorScale
+                {
+                    ushort weatherId;
+                    ushort numValues;
+                    uint curveValueOffsets[numValues];   
+ 
+                    struct CurveValue
+                    {
+                        uint time;
+    
+                        if (colorMode == RGB)
+                        {
+                            // These can exceed 1.0!
+                            Color color;
+                        }
+                        else if (colorMode == Alpha)
+                        {
+                            // Values range from 0-1000.
+                            float strength;
+                        }
+                        else if (colorMode == LUT)
+                        {
+                            uint64 lutHash;
+                        }
+                        else
+                        {
+                            Assert(false);
+                        }
+                    } values[numValues] <optimize=false>;
+                } colorScales[numWeathers] <optimize=false>;
+            } definitions[numDefinitions] <name=GetTag1, optimize=false>;
+        } entries[entryCount] <optimize=false>;
+    } parameterChunks[header.section1EntryCount - 1] <bgcolor=0x533717, optimize=false>;
+} section1;
+
+string GetTag1(Section1Subentry &entry)
+{
+    local int position = FTell();
+    string tag = ReadString(entry.tagOffset);
+    FSeek(position);
+    return tag;
+}
+
+
+// NOTE
+// The footer names are called "tags"
+// And are called like: WeatherManager.RequestTag("sortie_space", 0 )
