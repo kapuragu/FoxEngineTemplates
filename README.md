@@ -10,7 +10,8 @@ Highflex
 id-Daemon  
 Jayveer  
 Joey35233  
-Mana  
+Mana
+Morbidslinky  
 MrDev  
 sai  
 SecaProject  
