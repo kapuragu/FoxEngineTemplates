@@ -1,2 +1,2 @@
 # Fox Engine Templates
-Fox Engine file format templates.
+Fox Engine file format 010 Editor templates.
