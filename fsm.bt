@@ -5,7 +5,7 @@
 // Supposed to be run either on .fsm files' .demo output of BobDoleOwndU's FsmTool, or from offset inside .fsm files.
 // https://github.com/BobDoleOwndU/FsmTool
 
-struct NodeType
+enum NodeType
 {
 	ROOT            = 3933341002,
 	DEMO            = 3254096966,
@@ -25,6 +25,7 @@ struct NodeType
 	MTP_LIST        = 3937479969,
 	MTP_PARENT_LIST = 4042487769,
 	LOCATOR         = 3187573380,
+	GLOBALSRT		= 2036377104,
 	Unknown         = 2053459263,
 };
 
@@ -91,7 +92,6 @@ if (demoData.chunkType==0)
 		struct SegmentMotion
 		{	
 			// There's some empty ones at the end with this kind of parsing, so maybe the type indices define the length of the individual segments
-
 			if ((demoData.offsetToNodes>0) & (demoData.offsetToNodes<header.chunkSize))
 			{
 				while ( (FTell() - startOfChunk) < demoData.offsetToNodes+0x10 )
