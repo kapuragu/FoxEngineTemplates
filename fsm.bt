@@ -68,7 +68,7 @@ if (demoData.chunkType==0)
 		struct SegmentMotion
 		{	
 			// There's some empty ones at the end with this kind of parsing, so maybe the type indices define the length of the individual segments
-			?
+
 			if ((demoData.offsetToNodes>0) & (demoData.offsetToNodes<header.chunkSize))
 			{
 				while ( (FTell() - startOfChunk) < demoData.offsetToNodes+0x10 )
