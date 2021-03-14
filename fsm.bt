@@ -5,6 +5,8 @@
 // Supposed to be run on raw .fsm files, not on input from FsmTool, not anymore.
 // https://github.com/BobDoleOwndU/FsmTool
 
+LittleEndian();
+
 enum NodeType
 {
 	ROOT            = 3933341002,
@@ -12,7 +14,7 @@ enum NodeType
 	CAMERA          = 2620425302,
 	MOVE            = 3150281601,
 	CameraParam     = 2862912361,
-	SI_Frame        = 1885607306,
+	SI_Frame        = 1885607306, // Technically, the hash is "SI Frame" with a space instead of an underscore. 
 	SKEL	        = 1889896775,
 	MESH_EVENT      = 2454300086,
 	MOTION	        = 143688520,
@@ -28,8 +30,6 @@ enum NodeType
 	GLOBALSRT       = 2036377104,
 	Unknown         = 2053459263,
 };
-
-LittleEndian();
 
 local int passedSoundChunk = 0;
 

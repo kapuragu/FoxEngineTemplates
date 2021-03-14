@@ -4,6 +4,30 @@
 
 LittleEndian();
 
+enum NodeType
+{
+	ROOT            = 3933341002,
+	DEMO            = 3254096966,
+	CAMERA          = 2620425302,
+	MOVE            = 3150281601,
+	CameraParam     = 2862912361,
+	SI_Frame        = 1885607306, // Technically, the hash is "SI Frame" with a space instead of an underscore. 
+	SKEL	        = 1889896775,
+	MESH_EVENT      = 2454300086,
+	MOTION	        = 143688520,
+	MODEL           = 2215748180,
+	SKELINFO        = 3736262940,
+	MTPINFO         = 917055795,
+	MTEV            = 2846912397,
+	MTP             = 494270195,
+	SHADER          = 2250865118,
+	MTP_LIST        = 3937479969,
+	MTP_PARENT_LIST = 4042487769,
+	LOCATOR         = 3187573380,
+	GLOBALSRT       = 2036377104,
+	Unknown         = 2053459263,
+};
+
 struct Header
 {
 	uint magic <comment="June 23rd, 2014">; if (magic==372703500) { BigEndian();}
@@ -72,26 +96,26 @@ struct DEMO
 		struct SandNode
 		{
 			local int nodeStart = FTell();
-			uint nodeType <comment="StrCode32 hash">;
-			if (nodeType==3933341002 // ROOT
-				|| nodeType==3254096966 // DEMO
-				|| nodeType==2620425302 // CAMERA
-				|| nodeType==3150281601 // MOVE
-				|| nodeType==2862912361 // CameraParam
-				|| nodeType==1885607306 // "SI Frame"
-				|| nodeType==1889896775 // SKEL	
-				|| nodeType==2454300086 // MESH_EVENT
-				|| nodeType==143688520 // MOTION	
-				|| nodeType==2215748180 // MODEL
-				|| nodeType==3736262940 // SKELINFO
-				|| nodeType==917055795 // MTPINFO
-				|| nodeType==2846912397 // MTEV
-				|| nodeType==494270195 // MTP
-				|| nodeType==2250865118 // SHADER
-				|| nodeType==3937479969 // MTP_LIST
-				|| nodeType==4042487769 // MTP_PARENT_LIST
-				|| nodeType==3187573380 // LOCATOR
-				|| nodeType==2053459263 // Unknown
+			NodeType nodeType <comment="StrCode32 hash">;
+			if (nodeType == ROOT
+				|| nodeType==DEMO
+				|| nodeType==CAMERA
+				|| nodeType==MOVE
+				|| nodeType==CameraParam
+				|| nodeType==SI_Frame
+				|| nodeType==SKEL	
+				|| nodeType==MESH_EVENT
+				|| nodeType==MOTION	
+				|| nodeType==MODEL
+				|| nodeType==SKELINFO
+				|| nodeType==MTPINFO
+				|| nodeType==MTEV
+				|| nodeType==MTP
+				|| nodeType==SHADER
+				|| nodeType==MTP_LIST
+				|| nodeType==MTP_PARENT_LIST
+				|| nodeType==LOCATOR
+				|| nodeType==Unknown
 				)
 			{
 				uint offsetToNodeTypeString;
@@ -117,11 +141,11 @@ struct DEMO
 					// FSkip(16 - (FTell() % 16));
 				// }
 				
-				if (nodeType==3150281601 // MOVE
-					|| nodeType==2862912361 // CameraParam
-					|| nodeType==1885607306 // "SI Frame"
-					|| nodeType==1889896775 // SKEL	
-					|| nodeType==2053459263 // Unknown	
+				if (nodeType==MOVE
+					|| nodeType==CameraParam
+					|| nodeType==SI_Frame
+					|| nodeType==SKEL	
+					|| nodeType==Unknown
 					)
 				{
 					uint subObjectCount;
@@ -200,7 +224,7 @@ struct DEMO
 						
 					} objectEntry;
 				}
-				else if (nodeType==143688520) // MOTION	
+				else if (nodeType==MOTION)	
 				{
 					if (offsetToNextNode!=0)
 					{
@@ -224,7 +248,7 @@ struct DEMO
 						};
 					}
 				}
-				else if (nodeType==494270195) // MTP
+				else if (nodeType==MTP)
 				{
 					uint subObjectCount;
 					uint unknown00;
@@ -301,7 +325,7 @@ struct DEMO
 						FSkip(16);
 					}
 				}
-				else if (nodeType==2250865118) // SHADER
+				else if (nodeType==SHADER)
 				{
 					ushort entryCount;
 					ushort PossiblyPadding;
@@ -414,7 +438,7 @@ struct DEMO
 						} material;
 					}
 				}
-				else if (nodeType==3937479969)  // MTP_LIST
+				else if (nodeType==MTP_LIST)
 				{
 					uint mtpCount;
 					struct MTPListEntry
@@ -445,7 +469,7 @@ struct DEMO
 						// FSkip(16 - (FTell() % 16));
 					// }
 				}
-				else if (nodeType==4042487769)  // MTP_PARENT_LIST
+				else if (nodeType==MTP_PARENT_LIST)
 				{
 					uint mtpCount;
 					struct MTPParentListEntry
