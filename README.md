@@ -4,7 +4,7 @@ Fox Engine file format 010 Editor templates.
 # Special Thanks To
 Atvaark  
 BobDoleOwndU  
-caplag  
+caplag (AKA kapuragu AKA rlc)  
 Half Way Lambda  
 HeartlessSeph  
 Highflex  
