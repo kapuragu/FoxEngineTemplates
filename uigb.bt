@@ -1,0 +1,691 @@
+LittleEndian();
+
+/* Color defines. */
+#define COLOR1 0xA7D6E4
+#define COLOR2 0x4CB4E9
+#define COLOR3 0x15299B
+#define COLOR4 0xA7A250
+#define COLOR5 0xF9FC90
+#define COLOR6 0x85CD7D
+#define COLOR7 0x3B53CD
+#define COLOR8 0xA57422
+
+/* Node type hash defines. */
+#define StrCode32_UiEventNode 1566827328
+#define StrCode32_UiPageNode 2327456298
+#define StrCode32_UiPhaseNode 909234960
+#define StrCode32_UiActionNode 3565552990
+#define StrCode32_UiOperationNode 1439661161
+
+/* UiEventNode type hashes. */
+#define StrCode32_UiEventNode_EquipUnknown1 3448827577
+#define StrCode32_UiEventNode_EndingUnknown1 3718746465
+#define StrCode32_UiEvTriggerNode 387457081
+#define StrCode32_UiEvScriptNode 1132904100
+#define StrCode32_EvSubtitlesNode 2835314347
+
+#define StrCode32_DemoPauseEvCallNode 693978763
+#define StrCode32_ActionIconEvCallNode 2064477394
+#define StrCode32_WorldMarkerEvCallNode 2755355081
+#define StrCode32_EquipCrossEvCallNode 3448827577
+#define StrCode32_CqcIconEvCallNode 1570974952
+#define StrCode32_SaveLoadEvCallNode 3419581678
+#define StrCode32_DisplayTimerEvCallNode 2490646102
+#define StrCode32_WalkmanEvCallNode 3493125727
+#define StrCode32_TimeCigaretteEvCallNode 822423478
+#define StrCode32_EulaEvCallNode 3540561745
+#define StrCode32_KeySettingEvCallNode 553707658
+#define StrCode32_NoticeDirEvCallNode 1029062350
+#define StrCode32_DamageDirEvCallNode 1335296452
+#define StrCode32_HeadMarkMarkerEvCallNode 2794031067
+#define StrCode32_GameOverEvCallNode 3811152451
+
+/* UiActionNode type hashes. */
+#define StrCode32_UiActionNode_PhaseUnknown1 1640419221
+#define StrCode32_UiActDisplayNode 4161305626
+#define StrCode32_UiActScriptNode 3936517678
+#define StrCode32_UiActAnimationNode 3355990556
+#define StrCode32_UiActTextureNode 762754712
+#define StrCode32_UiActTransformNode 1212229654
+#define StrCode32_UiActColorNode 3526460790
+#define StrCode32_UiActFadeSceneNode 2481144418
+#define StrCode32_UiActPageChangeNode 1618112073
+#define StrCode32_UiActPhaseChangeNode 1516971955
+#define StrCode32_UiActSoundNode 1132903556
+#define StrCode32_UiActSendTriggerNode 594098297
+#define StrCode32_UiActSetTextNode 2414984170
+#define StrCode32_UiActColorGroupNode 1655745168
+#define StrCode32_UiActPriorityNode 1459057519
+#define StrCode32_UiActAddWindowNode 460711256
+#define StrCode32_UiActConnectComponentNode 2964015700
+
+#define StrCode32_MbCommonPopupActNode 3661971897
+
+/* UiOperationNode type hashes. */
+#define StrCode32_UiOpeOrNode 3628566006
+#define StrCode32_UiOpeGetPropertyNode 4260229017
+
+/* Other defines. */
+#define INVALID_INDEX 65535
+#define INVALID_OFFSET 4294967295
+
+local uint layoutLinksRead;
+
+struct Header
+{
+    char uigb[4] <hidden=true>;
+    ushort magic <hidden=true>;
+    Assert(magic == 257);    
+
+    ushort padding <hidden=true>;
+    Assert(padding == 0);
+
+    ushort nodeCount;
+
+    ubyte uilbCount;
+    ubyte uigbCount;
+    ubyte n1;                   // Number of o2 entries
+    Assert(n1 == 0);
+
+    ubyte section6EntryCount;
+
+    ushort fileReferenceCount;
+    uint strCode32HashCount;
+
+    int nodeTableOffset;
+    int layoutTableOffset;
+    int section4Offset;
+    uint o2;                    // Relates to fileReferenceCount and section6Offset
+    int section6Offset;         // Only used in GZ? (Nope, it's used in SubtitlesSideshow.uigb)
+//    Assert(section6Offset == -1);
+
+    int uilbHashesOffset;       // Offset from section5Offset
+    uint hashTableOffset;       // Offset from section5Offset 
+    int o4;                     // Offset from section5Offset; more hashes (uifs?)
+    Assert(o4 == -1);
+
+    uint section5Offset;
+} header <bgcolor=COLOR1>;
+
+enum <ubyte> UiActionNodeKind
+{
+    ACTION_NONE = 0,
+    ACTION_DISPLAY = 1,
+    ACTION_ANIMATION = 2,
+    ACTION_TRANSFORM = 3,
+	ACTION_COLOR = 4,
+	ACTION_TEXTURE = 5,
+	ACTION_FADE_SCENE = 6,
+	ACTION_PAGE_CHANGE = 7,
+	ACTION_PHASE_CHANGE = 8,
+	ACTION_SCRIPT = 9,
+	ACTION_CHAIN_LIST = 10,
+	ACTION_SOUND = 11,
+	ACTION_SENDTRIGGER = 12,
+	ACTION_SET_TEXT = 13,
+	ACTION_COLOR_GROUP = 14,
+	ACTION_PRIORITY = 15,
+	ACTION_ACTADDWINDOW = 16,
+	ACTION_ACTREMOVEWINDOW = 17,
+    ACTION_CONNECTCOMPONENT = 18
+};
+
+enum <uint> UiEventNodeKind
+{
+    EVENT_NONE = 0,
+	EVENT_PRESS = 1,
+	EVENT_LONG_PRESS = 2,
+	EVENT_RELEASE = 3,
+	EVENT_TIMER = 4,
+	EVENT_SCRIPT = 5,
+	EVENT_SELECTION = 6,
+	EVENT_SELECT = 7,
+	EVENT_SELECT_LIST = 8,
+	EVENT_TRIGGER = 9,
+    EVENT_EVCONTROLLER = 10
+};
+
+struct UiPageNode
+{
+    // None of these are read?
+    ushort o1;
+    ushort o2;
+    ushort o3;
+};
+
+struct UiEdgeData
+{
+    ushort inputNodeNameHashIndex <comment=GetHashComment>;
+
+    // Values found: "func", "start"
+    ushort propertyNameHashIndex1 <comment=GetHashComment>;
+
+    // Values found: "event", "param", "end"
+    // Only used when linking a UiActionNode to UiEventNode?
+    ushort propertyNameHashIndex2 <comment=GetHashComment>;
+    ushort n3;
+};
+
+struct UiOutputEdgeData
+{    
+    ushort nodeNameHash <comment=GetHashComment>;
+
+    // Example: "start", "stop"
+    ushort hashIdx1 <comment=GetHashComment>;
+
+    // Examples: "event"
+    ushort hashIdx2 <comment=GetHashComment>;
+
+    // Never read?
+    ushort nodeName2Hash;
+};
+
+struct LayoutLink
+{
+    ushort hashIndex1;
+    ushort hashIndex2;
+};
+
+struct FileReference
+{
+    // This is the hashed name of a .uilb (e.g., UI_demo_provisional 2238145568)
+    // Might also be a .uia
+    // Note: Somewhere in the hash list is the hashed name of all .uilbs, .uifs, and .uias referenced in the .uilbs!
+    ushort fileNameHashIndex;
+    
+    // If n1 == 2, then skip the rest of the struct (TODO)
+    // Other valid values are 1 and 0
+    // The type indicates something to be done with the file
+    ubyte type;
+
+    // Number of hashes
+    ubyte hashCount;
+
+    // This is an offset from section5Offset
+    ushort hashIndicesOffset;
+
+    // Never read?
+    ushort u4;
+    Assert(u4 == 0);
+};
+
+/* UiPhaseNodes receive input from UiPageNodes. */
+struct UiPhaseNode
+{
+    ubyte kind;
+    ubyte edgeCount;
+    ushort edgesOffset;
+
+    local uint currentPosition = FTell();
+
+    FSeek(edgesOffset);
+    UiEdgeData inputEdge[edgeCount] <bgcolor=COLOR7>;
+    FSeek(currentPosition);
+
+    // Not read?
+    ushort o3;
+    Assert(o3 == 0);
+};
+
+/* UiEventNodes receive input from UiPhaseNodes. */
+struct UiEventNode
+{
+    ubyte inputOperationCount;
+    ubyte outputEdgeCount;
+    uint outputEdgesOffset;
+
+    local uint currentPosition = FTell();
+
+    FSeek(outputEdgesOffset);
+    UiEdgeData inputEdges[outputEdgeCount] <bgcolor=COLOR7>;
+    FSeek(currentPosition);
+
+    ubyte layoutLinkCount;
+
+    currentPosition = FTell();
+    FSeek(header.section5Offset + layoutLinksRead);
+    LayoutLink layoutLinks[layoutLinkCount];
+    layoutLinksRead += layoutLinkCount;
+    FSeek(currentPosition);
+
+    ubyte paramBytes;
+
+    ushort padding <hidden=true>;
+    Assert(padding == 0);
+
+    uint layoutLinks2Offset;   
+    uint paramsOffset;
+
+    currentPosition = FTell();
+    FSeek(header.section5Offset + paramsOffset);
+    ubyte params[paramBytes];
+    FSeek(currentPosition);
+
+    uint o6;
+    uint o7;
+    UiEventNodeKind kind;
+};
+
+struct UiEventNode_EquipUnknown1
+{
+    UiEventNode base;
+};
+
+struct UiEventNode_EndingUnknown1
+{
+    UiEventNode base;
+};
+
+/* UiEventNodes receive input from UiEventNodes. */
+struct UiActionNode
+{
+    UiActionNodeKind kind;
+    ubyte outputEdgeCount;
+    uint outputEdgesOffset;
+
+    local uint currentPosition = FTell();
+
+    FSeek(outputEdgesOffset);
+    UiEdgeData inputEdges[outputEdgeCount] <bgcolor=COLOR7>;
+    FSeek(currentPosition);
+
+    ubyte layoutLinkCount;
+
+    currentPosition = FTell();
+    FSeek(header.section5Offset + layoutLinksRead * sizeof(LayoutLink));
+    LayoutLink layoutLinks[layoutLinkCount];
+    layoutLinksRead += layoutLinkCount;
+    FSeek(currentPosition);
+
+    ubyte paramBytes;
+    ubyte hashIndicesCount; // Only hash value found so far is ""
+    Assert(hashIndicesCount == 0);
+
+    // Probably relates to an undiscovered section. Found in exe.
+    ubyte o7EntryCount;
+    Assert(o7EntryCount == 0);
+
+    uint layoutLinks2Offset;
+    uint paramOffset; // Seems to be offset from section5. Read paramBytes from here.
+
+    currentPosition = FTell();
+    if (layoutLinks2Offset != INVALID_OFFSET)
+    {
+        Assert(layoutLinkCount > 0);
+        FSeek(layoutLinks2Offset);
+        FileReference fileReferences[layoutLinkCount];
+    }
+
+    // TODO: Do this for all node types!
+    // TODO2: This is always an 8 byte value
+    if (paramOffset != INVALID_OFFSET)
+    {
+        FSeek(header.section5Offset + paramOffset);
+        ubyte params[paramBytes];
+    }
+
+    FSeek(currentPosition);
+
+    uint hashIndicesOffset; // Offset from section5
+    uint o7;
+    uint o8;
+    Assert(o8 == 0);
+
+    uint o9;
+
+    currentPosition = FTell();
+    FSeek(outputEdgesOffset);
+    UiOutputEdgeData outputEdges[outputEdgeCount] <bgcolor=COLOR7>;
+    FSeek(currentPosition);
+};
+
+struct UiOperationNode
+{
+    // Not what this is. What is it? Sometimes as high as 9.
+    ubyte inputOperationCount;
+    ubyte outputEdgeCount;
+    uint outputEdgesOffset;
+
+    local uint currentPosition = FTell();
+
+    FSeek(outputEdgesOffset);
+    UiEdgeData inputEdges[outputEdgeCount] <bgcolor=COLOR7>;
+    FSeek(currentPosition);
+
+    ubyte layoutLinkCount;
+
+    currentPosition = FTell();
+    FSeek(header.section5Offset + layoutLinksRead);
+    LayoutLink layoutLinks[layoutLinkCount];
+    layoutLinksRead += layoutLinkCount;
+    FSeek(currentPosition);
+
+    ubyte paramBytes;
+
+    ushort padding <hidden=true>;
+    Assert(padding == 0);
+
+    uint layoutLinks2Offset;   
+    uint paramsOffset;
+
+    currentPosition = FTell();
+    FSeek(header.section5Offset + paramsOffset);
+    ubyte params[paramBytes];
+    FSeek(currentPosition);
+
+    uint o6;
+    uint o7;
+};
+
+struct UiActionNode_PhaseUnknown1
+{
+    UiActionNode base;
+};
+
+struct UiActionNode_Unknown1
+{
+    UiActionNode base;
+};
+
+enum <ubyte> UiNodeType
+{
+    NODE_PAGE = 0,
+    NODE_PHASE = 1,
+    NODE_EVENT = 2,
+    NODE_ACTION = 3,
+    NODE_OPERATION = 4,
+    NODE_UNKNOWN = 5,
+    NODE_COMPOUND = 6
+};
+
+struct UiNodeData
+{
+    ushort nodeTypeHashIndex <comment=GetNodeTypeComment, fgcolor=0xFFFFFF>;
+    ushort nodeNameHashIndex <comment=GetHashComment>;
+
+    ubyte nodeSzeInBytes;
+    UiNodeType type;
+
+    local uint nodeTypeHash = GetHash(nodeTypeHashIndex);
+
+    switch(type)
+    {
+        case NODE_PAGE:
+            UiPageNode pageNode;
+            break;
+        case NODE_PHASE:
+            UiPhaseNode phaseNode;
+            break;
+        case NODE_EVENT:
+            UiEventNode eventNode;
+            break;
+        case NODE_ACTION:
+            UiActionNode actionNode;
+            break;
+        case NODE_OPERATION:
+            UiOperationNode operationNode;
+            break;
+        default:
+            Printf("Unrecognized node type: %u\n", nodeTypeHash);
+            Assert(false);
+    }
+} nodes [header.nodeCount] <bgcolor=COLOR2, optimize=false>;
+
+FSeek(header.layoutTableOffset);
+
+struct UiLayoutData
+{
+    ushort hashIndex <comment=GetHashComment, fgcolor=0xFFFFFF>;
+
+    // Interesting note: these are always 6 apart
+    ushort layoutPathHashIndex <comment=GetUilbHashComment>;
+
+    // Boolean; sets some flag in the uilb
+    ubyte flag1;
+    Assert(flag1 == 0 || flag1 == 1);
+
+    // Some kind of index, possibly related to an fmdl?
+    ubyte n2;
+
+    // Values found: LMENU (equip_cross.uigb)
+    ushort drawPriorityHashIndex <comment=GetHashComment>;
+
+    // These are in the exe, but no clue what any of them are.
+    ushort connectionHashIndex <comment=GetHashComment>;
+    ushort u1 <comment=GetHashComment>;
+} layouts[header.uilbCount] <bgcolor=COLOR4>;
+
+struct Vector4
+{
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+struct Section2Entry
+{
+    short hashIndex;             // Values include "param"
+    ubyte flag; // Valid values are 0 or 1
+    ubyte hashCount;
+    uint section5RelativeOffset; // Values include "param"
+};
+
+/* Relates to external uigb files somehow. */
+struct Section4
+{
+    struct Section4Entry
+    {
+        ushort hashIndex1;      // Some kind of name associated with this entry.
+        ushort uigbHashIndex;
+
+        ushort n3;
+        ushort nameHashIndex;
+        ubyte n5;
+
+        // TODO: If false, stop reading
+        ubyte b6;
+        Assert(b6 == 0 || b6 == 1);
+
+        ushort hashIndex3;
+        uint n8;
+        uint section2EntryOffset;
+
+        local ulong position = FTell();
+        FSeek(section2EntryOffset);
+        Section2Entry section2Entry;
+        FSeek(position);
+
+        Vector4 v1;
+        Vector4 v2;
+        Vector4 v3;
+        Vector4 v4;
+    } entries[header.uigbCount] <optimize=false>;
+} section4 <bgcolor=COLOR8, fgcolor=0xFFFFFF>;
+
+FSeek(header.section5Offset);
+ubyte section5[header.hashTableOffset/2];
+uint hashes[header.strCode32HashCount] <bgcolor=COLOR5>;
+
+FSeek(header.section5Offset + header.uilbHashesOffset);
+uint64 filePathHashes[header.fileReferenceCount] <bgcolor=COLOR6>;
+
+/* Get the comment string for a given hash index. */
+string GetNodeTypeComment(ushort hashIndex)
+{
+    local uint hash = GetHash(hashIndex);
+    switch(hash)
+    {
+        case StrCode32_UiEventNode:
+            return "UiEventNode";
+        case StrCode32_UiPageNode:
+            return "UiPageNode";
+        case StrCode32_UiPhaseNode:
+            return "UiPhaseNode";
+        case StrCode32_UiActionNode:
+            return "UiActionNode";
+        case StrCode32_UiOperationNode:
+            return "UiOperationNode";
+        case StrCode32_UiEvTriggerNode:
+            return "UiEvTriggerNode";
+        case StrCode32_UiEvScriptNode:
+            return "UiEvScriptNode";        
+        case StrCode32_EvSubtitlesNode:
+            return "EvSubtitlesNode";
+        case StrCode32_DemoPauseEvCallNode:
+            return "DemoPauseEvCallNode";
+        case StrCode32_ActionIconEvCallNode:
+            return "ActionIconEvCallNode";
+        case StrCode32_WorldMarkerEvCallNode:
+            return "WorldMarkerEvCallNode";
+        case StrCode32_EquipCrossEvCallNode:
+            return "EquipCrossEvCallNode";
+        case StrCode32_CqcIconEvCallNode:
+            return "CqcIconEvCallNode";
+        case StrCode32_UiActScriptNode:
+            return "UiActScriptNode";
+        case StrCode32_SaveLoadEvCallNode:
+            return "SaveLoadEvCallNode";
+        case StrCode32_DisplayTimerEvCallNode:
+            return "DisplayTimerEvCallNode";
+        case StrCode32_WalkmanEvCallNode:
+            return "WalkmanEvCallNode";
+        case StrCode32_TimeCigaretteEvCallNode:
+            return "TimeCigaretteEvCallNode";
+        case StrCode32_EulaEvCallNode:
+            return "EulaEvCallNode";
+        case StrCode32_KeySettingEvCallNode:
+            return "KeySettingEvCallNode";
+        case StrCode32_NoticeDirEvCallNode:
+            return "NoticeDirEvCallNode";
+        case StrCode32_HeadMarkMarkerEvCallNode:
+            return "HeadMarkMarkerEvCallNode";
+        case StrCode32_DamageDirEvCallNode:
+            return "DamageDirEvCallNode";
+        case StrCode32_GameOverEvCallNode:
+            return "GameOverEvCallNode";
+        case StrCode32_UiActDisplayNode:
+            return "UiActDisplayNode";
+        case StrCode32_UiActTextureNode:
+            return "UiActTextureNode";
+        case StrCode32_UiActTransformNode:
+            return "UiActTransformNode";
+        case StrCode32_UiActColorNode:
+            return "UiActColorNode";
+        case StrCode32_UiActFadeSceneNode:
+            return "UiActFadeSceneNode";
+        case StrCode32_UiActPageChangeNode:
+            return "UiActPageChangeNode";
+        case StrCode32_UiActPhaseChangeNode:
+            return "UiActPhaseChangeNode";
+        case StrCode32_UiActSoundNode:
+            return "UiActSoundNode";
+        case StrCode32_UiActSendTriggerNode:
+            return "UiActSendTriggerNode";
+        case StrCode32_UiActSetTextNode:
+            return "UiActSetTextNode";
+        case StrCode32_UiActColorGroupNode:
+            return "UiActColorGroupNode";
+        case StrCode32_UiActPriorityNode:
+            return "UiActPriorityNode";
+        case StrCode32_UiActAddWindowNode:
+            return "UiActAddWindowNode";
+        case StrCode32_UiActConnectComponentNode:
+            return "UiActConnectComponentNode";
+        case StrCode32_UiOpeOrNode:
+            return "UiOpeOrNode";
+        case StrCode32_UiOpeGetPropertyNode:
+            return "UiOpeGetPropertyNode";
+        case StrCode32_UiActAnimationNode:
+            return "UiActAnimationNode";
+        case StrCode32_MbCommonPopupActNode:
+            return "MbCommonPopupActNode";
+        default:
+            return Itoa(hash);
+    }
+}
+
+/* Get the hash at a given index. */
+uint GetHash(ushort hashIndex)
+{
+    local uint hashTableOffset = header.section5Offset + header.hashTableOffset;
+    local ulong currentPosition = FTell();
+
+    FSeek(hashTableOffset + sizeof(uint) * hashIndex);
+
+    local uint hash = ReadUInt();
+    FSeek(currentPosition);
+
+    return hash;
+}
+
+/* Get the uilb hash at a given index. */
+ulong GetUilbHash(ushort hashIndex)
+{
+    local uint hashTableOffset = header.section5Offset + header.hashTableOffset;
+    local ulong currentPosition = FTell();
+
+    FSeek(hashTableOffset + header.uilbHashesOffset + (sizeof(uint64) * hashIndex));
+
+    local uint hash = ReadUInt64();
+    FSeek(currentPosition);
+
+    return hash;
+}
+
+/* Get the comment string for a given version number. */
+string GetVersionComment(ubyte versionNumber)
+{
+    if (versionNumber == 0)
+    {
+        return "GZ";
+    }
+    else if (versionNumber == 1)
+    {
+        return "TPP";
+    }
+    else
+    {
+        return "Unrecognized version";
+    }
+}
+
+/* Get the comment string for a given hash index. */
+string GetHashComment(ushort hashIndex)
+{
+    if (hashIndex == INVALID_INDEX)
+    {
+        return "";
+    }
+
+    local uint hash = GetHash(hashIndex);
+    return Itoa(hash);
+}
+
+/* Get the comment string for a given uilb hash index. */
+string GetUilbHashComment(ushort hashIndex)
+{
+    if (hashIndex == INVALID_INDEX)
+    {
+        return "";
+    }
+
+    local uint64 hash = GetUilbHash(hashIndex);
+    return Ltoa(hash);
+}
+
+/* Converts an unsigned integer to a string. */
+string Itoa(uint number)
+{
+    char result[12];
+    SPrintf(result, "%u", number);
+    return result;
+}
+
+/* Converts an unsigned long to a string. */
+string Ltoa(uint64 number)
+{
+    char result[24];
+    SPrintf(result, "%Lu", number);
+    return result;
+}

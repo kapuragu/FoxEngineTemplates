@@ -1,0 +1,51 @@
+//------------------------------------------------
+//--- 010 Editor v7.0.2 Binary Template
+//
+//      File: frt.bt (TppRouteSet)
+//   Version: 1.0
+//------------------------------------------------
+LittleEndian();
+
+struct Header
+{
+    char ROUT[4] <hidden = true>;
+    ushort version;
+    ushort routeIdCount;
+    uint routeIdsOffset;
+
+    uint routeDefinitionsOffset;
+    uint routeNodesOffset;
+    uint routeEventTablesOffset;
+    uint routeNodeEventsOffset;
+    
+    uint routeIds[header.routeIdCount];
+} header;
+
+struct RouteDefinition
+{
+    uint nodeOffset;
+    uint edgeOffset;
+    uint eventTableOffset;
+    ushort numNodes;
+    ushort numEvents;
+} routeDefinitions[header.routeIdCount];
+
+struct RouteNode
+{
+    float x;
+    float y;
+    float z;
+} routeNodes[(header.routeEventTablesOffset - header.routeNodesOffset)/sizeof(RouteNode)];
+
+struct RouteNodeEventTable
+{
+    ushort nodeEventCount;
+    ushort edgeEventIndex;
+} routeNodeEventTables[(header.routeNodeEventsOffset - header.routeEventTablesOffset)/sizeof(RouteNodeEventTable)];
+
+struct RouteNodeEvent
+{
+    uint type;
+	int params[10];
+    char snippet[4];
+} routeNodeEvents[(FileSize() - header.routeNodeEventsOffset)/sizeof(RouteNodeEvent)];

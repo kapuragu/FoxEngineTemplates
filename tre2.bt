@@ -1,0 +1,328 @@
+//------------------------------------------------
+LittleEndian();
+
+struct ParamSection
+{
+    uint hash <comment=HashLookup>;
+    int nameAddressOffset <comment="Name Offset + 4">;
+    int paramUnknown00;
+    int paramUnknown01;
+    int paramUnknown02;
+    int paramUnknown03;
+    int paramUnknown04;
+    int paramUnknown05;
+    int paramUnknown06;
+    int paramUnknown07;
+    int paramUnknown08;
+    int paramUnknown09;
+    //int paramUnknown10 <comment="Type ID or Value. Almost certain Not an offset">;
+};
+
+struct WidthSection
+{
+    uint typeID;
+    uint hash <comment=HashLookup>;
+    int nameAddressOffset <comment="Name Offset + 4">;
+    uint fullResHeightmapWidth;
+    //int widthUnknown2 <comment="Type ID or Value. Almost certain Not an offset">;
+};
+
+struct HeightSection
+{
+    uint typeID;
+    uint hash <comment=HashLookup>;
+    int nameAddressOffset <comment="Name Offset + 4">;
+    uint fullResHeightmapHeight;    
+    //int heightUnknown2 <comment="Type ID or Value. Almost certain Not an offset">;
+};
+
+// What is this? Maybe number of "high" res tiles for "low" res tiles?
+struct HighPerLowSection
+{
+    uint typeID;
+    uint hash <comment=HashLookup>;
+    int nameAddressOffset <comment="Name Offset + 4">;
+    int highPerLowUnknown2;
+    //int highPerLowUnknown3  <comment="Type ID or Value. Almost certain Not an offset">;
+};
+
+struct MaxLodLevelSection
+{
+    uint typeID;
+    uint hash <comment=HashLookup>;
+    int nameAddressOffset <comment="Name Offset + 4">;
+    int maxLodLevelUnknown2;
+    //int maxLodLevelUnknown3 <comment="Type ID or Value. Almost certain Not an offset">;
+};
+
+struct GridDistanceSection
+{
+    uint typeID;
+    uint hash <comment=HashLookup>;
+    int nameAddressOffset <comment="Name Offset + 4">;
+    //float gridDistanceUnknown2 <comment="Value?">;
+};
+
+struct HeightmapSection
+{
+    uint typeID;
+    uint hash <comment=HashLookup>;
+    int nameAddressOffset <comment="Name Offset + 4">;
+    int heightmapUnknown2;
+    int heightmapUnknown3 <comment="Offset">;
+    int heightmapBytes <comment="Size in bytes of the full res tre2 heightmap">;
+    int heightmapUnknown4[7];   // These are offsets to other header sections.
+    //int heightmapUnknown5  <comment="Type ID or Value. Almost certain Not an offset">;
+};
+
+struct HeightFormatSection
+{
+    uint typeID;
+    uint hash <comment=HashLookup>;
+    int nameAddressOffset<comment="Name Offset + 4">;
+    int heightFormatUnknown2;
+    //int heightFormatUnknown3;
+};
+
+struct HeightRangeMaxSection
+{
+    uint typeID;
+    uint hash <comment=HashLookup>;
+    int nameAddressOffset<comment="Name Offset + 4">;
+    float maxHeight;
+    //short heightRangeMaxUnknown2a;
+    //short heightRangeMaxUnknown2b;
+};
+
+struct HeightRangeMinSection
+{
+    uint typeID;
+    uint hash <comment=HashLookup>;
+    int nameAddressOffset<comment="Name Offset + 4">;
+    float minHeight;
+};
+
+struct ComboTextureSection
+{
+    uint hash <comment=HashLookup>;
+    int nameAddressOffset<comment="Name Offset + 4">;;
+    int comboTextureUnknown2;
+    int comboTextureUnknown3 <comment="Some kind of size?">;
+    int comboTextureBytes <comment="Size in bytes of the full res tre2 comboTexture">;
+    int comboTextureUnknown00;
+    int comboTextureUnknown01;
+    int comboTextureUnknown02;
+    int comboTextureUnknown03;
+    int comboTextureUnknown04;
+    int comboTextureUnknown05;
+    int comboTextureUnknown06;
+    int comboTextureUnknown07;
+    int comboTextureUnknown08;
+    int comboTextureUnknown09;
+    int comboTextureUnknown10;
+};
+
+struct MaxHeightSection
+{
+    uint hash <comment=HashLookup>;
+    int nameAddressOffset<comment="Name Offset + 4">;
+    int maxHeightUnknown2;
+    int maxHeightUnknown3 <comment="Some kind of size?">;
+    int maxHeightUnknown4 <comment="Some kind of size?">;
+    int maxHeightUnknown5;
+    int maxHeightUnknown6;
+    int maxHeightUnknown7;
+    int maxHeightUnknown8;
+    int maxHeightUnknown9;
+    int maxHeightUnknown10;
+    int maxHeightUnknown11;
+};
+
+struct MinHeightSection
+{
+    uint hash <comment=HashLookup>;
+    int nameAddressOffset<comment="Name Offset + 4">;;
+    int minHeightUnknown2;
+    int minHeightUnknown3 <comment="Some kind of size?">;
+    int minHeightUnknown4 <comment="Some kind of size?">;
+    int minHeightUnknown5;
+    int minHeightUnknown6;
+    int minHeightUnknown7 <comment="Might not be an int">;
+    int minHeightUnknown8;
+    int minHeightUnknown9;
+    int minHeightUnknown10;
+    int minHeightUnknown11;
+};
+
+struct MaterialIdsSection
+{
+    uint hash <comment=HashLookup>;
+    int nameAddressOffset<comment="Name Offset + 4">;;
+    int materialIdsUnknown2;
+    int materialIdsUnknown3 <comment="Some kind of size?">;
+    int materialIdsBytes;
+    int materialIdsUnknown5;
+    int materialIdsUnknown6;
+    int materialIdsUnknown7;
+    int materialIdsUnknown8;
+    int materialIdsUnknown9;
+    int materialIdsUnknown10;
+    int materialIdsUnknown11;
+};
+
+struct ConfigrationIdsSection
+{
+    uint hash <comment=HashLookup>;
+    int nameAddressOffset<comment="Name Offset + 4">;;
+    int configrationIdsUnknown2;
+    int configrationIdsUnknown3 <comment="Some kind of size?">;
+    int configrationIdsBytes;
+    int configrationIdsUnknown5;
+    int configrationIdsUnknown6;
+    int configrationIdsUnknown7;
+    int configrationIdsUnknown8;
+    int configrationIdsUnknown9;
+    int configrationIdsUnknown10;
+    int configrationIdsUnknown11;
+};
+
+struct LayoutDescriptionSection
+{
+    uint hash <comment=HashLookup>;
+    int nameAddressOffset<comment="Name Offset + 4">;;
+    int layoutDescriptionUnknown2;
+    int layoutDescriptionUnknown3;
+    int layoutDescriptionUnknown4;
+    int layoutDescriptionUnknown5;
+    int layoutDescriptionUnknown6;
+    int layoutDescriptionUnknown7;
+    int layoutDescriptionUnknown8;
+    int layoutDescriptionUnknown9;
+    int layoutDescriptionUnknown10;
+    int layoutDescriptionUnknown11;
+};
+
+struct Header
+{
+    uint headerUnknown1; //Mostlikely type
+    uint headerSize;
+    uint filesize;
+    uint tre2Hash <comment=HashLookup>;
+    //int headerUnknown4 <comment="Some kind of offset?">;
+    int nameAddressOffset<comment="Name Offset + 4">;
+    //FSkip(4*3);
+    byte skiped12[12]; //FTell()-headerSize;
+
+    ParamSection paramSection<bgcolor=0xff9999>;
+    WidthSection widthSection<bgcolor=0xff9900>;
+    HeightSection heightSection<bgcolor=0x00ff99>;
+    HighPerLowSection highPerLowSection<bgcolor=0x0099ff>;
+    MaxLodLevelSection maxLodLevelSection<bgcolor=0xff0099>;
+    GridDistanceSection gridDistanceSection<bgcolor=0x009999>;
+    HeightmapSection heightmapSection<bgcolor=0x999900>;
+    HeightFormatSection heightFormatSection<bgcolor=0x990099>;
+    HeightRangeMaxSection heightRangeMaxSection<bgcolor=0xff0909>;
+    HeightRangeMinSection heightRangeMinSection<bgcolor=0x09ff09>;
+    ComboTextureSection comboTextureSection<bgcolor=0x0909ff>;
+    MaxHeightSection maxHeightSection<bgcolor=0x9999ff>;
+    MinHeightSection minHeightSection<bgcolor=0xff99ff>;
+    MaterialIdsSection materialIdsSection<bgcolor=0x99ffff>;
+    ConfigrationIdsSection configrationIdsSection<bgcolor=0x99ff99>;
+    LayoutDescriptionSection layoutDescriptionSection<bgcolor=0xffff99>;
+
+    //FSkip(16);
+    byte skiped16[16];
+
+    //If i have to guess this is another section
+    uint width;
+    uint height;
+    uint headerUnknown5; //bit
+    float maxHeight;
+    float minHeight;
+
+    float headerUnknown6;
+    int headerUnknown7;
+    int headerUnknown8;
+    int headerUnknown9;
+
+    float maxHeightAgain;
+    float minHeightAgain;
+
+    // Many of these appear to be offsets into the heightMap.
+    short vals2[28];
+    uint miniHeightMapWidth;
+    uint miniHeightMapHeight;
+    short vals3[10];
+} header<bgcolor=0xaaaaaa>;
+
+// 128 x 128
+typedef struct 
+{
+    float vals[header.miniHeightMapWidth * header.miniHeightMapHeight / 4];
+} HeightMap;
+
+struct HeightMaps
+{
+    HeightMap map00<bgcolor=0x00aaff>;
+    HeightMap map01<bgcolor=0xff00aa>;
+    HeightMap map02<bgcolor=0xaaff00>;
+    HeightMap map03<bgcolor=0x99aacc>;
+    HeightMap map04<bgcolor=0xcc99aa>;
+    HeightMap map05<bgcolor=0xaacc99>;
+    HeightMap map06<bgcolor=0xff22dd>;
+    HeightMap map07<bgcolor=0xdd22ff>;
+    HeightMap map08<bgcolor=0xffdd22>;
+    HeightMap map09<bgcolor=0x22aaff>;
+} heightMaps;
+
+struct Pixel
+{
+    ubyte r<fgcolor=0xaaaaff>;
+    ubyte g<fgcolor=0xaaffaa>;
+    ubyte b<fgcolor=0xffaaaa>;
+    ubyte a<fgcolor=0xaaaaaa>;
+};
+
+Pixel comboTexture[header.comboTextureSection.comboTextureBytes / sizeof(Pixel)]<bgcolor=0x111199>;
+Pixel materialIds[header.materialIdsSection.materialIdsBytes / sizeof(Pixel)]<bgcolor=0x991111>;
+Pixel configrationIds[header.configrationIdsSection.configrationIdsBytes / sizeof(Pixel)]<bgcolor=0x119911>;
+
+string HashLookup( uint hash )
+{
+ if( hash == 1840366096 )
+     return "tre2";
+ else if( hash == 101154120 )
+     return "param";
+ else if( hash == 452962688 )
+     return "width";
+ else if( hash == 4122297310 )
+     return "height";
+ else if( hash == 3586468480 )
+     return "highPerLow";
+ else if( hash == 443065316 )
+     return "maxLodLevel";
+ else if( hash == 946246513 )
+     return "gridDistance";
+ else if( hash == 4283592115 )
+     return "heightMap";
+ else if( hash == 3548226499 )
+     return "heightFormat";
+ else if( hash == 4167755735 )
+     return "heightRangeMax";
+ else if( hash == 3494717177 )
+     return "heightRangeMin";
+ else if( hash == 2170562455 )
+     return "maxHeight";
+ else if( hash == 316436384 )
+     return "minHeight";
+ else if( hash == 3214045617 )
+     return "materialIds";
+ else if( hash == 2104978212 )
+     return "configrationIds";
+ else if( hash == 438047989 )
+     return "layoutDescription";
+ else if( hash == 1508369315 )
+     return "comboTexture";
+ else
+     return "";
+}
