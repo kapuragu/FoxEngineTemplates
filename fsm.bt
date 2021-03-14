@@ -5,6 +5,29 @@
 // Supposed to be run either on .fsm files' .demo output of BobDoleOwndU's FsmTool, or from offset inside .fsm files.
 // https://github.com/BobDoleOwndU/FsmTool
 
+struct NodeType
+{
+	ROOT            = 3933341002,
+	DEMO            = 3254096966,
+	CAMERA          = 2620425302,
+	MOVE            = 3150281601,
+	CameraParam     = 2862912361,
+	SI_Frame        = 1885607306,
+	SKEL	        = 1889896775,
+	MESH_EVENT      = 2454300086,
+	MOTION	        = 143688520,
+	MODEL           = 2215748180,
+	SKELINFO        = 3736262940,
+	MTPINFO         = 917055795,
+	MTEV            = 2846912397,
+	MTP             = 494270195,
+	SHADER          = 2250865118,
+	MTP_LIST        = 3937479969,
+	MTP_PARENT_LIST = 4042487769,
+	LOCATOR         = 3187573380,
+	Unknown         = 2053459263,
+};
+
 LittleEndian();
 
 local int startOfChunk = FTell(); // In case is run from offset inside .fsm
@@ -123,7 +146,7 @@ if (((demoData.chunkType==2) || (demoData.offsetToNodes>0)) & (demoData.offsetTo
 
 		struct Node
 		{
-			uint nodeType <comment="Node type hash?">;
+			NodeType nodeType <comment="Node type hash?">;
 			
 			ubyte u0;	// Might be a bitfield, but unaffected by endianness
 			ubyte u1;
@@ -169,26 +192,26 @@ if (demoData.chunkType==1)
 			{
 				local int nodeStart = FTell();
 				
-				uint nodeType;
-				if ( nodeType==3933341002 // ROOT
-					|| nodeType==3254096966 // DEMO
-					|| nodeType==2620425302 // CAMERA
-					|| nodeType==3150281601 // MOVE
-					|| nodeType==2862912361 // CameraParam
-					|| nodeType==1885607306 // "SI Frame"
-					|| nodeType==1889896775 // SKEL	
-					|| nodeType==2454300086 // MESH_EVENT
-					|| nodeType==143688520 // MOTION	
-					|| nodeType==2215748180 // MODEL
-					|| nodeType==3736262940 // SKELINFO
-					|| nodeType==917055795 // MTPINFO
-					|| nodeType==2846912397 // MTEV
-					|| nodeType==494270195 // MTP
-					|| nodeType==2250865118 // SHADER
-					|| nodeType==3937479969 // MTP_LIST
-					|| nodeType==4042487769 // MTP_PARENT_LIST
-					|| nodeType==3187573380 // LOCATOR
-					|| nodeType==2036377104 // GLOBALSRT
+				NodeType nodeType;
+				if (nodeType == ROOT
+					|| nodeType==DEMO
+					|| nodeType==CAMERA
+					|| nodeType==MOVE
+					|| nodeType==CameraParam
+					|| nodeType==SI_Frame
+					|| nodeType==SKEL	
+					|| nodeType==MESH_EVENT
+					|| nodeType==MOTION	
+					|| nodeType==MODEL
+					|| nodeType==SKELINFO
+					|| nodeType==MTPINFO
+					|| nodeType==MTEV
+					|| nodeType==MTP
+					|| nodeType==SHADER
+					|| nodeType==MTP_LIST
+					|| nodeType==MTP_PARENT_LIST
+					|| nodeType==LOCATOR
+					|| nodeType==GLOBALSRT
 					)
 				{
 					uint offsetToNodeTypeString;
@@ -214,10 +237,10 @@ if (demoData.chunkType==1)
 						FSkip(16 - (FTell() % 16));
 					}
 					
-					if (nodeType==3150281601 // MOVE
-						|| nodeType==2862912361 // CameraParam
-						|| nodeType==1885607306 // "SI Frame"
-						|| nodeType==1889896775 // SKEL	
+					if (nodeType==MOVE
+						|| nodeType==CameraParam
+						|| nodeType==SI_Frame
+						|| nodeType==SKEL	
 						)
 					{
 						uint subObjectCount;
@@ -287,7 +310,7 @@ if (demoData.chunkType==1)
 								
 						} objectEntry;
 					}
-					else if (nodeType==494270195) // MTP
+					else if (nodeType==MTP)
 					{
 						uint subObjectCount;
 						uint unknown00;
@@ -352,7 +375,7 @@ if (demoData.chunkType==1)
 							
 						} mtpEntry;
 					}
-					else if (nodeType==2250865118) // SHADER
+					else if (nodeType==SHADER)
 					{
 						ushort entryCount;
 						ushort PossiblyPadding;
@@ -455,7 +478,7 @@ if (demoData.chunkType==1)
 							} material;
 						};
 					}
-					else if (nodeType==3937479969)  // MTP_LIST
+					else if (nodeType==MTP_LIST)
 					{
 						uint mtpCount;
 						struct MTPListEntry
@@ -486,7 +509,7 @@ if (demoData.chunkType==1)
 							FSkip(16 - (FTell() % 16));
 						}
 					}
-					else if (nodeType==4042487769)  // MTP_PARENT_LIST
+					else if (nodeType==MTP_PARENT_LIST)
 					{
 						uint mtpCount;
 						struct MTPParentListEntry
@@ -517,7 +540,7 @@ if (demoData.chunkType==1)
 							FSkip(16 - ((FTell() - startOfChunk) % 16));
 						};
 					}
-					else if (nodeType==143688520) // MOTION	
+					else if (nodeType==MOTION)
 					{
 						if (offsetToNextNode!=0)
 						{
@@ -545,7 +568,7 @@ if (demoData.chunkType==1)
 							Assert(2+2==5,"Weird Case Of Reaching Into Another Demo Chunk!! Screw You: p11_010170_000 p12_030020 p12_040030_001 p12_050020_010 p12_050020_020 p12_050020_060_rev p12_050020_075 p12_050020_075_jpn p12_050070_000 p12_050070_001 gc_p02_060 gc_p02_070 gc_p02_080 gc_p02_100 gc_p02_500 gc_p02_520 gc_p03_070!!!");
 						};
 					}
-					else if (nodeType==2036377104) // GLOBALSRT
+					else if (nodeType==GLOBALSRT)
 					{
 						uint subObjectCount;
 						uint unknown00;
