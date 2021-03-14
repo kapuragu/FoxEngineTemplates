@@ -1,0 +1,194 @@
+LittleEndian();
+
+struct Pixel
+{
+    ubyte r;
+    ubyte g;
+    ubyte b;
+    ubyte a;
+};
+
+// The header is identical in two random afgh and cypr htres.
+struct Metadata
+{
+    struct Header
+    {
+        uint version; // This template is for version 3! Much of afgh uses version 4.
+        uint headerUnknown2; //Always 32
+        uint fileBytes <hidden=true>;
+        uint terrainHighBlockHash <hidden=true>;
+        uint headerEndOffset <comment="Not sure if actually true">;
+    } header;
+
+    FSkip(12);
+
+    struct HeightMapMetadata
+    {
+        uint heightMapHash <hidden=true>;
+        uint terrainHighBlockOffset;
+
+        FSkip(4);
+
+        uint materialIdsOffset;
+        uint heightMapBytes;
+
+        FSkip(12);
+
+        int heightMapMetaUnknown1;
+        int heightMapMetaUnknown2;
+
+        FSkip(12);
+    } heightMapMeta1;
+
+    struct PitchMetadata
+    {
+        uint pitchHash <hidden=true>;
+        uint pitchMetaUnknown1;
+        uint pitchMetaUnknown2;
+    } pitchMeta;
+
+    struct HeightMapMetadata2
+    {
+        uint heightMapHash <hidden=true>;
+        uint heightMapMeta2Unknown1;
+
+        FSkip(4);
+
+        uint heightMapMeta2Unknown2;
+        uint heightMapBytes;
+
+        FSkip(8);
+
+        float maxHeightVal;
+        int heightMapMeta2Unknown4;
+
+        FSkip(12);
+    } heightMapMeta2;    
+
+    struct EditParamMetadata
+    {
+        uint editParamHash <hidden=true>;
+        uint editParamMetaUnknown1;
+
+        FSkip(16);
+
+        int editParamMetaUnknown2;
+        int editParamMetaUnknown3;
+        int editParamMetaUnknown4;
+        int editParamMetaUnknown5;
+
+        FSkip(12);
+    } editParamMeta;
+
+    struct MaxLodLevelMetadata
+    {
+        uint maxLodLevelHash <hidden=true>;
+        uint maxLodLevelUnknown1;
+        uint maxLodLevelUnknown2;
+    } maxLodLevelMeta;
+
+    struct LodParameterMetadata
+    {
+        uint lodParameterHash <hidden=true>;
+        uint lodParameterUnknown1;
+        uint lodParameterUnknown2;
+        uint lodParameterUnknown3 <comment="Offset into material ID texture?">;
+        uint lodParameterUnknown4;
+        uint lodParameterUnknown5;
+        uint lodParameterUnknown6;
+        uint lodParameterUnknown7;
+        uint lodParameterUnknown8;
+
+        FSkip(12);
+    } lodParameterMeta;
+
+    struct MaxHeightMetadata
+    {
+        uint maxHeightHash <hidden=true>;
+        uint maxHeightUnknown1;
+        uint maxHeightUnknown2;
+        uint maxHeightUnknown3;
+        uint maxHeightUnknown4;
+        uint maxHeightUnknown5;
+        uint maxHeightUnknown6;
+        uint maxHeightUnknown7;
+        uint maxHeightUnknown8;
+
+        FSkip(12);
+    } maxHeightMeta;
+
+    struct MinHeightMetadata
+    {
+        uint minHeightHash <hidden=true>;
+        uint minHeightUnknown1;
+        uint minHeightUnknown2;
+        uint minHeightUnknown3;
+        uint minHeightUnknown4;
+        uint minHeightUnknown5;
+        uint minHeightUnknown6;
+        uint mniHeightUnknown7;
+        uint minHeightUnknown8;
+
+        FSkip(12);
+    } minHeightMeta;
+
+    struct MaterialIdsMetadata
+    {
+        uint hash <hidden=true>;
+        uint unknown1;
+        uint unknown2;
+        uint unknown3;
+        uint unknown4;
+        uint unknown5;
+        uint unknown6;
+        uint unknown7;
+        uint unknown8;
+
+        FSkip(12);
+    } materialIdsMeta;
+
+    struct ConfigrationIdsMetadata
+    {
+        uint hash <hidden=true>;
+        uint unknown1;
+        uint unknown2;
+        uint unknown3;
+        uint unknown4;
+        uint unknown5;
+        uint unknown6;
+        uint unknown7;
+        uint unknown8;
+
+        FSkip(12);
+    } configrationIdsMeta;
+    
+} metadata;
+
+FSkip(192);
+
+struct Textures
+{    
+    float heightMap[metadata.heightMapMeta1.heightMapBytes / sizeof(float)];
+    Pixel splatmap[metadata.heightMapMeta1.heightMapBytes / sizeof(Pixel)];
+
+    struct TexturesUnknown1
+    {
+        float dunno1[6];
+        float dunno2[6];
+        float dunno3[4];
+        float dunno4[8];
+    } texturesUnknown1;
+    Pixel materialIds[16 / sizeof(Pixel)];
+    Pixel dunno3[16 / sizeof(Pixel)];
+} textures;
+
+// terrainHighBlock 2767142850
+// heightMap 4283592115
+// pitch 1011123561
+// editParam 3806600625
+// maxLodLevel 443065316
+// lodParameter 2901004164
+// maxHeight 2170562455
+// minHeight 316436384
+// materialIds 3214045617
+// configrationIds 2104978212

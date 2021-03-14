@@ -1,0 +1,163 @@
+LittleEndian();
+
+// At the bottom are a list of .uifs, .uias,
+// and .uilbs after a list of hashes.
+
+struct Header
+{
+    char signature[4] <hidden=true>;
+    ushort magicNumber <hidden=true>;
+    Assert(magicNumber == 257);
+
+    ushort u3 <hidden=true>;
+    Assert(u3 == 0);
+
+    ushort modelDataEntryCount;
+    ushort animDataEntryCount;    // (Max: 32)
+    ushort section3EntryCount;
+    Assert(section3EntryCount < 2);
+
+    ushort layoutDataEntryCount;
+
+    ushort strCode32HashCount;
+    ushort fileHashCount;
+
+    int uiModelDataOffset;
+    int uiAnimDataOffset;
+    int section3Offset;
+    int uiLayoutDataOffset;
+    int strCode32HashesRelativeOffset;  // Relative to hashesOffset
+    int fileHashesRelativeOffset;       // Relative to hashesOffset
+    int hashesOffset;
+} header <bgcolor=0xECE0F3>;
+
+struct Vector4
+{
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+if (header.section3Offset > 0)
+{
+    FSeek(header.section3Offset);
+    struct Section3
+    {
+        short nameHashIndex;
+        byte b1;
+        byte b2;
+
+        Assert(b1 == 0 && b2 == 0);
+        
+        float f1;
+        float f2;
+        float f3;
+        float angleDeg;
+        Vector4 v1;
+        Vector4 rotQuat;
+    } section3Entries[header.section3EntryCount] <bgcolor=0xE19CCA>;
+}
+
+if (header.uiAnimDataOffset > 0)
+{
+    FSeek(header.uiAnimDataOffset);
+    struct UiAnimDataSection
+    {
+        // The name is the StrCode32 hash of the first filename.
+        short nameHashIndex;
+        short fileHashIndex;
+        short fileHashIndex2;
+
+        short u1;
+        short u2;
+        short u3;
+        short u4;
+        short u5;
+
+        Assert(u2 == -1 && u3 == -1 && u4 == -1 && u5 == -1);
+
+        float speed;
+    } animDataEntries[header.animDataEntryCount] <bgcolor=0xFCBEF2>;
+}
+
+if (header.uiModelDataOffset > 0)
+{
+    FSeek(header.uiModelDataOffset);
+    struct UiModelDataSection
+    {
+        // The name is just the StrCode32 hash of the filename.
+        short nameHashIndex;
+        short fileHashIndex;
+        short flags;
+        short u3;
+        short u4;
+        short u5;
+
+        Vector4 v1;
+        Vector4 v2;
+        Vector4 v3;
+        Vector4 v4;
+
+        short u6a;
+        short u6b;
+        short u6c;
+        short u6d;
+        short unknownHashIndex;             // Examples: UI_mb_base_mgt_layout
+        short unknownHashIndex2;
+
+        int flags2;
+        short subEntryRelativeOffset;       // Offset from hashesOffset
+        short u8;
+        short numSubEntryHashIndices;
+        short u9;
+
+        if (subEntryRelativeOffset > -1)
+        {
+            local long position = FTell();
+            FSeek(header.hashesOffset + subEntryRelativeOffset);
+            short subEntryHashIndices[numSubEntryHashIndices];
+            FSeek(position);
+        }
+    } modelDataEntries[header.modelDataEntryCount] <bgcolor=0xE6D5EA>;
+}
+
+if (header.uiLayoutDataOffset > 0)
+{
+    FSeek(header.uiLayoutDataOffset);
+    struct LayoutDataSection
+    {
+        short nameHashIndex;
+        short fileHashIndex;
+        ubyte u1;
+        ubyte u2;
+        ubyte u3;
+        ubyte u4;
+
+        Vector4 v1;
+        Vector4 v2;
+        Vector4 v3;
+        Vector4 v4;
+
+        short unknownHashIndex;
+        short unknownHashIndex2;
+        ubyte b1;
+        ubyte b2;
+        short u9;
+    } layoutDataEntries[header.layoutDataEntryCount] <bgcolor=0x745F68>;
+}
+
+FSeek(header.hashesOffset + header.strCode32HashesRelativeOffset);
+uint strCode32Hashes[header.strCode32HashCount] <bgcolor=0x75A2FA>;
+
+FAlign(8);
+uint64 fileHashes[header.fileHashCount] <bgcolor=0x856ACE>;
+
+void FAlign(uint alignment)
+{
+    local int64 alignmentRequired = FTell() % alignment;
+    if (alignmentRequired > 0)
+    {
+        FSkip(alignment - alignmentRequired);
+    }
+}

@@ -1,0 +1,78 @@
+LittleEndian();
+
+typedef unsigned int offset;
+typedef unsigned int size;
+typedef unsigned int count;
+typedef unsigned int hash;
+
+struct Header
+{
+    uint u1;                                // Always 1
+    uint u2;                                // Always 32
+    size fileBytes;
+    hash AtmosphereSHCoefficients;
+    offset AtmosphereSHCoefficientsLiteral;
+    uint u3;                                // Always 0
+
+    FSkip(4*4);
+
+    uint u4;                                // Always 1
+    offset block1;
+    size bodyBytes;
+
+    FSkip(4*4);
+
+    size block1Bytes;
+
+    FSkip(4*10);
+} header;
+
+struct Block1
+{
+    struct NumDiv
+    {
+        ushort u1;
+        ushort u2;          // Always 16?
+        hash numDiv;
+        count n1;           // Always 28?
+        count num;
+    } numDivMetadata;
+
+    struct NumWeathers
+    {
+        ushort u1;          // Always 0?
+        ushort u2;          // Always 0?
+        hash numWeathers;
+        count n1;           // Always 28?
+        count num;          // Always 2?
+    } numWeathersMetadata;
+} block1;
+
+FSkip(32);
+
+// Time values in seconds
+uint divs[block1.numDivMetadata.num];
+
+// Amount of padding weirdly based on block1.numDivMetadata.num
+// Need to calculate how much to skip
+long roundUp(long n, long m)
+{
+    return n >= 0 ? ((n + m - 1) / m) * m : (n / m) * m;
+}
+
+local uint n2 = block1.numDivMetadata.num * 4;
+local long coefficientsOffset = 176 + roundUp(n2, 16);
+FSeek(coefficientsOffset);
+
+struct SphericalHarmonics
+{
+	struct Entry
+	{
+		struct ShCoefficientSet
+		{
+			hfloat r;
+			hfloat g;
+			hfloat b;
+		} coefficients[9];
+	} entries[block1.numDivMetadata.num * block1.numWeathersMetadata.num ];
+} sh;

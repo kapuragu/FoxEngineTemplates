@@ -1,0 +1,70 @@
+LittleEndian();
+
+struct Header
+{
+    char FGxL[4] <hidden=true>;
+    uint magicNumber1;
+
+    Assert(magicNumber1 == 0);
+
+    uint n1;
+    uint n2;
+
+    char CM00[4];
+
+    uint headerBytes;
+    uint dataSetFilenameHash <hidden=true>;
+
+    int o1;
+    uint n3;
+    uint n4;
+
+    char dataSetFilename[headerBytes-24];
+} header;
+
+struct LightArray
+{
+    struct Vector4
+    {
+        float x;
+        float y;
+        float z;
+        float w;
+    };
+
+    struct Quaternion
+    {
+        hfloat x;
+        hfloat y;
+        hfloat z;
+        hfloat w;
+    };
+
+    struct LightArrayEntry
+    {
+        char name[4];
+        uint entrySize;
+
+        uint lightNameHash;
+        uint vals1[5];
+        Quaternion rotation;
+        hfloat vals2[2];
+        float vals3[7];
+
+        Vector4 translation;
+        ushort lumen;
+        ushort u2;
+        ushort n3;
+        ushort index;
+        float lightSize;
+        float u5;
+
+        char lightProbeName[entrySize - (4 * sizeof(char)) - (25 * sizeof(uint))];
+    } entries[999] <optimize=false>;    // Note: Not sure the num is in here
+} lightArray;
+
+struct Footer
+{
+    uint footerUnknown1;
+    uint footerUnknown2;
+} footer;

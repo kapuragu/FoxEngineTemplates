@@ -1,0 +1,25 @@
+LittleEndian();
+
+struct Header
+{
+    char signature[4];
+    uint padding;
+    uint section0Offset;
+    uint entryCount;    
+} header;
+
+struct Section0Entry
+{
+    char name[8];
+    uint dataSetHash;
+    uint u1;
+
+    uint n1;
+    uint padding;
+    char dataSet[79];
+
+    byte padding;
+
+    uint u2;    // Always the same?
+    uint o1;
+} section0;

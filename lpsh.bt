@@ -1,0 +1,108 @@
+LittleEndian();
+
+void AlignRead(int alignment)
+{
+    local long alignmentRequired = FTell() % alignment;
+    if (alignmentRequired > 0)
+        FSeek(FTell() + alignment - alignmentRequired);
+}
+
+struct Header
+{
+    uint version;   // 4 for TPP, 3 for GZ
+    uint unknown1;
+    uint fileSize;
+    uint LightProbeSHCoefficientsHash;
+
+    uint LightProbeSHCoefficientsLiteralOffset <hidden=true>;
+
+    int64 empty1 <hidden=true>;
+    int64 empty2 <hidden=true>;    
+    int empty3 <hidden=true>;
+
+    int unknown5;
+    uint numDivNameOffset;// <hidden=true>;
+
+    uint dataBlockSize;
+    int64 empty4 <hidden=true>;
+    int64 empty5 <hidden=true>;
+
+    uint fileFormatNameOffset;// <hidden=true>;
+    FSkip(40);
+
+    struct MetadataStruct
+    {
+        ushort unknown8a;
+        ushort unknown8b;
+        uint variableNameHash <hidden=true>;
+        uint unknown9;
+        uint value;
+    };
+
+    MetadataStruct numLightProbes;
+    MetadataStruct numDiv;
+    MetadataStruct formatType;
+
+    FSkip(48);
+
+    // Time of day in seconds.
+    uint timeValues[numDiv.value];
+    AlignRead(16);
+
+    struct LightProbeMetadata
+    {
+        uint nameAddress;
+        uint shDataAddress;
+
+        // Might be related to number of SH sets? An enum? 0 = 1 set, 3 = 28 sets, 4 = 3 sets, 7 = 30 sets. But not true in mgo?
+        uint unknownNum;
+    } lightProbeMetadata[numLightProbes.value] <optimize=false>;
+
+    ReadLine(FTell()); 
+
+} header;
+
+// Skip names
+FSeek(header.lightProbeMetadata[0].shDataAddress);
+
+struct ShCoefficients
+{
+    hfloat r;
+    hfloat g;
+    hfloat b;
+    hfloat skyVisibility;
+};
+
+struct ShCoefficientSet
+{
+    ShCoefficients coefficients[9] <optimize=false>;
+};
+
+struct SphericalHarmonics
+{
+    local int i = 0;
+    while (i < header.numLightProbes.value)
+    {
+        if (i == header.numLightProbes.value - 1)
+        {
+            struct LightProbe1
+            {
+                while (FTell() < FileSize() - 72)
+                {
+                    ShCoefficientSet sh;
+                }
+            } lightProbeSet;
+        }
+        else
+        {
+            struct LightProbe2
+            {
+                while (FTell() < header.lightProbeMetadata[i + 1].shDataAddress)
+                {
+                    ShCoefficientSet sh;
+                }
+            } lightProbeSet;
+        }
+        i++;
+    }    
+} sh <optimize=false>;

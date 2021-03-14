@@ -1,0 +1,79 @@
+//------------------------------------------------
+//--- 010 Editor v7.0.2 Binary Template
+//
+//      File: *.lba
+//   Authors: youarebritish
+//   Version: 2.01
+//------------------------------------------------
+LittleEndian();
+
+//------------------------------------------------
+// Struct definitions
+//------------------------------------------------
+enum <uint> Format { TYPE_0 = 0, TYPE_2 = 2, TYPE_3 = 3, TYPE_UNKNOWN };
+
+struct Vector4
+{
+    float x;
+    float y;
+    float z;
+    float w;
+};
+//------------------------------------------------
+// File format
+//------------------------------------------------
+struct LbaFile
+{
+    struct Header
+    {
+        uint numLocators;
+        Format format;
+        double empty <hidden=true>;
+    } header;
+
+    if (header.format == TYPE_0)
+    {
+        struct PowerCutAreaLocator
+        {
+            Vector4 translation;
+            Vector4 rotation;
+        } locators[header.numLocators];
+    }
+
+    else if (header.format == TYPE_2)
+    {
+        struct NamedGimmickLocator
+        {
+            Vector4 translation;
+            Vector4 rotation;
+        } locators[header.numLocators];
+        struct LocatorType2Metadata
+        {
+            uint locatorName;
+            uint dataSetName;
+        } metadata[header.numLocators];
+    }
+
+    else if (header.format == TYPE_3)
+    {
+        struct ScaledGimmickLocator
+        {
+            Vector4 translation;
+            Vector4 rotation;
+
+            struct WideVector3
+            {
+                float x;
+                float y;
+                float z;
+                ushort a;
+                ushort b;
+            } scale;     
+        } locators[header.numLocators];
+        struct LocatorType3Metadata
+        {
+            uint locatorName;
+            uint dataSetName;
+        } metadata[header.numLocators];
+    }
+} file;
