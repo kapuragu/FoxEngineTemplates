@@ -2,6 +2,7 @@
 Fox Engine file format 010 Editor templates.
 
 # Special Thanks To
+Atvaark  
 BobDoleOwndU  
 caplag  
 Half Way Lambda  
@@ -12,10 +13,12 @@ Jayveer
 Joey35233  
 Kaz  
 Mana  
-Morbidslinky  
+Morbidslinky (AKA CalibratedMishap AKA Joseph Zoeller)  
 MrDev (AKA JohnHudeski AKA NewStudent)  
 OldBanana  
-sai  
+sai (AKA youarebritish)  
 SecaProject  
+Shigu (AKA NoShigu)  
 tinmantex  
+unknown321  
 Ventos  
