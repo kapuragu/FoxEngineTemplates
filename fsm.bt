@@ -2,7 +2,7 @@
 // By RLC, based on documentation from BobDoleOwndU - inspired by other FOX templates by the researchers of Modders' Heaven!
 // https://metalgearmodding.fandom.com/wiki/FSM
 
-// Supposed to be run either on .fsm files' .demo output of BobDoleOwndU's FsmTool, or from offset inside .fsm files.
+// Supposed to be run on raw .fsm files, not on input from FsmTool, not anymore.
 // https://github.com/BobDoleOwndU/FsmTool
 
 enum NodeType
