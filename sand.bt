@@ -33,53 +33,26 @@ struct Header
 	uint magic <comment="June 23rd, 2014">; if (magic==372703500) { BigEndian();}
 	uint fileSize; Assert(fileSize==FileSize());
 	uint sectionParamCount <comment="Four sections always">; Assert(sectionParamCount==4);
-	uint castCount;
+	uint objectCount;
 		
-	struct ROOTParams
+	struct SectionParams
 	{
-		uint sectionId <comment="ROOT - 1">;
-		uint sectionEntriesCount <comment="Always same as castCount, amount of DEMO entry offsets">;
+		uint sectionId;
+		uint sectionEntriesCount <comment="Always same as objectCount, amount of Section 2 entry offsets">;
 		uint sectionStartOffset <comment="Offset to section start, from the start of the line">;
 		uint sectionSize;
 		
-	} section1Params <bgcolor=0x8694EB, comment="ROOT Section Params">;
-		
-	struct DEMOParams
-	{
-		uint sectionId <comment="DEMO - 2">;
-		uint sectionEntriesCount <comment="Always empty, presumably uses header track count">;
-		uint sectionStartOffset <comment="Offset to section start, from the start of the line">;
-		uint sectionSize;
-		
-	} section2Params <bgcolor=0x8ADEF3, comment="DEMO Section Params">;
-		
-	struct CAMERAParams
-	{
-		uint sectionIdDEMO <comment="CAMERA - 3">;
-		uint sectionEntriesCount;
-		uint sectionStartOffset <comment="Offset to section start, from the start of the line">;
-		uint sectionSize;
-		
-	} section3Params <bgcolor=0xB9E7CA, comment="CAMERA Section Params">;
-		
-	struct MOVEParams
-	{
-		uint sectionId <comment="MOVE - 4">;
-		uint sectionEntriesCount;
-		uint sectionStartOffset <comment="Offset to section start, from the start of the line">;
-		uint sectionSize;
-		
-	} section4Params <bgcolor=0x9A7F7E, comment="MOVE Section Params">;
+	} sectionParams[sectionParamCount] <fgcolor=0x8694EB, comment="ROOT Section Params">;
 	
 } header <bgcolor=0xB3A797>;
 
-struct ROOT
+struct ROOT_ObjectOffsetSection
 {
 	struct Section1Entries
 	{
 		uint section1EntryOffset;
 		
-	} section1Entries[header.section1Params.sectionEntriesCount] <comment="Global offsets to DEMO entries", optimize=false>;
+	} section1Entries[header.sectionParams[0].sectionEntriesCount] <comment="Global offsets to the object entries of the nodes?", optimize=false>;
 	
 	// Special thanks to BobDoleOwndU and OldBanana!
 	if (FTell() % 16 != 0)
@@ -89,23 +62,23 @@ struct ROOT
 		
 } section1 <bgcolor=0x8694EB>;
 
-struct DEMO
+struct DEMO_SandNodeSection
 {
-	while ( FTell() < header.section3Params.sectionStartOffset + 0x30 )
+	while ( FTell() < header.sectionParams[2].sectionStartOffset + 0x30 )
 	{
 		struct SandNode
 		{
 			local int nodeStart = FTell();
 			NodeType nodeType <comment="StrCode32 hash">;
-			if (nodeType == ROOT
+			if (nodeType==ROOT
 				|| nodeType==DEMO
 				|| nodeType==CAMERA
 				|| nodeType==MOVE
 				|| nodeType==CameraParam
 				|| nodeType==SI_Frame
-				|| nodeType==SKEL	
+				|| nodeType==SKEL
 				|| nodeType==MESH_EVENT
-				|| nodeType==MOTION	
+				|| nodeType==MOTION
 				|| nodeType==MODEL
 				|| nodeType==SKELINFO
 				|| nodeType==MTPINFO
@@ -119,13 +92,13 @@ struct DEMO
 				)
 			{
 				uint offsetToNodeTypeString;
-				uint unknown0;
-				uint unknown1;
+				uint objectCount;
+				uint objectOffset;
 				
-				uint unknown2;
-				int offsetToPrevNode;
+				uint listSize;
+				int offsetToParentNode <comment="Not actually to the ROOT node, not always">;
 				int offsetToNextNode;
-				int offsetToPrev2Node;
+				int offsetToPreviousNode;
 					
 				uint nodeSize;
 				uint offsetToNodeEnd;
@@ -133,82 +106,75 @@ struct DEMO
 				{
 					FSkip(16 - (FTell() % 16));
 				}
-					
-				// char nodeTypeString[];
-				
-				// if (FTell() % 16 != 0)
-				// {
-					// FSkip(16 - (FTell() % 16));
-				// }
 				
 				if (nodeType==MOVE
 					|| nodeType==CameraParam
 					|| nodeType==SI_Frame
 					|| nodeType==SKEL	
 					|| nodeType==Unknown
+					|| nodeType==MTP
 					)
 				{
-					uint subObjectCount;
-					uint unknown00;
-					uint unknown01;
-					uint unknown02;
-					
-					ubyte unknown03;
-					FSkip(0x3);
-					uint subObjectOffset[subObjectCount];
-					
-					if (subObjectCount==1)
+					struct Object
 					{
-						FSkip(0x10);
-					}
-					else
-					{
-						FSkip(0xC);
-						
-						if ((FTell() - 16) % 8 != 0)
+						uint subObjectCount;
+						uint unknown00;
+						uint unknown01;
+						uint unknown02;
+
+						ubyte unknown03;
+						FSkip(0x3);
+						uint subObjectOffset[subObjectCount];
+
+						if (subObjectCount==1)
 						{
-							if ((FTell() - 16) % 16 != 0)
+							FSkip(0x10);
+						}
+						else
+						{
+							FSkip(0xC);
+							
+							if ((FTell() - 16) % 8 != 0)
 							{
-								FSkip(8 - ((FTell() - 16) % 8));
+								if ((FTell() - 16) % 16 != 0)
+								{
+									FSkip(8 - ((FTell() - 16) % 8));
+								}
 							}
 						}
-					}
-					
-					struct ObjectEntry
-					{
-						struct BoneSubEntry
+						struct SubObject
 						{
 							uint subObjectHash <comment="Hash of the sub object, like a bone, ie SKL_000_WAIST">;
-							ubyte subSubEntryCount;
+							ubyte segmentCount;
 							FSkip(0x3);
 							
-							struct SubSubEntryMov
+							struct SegmentParams
 							{
 								FSkip(0x4);
 								ushort motionSegmentId <comment=".fsm DEMO chunk motion segment id">;
 								ubyte u2;
 								ubyte u3;
 								
-							} subSubEntryMov[subSubEntryCount] <optimize=false>;
+							} segmentParams[segmentCount] <optimize=false>;
 							
-						} boneSubEntry[subObjectCount] <optimize=false>;
+						} subObject[subObjectCount] <optimize=false>;
 						
 						if (FTell() % 16 != 0)
 						{
 							FSkip(16 - (FTell() % 16));
 						}
 						
-						ushort someShort;
+						ushort targetCount;
 						FSkip(0x2);
-						uint objectNameType <comment="StrCode32 hash of TARGET_NAME, 2570203771">;
-						uint offsetToString;
-						uint objectName <comment="StrCode32 hash of the object name from fox2, ie HM_sna0_main0_def, demo_camera">;
-						
-						uint offsetFromActorNameToNodeType;
+						struct TargetNames
+						{
+							uint objectNameType <comment="StrCode32 hash of TARGET_NAME, 2570203771">;
+							FSkip(0x4);
+							uint objectName <comment="StrCode32 hash of the object name from fox2, ie HM_sna0_main0_def, demo_camera">;
+							FSkip(0x4);
 
-						// char stringObjectName[];
-						// char stringObjectType[];
-						
+						} targetNames[targetCount] <optimize=false>; // Warning: I have never seen one with more than one
+							
 						if (FTell() % 16 != 0)
 						{
 							FSkip(16 - (FTell() % 16));
@@ -222,7 +188,7 @@ struct DEMO
 							}
 						}
 						
-					} objectEntry;
+					} object[objectCount] <optimize=false>; // I haven't seen any more than 1
 				}
 				else if (nodeType==MOTION)	
 				{
@@ -238,7 +204,6 @@ struct DEMO
 								uint offsetToString;
 								uint offsetMaybe;
 							
-								// char stringObjectType[];
 								if (FTell() % 16 != 0)
 								{
 									FSkip(16 - (FTell() % 16));
@@ -248,257 +213,130 @@ struct DEMO
 						};
 					}
 				}
-				else if (nodeType==MTP)
-				{
-					uint subObjectCount;
-					uint unknown00;
-					uint unknown01;
-					uint unknown02;
-					
-					ubyte unknown03;
-					FSkip(0x3);
-					uint subObjectOffset[subObjectCount];
-
-					if (subObjectCount==1)
-					{
-						FSkip(0x10);
-					}
-					else
-					{
-						FSkip(0xC);
-						
-						if ((FTell() - 16) % 8 != 0)
-						{
-							if ((FTell() - 16) % 16 != 0)
-							{
-								FSkip(8 - ((FTell() - 16) % 8));
-							}
-						}
-					}
-					
-					struct MtpEntry
-					{
-						struct SubEntryMtp
-						{
-							uint subObjectHash <comment="Hash of the sub object, like a bone, ie SKL_000_WAIST">;
-							ubyte subSubEntryCountMtp;
-							FSkip(0x3);
-							struct SubSubEntryMtp
-							{
-								FSkip(0x4);
-								ushort motionSegmentId <comment=".fsm DEMO chunk motion segment id">;
-								ubyte u2;
-								ubyte u3;
-									
-							} subSubEntryMtp[subSubEntryCountMtp] <optimize=false>;
-							
-							
-						} subEntryMtp[subObjectCount] <optimize=false>;
-						
-						if (FTell() % 16 != 0)
-						{
-							FSkip(16 - (FTell() % 16));
-						}
-						ushort someShort;
-						FSkip(0x2);
-						uint objectNameType <comment="StrCode32 hash of TARGET_NAME, 2570203771">;
-						FSkip(0x4);
-						uint objectName <comment="StrCode32 hash of the object name from fox2, ie HM_sna0_main0_def">;
-						FSkip(0x4);
-						
-						if (FTell() % 16 != 0)
-						{
-							FSkip(16 - (FTell() % 16));
-						}
-						
-					} mtpEntry;
-					
-					if (nodeSize>0)
-					{
-						if (FTell()-nodeSize!=nodeStart)
-						{
-							FSkip((nodeStart-FTell())+nodeSize);
-						}
-					}
-					else
-					{
-						FSkip(16);
-					}
-				}
 				else if (nodeType==SHADER)
 				{
-					ushort entryCount;
-					ushort PossiblyPadding;
-					struct Shader
+					struct ObjectShader
 					{
-						uint objectNameType <comment="StrCode32 hash of TARGET_NAME, 2570203771">;
-						uint entryTypeStringOffset <comment="Offset from hash">;
-						uint objectName <comment="StrCode32 hash of the object name from fox2, ie HM_sna0_main0_def">;
-						
-						uint offsetFromActorNameToNodeType;
-						
-						char objectNameString[];
-						char objectTypeString[];
-						
-					} shader[entryCount] <optimize=false>;
-										
-					if (FTell() % 16 != 0)
-					{
-						FSkip(16 - (FTell() % 16));
-					}
-					
-					while (FTell()-nodeSize!=nodeStart & FTell()!=header.section3Params.sectionStartOffset + 0x30)
-					{
-						struct Material
+						ushort entryCount;
+						FSkip(0x2);
+						struct Shader
 						{
-							uint materialName <comment="Material name, for tension ie TENSION_NECK">;
-							if (materialName!=0) // Similar issue to phantom 0 nodes
+							uint objectNameType <comment="StrCode32 hash of TARGET_NAME, 2570203771">;
+							FSkip(0x4);
+							uint objectName <comment="StrCode32 hash of the object name from fox2, ie HM_sna0_main0_def">;
+							FSkip(0x4);
+							
+						} shader[entryCount] <optimize=false>;
+
+						if (FTell() % 16 != 0)
+						{
+							FSkip(16 - (FTell() % 16));
+						}
+
+						while (FTell()-nodeSize!=nodeStart & FTell()!=header.sectionParams[2].sectionStartOffset + 0x30)
+						{
+							struct Material
 							{
-								uint offsetToNodeTypeString;
-								uint unknown0;
-								uint unknown1;
-								
-								uint unknown2;
-								int offsetToPrevNode;
-								int offsetToNextNode;
-								int offsetToPrev2Node;
-								
-								uint unknown2;
-								uint offsetToNodeEnd;
-								uint unknown4;
-								uint unknown5;
-								
-								// char stringMaterialName[];
-								
-								// if ((FTell() - 16) % 16 != 0)
-								// {
-									// FSkip(16 - ((FTell() - 16) % 16));
-								// }
-								
-								uint subObjectCount;
-								uint unknown00;
-								uint unknown01;
-								uint unknown02;
-								
-								ubyte unknown03;
-								FSkip(0x3);
-								uint subObjectOffset[subObjectCount];
-								
-								if (subObjectCount==1)
+								uint materialName <comment="Material name, for tension ie TENSION_NECK">;
+								if (materialName!=0) // Similar issue to phantom 0 nodes
 								{
-									FSkip(0x10);
+									uint offsetToNodeTypeString;
+									uint unknown0;
+									uint unknown1;
+									
+									uint unknown2;
+									int offsetToParentNode;
+									int offsetToNextNode;
+									int offsetToPreviousNode;
+									
+									uint unknown2;
+									uint offsetToNodeEnd;
+									uint unknown4;
+									uint unknown5;
+									
+									uint subObjectCount;
+									uint unknown00;
+									uint unknown01;
+									uint unknown02;
+									
+									ubyte unknown03;
+									FSkip(0x3);
+									uint subObjectOffset[subObjectCount];
+									
+									if (subObjectCount==1)
+									{
+										FSkip(0x10);
+									}
+									else
+									{
+										FSkip(0xC);
+										
+										if ((FTell() - 16) % 8 != 0)
+										{
+											if ((FTell() - 16) % 16 != 0)
+											{
+												FSkip(8 - ((FTell() - 16) % 8));
+											}
+										}
+									}
+									
+									struct MaterialEntry
+									{
+										struct MaterialSubEntry
+										{
+											uint subObjectHash <comment="Hash of the sub object, like a bone, ie SKL_000_WAIST">;
+											ubyte subSubEntryCount;
+											FSkip(0x3);
+
+											struct MaterialSegmentParams
+											{
+												FSkip(0x4);
+												ushort motionSegmentId <comment=".fsm DEMO chunk motion segment id">;
+												ubyte u2;
+												ubyte u3;
+												
+											} segmentParams[subSubEntryCount] <optimize=false>;
+
+										} subEntry[subObjectCount] <optimize=false>;
+										
+										if ((FTell() - 16) % 16 != 0)
+										{
+											FSkip(16 - ((FTell() - 16) % 16));
+										}
+
+									} entry;
 								}
 								else
 								{
-									FSkip(0xC);
-									
-									if ((FTell() - 16) % 8 != 0)
-									{
-										if ((FTell() - 16) % 16 != 0)
-										{
-											FSkip(8 - ((FTell() - 16) % 8));
-										}
-									}
-								}
-								
-								struct MaterialEntry
-								{
-									struct MaterialSubEntry
-									{
-										uint subObjectHash <comment="Hash of the sub object, like a bone, ie SKL_000_WAIST">;
-										ubyte subSubEntryCount;
-										FSkip(0x3);
-										
-										struct MaterialTextureEntry
-										{
-											FSkip(0x4);
-											ushort motionSegmentId <comment=".fsm DEMO chunk motion segment id">;
-											ubyte u2;
-											ubyte u3;
-											
-										} materialTextureEntry[subSubEntryCount] <optimize=false>;
-										
-									} materialSubEntry[subObjectCount] <optimize=false>;
-									
 									if ((FTell() - 16) % 16 != 0)
 									{
 										FSkip(16 - ((FTell() - 16) % 16));
 									}
-										
-								} materialEntry;
-							}
-							else
-							{
-								if ((FTell() - 16) % 16 != 0)
-								{
-									FSkip(16 - ((FTell() - 16) % 16));
 								}
-							}
-							
-						} material;
-					}
-				}
-				else if (nodeType==MTP_LIST)
-				{
-					uint mtpCount;
-					struct MTPListEntry
-					{
-						uint mtpHash;
-						uint mtpStringOffset;
-						
-					} mtpListEntry[mtpCount] <optimize=false>;
-					
-					FSkip(0xC);
-						
-					if ((FTell() - 16) % 8 != 0)
-					{
-						if ((FTell() - 16) % 16 != 0)
-						{
-							FSkip(8 - ((FTell() - 16) % 8));
+								
+							} material;
 						}
-					}
-						
-					// struct MTPStrings
-					// {
-						// char mtpString[];
-							
-					// } mtpStrings[mtpCount] <optimize=false>;
-					
-					// if (FTell() % 16 != 0)
-					// {
-						// FSkip(16 - (FTell() % 16));
-					// }
+					} object;
 				}
-				else if (nodeType==MTP_PARENT_LIST)
+				else if (nodeType==MTP_LIST
+					|| nodeType==MTP_PARENT_LIST
+					)
 				{
-					uint mtpCount;
-					struct MTPParentListEntry
+					struct ObjectMTPList
 					{
-						uint mtpHash;
-						uint mtpStringOffset;
-						
-					} mtpParentListEntry[mtpCount] <optimize=false>;
-					
-					FSkip(0xC);
-						
-					if ((FTell() - 16) % 8 != 0)
-					{
-						if ((FTell() - 16) % 16 != 0)
+						uint entryCount;
+						struct EntryList
 						{
-							FSkip(8 - ((FTell() - 16) % 8));
+							uint name;
+							FSkip(0x4);
+							
+						} entryList[entryCount] <optimize=false>;
+
+						if (FTell() % 16 != 0)
+						{
+							FSkip(16 - (FTell() % 16));
 						}
-					}
-					
-					// struct MTPParentStrings
-					// {
-						// char mtpString[];
-						
-					// } mtpParentStrings[mtpCount] <optimize=false>;
-						
-					// if ((FTell() - 16) % 16 != 0)
-					// {
-						// FSkip(8 - ((FTell() - 16) % 8));
-					// }
+					} object;
 				}
 			}
 			else if (nodeType==0) // Fuck it, can't be fucked, can't figure out the inconsistent post-node padding
@@ -524,28 +362,28 @@ struct DEMO
 	
 } section2 <bgcolor=0x8ADEF3>;
 
-struct CAMERA
+struct CAMERA_CameraObjectSection
 {
-	struct CAMERAEntries
+	struct Section3Entries
 	{
-		uint objectNameHash <comment="Hash of the object name from fox2, ie HM_sna0_main0_def">;
-		int id <comment="Track id?">;
+		uint objectNameHash <comment="Hash of the object name, sometimes CameraParam or SI Frame.">;
+		int id <comment="">;
 		
-	} entries[header.section3Params.sectionEntriesCount] <optimize=false>;
+	} entries[header.sectionParams[2].sectionEntriesCount] <optimize=false>;
 	
 } section3 <bgcolor=0xB9E7CA>;
 
-struct MOVE
+struct MOVE_MoveObjectSection
 {
-	struct MOVEEntries
+	struct Section4Entries
 	{
 		uint objectNameHash <comment="Hash of the object name from fox2, ie HM_sna0_main0_def">;
-		short aShort0 <comment="Track id?">;
-		short aShort1 <comment="These can be FFFF or another track id?">;
+		short aShort0 <comment="">;
+		short aShort1 <comment="These can be FFFF">;
 		short aShort2;
 		short aShort3;
-		uint offset <comment="Offset to entry in the DEMO section">;
+		uint offset <comment="">;
 		
-	} entries[header.section4Params.sectionEntriesCount] <optimize=false>;
+	} entries[header.sectionParams[3].sectionEntriesCount] <optimize=false>;
 	
 } section4 <bgcolor=0x9A7F7E>;
