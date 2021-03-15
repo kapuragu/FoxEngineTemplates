@@ -2,7 +2,7 @@
 // By RLC, based on documentation from BobDoleOwndU - inspired by other FOX templates by the researchers of Modders' Heaven!
 // https://metalgearmodding.fandom.com/wiki/FSM
 
-// Supposed to be run on raw .fsm files, not on input from FsmTool, not anymore.
+// Supposed to be run on raw .fsm files, not on input from FsmTool, not anymore. Though it should still work on them!
 // https://github.com/BobDoleOwndU/FsmTool
 
 LittleEndian();
@@ -31,7 +31,7 @@ enum NodeType
 	Unknown         = 2053459263,
 };
 
-local int passedSoundChunk = 0;
+local int passedSoundChunk = 0; // Probably a better way to tell that it's the first SND chunk
 
 local int startOfChunk = FTell(); // In case is run from offset inside .fsm
 
@@ -39,7 +39,7 @@ while (FTell()!=FileSize())
 {
 	struct DemoChunk
 	{
-		startOfChunk = FTell(); // In case is run from offset inside .fsm
+		startOfChunk = FTell(); // When the chunk needs to get the offset of its start
 		
 		struct Header
 		{
@@ -60,14 +60,14 @@ while (FTell()!=FileSize())
 				uint chunkType;
 				if (demoData.chunkType==0)
 				{
-					uint u0; // 10 in p41_010005
-					uint u1; // 0 in p41_010005
-					uint u2; // 120 in p41_010005	
+					uint u0;
+					uint u1;
+					uint u2;
 					
 					uint segmentCount;
 				}
 				uint offsetToChunkEnd <comment="Chunk size starting from demoData">;
-				uint offsetToNodes <comment="Offset starts from demoData">; // 0 in some chunks in p41_070030?
+				uint offsetToNodes <comment="Offset starts from demoData">;
 				
 				if (demoData.chunkType==1)
 				{
@@ -94,7 +94,7 @@ while (FTell()!=FileSize())
 							float y;
 							float z;
 							
-						} rootVector3 <bgcolor=0xC08000, comment="World translation root of the demo chunk. Thanks to Ventos to pointing it out!">; // Not floats in p41_010005?? Some demos without cameras also skip this over, but can't tell how
+						} rootVector3 <bgcolor=0xC08000, comment="World translation root of the demo chunk. Thanks to Ventos to pointing it out!">;
 					};
 					
 					struct SegmentTypeIndices
@@ -162,7 +162,7 @@ while (FTell()!=FileSize())
 					{
 						NodeType nodeType <comment="Node type hash?">;
 						
-						ubyte u0;	// Might be a bitfield, but unaffected by endianness
+						ubyte u0; // Might be a bitfield, but unaffected by endianness
 						ubyte u1;
 						ubyte u2;
 						ubyte u3;
@@ -195,7 +195,7 @@ while (FTell()!=FileSize())
 				FSkip(16 - ((FTell() - startOfChunk) % 16));
 			};
 
-			// GZ only
+			// GZ only. Since GZ has no .sand files, it uses this instead. Usually the first chunk, after SYS if that exists.
 			if (demoData.chunkType==1)
 			{
 				struct SandSection
@@ -714,21 +714,12 @@ while (FTell()!=FileSize())
 				} sandSection <bgcolor=0x0CC0C0>;
 			}
 			
-			// if (demoData.chunkType!=1)
-			// {
-				// Assert(FTell()==demoData.offsetToChunkEnd+0x10,"Failed to reach end of chunk!");
-			// }
-			// else
-			// {
-				// Assert(FTell()==header.chunkSize,"Failed to reach end of chunk!");
-			// }
-			
 		}
 		else if (header.sign=="SND " || header.sign==" DNS")
 		{
 			if (passedSoundChunk==0)
 			{
-				passedSoundChunk = 1;
+				passedSoundChunk = 1; // There's probably a better way to tell that it's the first SND chunk to parse this section.
 				struct SoundData
 				{
 					uint completeSoundFileLength;
@@ -752,11 +743,11 @@ while (FTell()!=FileSize())
 		}
 		else if (header.sign=="END " || header.sign==" DNE")
 		{
-			FSkip(FileSize()-FTell());
+			FSkip(FileSize()-FTell()); // Sometimes there's tons of null lines after the END
 		}
 		else
 		{
-			Assert(2+2==5, "Unknown Chunk Type!!!");
+			Assert(2+2==5, "Unknown Chunk Type!!!"); // In case something goes very very wrong
 		}
 		
 	} demoChunk;
