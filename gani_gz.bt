@@ -1,0 +1,174 @@
+// GANI - GameAnimation
+// By RLC, based on templates by MrDev/JohnHudeski/NewStudent
+// https://metalgearmodding.fandom.com/wiki/GANI
+// Me: Remove this comment when you actually start having to use those templates^
+
+#define COLOR_HEADER 0x4F93FF
+#define COLOR_NODES 0x12E8C2
+
+LittleEndian();
+
+enum NodeType
+{
+	ROOT            = 3933341002,
+	MOTION          = 143688520,
+	SLOPE_DIR       = 3426329078,
+	SLOPE_ANGLE     = 35201703,
+	Unknown0        = 2447659851, // Skeletons
+	Unknown1        = 3337172921,
+};
+
+struct Node
+{
+	NodeType nodeType;
+	if (nodeType==ROOT || nodeType==MOTION)
+	{
+		uint offsetToNodeTypeString;
+		uint objectCount;
+		uint objectOffset;
+
+		uint listSize;
+		int offsetToParentNode <comment="Not actually to the ROOT node, not always">;
+		int offsetToNextNode;
+		int offsetToPreviousNode;
+		
+		uint nodeSize;
+		uint offsetToNodeEnd;
+		
+		if (FTell() % 16 != 0)
+		{
+			FSkip(16 - (FTell() % 16));
+		}
+		
+		char nodeString[];
+		
+		if (FTell() % 16 != 0)
+		{
+			FSkip(16 - (FTell() % 16));
+		}
+		
+		if (nodeType==MOTION)
+		{
+			struct NodeSlope
+			{
+				ushort unk0;
+				ushort unk1;
+				NodeType slopeNodeType;
+				uint offsetToString;
+				uint offsetMaybe;
+
+			} slopeNodes[2];
+		}
+	}
+	else if (nodeType==Unknown0)
+	{
+		FSkip(0x8);
+		int objectOffset;
+
+		int listSize;
+		int offsetToParentNode <comment="Not actually to the ROOT node, not always">;
+		int offsetToNextNode;
+		int offsetToPreviousNode;
+		
+		int nodeSize;
+		FSkip(0xC);
+		
+		int objectCount;
+		struct BoneName
+		{
+			uint boneNameHash;
+			int offsetToBoneNameString;
+			
+		} boneName[objectCount];
+		
+		if (FTell() % 16 != 0)
+		{
+			FSkip(16 - (FTell() % 16));
+		}
+		
+		FSkip(0x8);
+		struct BoneNameStrings
+		{
+			char boneNameString[];
+			
+		} boneNameStrings[objectCount] <optimize=false>;
+		
+		if (FTell() % 16 != 0)
+		{
+			FSkip(16 - (FTell() % 16));
+		}
+	}
+	else if (nodeType==Unknown1)
+	{
+		FSkip(0x4);
+		int objectCount;
+		int objectOffset;
+
+		int listSize;
+		int offsetToParentNode <comment="Not actually to the ROOT node, not always">;
+		int offsetToNextNode;
+		int offsetToPreviousNode;
+		
+		int nodeSize;
+		FSkip(0xC);
+		
+		int someCount;
+		int someOtherCount;
+		int unknown0;
+		int someYetOtherCount;
+		int someYetAnotherCount;
+		int offsetToSomeList[someCount];
+		
+		if (FTell() % 16 != 0)
+		{
+			FSkip(16 - (FTell() % 16));
+		}
+		FSkip(0x8);
+		
+		struct SomeObject
+		{
+			int someName;
+			byte subCount;
+			byte u1;
+			short someShort;
+			struct SomeSubObject
+			{
+				int someOffset;
+				short someSubShort;
+				short someOtherSubShort;
+				
+			} someSubObject[subCount];
+				
+		} someObject[someCount] <optimize=false>;
+	}
+	else
+	{
+		Assert(2+2==5,"Unknown nodeType!!");
+	}
+};
+
+struct SkelNode
+{
+	NodeType nodeType;
+	
+};
+
+struct Header
+{
+	int magic <comment="June 13th, 2011">; if (magic==-761070581) { BigEndian(); }
+	int offsetToNodes;
+	int fileSize; Assert(fileSize==FileSize());
+	FSkip(0x4);
+	
+	FSkip(0x10);
+	
+} header <bgcolor=COLOR_HEADER>;
+
+struct Nodes
+{
+	while (FTell()<header.fileSize)
+	{
+		Node node;
+	}
+	
+} nodes <bgcolor=COLOR_NODES>;

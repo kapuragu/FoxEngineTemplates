@@ -1,3 +1,5 @@
+// rlc Original template by sai/youarebritish!
+
 LittleEndian();
 
 struct Header
@@ -39,28 +41,31 @@ struct LightArray
         hfloat z;
         hfloat w;
     };
+	
+	while (FTell()<FileSize()-0x8) // rlc since it probably doesn't count them and just stacks them arbitrarily
+	{
+		struct LightArrayEntry
+		{
+			char name[4];
+			uint entrySize; //rlc last footer entry is 8 bytes long with no name, maybe that's how the while loop is terminated?
 
-    struct LightArrayEntry
-    {
-        char name[4];
-        uint entrySize;
+			uint lightNameHash;
+			uint vals1[5];
+			Quaternion rotation;
+			hfloat vals2[2];
+			float vals3[7];
 
-        uint lightNameHash;
-        uint vals1[5];
-        Quaternion rotation;
-        hfloat vals2[2];
-        float vals3[7];
+			Vector4 translation;
+			ushort lumen;
+			ushort u2;
+			ushort n3;
+			ushort index;
+			float lightSize;
+			float u5;
 
-        Vector4 translation;
-        ushort lumen;
-        ushort u2;
-        ushort n3;
-        ushort index;
-        float lightSize;
-        float u5;
-
-        char lightProbeName[entrySize - (4 * sizeof(char)) - (25 * sizeof(uint))];
-    } entries[999] <optimize=false>;    // Note: Not sure the num is in here
+			char lightProbeName[entrySize - (4 * sizeof(char)) - (25 * sizeof(uint))];
+		} entry <optimize=false>;
+	}
 } lightArray;
 
 struct Footer

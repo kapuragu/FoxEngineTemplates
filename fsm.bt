@@ -2,7 +2,7 @@
 // By RLC, based on documentation from BobDoleOwndU - inspired by other FOX templates by the researchers of Modders' Heaven!
 // https://metalgearmodding.fandom.com/wiki/FSM
 
-// Supposed to be run on raw .fsm files, not on input from FsmTool, not anymore. Though it should still work on them!
+// Can be run on .fsm files and per-chunk output of FsmTool by BobDoleOwndU!
 // https://github.com/BobDoleOwndU/FsmTool
 
 LittleEndian();
@@ -68,7 +68,7 @@ while (FTell()!=FileSize())
 				}
 				
 				uint offsetToChunkEnd <comment="Chunk size starting from demoData">;
-				uint offsetToNodes <comment="Offset starts from demoData">;
+				uint offsetToEventSection <comment="Offset starts from demoData">;
 				
 				if (demoData.chunkType==1)
 				{
@@ -107,9 +107,9 @@ while (FTell()!=FileSize())
 					struct SegmentMotion
 					{	
 						// There's some empty ones at the end with this kind of parsing, so maybe the type indices define the length of the individual segments
-						if ((demoData.offsetToNodes>0) & (demoData.offsetToNodes<header.chunkSize))
+						if ((demoData.offsetToEventSection>0) & (demoData.offsetToEventSection<header.chunkSize))
 						{
-							while ( (FTell() - startOfChunk) < demoData.offsetToNodes+0x10 )
+							while ( (FTell() - startOfChunk) < demoData.offsetToEventSection+0x10 )
 							{
 								ushort motion;
 							}
@@ -127,18 +127,18 @@ while (FTell()!=FileSize())
 				} motionSection <bgcolor=0x008000>;
 			};
 
-			if (((demoData.chunkType==2) || (demoData.offsetToNodes>0)) & (demoData.offsetToNodes<header.chunkSize))
+			if (((demoData.chunkType==2) || (demoData.offsetToEventSection>0)) & (demoData.offsetToEventSection<header.chunkSize))
 			{
-				struct NodeSection
+				struct EventSection
 				{
-					struct NodeOffsets
+					struct EventOffsets
 					{
 						uint name <comment="A hash of `Normal`">;
-						ushort nodeCount;
-						ushort someOtherCountOrPadding;
-						uint offsetToNode[nodeCount]; // offset to a node from uint name here
+						ushort eventCount;
+						FSkip(0x2);
+						uint offsetToEvent[eventCount]; // offset to a node from uint name here
 
-					} nodeOffsets <bgcolor=0x00C000, comment="Offsets to nodes, relative from the start of the section.">;
+					} eventOffsets <bgcolor=0x00C000, comment="Offsets to nodes, relative from the start of the section.">;
 
 					if (demoData.chunkType==0)
 					{
@@ -158,37 +158,39 @@ while (FTell()!=FileSize())
 							FSkip(0xC);
 						};
 					};
-
-					struct Node
-					{
-						NodeType nodeType <comment="Node type hash?">;
-						
-						ubyte u0; // Might be a bitfield, but unaffected by endianness
-						ubyte u1;
-						ubyte u2;
-						ubyte u3;
-						
-						struct SubArray0
-						{
-							uint unknown0;
-							uint unknown1;
-							
-						} subArray[u0] <optimize=false>;
-						
-						uint unk0[u1];
-							
-						uint unk1[u2];
-							
-						struct SubArray1
-						{
-							uint name <comment="Sometimes uses fox2/sand object name ie HM_mnt0_main0_def">;
-							uint offset;
-							
-						} subArray1[u3] <optimize=false>;
-						
-					} node[nodeOffsets.nodeCount] <optimize=false, bgcolor=0xF0F080>;
 					
-				} nodeSection <bgcolor=0x00C000>;
+					// Thanks .evfs!
+					// Something similar also seems to be used in .gani files.
+					struct Event
+					{
+						uint eventType <comment="Node type hash - usually ExecCommand/595181585">;
+						
+						byte params1Count; // Might be a bitfield, but unaffected by endianness
+						byte params2Count;
+						byte params3Count;
+						byte params4Count;
+						
+						struct TimeSection
+						{
+							int startFrame;
+							int endFrame; // Two shorts? Endianness and all that really screws these up, especially some paramInts.
+							
+						} timeSection[params1Count] <optimize=false>;
+						
+						int paramInt[params2Count];
+							
+						float paramFloat[params3Count];
+							
+						struct ParamString
+						{
+							uint paramHash <comment="Sometimes uses fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s">;
+							int unknown;
+							
+						} paramString[params4Count] <optimize=false>;
+						
+					} event[eventOffsets.eventCount] <optimize=false, bgcolor=0xF0F080>;
+					
+				} eventSection <bgcolor=0x00C000>;
 			};
 
 			if (FTell() % 16 != 0)
