@@ -41,9 +41,16 @@ struct Header
 
     MetadataStruct numLightProbes;
     MetadataStruct numDiv;
-    MetadataStruct formatType;
+	if (version==4)
+	{
+		MetadataStruct formatType;
+	}
 
-    FSkip(48);
+    FSkip(32);
+	if (version==4)
+	{
+		FSkip(16);
+	}
 
     // Time of day in seconds.
     uint timeValues[numDiv.value];
