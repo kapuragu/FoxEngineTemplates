@@ -57,10 +57,12 @@ FSkip (80);
 struct Object
 {
     float yTranslation;
-    local float xTranslation = header.blockSizeWMetadata.value*((float)(ReadUShort(FTell() + 12 % header.numBlocksWMetadata.value) + 0.5 - (float)header.numBlocksWMetadata.value / 2) + header.blockSizeWMetadata.value * (float)ReadShort() / 32767;
-    FSkip(2);
-    local float zTranslation = header.blockSizeHMetadata.value*((float)(blockID / header.numBlocksHMetadata.value) + 0.5 - (float)header.numBlocksHMetadata.value / 2) + header.blockSizeHMetadata.value * (float)ReadShort()/ 32767;
-    FSkip(2);
+	ushort xTranslation;
+	ushort zTranslation;
+    // local float xTranslation = header.blockSizeWMetadata.value*((float)(ReadUShort(FTell() + 12 % header.numBlocksWMetadata.value) + 0.5 - (float)header.numBlocksWMetadata.value / 2) + header.blockSizeWMetadata.value * (float)ReadShort() / 32767;
+    // FSkip(2);
+    // local float zTranslation = header.blockSizeHMetadata.value*((float)(blockID / header.numBlocksHMetadata.value) + 0.5 - (float)header.numBlocksHMetadata.value / 2) + header.blockSizeHMetadata.value * (float)ReadShort()/ 32767;
+    // FSkip(2);
     hfloat xQuat;
     hfloat yQuat;
     hfloat zQuat;
