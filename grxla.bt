@@ -1,31 +1,34 @@
 // rlc Original template by sai/youarebritish!
+// Will read GZ and TPP .grxla LightArray and .grxoc OccluderArray files!
 
-LittleEndian();
+#define COLOR_HEADER_RED 0x8284F2
+#define COLOR_ENTRY_YELL 0x81C9F7
+
+local byte byteSex = 1;
+if (byteSex==0)	{BigEndian();} else {LittleEndian();};
 
 struct Header
 {
     char FGxL[4] <hidden=true>;
-    uint magicNumber1;
+	FSkip(4);
 
-    Assert(magicNumber1 == 0);
-
-    uint n1;
+    uint offsetToArray;
     uint n2;
-
-    char CM00[4];
-
-    uint headerBytes;
-    uint dataSetFilenameHash <hidden=true>;
-
-    int o1;
-    uint n3;
-    uint n4;
-
-    char dataSetFilename[headerBytes-24];
-} header;
+	
+} header <bgcolor=COLOR_HEADER_RED>;
 
 struct LightArray
 {
+	struct LightProbeName
+	{
+		char name[];
+			
+		if (FTell() % 4 != 0)
+		{
+			FSkip(4-FTell() % 4);
+		};
+	};
+	
     struct Vector4
     {
         float x;
@@ -33,8 +36,30 @@ struct LightArray
         float z;
         float w;
     };
-
-    struct Quaternion
+	
+    struct Vector3
+    {
+        float x;
+        float y;
+        float z;
+    };
+	
+    struct Vect3
+    {
+        hfloat x;
+        hfloat y;
+        hfloat z;
+    };
+	
+    struct HColor
+    {
+        hfloat r;
+        hfloat g;
+        hfloat b;
+        hfloat a;
+    };
+	
+    struct Quat
     {
         hfloat x;
         hfloat y;
@@ -42,34 +67,216 @@ struct LightArray
         hfloat w;
     };
 	
-	while (FTell()<FileSize()-0x8) // rlc since it probably doesn't count them and just stacks them arbitrarily
+    struct Quaternion
+    {
+        float x;
+        float y;
+        float z;
+        float w;
+    };
+	
+	while (FTell()!=FileSize() || FTell()>FileSize()) // rlc since it probably doesn't count them and just stacks them arbitrarily
 	{
 		struct LightArrayEntry
 		{
-			char name[4];
-			uint entrySize; //rlc last footer entry is 8 bytes long with no name, maybe that's how the while loop is terminated?
+			local uint startOfEntry = FTell();
+			char lightType[4];
+			uint entrySize;
+			if (lightType=="CM00") //rlc Header entry type
+			{
+				uint64 dataSetFilenameHash;
+				uint n3;
+				uint n4;
 
-			uint lightNameHash;
-			uint vals1[5];
-			Quaternion rotation;
-			hfloat vals2[2];
-			float vals3[7];
+				char dataSetFilename[];
+				if (FTell() % 4 != 0)
+				{
+					FSkip(4-FTell() % 4);
+				};
+			}
+			else if (lightType=="") // rlc Terminator Entry
+			{
+				
+			}
+			else if (lightType=="DL00") // rlc Directional Light - does it even exist?
+			{
+				Assert(2+2==5," WE FOUND DIRECTIONAL LIGHT!!!!");
+			}
+			else if (lightType=="PL01" || lightType=="PL02" || lightType=="PL03") // rlc PointLight GZ TPP
+			{
+				uint64 lightNameHash;
+				uint offsetToString; // Different in GZ
+				uint vals4_2; // Different in GZ
+				uint vals4_3;
+				uint vals4_4; // Sometimes different in GZ?
+				uint offsetToLightArea;
+				Vector3 translation;
+				Vect3 reachPoint;
+				HColor color;
+				hfloat temperature;
+				float colorDeflection;
+				float lumen;
+				hfloat vals5_3;
+				hfloat vals5_4;
+				hfloat vals3_1;
+				hfloat vals3_2;
+				hfloat vals6;
+				hfloat vals13;
+				uint vals7_1;
+				uint vals7_2;
+				uint offsetToIrraditationTransform;
+				
+				if (offsetToString>0)
+				{
+					char lightName[];
+				
+					if (FTell() % 4 != 0)
+					{
+						FSkip(4-FTell() % 4);
+					};
+				};
+				
+				if (offsetToLightArea>0)
+				{
+					Vector3 lightAreaScale;
+					Quaternion lightAreaRotation;
+					Vector3 lightAreaTranslation;
+				};
+				if (offsetToIrraditationTransform>0)
+				{
+					Vector3 irradiationPointScale;
+					Quaternion irradiationPointRotation;
+					Vector3 irradiationPointTranslation;
+				};
 
-			Vector4 translation;
-			ushort lumen;
-			ushort u2;
-			ushort n3;
-			ushort index;
-			float lightSize;
-			float u5;
+			}
+			else if (lightType=="SL01" || lightType=="SL02" || lightType=="SL03") // rlc SpotLight GZ TPP
+			{
+				uint64 lightNameHash;
+				uint offsetToString; // Different in GZ
+				uint vals4_2; // Different in GZ
+				uint vals4_3;
+				uint vals4_4;
+				uint offsetToLightArea;
+				Vector3 translation;
+				Vector3 reachPoint;
+				Quaternion rotation;
+				hfloat outerRange;
+				hfloat innerRange;
+				hfloat umbraAngle;
+				hfloat penumbraAngle;
+				hfloat attenuationExponent;
+				hfloat vals14_6;
+				HColor color;
+				hfloat temperature;
+				hfloat colorDeflection;
+				float lumen;
+				hfloat vals10;
+				hfloat shadowUmbraAngle;
+				hfloat shadowPenumbraAngle;
+				hfloat shadowAttenuationExponent;
+				hfloat dimmer;
+				hfloat shadowBias;
+				hfloat viewBias;
+				hfloat vals11_1;
+				hfloat vals11_2;
+				hfloat vals11_3;
+				uint lodRadiusLevel;
+				uint vals12_2;
+				uint offsetToIrraditationTransform;
 
-			char lightProbeName[entrySize - (4 * sizeof(char)) - (25 * sizeof(uint))];
-		} entry <optimize=false>;
+				if (offsetToString>0)
+				{
+					char lightName[];
+				
+					if (FTell() % 4 != 0)
+					{
+						FSkip(4-FTell() % 4);
+					};
+				};
+				
+				if (offsetToLightArea>0)
+				{
+					Vector3 lightAreaScale;
+					Quaternion lightAreaRotation;
+					Vector3 lightAreaTranslation;
+				};
+				if (offsetToIrraditationTransform>0)
+				{
+					Vector3 irradiationPointScale;
+					Quaternion irradiationPointRotation;
+					Vector3 irradiationPointTranslation;
+				};
+				
+			}
+			else if (lightType=="LP00") // rlc Light Probe - unlike EP00???
+			{
+				Assert(2+2==5," WE FOUND  LIGHT probe!!!!");
+			}
+			else if (lightType=="EP00") // rlc LightProbe
+			{
+				uint64 lightNameHash;
+				uint offsetToString;
+				uint vals4_2;
+				uint vals4_3;
+				uint vals4_4;
+				
+				hfloat innerScaleXPositive;
+				hfloat innerScaleXNegative;
+				hfloat innerScaleYPositive;
+				hfloat innerScaleYNegative;
+				hfloat innerScaleZPositive;
+				hfloat innerScaleZNegative;
+				
+				struct LightArea
+				{
+					Vector3 scale;
+					Quaternion rotation;
+					Vector3 translation;
+					
+				} lightArea;
+				
+				float vals16; //translation's w?
+				ushort lumen;
+				ushort u2;
+				ushort n3;
+				ushort index;
+				float lightSize;
+				float u5;
+				
+				if (offsetToString>0)
+				{
+					char lightName[];
+					
+					if (FTell() % 4 != 0)
+					{
+						FSkip(4-FTell() % 4);
+					};
+				};
+			}
+			else if (lightType=="OC00") // Occluder entry (.grxoc)
+			{
+				uint valsOcc_1;
+				uint offsetToEdges;
+				uint edgesCount;
+				uint offsetToNodes;
+				uint nodesCount;
+				
+				Vector4 nodes[nodesCount];
+				struct Face
+				{
+					short value1;
+					short value2;
+					short vertexIndex;
+					short size;
+					
+				} faces[edgesCount];
+			}
+			else
+			{
+				Assert(2+2==5,"Unknown LightArrayEntry.lightType!!!!");
+			};
+			
+		} entry <optimize=false,bgcolor=COLOR_ENTRY_YELL>;
 	}
 } lightArray;
-
-struct Footer
-{
-    uint footerUnknown1;
-    uint footerUnknown2;
-} footer;
