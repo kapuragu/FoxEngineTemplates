@@ -1,0 +1,56 @@
+// TCVP - TppCoverPoint
+// By RLC - inspired by other FOX templates by the researchers of Modders' Heaven!
+LittleEndian();
+
+struct Vector3
+{
+	float x;
+	float y;
+	float z;
+};
+
+struct Header
+{
+	char tcvp[4] <comment="TCVP">; Assert(tcvp=="TCVP"); // TCVP
+	ushort fileVersion; // GZ is 0, TPP is 1. TPP crashes if it's 0 so I don't know
+	if (fileVersion==256)
+	{
+		BigEndian();
+	}
+	ushort entryCount;
+	uint something; Assert(something==12);
+	
+} header <bgcolor=0xCAE7B9>;
+
+struct CoverPoints
+{
+	struct Point
+	{
+		Vector3 position <bgcolor=0xEB9486>;
+		// uint something0;	// These two must somehow define rotation/cover height flags?
+		// uint something1;
+		// According to PC-PS3 endianness not changing just for these eight bytes, they're all separate?
+		if (header.fileVersion == 0)
+		{
+			byte param0;
+			byte param1;
+			byte param2;
+			byte param3;
+			byte param4;
+			byte param5;
+			byte param6;
+			byte param7;
+		}
+		else if (header.fileVersion == 1 || header.fileVersion == 256)
+		{
+			ushort param0;
+			ushort param1;
+			ushort param2;
+			ushort param3;
+		};
+		
+	} entry[header.entryCount];
+	
+} entries <bgcolor=0xF3DE8A>;
+
+Assert(FTell() == FileSize(), "Failed to reach EoF.");

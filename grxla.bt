@@ -75,7 +75,7 @@ struct LightArray
         float w;
     };
 	
-	while (FTell()!=FileSize() || FTell()>FileSize()) // rlc since it probably doesn't count them and just stacks them arbitrarily
+	while (FTell()!=FileSize()) // rlc since it probably doesn't count them and just stacks them arbitrarily
 	{
 		struct LightArrayEntry
 		{
@@ -237,10 +237,10 @@ struct LightArray
 				} lightArea;
 				
 				float vals16; //translation's w?
-				ushort lumen;
-				ushort u2;
-				ushort n3;
-				ushort index;
+				short priority;
+				short u2;
+				short n3; // some other kind of index? sometimes it increases with entries, sometimes skips
+				ushort entryIndex;
 				float lightSize;
 				float u5;
 				
@@ -278,5 +278,7 @@ struct LightArray
 			};
 			
 		} entry <optimize=false,bgcolor=COLOR_ENTRY_YELL>;
+		
 	}
+	
 } lightArray;
