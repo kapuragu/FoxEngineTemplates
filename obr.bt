@@ -57,8 +57,8 @@ FSkip (80);
 struct Object
 {
     float yTranslation;
-	ushort xTranslation;
-	ushort zTranslation;
+	short xTranslation;
+	short zTranslation;
     // local float xTranslation = header.blockSizeWMetadata.value*((float)(ReadUShort(FTell() + 12 % header.numBlocksWMetadata.value) + 0.5 - (float)header.numBlocksWMetadata.value / 2) + header.blockSizeWMetadata.value * (float)ReadShort() / 32767;
     // FSkip(2);
     // local float zTranslation = header.blockSizeHMetadata.value*((float)(blockID / header.numBlocksHMetadata.value) + 0.5 - (float)header.numBlocksHMetadata.value / 2) + header.blockSizeHMetadata.value * (float)ReadShort()/ 32767;
@@ -67,9 +67,9 @@ struct Object
     hfloat yQuat;
     hfloat zQuat;
     hfloat wQuat;
-    ushort blockID;
-    ubyte brushID;
+    ushort blockID; // Index of ObjBrush dataset entity's pluginHandle list entry
+    ubyte pluginBrushID;
     ubyte yScale;
-    uint id;
+    uint objectIndex;
 	
 } objects[header.numObjectsMetadata.value] <bgcolor=0x8CAF5A>;

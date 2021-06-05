@@ -45,7 +45,20 @@ struct RouteNodeEventTable
 
 struct RouteNodeEvent
 {
+	// rlc reorganized a bit
     uint type;
-	int params[10];
+	uint flags; //Including flags for target type
+/* 	+0 for edge event classes (Walk,Run etc) (ie 0 100 200)
+	+1 for node event classes (Idle etc) 	 (ie 1 101 201)
+	000 - ROUTE_AIM_NO_TARGET
+	100 - ROUTE_AIM_STATIC_POINT
+	200 - ROUTE_AIM_CHARACTER
+	300 - ROUTE_AIM_ROUTE_AS_SIGHT_MOVE_PATH
+	400 - ROUTE_AIM_ROUTE_AS_OBJECT
+	1000000 - Unknown, only on some event nodes */
+	
+	ushort waitTime; //A common wait time is 479 or 299.
+	ushort rotation; //Counter-clockwise from 0 to ushort max, in Unity looking at blue Z
+	int params[8]; //These vary depending on route event and aim target type
     char snippet[4];
 } routeNodeEvents[(FileSize() - header.routeNodeEventsOffset)/sizeof(RouteNodeEvent)];
