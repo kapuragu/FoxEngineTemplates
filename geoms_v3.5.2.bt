@@ -243,6 +243,7 @@ struct Chunk10_Subsection1
 	// an int64.
 	int64 i64;
 	
+/*
 	// sometimes the ending position of section1 is also the starting point, meaning that
 	// there's no section1 and it goes into section2 instantly.
 	if ( section1_endPoint - FTell() > 0 )
@@ -250,6 +251,8 @@ struct Chunk10_Subsection1
 		bytePairs bytepairs_primary[ ( section1_endPoint - FTell() ) / 2 ];
 	}
 	bytePairs bytepairs_secondary[ ( section2_endPoint - FTell() ) / 2 ];
+*/
+    bytePairs bytepairs[chunk10.section1_endPointOffset / 2];
 };
 
 
