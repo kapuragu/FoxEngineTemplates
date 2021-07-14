@@ -13,22 +13,13 @@ struct Header
     char FGxL[4] <hidden=true>;
 	FSkip(4);
 
-    uint offsetToArray;
-    uint n2;
+    int offsetToArray; //0x10
+    int n2; //1
 	
 } header <bgcolor=COLOR_HEADER_RED>;
 
 struct LightArray
 {
-	struct LightProbeName
-	{
-		char name[];
-			
-		if (FTell() % 4 != 0)
-		{
-			FSkip(4-FTell() % 4);
-		};
-	};
 	
     struct Vector4
     {
@@ -45,35 +36,19 @@ struct LightArray
         float z;
     };
 	
-    struct Vect3
+    struct HalfVector3
     {
         hfloat x;
         hfloat y;
         hfloat z;
     };
 	
-    struct HColor
+    struct HalfColor
     {
         hfloat r;
         hfloat g;
         hfloat b;
         hfloat a;
-    };
-	
-    struct Quat
-    {
-        hfloat x;
-        hfloat y;
-        hfloat z;
-        hfloat w;
-    };
-	
-    struct Quaternion
-    {
-        float x;
-        float y;
-        float z;
-        float w;
     };
 	
 	while (FTell()!=FileSize()) // rlc since it probably doesn't count them and just stacks them arbitrarily
@@ -82,12 +57,12 @@ struct LightArray
 		{
 			local uint startOfEntry = FTell();
 			char lightType[4];
-			uint entrySize;
+			int entrySize;
 			if (lightType=="CM00") //rlc Header entry type; at the start of every file
 			{
 				uint64 dataSetFilenameHash;
-				uint n3;
-				uint n4;
+				int n3; //8
+				FSkip(4);
 
 				char dataSetFilename[];
 				if (FTell() % 4 != 0)
@@ -106,26 +81,26 @@ struct LightArray
 			else if (lightType=="PL01" || lightType=="PL02" || lightType=="PL03") // rlc PointLight GZ TPP
 			{
 				uint64 lightNameHash;
-				uint offsetToString; // Different in GZ
-				uint vals4_2; // Different in GZ
-				uint vals4_3;
-				uint vals4_4; // Sometimes different in GZ?
-				uint offsetToLightArea;
+				int offsetToString; // Different in GZ
+				uint flags1; // Different in GZ
+				uint lightFlags;
+				uint flags2; // Sometimes different in GZ?
+				int offsetToLightArea;
 				Vector3 translation;
-				Vect3 reachPoint;
-				HColor color;
+				HalfVector3 reachPoint;
+				HalfColor color;
 				hfloat temperature;
 				float colorDeflection;
 				float lumen;
-				hfloat vals5_3;
-				hfloat vals5_4;
-				hfloat vals3_1;
-				hfloat vals3_2;
-				hfloat vals6;
-				hfloat vals13;
-				uint vals7_1;
-				uint vals7_2;
-				uint offsetToIrraditationTransform;
+				hfloat lightSize;
+				hfloat dimmer;
+				hfloat shadowBias;
+				hfloat lodFarSize;
+				hfloat lodNearSize;
+				hfloat lodShadowDrawRate;
+				int lodRadiusLevel;
+				int lodFadeType;
+				int offsetToIrraditationTransform;
 				
 				if (offsetToString>0)
 				{
@@ -140,13 +115,13 @@ struct LightArray
 				if (offsetToLightArea>0)
 				{
 					Vector3 lightAreaScale;
-					Quaternion lightAreaRotation;
+					Vector4 lightAreaRotation;
 					Vector3 lightAreaTranslation;
 				};
 				if (offsetToIrraditationTransform>0)
 				{
 					Vector3 irradiationPointScale;
-					Quaternion irradiationPointRotation;
+					Vector4 irradiationPointRotation;
 					Vector3 irradiationPointTranslation;
 				};
 
@@ -154,37 +129,37 @@ struct LightArray
 			else if (lightType=="SL01" || lightType=="SL02" || lightType=="SL03") // rlc SpotLight GZ TPP
 			{
 				uint64 lightNameHash;
-				uint offsetToString; // Different in GZ
-				uint vals4_2; // Different in GZ
-				uint vals4_3;
-				uint vals4_4;
-				uint offsetToLightArea;
+				int offsetToString; // Different in PS3
+				uint flags1; // Different in PS3
+				uint lightFlags;
+				uint flags2;
+				int offsetToLightArea;
 				Vector3 translation;
 				Vector3 reachPoint;
-				Quaternion rotation;
+				Vector4 rotation;
 				hfloat outerRange;
 				hfloat innerRange;
 				hfloat umbraAngle;
 				hfloat penumbraAngle;
 				hfloat attenuationExponent;
-				hfloat vals14_6;
-				HColor color;
+				hfloat dimmer;
+				HalfColor color;
 				hfloat temperature;
 				hfloat colorDeflection;
-				float lumen;
+				float lightSize;
 				hfloat vals10;
 				hfloat shadowUmbraAngle;
 				hfloat shadowPenumbraAngle;
 				hfloat shadowAttenuationExponent;
-				hfloat dimmer;
 				hfloat shadowBias;
 				hfloat viewBias;
-				hfloat vals11_1;
-				hfloat vals11_2;
-				hfloat vals11_3;
-				uint lodRadiusLevel;
-				uint vals12_2;
-				uint offsetToIrraditationTransform;
+				hfloat powerScale;
+				hfloat lodFarSize;
+				hfloat lodNearSize;
+				hfloat lodShadowDrawRate;
+				int lodRadiusLevel;
+				int lodFadeType;
+				int offsetToIrraditationTransform;
 
 				if (offsetToString>0)
 				{
@@ -199,13 +174,13 @@ struct LightArray
 				if (offsetToLightArea>0)
 				{
 					Vector3 lightAreaScale;
-					Quaternion lightAreaRotation;
+					Vector4 lightAreaRotation;
 					Vector3 lightAreaTranslation;
 				};
 				if (offsetToIrraditationTransform>0)
 				{
 					Vector3 irradiationPointScale;
-					Quaternion irradiationPointRotation;
+					Vector4 irradiationPointRotation;
 					Vector3 irradiationPointTranslation;
 				};
 				
@@ -217,31 +192,31 @@ struct LightArray
 			else if (lightType=="EP00") // rlc LightProbe
 			{
 				uint64 lightNameHash;
-				uint offsetToString;
-				uint vals4_2;
-				uint vals4_3;
-				uint vals4_4;
+				int offsetToString;
+				uint flags1;
+				uint lightFlags;
+				uint flags2;
 				
 				hfloat innerScaleXPositive;
-				hfloat innerScaleXNegative;
 				hfloat innerScaleYPositive;
-				hfloat innerScaleYNegative;
 				hfloat innerScaleZPositive;
+				hfloat innerScaleXNegative;
+				hfloat innerScaleYNegative;
 				hfloat innerScaleZNegative;
 				
 				struct LightArea
 				{
 					Vector3 scale;
-					Quaternion rotation;
+					Vector4 rotation;
 					Vector3 translation;
 					
 				} lightArea;
 				
 				float vals16; //translation's w?
 				short priority;
-				short u2;
-				short n3; // some other kind of index? sometimes it increases with entries, sometimes skips
-				ushort entryIndex;
+				ushort shapeType;
+				ushort relatedLightIndex; // some other kind of index? sometimes it increases with entries, sometimes skips
+				ushort sphericalHarmonicsDataIndex;
 				float lightSize;
 				float u5;
 				
@@ -257,11 +232,11 @@ struct LightArray
 			}
 			else if (lightType=="OC00") // Occluder entry (.grxoc)
 			{
-				uint valsOcc_1;
-				uint offsetToEdges;
-				uint edgesCount;
-				uint offsetToNodes;
-				uint nodesCount;
+				int valsOcc_1;
+				int offsetToEdges;
+				int edgesCount;
+				int offsetToNodes;
+				int nodesCount;
 				
 				Vector4 nodes[nodesCount];
 				struct Face
