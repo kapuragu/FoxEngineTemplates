@@ -10,7 +10,7 @@ struct Header
 	
 	if (version == 3)	//TPP
 	{
-		ubyte sbpValuesSetCount0;
+		ubyte dialogueEventCount;
 		
 		ushort labelCount;		
 		// short labelCount;		
@@ -24,7 +24,7 @@ struct Header
 		ushort optionSetCount;
 		ushort variationSetCount;
 		
-		ubyte sbpValuesSetCount1;
+		ubyte voiceTypeCount;
 	}
 	else if (version == 1)
 	{
@@ -37,21 +37,18 @@ struct Header
 
 if (header.version == 3) // if TPP
 {
-	if (header.sbpValuesSetCount0+header.sbpValuesSetCount1 > 0)
+	if (header.dialogueEventCount+header.voiceTypeCount > 0)
 	{
 		struct tppSection0
 		{
-			struct sbpValueList0
-			{
-				uint sbpValue0;	// These values are followed up by 64 02 in the HIRC.dat file in the .sbp
-				
-			} sbpValues0[header.sbpValuesSetCount0] <optimize=false>;
-			
-			struct sbpValueList1
-			{
-				uint sbpValue1; // These values are at the start of the lists, between the list entries and the sbpValue0 values
-				
-			} sbpValues1[header.sbpValuesSetCount1] <optimize=false>;
+			uint dialogueEventId[header.dialogueEventCount];	// These values are followed up by 64 02 in the HIRC.dat file in the .sbp
+			// fnv132: dd_ etc
+			uint voiceTypes[header.voiceTypeCount]; // These values are at the start of the lists, between the list entries and the sbpValue0 values
+			// fnv132:
+			// miller = 3140691722 0A 27 33 BB
+			// ocelot = 469355457 C1 CB F9 1B
+			// cdtk = 3786002599 A7 D0 A9 E1
+			// huey = 2975838118 A6 AF 5F B1
 			
 		} sbpSection <bgcolor=0xBCAF9C>;
 	}
@@ -63,41 +60,37 @@ if (header.version == 3) // if TPP
 			struct radioLabel
 			{
 				uint labelName;
+				//strcode32, found in lua
 
-				// The flags must also somehow define whether the entries are all played in order or if it should randomly pick one to play, and more
+				// The flags must also somehow define whether the entries are all played 
+				// in order or if it should randomly pick one to play, and more
 			
-				uint flag0 : 4;
-				uint flag1 : 4;
-				uint flag2 : 4;
-				uint flag3 : 4;
-				uint flag4 : 4;
-				uint flag5 : 4;
-				uint flag6 : 4;
-				uint flag7 : 4;
-
-				local ubyte labelClipCount = (ubyte)flag4;
+				ubyte flag0 : 4; //?
+				ubyte callType : 4;
+				// if 0, short real time noise. 
+				// if 2, haves espionage radio noise. 
+				// if 4, optional radio noise, 
+				// if 8, short real time intro noise, 
+				// if 10, also short real time intro noise
+				ubyte flag2; //?
 				
-				if (flag5>8)		// RadioData_comn2000 case: an entry at 0x1337 has 17 voice clips
-				{
-					labelClipCount = ( labelClipCount + ( ( flag5 - 8 ) * 16) );
-				}
-				else if (flag5<4)	// RadioData_comn6000 case: an entry at 0x1FE has 18 voice clips
-				{
-					labelClipCount = ( labelClipCount + ( flag5 * 16 ) );
-				}
+				//Read bits 16-22 of the bitfield as the label count:
+				ubyte labelClipCountBits4 : 4 <hidden=true>;
+				ubyte labelClipCountBits6 : 2 <hidden=true>;
+				local ubyte labelClipCount = (ubyte)labelClipCountBits4 + ((ubyte)labelClipCountBits6 * 0x10); 
+				ubyte flag52 : 2;
+				
+				ubyte flag6; //something to do with randomization 
 				
 				FSkip(2);
 				
 				struct voiceClipSubEntry
 				{
-					uint sbpVoiceClipId;	// Sometimes isn't a voice clip id, but a variationSetName; check section 3
-					
-					ubyte flag0 : 4;	// No idea
-					ubyte flag1 : 4;
-					ubyte flag2 : 4;
-					ubyte flag3 : 4;
-					ubyte flag6 : 4;
-					ubyte flag7 : 4;
+					uint voiceId;	// Sometimes isn't a voice clip id, but a variationSetName; check section 3
+					//fnv321: very often, if not always, is just tolower of the subtitle/msgId: ie abcd1000_101010
+					ubyte flag0;	// No idea
+					ubyte voiceTypeIndex; //Can be 15/invalid
+					ubyte flag6;
 						
 				} voiceClipSubEntries[labelClipCount] <optimize=false>;
 				
@@ -189,7 +182,7 @@ else if (header.version == 1) // if GZ
 				
 				ubyte someFlag2;
 				ubyte someFlag3;
-				ubyte someFlag4;
+				ubyte somelabelClipCountBits4;
 				ubyte voiceClipCount;
 				ubyte someFlag5;
 				ubyte someFlag6;
@@ -197,9 +190,9 @@ else if (header.version == 1) // if GZ
 				
 				struct gzVoiceClipEntry
 				{
-					uint sbpVoiceClipListId0;	// .sbp HIRC.dat voice clip list, value before 0x6402
-					uint sbpVoiceClipListId1;	// .sbp HIRC.dat voice clip list, top entry
-					uint sbpVoiceClipId;		// .sbp HIRC.dat voice clip id
+					uint dialogueEventId;	// .sbp HIRC.dat voice clip list, value before 0x6402
+					uint voiceTypeId;	// .sbp HIRC.dat voice clip list, top entry
+					uint voiceId;		// .sbp HIRC.dat voice clip id
 					ubyte someFlag7;			// Usually 0x64
 					ubyte someFlag8;			// Sometimes 0x00, sometimes 0x02, sometimes 0x04
 					FSkip(2);

@@ -67,8 +67,8 @@ while (FTell()!=FileSize())
 					int segmentCount;
 				}
 				
-				uint offsetToChunkEnd <comment="Chunk size starting from demoData">;
-				uint offsetToEventSection <comment="Offset starts from demoData">;
+				int offsetToChunkEnd <comment="Chunk size starting from demoData">;
+				int offsetToEventSection <comment="Offset starts from demoData">;
 				
 				if (demoData.chunkType==1)
 				{
@@ -164,39 +164,29 @@ while (FTell()!=FileSize())
 					struct Event
 					{
 						uint eventType <comment="Node type hash - usually ExecCommand/595181585">;
-						Printf("\n<event eventType=%u>",eventType);
 						
-						byte params1Count; // Might be a bitfield, but unaffected by endianness
-						byte params2Count;
-						byte params3Count;
-						byte params4Count;
+						byte timeSectionCount; // Might be a bitfield, but unaffected by endianness
+						byte paramIntCount;
+						byte paramFloatCount;
+						byte paramStringCount;
 						
 						struct TimeSection
 						{
 							int startFrame;
 							int endFrame; // Two shorts? Endianness and all that really screws these up, especially some paramInts.
-							Printf("\n <timeSection startFrame=%d endFrame=%d></timeSection>",startFrame,endFrame);
 							
-						} timeSection[params1Count] <optimize=false>;
+						} timeSection[timeSectionCount] <optimize=false>;
 						
-						int paramInt[params2Count] <optimize=false>;
-						local uint i = 0;
-						for (i=0;i<params2Count;i++)
-							Printf("\n <paramInt paramInt=%d></paramInt>",paramInt[i]);
-
-							
-						float paramFloat[params3Count] <optimize=false>;
-						for (i=0;i<params3Count;i++)
-							Printf("\n <paramFloat paramFloat=%d></paramFloat>",paramFloat[i]);
+						int paramInt[paramIntCount] <optimize=false>;
+						
+						float paramFloat[paramFloatCount] <optimize=false>;
 							
 						struct ParamString
 						{
 							uint paramHash <comment="Sometimes uses fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s">;
 							int unknown;
-							Printf("\n <paramString paramString=%u unknown=%d></paramString>",paramHash,unknown);
 							
-						} paramString[params4Count] <optimize=false>;
-						Printf("\n</event>");
+						} paramString[paramStringCount] <optimize=false>;
 						
 					} event[eventOffsets.eventCount] <optimize=false, bgcolor=0xF0F080>;
 					
