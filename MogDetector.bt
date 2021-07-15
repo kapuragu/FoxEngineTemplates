@@ -1,0 +1,100 @@
+//
+
+char sig[16];
+typedef struct
+{
+    uint a, b;
+}TupleAddr<read=ReadTuple>;
+string ReadTuple(TupleAddr &t)
+{
+    string s = "";
+    SPrintf(s, "(%u, %u)", t.a, t.b);
+    return s;
+}
+
+typedef struct
+{
+    int hash0<bgcolor=cBlack, fgcolor=cWhite>;
+    int unkn[4];
+    int hash1<bgcolor=cBlack, fgcolor=cWhite>;
+    int dat[12];
+}TestSubEntry<bgcolor=cPurple>;
+
+typedef struct
+{
+    uint addr; //float weight; (Does not appear to be a float for player)
+    uint tag1;
+    uint tag2;
+    uint flags;
+    uint hash;
+    TupleAddr addr0;
+    TupleAddr addr1;
+    TupleAddr addr2;
+}LayerDef;
+
+
+typedef struct
+{
+    int a;
+    uint b;
+    LayerDef def[4];
+    int unkn[8];
+    short c;
+    short count;
+    TestSubEntry test[count];
+}Layer<optimize=false, read=ReadLayer>;
+string ReadLayer(Layer &l)
+{
+    string s = "";
+    SPrintf(s, "count: %u  (c=%d)", l.count, l.c);
+    return s;
+}
+
+
+typedef struct
+{
+    int id;
+    int hash0;
+    uint hash1;
+    uint flags;
+}EntryHeader<read=ReadEntHeader, optimize=false>;
+string ReadEntHeader(EntryHeader &e)
+{
+    string s = "";
+    SPrintf(s, "sig: %d, hash0: %d, hash1: %u, flags: %u", e.id, e.hash0, e.hash1, e.flags);
+    return s;
+}
+
+local int i =0;
+local int t =0;
+local int e =0;
+local int bac = 0;
+do
+{
+    FSeek(i * 16);
+    int a<hidden=true>;
+    if(a[i] == 6)
+    {
+        bac = i*16;
+        FSkip(8);
+
+        int b<hidden=true>;
+        if(b[t] < 10)
+        {
+            FSeek(bac);
+            EntryHeader header<bgcolor=cLtRed, optimize=false>;
+            Printf("\nEntry[%d].pos = %d", e, bac);
+    
+            if(e > 0)
+                Layer layer<bgcolor=cLtGreen, optimize=false>;
+
+            ++e;
+        }
+        ++t;
+    }
+    else
+        FSkip(12);
+    ++i;
+}
+while(FTell() < FileSize()-16);
+
