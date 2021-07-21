@@ -30,12 +30,12 @@ struct RouteDefinition
     ushort numEvents;
 } routeDefinitions[header.routeIdCount];
 
-struct RouteNode
+struct Vector3
 {
     float x;
     float y;
     float z;
-} routeNodes[(header.routeEventTablesOffset - header.routeNodesOffset)/sizeof(RouteNode)];
+} routeNodes[(header.routeEventTablesOffset - header.routeNodesOffset)/sizeof(Vector3)];
 
 struct RouteNodeEventTable
 {
@@ -43,22 +43,54 @@ struct RouteNodeEventTable
     ushort edgeEventIndex;
 } routeNodeEventTables[(header.routeNodeEventsOffset - header.routeEventTablesOffset)/sizeof(RouteNodeEventTable)];
 
+enum <ubyte> RouteAimTargetType
+{
+    ROUTE_AIM_NO_TARGET = 0,
+    ROUTE_AIM_STATIC_POINT = 1,
+    ROUTE_AIM_CHARACTER = 2,
+    ROUTE_AIM_ROUTE_AS_SIGHT_MOVE_PATH = 3,
+    ROUTE_AIM_ROUTE_AS_OBJECT = 4
+};
+
 struct RouteNodeEvent
 {
-	// rlc reorganized a bit
     uint type;
-	uint flags; //Including flags for target type
-/* 	+0 for edge event classes (Walk,Run etc) (ie 0 100 200)
-	+1 for node event classes (Idle etc) 	 (ie 1 101 201)
-	000 - ROUTE_AIM_NO_TARGET
-	100 - ROUTE_AIM_STATIC_POINT
-	200 - ROUTE_AIM_CHARACTER
-	300 - ROUTE_AIM_ROUTE_AS_SIGHT_MOVE_PATH
-	400 - ROUTE_AIM_ROUTE_AS_OBJECT
-	1000000 - Unknown, only on some event nodes */
+	ubyte isNodeEvent;
+    RouteAimTargetType aimPointType;
+    ubyte flagA;
+    ubyte flagB;
+
+    Assert(flagA == 0);
 	
-	ushort waitTime; //A common wait time is 479 or 299.
-	ushort rotation; //Counter-clockwise from 0 to ushort max, in Unity looking at blue Z
-	int params[8]; //These vary depending on route event and aim target type
+	ushort time; //A common wait time is 479 or 299.
+	ushort dir; //Counter-clockwise from 0 to ushort max, in Unity looking at blue Z
+
+    if (aimPointType == ROUTE_AIM_NO_TARGET)
+    {
+        uint dummy1 <hidden = true>;
+        uint dummy2 <hidden = true>;
+        uint dummy3 <hidden = true>;
+
+        Assert(dummy1 == 0 && dummy2 == 0 && dummy3 == 0);
+    }
+    else if (aimPointType == ROUTE_AIM_STATIC_POINT)
+    {
+        Vector3 aimPos;
+    }
+    else if (aimPointType == ROUTE_AIM_CHARACTER)
+    {
+        uint characterId;
+        uint unknown1;
+        uint dummy <hidden = true>;
+    }
+    else
+    {
+        uint routeId;
+        uint unknown1;
+        uint unknown2;
+    }
+
+    uint unknown3;
+	uint extensions[4]; //These vary depending on event type
     char snippet[4];
-} routeNodeEvents[(FileSize() - header.routeNodeEventsOffset)/sizeof(RouteNodeEvent)];
+} routeNodeEvents[(FileSize() - header.routeNodeEventsOffset)/48] <optimize=false>;

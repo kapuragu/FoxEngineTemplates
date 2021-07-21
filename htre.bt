@@ -92,7 +92,7 @@ if (header.version == 3)
     
     FSkip(192);
     
-    float heightMap[metad.heightMapMeta.textureSizeBytes / sizeof(float)] <bgcolor=COLOR_1, fgcolor=COLOR_TEXT>;
+    float heightMap[meta.heightMapMeta.textureSizeBytes / sizeof(float)] <bgcolor=COLOR_1, fgcolor=COLOR_TEXT>;
     Pixel materialWeightMap[meta.heightMapMeta.textureSizeBytes / sizeof(Pixel)] <bgcolor=COLOR_2, fgcolor=COLOR_TEXT>;
     float lodParameter[16] <bgcolor=COLOR_3>;
     float maxHeight[4] <bgcolor=COLOR_4>;
@@ -167,7 +167,7 @@ else if (header.version == 4)
     } meta <bgcolor=COLOR_HEADER, fgcolor=COLOR_TEXT>;
 
     // No idea what this is, seems to have texture offsets?
-    int patchDescription[28] <bgcolor=COLOR_3>;
+    uint64 patchDescription[14] <bgcolor=COLOR_3>;
 
     FSeek(672);
 
