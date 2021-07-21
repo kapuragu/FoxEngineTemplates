@@ -58,8 +58,8 @@ struct Header
 
     struct LightProbeMetadata
     {
-        uint nameAddress;
-        uint shDataAddress;
+        int nameAddress;
+        int shDataAddress;
 
         // Might be related to number of SH sets? An enum? 0 = 1 set, 3 = 28 sets, 4 = 3 sets, 7 = 30 sets. But not true in mgo?
         uint unknownNum;
@@ -94,7 +94,7 @@ struct SphericalHarmonics
         {
             struct LightProbe1
             {
-                while (FTell() < FileSize() - 72)
+                while (FTell() < FileSize() - 0x8 && FTell() < FileSize())
                 {
                     ShCoefficientSet sh;
                 }
@@ -113,3 +113,5 @@ struct SphericalHarmonics
         i++;
     }    
 } sh <optimize=false>;
+
+AlignRead(16);

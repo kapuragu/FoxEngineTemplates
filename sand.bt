@@ -48,11 +48,7 @@ struct Header
 
 struct ROOT_ObjectOffsetSection
 {
-	struct Section1Entries
-	{
-		uint section1EntryOffset;
-		
-	} section1Entries[header.sectionParams[0].sectionEntriesCount] <comment="Global offsets to the object entries of the nodes?", optimize=false>;
+	uint objectOffset[header.sectionParams[0].sectionEntriesCount] <comment="Global offsets to the object entries of the nodes", optimize=false>;
 	
 	// Special thanks to BobDoleOwndU and OldBanana!
 	if (FTell() % 16 != 0)

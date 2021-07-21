@@ -60,15 +60,15 @@ while (FTell()!=FileSize())
 				uint chunkType;
 				if (demoData.chunkType==0)
 				{
-					uint u0;
-					uint u1;
-					uint u2;
+					int u0;
+					int startFrame; //chunk i is i*frameCount
+					int frameCount;
 					
-					uint segmentCount;
+					int segmentCount;
 				}
 				
-				uint offsetToChunkEnd <comment="Chunk size starting from demoData">;
-				uint offsetToEventSection <comment="Offset starts from demoData">;
+				int offsetToChunkEnd <comment="Chunk size starting from demoData">;
+				int offsetToEventSection <comment="Offset starts from demoData">;
 				
 				if (demoData.chunkType==1)
 				{
@@ -83,7 +83,7 @@ while (FTell()!=FileSize())
 				{
 					struct SegmentOffsets
 					{
-						uint segmentOffset[demoData.segmentCount];
+						int segmentOffset[demoData.segmentCount];
 						
 					} segmentOffsetSection <bgcolor=0x008000, comment="Offsets start from demoData">;
 					
@@ -105,7 +105,7 @@ while (FTell()!=FileSize())
 					} indices <bgcolor=0x0080C0, comment="Might have something to do with what kinda data is in the Motions">;
 
 					struct SegmentMotion
-					{	
+					{
 						// There's some empty ones at the end with this kind of parsing, so maybe the type indices define the length of the individual segments
 						if ((demoData.offsetToEventSection>0) & (demoData.offsetToEventSection<header.chunkSize))
 						{
@@ -124,7 +124,7 @@ while (FTell()!=FileSize())
 						
 					} motion <optimize=false, bgcolor=0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
 					
-				} motionSection <bgcolor=0x008000>;
+				} motionSection <optimize=false, bgcolor=0x008000>;
 			};
 
 			if (((demoData.chunkType==2) || (demoData.offsetToEventSection>0)) & (demoData.offsetToEventSection<header.chunkSize))
@@ -165,28 +165,28 @@ while (FTell()!=FileSize())
 					{
 						uint eventType <comment="Node type hash - usually ExecCommand/595181585">;
 						
-						byte params1Count; // Might be a bitfield, but unaffected by endianness
-						byte params2Count;
-						byte params3Count;
-						byte params4Count;
+						byte timeSectionCount; // Might be a bitfield, but unaffected by endianness
+						byte paramIntCount;
+						byte paramFloatCount;
+						byte paramStringCount;
 						
 						struct TimeSection
 						{
 							int startFrame;
 							int endFrame; // Two shorts? Endianness and all that really screws these up, especially some paramInts.
 							
-						} timeSection[params1Count] <optimize=false>;
+						} timeSection[timeSectionCount] <optimize=false>;
 						
-						int paramInt[params2Count];
-							
-						float paramFloat[params3Count];
+						int paramInt[paramIntCount] <optimize=false>;
+						
+						float paramFloat[paramFloatCount] <optimize=false>;
 							
 						struct ParamString
 						{
 							uint paramHash <comment="Sometimes uses fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s">;
 							int unknown;
 							
-						} paramString[params4Count] <optimize=false>;
+						} paramString[paramStringCount] <optimize=false>;
 						
 					} event[eventOffsets.eventCount] <optimize=false, bgcolor=0xF0F080>;
 					
