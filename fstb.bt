@@ -15,17 +15,19 @@ struct Header
 
 struct BlockDefinition
 {
-    uint name;
+    uint nameHash;
 
     uint magicNumber;
     Assert(magicNumber == 1);
 
     uint n2;                            // 0 in normals, 2 in weird structs (1 in SSD)
+    Assert(n2 < 3);
 
-    // In weirds, this points to a nonexistent fmdl.
-    uint fileListOffset;
-    uint additionalFileCount;            // 0 in normals, 2 in weirds (1 in SSD)
-    uint valsOffset;
+    uint superlowLodFmdlPathOffset;
+    uint additionalFpkCount;
+    Assert (additionalFpkCount == n2);
+
+    uint paddingListOffset;
     uint smallBlocksOffset;
     uint smallBlockDefinitionCount;
 
@@ -40,20 +42,19 @@ struct BlockDefinition
 
     uint fpkOffset;
 
-    // Sometimes fmdls, not fpks!
-    // ...And none of those fmdls exist?
-    uint additionalFileOffsets[additionalFileCount];
-
     // Weird part
-    if (n2 != 0)
+    if (additionalFpkCount != 0)
     {
+        uint additionalFpkPathOffsets[additionalFpkCount];
+
         // These offsets appear to be the start and end of the padding.
-        uint weirdOffsets[n2];
-        FSkip(4 * n2);
-        SmallBlockDefinition weirdBlock;     // This block is (always?) outside the block's range.
+        uint paddingOffsets[additionalFpkCount];
+        FSkip(4 * additionalFpkCount);
+
+        SmallBlockDefinition additionalBlockIndices;     // This block is (always?) outside the block's range.
         ushort weirdIndex1;
         ushort weirdIndex2;
-        uint weirdVals[(smallBlocksOffset - valsOffset)/4 - 6];
+        uint weirdVals[(smallBlocksOffset - paddingListOffset)/4 - 6];
     }
 
     SmallBlockDefinition smallBlocks[smallBlockDefinitionCount] <optimize=false>;
@@ -64,16 +65,16 @@ if (header.sections > 0)
 {
     struct Section0
     {
-        uint o1;         // In gntn, this is the common fpk offset, in mafr/afgh, it points to n1
+        uint nextEntryOffset;
         uint section2offset;
-        uint blockCount;
     } section0 <bgcolor=0xF2F254>;
 
     struct Section1
     {
-        uint blockDefinitionOffsets[section0.blockCount] <bgcolor=0xBFB15E>;
-        BlockDefinition blockDefinitions[section0.blockCount] <optimize=false>;
-    } section1 <comment="Large blocks", bgcolor=0x2A2B04, fgcolor=0xFCFCFC>;
+        uint blockCount;
+        uint blockDefinitionOffsets[blockCount] <bgcolor=0xBFB15E>;
+        BlockDefinition blockDefinitions[blockCount] <optimize=false>;
+    } LargeBlockDefinitions <comment="Large blocks", bgcolor=0x2A2B04, fgcolor=0xFCFCFC>;
 }
 
 // Section 1: Pack extra large
@@ -84,5 +85,5 @@ if (header.sections > 0 && section0.section2offset != 0)
         uint entryCount;
         uint offsets[entryCount];
         BlockDefinition entries[entryCount] <optimize=false>;
-    } section2 <comment="Extra large blocks", bgcolor=0xE1A700, fgcolor=0xFCFCFC>;
+    } ExtraLargeBlockDefinitions <comment="Extra large blocks", bgcolor=0xE1A700, fgcolor=0xFCFCFC>;
 }
