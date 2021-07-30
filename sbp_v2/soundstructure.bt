@@ -71,7 +71,9 @@ struct SoundStructure
 	byte activateOffsetPriorityByDistanceSetting;
 	byte additionalParametersCount;
 	
-	SoundStrctureParameterType additionalParameters[additionalParametersCount];
+	if (additionalParametersCount > 0)
+		SoundStrctureParameterType additionalParameters[additionalParametersCount];
+	
     local int index;
     for (index = 0; index < additionalParametersCount; index++)
 	{
@@ -180,7 +182,7 @@ struct SoundStructure
 		uint unknown3;
 	};
 	if (rtpcCount > 0)
-		rtpc[rtpcCount];
+		Rtpc rtpc[rtpcCount];
 	
 	if (unknownCount0==0)
 	{
