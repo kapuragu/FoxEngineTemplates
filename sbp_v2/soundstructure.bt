@@ -1,0 +1,189 @@
+// All the stuff used for the SoundStructure, including the struct itself
+
+enum <byte> SoundStrctureParameterType
+{
+	GeneralSettingsVoiceVolume=0,
+	GeneralSettingsVoicePitch=2,
+	GeneralSettingsVoiceLowPassFilter=3,
+	AdvancedSettingsPlaybackPriorityPriority=5, // this is the playback speed!
+	AdvancedSettingsPlaybackPriorityOffsetPriorityByMaxDistance=6,
+	Loop=7,
+	MotionAudioToMotionSettingsMotionVolumeOffset=8,
+	Positioning2DPannerXCoordinate=11,
+	Positioning2DPannerXCoordinate2=12,
+	PositioningCenterPercent=13,
+	GeneralSettingsUserDefinedAuxillarySendsBus0Volume=18,
+	GeneralSettingsUserDefinedAuxillarySendsBus1Volume=19,
+	GeneralSettingsUserDefinedAuxillarySendsBus2Volume=20,
+	GeneralSettingsUserDefinedAuxillarySendsBus3Volume=21,
+	GeneralSettingsGameDefinedAuxillarySendsVolume=22,
+	GeneralSettingsOutputBusVolume=23,
+	GeneralSettingsOutputBusLowPassFilter=24,
+};
+
+enum <byte> CoordinateDimension
+{
+	Pos2D=0,
+	Pos3D=1,
+};
+
+enum <uint> PositionSourceType
+{
+	UserDefined=2,
+	GameDefined=3,
+};
+
+enum <uint> PlayType
+{
+	SequenceStep=0,
+	RandomStep=1,
+	SequenceContinuous=2,
+	RandomContinuout=3,
+	SequenceStepPickNewPathWhenStarts=4,
+	RandomStepPickNewPathWhenStarts=5,
+};
+
+
+
+// ===================
+// The structure here
+// ===================
+struct SoundStructure
+{
+	byte overrideParentSettings;
+	byte effectsCount;
+	if (effectsCount > 0)
+		byte bypassEffectBitmask;
+	
+	struct SoundStrctureEffects
+	{
+		byte effectIndex;
+		uint effectObjectId;
+		FSkip(2);
+		
+	}; 
+	if (effectsCount > 0)
+		soundStructureEffects[effectsCount];
+	
+	uint outputBusId;
+	uint parentObjectId;
+	byte overrideSettingsForPlaybackPriority;
+	byte activateOffsetPriorityByDistanceSetting;
+	byte additionalParametersCount;
+	
+	SoundStrctureParameterType additionalParameters[additionalParametersCount];
+    local int index;
+    for (index = 0; index < additionalParametersCount; index++)
+	{
+		if (additionalParameters[index]==7)
+			uint32 parameterValueInt;
+		else
+			float parameterValueFloat;
+	}
+	
+	FSkip(1);
+	byte includePositioningSection;
+	if (includePositioningSection == 1)
+	{
+		CoordinateDimension coordinateDimension;
+		if (coordinateDimension==Pos2D)
+			byte enablePanner;
+		else if (coordinateDimension==Pos3D)
+		{
+			PositionSourceType positionSourceType;
+			uint attenuationObjectId;
+			byte enableSpatialization;
+			if (positionSourceType==UserDefined)
+			{
+				PlayType playType;
+				byte isLoop;
+				uint transitionTime;
+				byte followListenerOrientation;
+			}
+			else if (positionSourceType==GameDefined)
+				byte updateAtEachFrame;
+		}
+	}
+	byte overrideParentSettingsForGameDefinedAuxillarySends;
+	byte useGameDefinedAuxillarySends;
+	byte overrideParentSettingsForUserDefinedAuxillarySends;
+	byte isUserDefinedAuxillarySends;
+	if (isUserDefinedAuxillarySends==1)
+	{
+		uint auxillaryBus0Id;
+		uint auxillaryBus1Id;
+		uint auxillaryBus2Id;
+		uint auxillaryBus3Id;
+	}
+	byte unknownParameterForPlaybackLimitSection;
+	if (unknownParameterForPlaybackLimitSection>0)
+	{
+		byte oldOrNewInstanceToDiscard;
+		byte killVoiceOrUseVirtualVoiceSettings;
+		ushort limitSoundInstancesTo;
+	}
+	byte howToLimitSoundInstances;
+	byte virtualVoiceBehavior;
+	byte overrideParentSettingsForPlaybackLimitSection;
+	byte overrideParentSettingsForVirtualVoiceSection;
+	
+	// This stuff is different from the xentax article:
+	byte unknownCount0;
+	byte unknownCount1;
+	byte unknownCount2;
+	byte unknownCount3;
+	
+	// TODO!!!!
+	if (unknownCount0>0)
+	{
+		struct UnknownParams1
+		{
+			byte u1;
+			short unk1;
+			int unknown1;
+			int unknown2[unk1];
+		} unknownParams1[unknownCount1] <optimize=false>;
+		struct UnknownParams2
+		{
+			byte u0;
+			short unk0;
+			struct SubParam1
+			{
+				float unknown0;
+				float unknown1;
+				int unknown2;
+			} subParam[unk0];
+			int unknown0;
+			int unknown1;
+			int unknown2;
+		} unknownParams2[unknownCount2] <optimize=false>;
+		struct UnknownParams3
+		{
+			byte u0;
+			short unk0;
+			struct SubParam3
+			{
+				float unknown0;
+				float unknown1;
+				int unknown2;
+			} subParam[unk0];
+		} unknownParams3[unknownCount3] <optimize=false>;
+	}
+	
+	uint rtpcCount;
+	struct Rtpc
+	{
+		float unknown4;
+		byte unknown0;
+		ushort unknown1;
+		uint unknown2;
+		uint unknown3;
+	};
+	if (rtpcCount > 0)
+		rtpc[rtpcCount];
+	
+	if (unknownCount0==0)
+	{
+		FSkip(6);
+	}
+};
