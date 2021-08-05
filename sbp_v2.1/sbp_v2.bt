@@ -1,0 +1,548 @@
+// SBP - SoundBank Package
+// By RLC, based on: https://wiki.xentax.com/index.php/Wwise_SoundBank_(*.bnk) https://github.com/secaproject/SBP_tool
+// Further modified by Half Way Lambda as v2.1
+
+enum <byte> ObjectType{
+	Settings=1,
+	Sound=2,
+	EventAction=3,
+	Event=4,
+	SequenceContainer=5, // or random container
+	SwitchContainer=6,
+	ActorMixer=7,
+	AudioBus=8,
+	BlendContainer=9,
+	MusicSegment=10,
+	MusicTrack=11,
+	MusicSwitchContainer=12,
+	MusicPlaylistContainer=13,
+	Attenuation=14,
+	DialogueEvent=15,
+	MotionBus=16,
+	MotionFX=17,
+	Effect=18,
+	Unknown=19,
+	AuxillaryBus=20,
+};
+
+// HWL import all the other files we need, just for the sake of decreasing
+// the size of this template
+#include "soundstructure.bt"
+#include "obj_settings.bt"
+#include "obj_sound.bt"
+#include "obj_eventaction.bt"
+
+#include "info_print.bt"
+
+#define soundBankHeader_color 0x636F13
+#define BankHeader_color 0x3CCAE0
+#define Hierarchy_color 0x1342F3
+#define StreamId_color 0x5B2F3E
+#define DataIndex_color 0x558CEA
+
+struct BankHeader
+{
+	int sectionSize;
+	local int startOfSection = FTell();
+	int soundBankVersion <comment="TPP is 88">;
+	uint soundBankId <comment="FNV132 hash of the .sbp name">; 
+	int unknown0 <comment="12 in TPP/MGO vox/SSD, 0 in MGO bgm/GZ/PT?">;
+	int unknown1 <comment="Usually 1?">;
+	int unknown2 <comment="Varies?">;
+	FSkip( (sectionSize + startOfSection) - FTell() ); // Different with more padding in PS3 vox_hideo? Unreasonably huge padding size in PT/sh soundbanks
+};
+
+struct Object
+{
+	ObjectType objectType <bgcolor=0xffab00>;
+	int objectSize;
+	uint objectId <comment="FNV132 hash", bgcolor=0xabff00>;
+	
+	// HWL for printing useful info at the console
+	printType(objectType);
+	openBracket();
+	Printf( "Obj ID: " );
+	Printf( "%u", objectId );
+	Printf("\n");
+	
+	switch (objectType)
+	{
+		case Settings:
+			byte settingsCount;
+			ObjectSettingsType settingType[settingsCount];
+			float settingValue[settingsCount];
+			break;
+			
+		case Sound:
+			uint flagsUnknown;
+			ObjectSoundEmbedOrStream embedOrStream;
+			uint audioFileId;
+			uint sourceId <comment="If streamed, same as audioFileId. If embedded, the soundBankId.">;
+			if (embedOrStream==Embedded)
+			{
+				int offsetToSoundFile;
+				int lengthOfSoundFile;
+			}
+			ObjectSoundType soundType;
+			SoundStructure soundStructure <optimize=false>;
+			break;
+			
+		case EventAction:
+			ScopeEventAction scope_of_event_action;
+			ActionType action_type;
+			uint id_of_game_obj_referenced_above <comment="This is zero if there is no game object." , bgcolor=0xD8C5EA>;
+			// Always zero, according to the wiki
+			FSkip(1);
+			ubyte additional_params;
+			
+			local int i;
+			for (i = 0; i < additional_params; ++i)
+			{
+				EventParameterType parameter_type;
+				if (parameter_type == DELAY || parameter_type == PLAY)
+					uint milliseconds;
+				else if (parameter_type == PROBABILITY)
+					float probability;
+			}
+			// Always zero, according to the xentax wiki
+			FSkip(1);
+			
+			if (action_type == SET_STATE || action_type == SET_SWITCH)
+			{
+				uint state_group_id;
+				uint state_id;
+			}
+			break;
+			
+		case Event:
+			uint num_event_actions;
+			local int i;
+			for (i = 0; i < num_event_actions; ++i)
+			{
+				uint event_action_ID <bgcolor=0x66D1FF>;
+				
+				Printf("Event #");
+				Printf("%u", i);
+				Printf(" --> ");
+				Printf("%u", event_action_ID);
+				Printf("\n");
+			}
+			break;
+
+		case ActorMixer: // HWL According to PS3 files. This is ugly.
+			ubyte u1;
+			ubyte u2;
+			uint unknown0;
+			
+			FSkip(3);
+			
+			// These two are usually the same?
+			ubyte u3;
+			ubyte u4;
+			
+			FSkip(1);
+			ubyte bytes[4];
+			
+			ubyte u5;
+			uint unknown1;
+			uint unknown2;
+			ushort u55;
+			
+			ubyte u6;
+			ubyte u7;
+			uint unknown3;
+			uint unknown4;
+			
+			FSkip(2);
+			ubyte u8;
+			
+			FSkip(2);
+			ushort u9;
+			ubyte u10;
+			
+			FSkip(1);
+			ubyte u11;
+			
+			FSkip(3);
+			
+			uint unknown5;
+			uint object_ID <comment="Definitely an object ID, so an FNV132 hash">;
+			
+			// HWL can't remember why i commented this out..i guess it went out of range?
+			/*
+			FSkip(15);
+			uint wems_counter;
+			
+			// Just a fail safe.
+			if ( (wems_counter & 0x0000FFFF) > 0)
+			{
+				uint wem_IDs_with_offset[wems_counter] <comment="These wem IDs are +2 of their wem ID from what I can tell.">;
+			}
+			*/
+			break;
+			
+		case DialogueEvent:
+			struct DialogueEventObject{
+				byte unknown0;
+				uint unknown1;
+				
+				uint unknown2;
+				uint unknown3;
+				
+				byte unknown4;
+				byte unknown5;
+				
+				uint sizeOfEntryArray;
+				
+				byte unknown7;
+				
+				struct DialogueEventEntr0
+				{
+					uint empty;
+					ushort unk2;
+					ushort unk3;
+					ushort unk0;
+					ushort unk1;
+					
+				} dialogueEventEntr0[unknown4];
+				
+				struct DialogueEventVoiceType
+				{
+					uint voiceType;
+					ushort unk2;
+					ushort unk3;
+					ushort unk0;
+					ushort unk1;
+					
+				} dialogueEventVoiceType[unknown5];
+				
+				struct DialogueEventEntry
+				{
+					uint voiceId;
+					uint wemId;
+					ushort unk0;
+					ushort unk1;
+				} dialogueEntry[(sizeOfEntryArray/12)-(unknown4+unknown5)] <optimize=false>;
+				
+			} dialogueEventObject;
+			break;
+			
+		case MusicSegment:
+			SoundStructure soundstructure;
+			
+			uint children_count;
+			
+			// HWL NOTE: commented this out because the sound structure has corruption
+			// problems..
+			
+			//if (children_count > 0)
+				//uint children_IDs[children_count];
+			
+			FSkip(5); // HWL god i hope this doesn't break anything..
+			// EDIT: oh it sure does! but i can't find any other
+			// good fix as of now..
+			
+			//while ( ReadUByte() == 0 )
+			//{
+			//	FSkip(1);
+			//}
+			
+			uint num_of_music_tracks;
+			uint music_track_obj_ids[num_of_music_tracks];
+			
+			
+			double d1;
+			uint64 uint64_1;
+			
+			float tempo;
+			byte signature_one;
+			byte signature_two;
+			
+			uint u1;
+			byte b1;
+			
+			// i think this skip is also needed here
+			//FSkip(4);
+			double time_length;
+			
+			uint u2;
+			uint u3;
+			uint64 uint64_2;
+			uint u4;
+			uint u5;
+			
+			double time_length_next;
+			uint u6;
+			
+			// HWL according to WolvenKit, the rest is ignored if
+			// more stuff exists
+			
+			break;
+			
+		case MusicPlaylistContainer: // early implementation
+			SoundStructure soundstructure;
+			uint num_of_music_segments <comment="Music Segments that are part of this playlist">;
+			
+			// HWL NOTE: disabling this because of issues with the sound structure destroying
+			// everything
+			
+			//if (num_of_music_segments > 0)
+			//	uint segment_IDs[num_of_music_segments];
+			
+			// Xentax article for the following 2:
+			//FSkip(4);
+			//float unknown;
+			
+			break;
+	}
+	
+	// HWL for printing to console purposes
+	closeBracket();
+	
+};
+
+struct Hierarchy
+{
+	int sectionSize;
+	int objectCount;
+	
+	local long startObjectPos = FTell();
+	local int curObj;
+	
+	// HWL i renamed this to curObj instead of i, because 010 is
+	// dumb and would reset the number i because the same name is
+	// reused in other structures...
+	for (curObj = 0; curObj < objectCount; ++curObj)
+	{
+		Object object <optimize=false>;
+		
+		// HWL it's +5 since there always appears to be 5 empty
+		// bytes between every object.
+		FSeek(startObjectPos + object.objectSize + 5);
+		startObjectPos = FTell();
+	}
+};
+
+struct StreamId
+{
+	int sectionSize;
+	int unknown0;
+	int streamIdsCount;
+	struct StreamIds
+	{
+		uint streamId <comment="FNV132 hash of the following string">; 
+		ubyte streamIdStringLength;
+		char streamIdString[streamIdStringLength];
+		
+	} streamIds[streamIdsCount] <optimize=false>;
+	
+};
+
+struct StreamedPackage
+{
+	char sign[4];
+	short wemCount;
+	byte hasLipSync;
+	FSkip(1);
+	
+	struct StreamedWemDefiniton
+	{
+		uint streamedPackageId <comment="FNV132 hash?">;
+		int offsetToWem;
+		if (hasLipSync==1)
+			int offsetToLip;
+		
+	} streamedWemDefinition[wemCount] <optimize=false>;
+	
+	if (FTell() % 16 != 0)
+		FSkip(16 - (FTell() % 16));
+	
+	local int index = 0;
+	struct RiffStreamed
+	{
+		if (hasLipSync == 1)
+		{
+			struct LipFile
+			{
+				char libBytes[streamedWemDefinition[index].offsetToWem - streamedWemDefinition[index].offsetToLip];
+				
+			} lipFile;
+		}
+		
+		local int size = 0;
+		if (index + 1 < wemCount)
+			if (hasLipSync == 1)
+				size = (streamedWemDefinition[index+1].offsetToLip - streamedWemDefinition[index].offsetToWem);
+			else
+				size = (streamedWemDefinition[index+1].offsetToWem - streamedWemDefinition[index].offsetToWem);
+		else
+			size = (endOfStp - streamedWemDefinition[index].offsetToWem);
+		
+		char riffData[size];
+		
+		index += 1;
+		
+	} riffStreamed[wemCount] <optimize=false>;
+};
+
+struct DataIndex
+{
+	int offsetsSize;
+	struct EmbeddedWemDefinition
+	{
+		uint wemName <comment="FNV132 hash?">;
+		int offsetToStart;
+		int size;
+		
+	} embeddedWemDefiniton[offsetsSize / 12];
+	// DATA + garbage4bytes only appears if the definitions don't end up with an aligned stream????
+	if (FTell() % 16 != 0)
+		FSkip(16 - (FTell() % 16));
+	
+	local int index = 0;
+	local int startOfArray = FTell();
+	struct RiffEmbed
+	{
+		// ok seems to be inconsistent between GZ, TPP and SBP_Tool output as to whether it wants to align te stream
+		// so this might leave the riff files with empty bytes at the start
+		FSkip( (startOfArray+embeddedWemDefiniton[index].offsetToStart) - FTell() );
+		
+		char riffData[embeddedWemDefiniton[index].size];
+		
+		index += 1;
+		
+	} riffEmbed[offsetsSize / 12] <optimize=false>;
+};
+
+// HWL custom soundbanks don't have any SBPL (or SBPB) section
+local int has_soundbankheader = 0;
+if ( (ReadUInt() == 1280328275) || (ReadUInt() == 1112556115) ) // == "SBPL" or "SBPB"
+	has_soundbankheader = 1;
+
+struct SoundBankHeader
+{
+	char sign[4];
+	
+	switch (sign)
+	{
+		case "SBPL":
+			LittleEndian();
+			break;
+		case "SBPB":
+			BigEndian();
+			break;
+	}
+	
+	if (sign != "BKHD")
+	{
+		ubyte sectionCount;
+		ubyte bytesToSectionDefinitions;
+		FSkip(2);
+		struct SectionDefinition
+		{
+			char sign[4]; // "bnk" or "sab" or "stp"
+			int offsetToSection;
+			int sectionSize;
+			
+		} sectionDefinition[sectionCount];
+		
+		Assert(bytesToSectionDefinitions==FTell(),"SectionDefinitions size incorrect!!!");
+	}
+	
+};
+
+if (has_soundbankheader == 1)
+{
+	SoundBankHeader soundBankHeader <bgcolor=soundBankHeader_color>;
+	
+	if (FTell() % 16 != 0)
+	FSkip(16 - (FTell() % 16));
+}
+
+local int currentSection = 0;
+local int startOfSection = FTell();
+local int endOfStp = 0;
+
+struct Section0 {
+	char sign[4];
+	
+	switch (sign)
+	{
+		case "BKHD":
+			BankHeader bankHeader <bgcolor=BankHeader_color, comment="Bank Header">;
+			break;
+		case "HIRC":
+			Hierarchy hierarchy <bgcolor=Hierarchy_color, comment="Object Hierarchy">;
+			break;
+		case "STID":
+			StreamId streamId <bgcolor=StreamId_color, comment="Stream Ids">;
+			break;
+		case "DIDX":
+			DataIndex dataIndex <bgcolor=DataIndex_color, comment="Embedded .wem sounds">;
+			break;
+		default:
+			Assert(2+2==5,"Unknown section!!!!!");
+			break;
+	}
+	
+	
+};
+
+struct Sections
+{
+	startOfSection = FTell();
+
+	Assert(soundBankHeader.sectionDefinition[currentSection].offsetToSection==FTell(),"Offset to start of Section is incorrect!!!!");
+	
+	if (soundBankHeader.sectionDefinition[currentSection].sign == "bnk")
+	{
+		while (FTell() < startOfSection + soundBankHeader.sectionDefinition[currentSection].sectionSize)
+			Section0 section0;
+		
+		if (FTell() % 16 != 0)
+			FSkip(16 - (FTell() % 16));
+		
+	}
+	else if (soundBankHeader.sectionDefinition[currentSection].sign == "sab")
+	{
+		FSkip(soundBankHeader.sectionDefinition[currentSection].sectionSize);
+		/*
+ 		struct Section1
+		{
+			char sign[4];
+			int entryCount;
+			struct Sa3Params
+			{
+				uint64 unknown0;
+				int unknown1;
+				int unknown2;
+				
+			} sa3Params[entryCount];
+			struct Sa3Entry
+			{
+				// No idea lol
+			} sa3Entry[entryCount];
+			
+		} section1;
+		*/
+	}
+	else if (soundBankHeader.sectionDefinition[currentSection].sign == "stp")
+	{
+		endOfStp = soundBankHeader.sectionDefinition[currentSection].sectionSize;
+		struct Section2
+		{
+			StreamedPackage streamedPackage <bgcolor=StreamId_color, comment="Streamed .wem sounds">;
+			
+		} section2;
+	};
+	
+	currentSection += 1;
+};
+
+
+if (has_soundbankheader == 1)
+	Sections sections[soundBankHeader.sectionCount] <optimize=false>;
+else
+	while (true) // HWL i don't know how many section0s there are, so just make new
+	// ones until we get to the end of the file.
+	Section0 section0 <optimize=false>;
