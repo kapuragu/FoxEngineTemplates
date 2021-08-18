@@ -65,6 +65,7 @@ if (header.version == 3) // if TPP
 				// The flags must also somehow define whether the entries are all played 
 				// in order or if it should randomly pick one to play, and more
 			
+				// Byte 0
 				ubyte flag0 : 4; //?
 				ubyte callType : 4;
 				// if 0, short real time noise. 
@@ -72,14 +73,16 @@ if (header.version == 3) // if TPP
 				// if 4, optional radio noise, 
 				// if 8, short real time intro noise, 
 				// if 10, also short real time intro noise
+				
+				// Byte 1
 				ubyte flag2; //?
 				
-				//Read bits 16-22 of the bitfield as the label count:
-				ubyte labelClipCountBits4 : 4 <hidden=true>;
-				ubyte labelClipCountBits6 : 2 <hidden=true>;
-				local ubyte labelClipCount = (ubyte)labelClipCountBits4 + ((ubyte)labelClipCountBits6 * 0x10); 
-				ubyte flag52 : 2;
+				// Byte 2
+				//Read bits 1-6 of the byte as the label count:
+				ubyte labelClipCount : 6;
+				ubyte flag52 : 2; // unknown but used bits
 				
+				// Byte 3
 				ubyte flag6; //something to do with randomization 
 				
 				FSkip(2);
