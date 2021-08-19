@@ -71,8 +71,8 @@ if (header.version == 3) // if TPP
 				// if 0, short real time noise. 
 				// if 2, haves espionage radio noise. 
 				// if 4, optional radio noise, 
-				// if 8, short real time intro noise, 
-				// if 10, also short real time intro noise
+				// if 8, map radio
+				// if 10, mission image radio
 				
 				// Byte 1
 				ubyte flag2; //?
@@ -85,14 +85,17 @@ if (header.version == 3) // if TPP
 				// Byte 3
 				ubyte flag6; //something to do with randomization 
 				
-				FSkip(2);
+				// RadioData_comn1000.rdf 0x709 WHAT THE FUCK it's not padding?
+				ubyte flag8;
+				ubyte flag10;
+				
 				
 				struct voiceClipSubEntry
 				{
 					uint voiceId;	// Sometimes isn't a voice clip id, but a variationSetName; check section 3
 					//fnv321: very often, if not always, is just tolower of the subtitle/msgId: ie abcd1000_101010
-					ubyte flag0;	// No idea
-					ubyte voiceTypeIndex; //Can be 15/invalid
+					ubyte flag0;	// Can be 255/invalid
+					ubyte voiceTypeIndex; // Can be 255/invalid
 					ubyte flag6;
 						
 				} voiceClipSubEntries[labelClipCount] <optimize=false>;
