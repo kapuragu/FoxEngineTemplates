@@ -34,6 +34,9 @@ enum <byte> ObjectType{
 
 #include "info_print.bt"
 
+#include "sbp_sab.bt"
+#include "sbp_laddie.bt"
+
 #define soundBankHeader_color 0x636F13
 #define BankHeader_color 0x3CCAE0
 #define Hierarchy_color 0x1342F3
@@ -145,7 +148,7 @@ struct Object
 			
 			ubyte u5;
 			uint unknown1;
-			uint unknown2;
+			uint parentObjectId <bgcolor=0xDED272>;
 			ushort u55;
 			
 			ubyte u6;
@@ -184,45 +187,36 @@ struct Object
 		case DialogueEvent:
 			struct DialogueEventObject{
 				byte unknown0;
-				uint unknown1;
+				uint groupCount;
 				
-				uint unknown2;
-				uint unknown3;
+				uint groupName[groupCount] <comment="Definitely an object ID, so an FNV132 hash">;
+				//RLC: Real-time radio notes;
+				// 434268486 chara
+				// 3703962904 condition
 				
-				byte unknown4;
-				byte unknown5;
+				byte switchOrState[groupCount];
 				
 				uint sizeOfEntryArray;
 				
 				byte unknown7;
 				
-				struct DialogueEventEntr0
+				struct groupDefinition
 				{
-					uint empty;
-					ushort unk2;
-					ushort unk3;
-					ushort unk0;
-					ushort unk1;
+					uint groupName;
+					ushort parentStateGroupIndex;
+					ushort childrenCount;
+					ushort probability;
+					ushort weight;
 					
-				} dialogueEventEntr0[unknown4];
+				} dialogueEventEntr0[groupCount];
 				
-				struct DialogueEventVoiceType
-				{
-					uint voiceType;
-					ushort unk2;
-					ushort unk3;
-					ushort unk0;
-					ushort unk1;
-					
-				} dialogueEventVoiceType[unknown5];
-				
-				struct DialogueEventEntry
+				struct Path
 				{
 					uint voiceId;
 					uint wemId;
-					ushort unk0;
-					ushort unk1;
-				} dialogueEntry[(sizeOfEntryArray/12)-(unknown4+unknown5)] <optimize=false>;
+					ushort probability;
+					ushort weight;
+				} dialogueEntry[(sizeOfEntryArray/12)-(groupCount)] <optimize=false>;
 				
 			} dialogueEventObject;
 			break;
@@ -360,13 +354,12 @@ struct StreamedPackage
 	local int index = 0;
 	struct RiffStreamed
 	{
-		if (hasLipSync == 1)
+		local int preLipIndexCheck = FTell();
+		if (hasLipSync==1)
 		{
-			struct LipFile
-			{
-				char libBytes[streamedWemDefinition[index].offsetToWem - streamedWemDefinition[index].offsetToLip];
-				
-			} lipFile;
+			if ((streamedWemDefinition[index].offsetToWem-streamedWemDefinition[index].offsetToLip)>0)
+				Laddie lipFile;
+			Assert(FTell()-(streamedWemDefinition[index].offsetToWem-streamedWemDefinition[index].offsetToLip)==preLipIndexCheck,"Laddie didn't parse all!!!");
 		}
 		
 		local int size = 0;
@@ -505,26 +498,7 @@ struct Sections
 	}
 	else if (soundBankHeader.sectionDefinition[currentSection].sign == "sab")
 	{
-		FSkip(soundBankHeader.sectionDefinition[currentSection].sectionSize);
-		/*
- 		struct Section1
-		{
-			char sign[4];
-			int entryCount;
-			struct Sa3Params
-			{
-				uint64 unknown0;
-				int unknown1;
-				int unknown2;
-				
-			} sa3Params[entryCount];
-			struct Sa3Entry
-			{
-				// No idea lol
-			} sa3Entry[entryCount];
-			
-		} section1;
-		*/
+		StreamAnimationLip streamAnimationLip;
 	}
 	else if (soundBankHeader.sectionDefinition[currentSection].sign == "stp")
 	{

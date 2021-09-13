@@ -1,0 +1,294 @@
+// All the stuff used for the SoundStructure, including the struct itself
+
+enum <byte> Boolean
+{
+	is_false = 0,
+	is_true = 1,
+};
+
+enum <byte> SoundStrctureParameterType
+{
+	GeneralSettingsVoiceVolume=0,
+	GeneralSettingsVoicePitch=2,
+	GeneralSettingsVoiceLowPassFilter=3,
+	AdvancedSettingsPlaybackPriorityPriority=5, // this is the playback speed!
+	AdvancedSettingsPlaybackPriorityOffsetPriorityByMaxDistance=6,
+	Loop=7,
+	MotionAudioToMotionSettingsMotionVolumeOffset=8,
+	Positioning2DPannerXCoordinate=11,
+	Positioning2DPannerXCoordinate2=12,
+	PositioningCenterPercent=13,
+	GeneralSettingsUserDefinedAuxillarySendsBus0Volume=18,
+	GeneralSettingsUserDefinedAuxillarySendsBus1Volume=19,
+	GeneralSettingsUserDefinedAuxillarySendsBus2Volume=20,
+	GeneralSettingsUserDefinedAuxillarySendsBus3Volume=21,
+	GeneralSettingsGameDefinedAuxillarySendsVolume=22,
+	GeneralSettingsOutputBusVolume=23,
+	GeneralSettingsOutputBusLowPassFilter=24,
+};
+
+enum <byte> CoordinateDimension
+{
+	Pos2D=0,
+	Pos3D=1,
+};
+
+enum <uint> PositionSourceType
+{
+	UserDefined=2,
+	GameDefined=3,
+};
+
+enum <uint> PlayType
+{
+	SequenceStep=0,
+	RandomStep=1,
+	SequenceContinuous=2,
+	RandomContinuout=3,
+	SequenceStepPickNewPathWhenStarts=4,
+	RandomStepPickNewPathWhenStarts=5,
+};
+
+
+
+// ===================
+// The structure here
+// ===================
+struct SoundStructure
+{
+	Boolean overrideParentSettings;
+	byte effectsCount;
+	if (effectsCount > 0)
+		enum <byte> BitMask
+		{
+			BYPASS_EFFECT_0 = 0x00000001,
+			BYPASS_EFFECT_1 = 0x00000010,
+			BYPASS_EFFECT_2 = 0x00000100,
+			BYPASS_EFFECT_3 = 0x00001000,
+			BYPASS_ALL = 0x00010000
+		} bitmask;
+		//byte bypassEffectBitmask;
+	
+	struct SoundStrctureEffects
+	{
+		byte effectIndex;
+		uint effectObjectId;
+		FSkip(2);
+		
+	}; 
+	if (effectsCount > 0)
+		SoundStrctureEffects soundstructure_effects[effectsCount] <optimize=false>;
+	
+	uint outputBusId;
+	uint parentObjectId <bgcolor=0xDED272>;
+	
+	// for printing to console
+	Printf("Parent Obj ID: ");
+	Printf("%u", parentObjectId);
+	Printf("\n");
+	
+	Boolean overrideSettingsForPlaybackPriority;
+	Boolean activateOffsetPriorityByDistanceSetting;
+	byte additionalParametersCount;
+	
+	if (additionalParametersCount > 0)
+		SoundStrctureParameterType additionalParameters[additionalParametersCount];
+	
+    local int index;
+    for (index = 0; index < additionalParametersCount; index++)
+	{
+		if (additionalParameters[index]==7)
+			uint32 parameterValueInt;
+		else
+			float parameterValueFloat;
+	}
+	
+	//FSkip(1);
+	Boolean includePositioningSection;
+	if (includePositioningSection == is_true)
+	{
+		CoordinateDimension coordinateDimension;
+		if (coordinateDimension == Pos2D)
+			Boolean enablePanner;
+		else if (coordinateDimension == Pos3D)
+		{
+			PositionSourceType positionSourceType;
+			uint attenuationObjectId;
+			Boolean enableSpatialization;
+			if (positionSourceType == UserDefined)
+			{
+				PlayType playType;
+				Boolean isLoop;
+				uint transitionTime;
+				Boolean followListenerOrientation;
+			}
+			else if (positionSourceType == GameDefined)
+				Boolean updateAtEachFrame;
+		}
+		else // from WolvenKit code
+		{
+			uint u1;
+			uint u2;
+		}
+	}
+	Boolean overrideParentSettingsForGameDefinedAuxillarySends;
+	Boolean useGameDefinedAuxillarySends;
+	Boolean overrideParentSettingsForUserDefinedAuxillarySends;
+	Boolean isUserDefinedAuxillarySends;
+	
+	if (isUserDefinedAuxillarySends == is_true)
+	{
+		uint auxillaryBus0Id;
+		uint auxillaryBus1Id;
+		uint auxillaryBus2Id;
+		uint auxillaryBus3Id;
+	}
+	
+	Boolean unknownParameterForPlaybackLimitSection;
+	
+	if (unknownParameterForPlaybackLimitSection == is_true)
+	{
+		//byte oldOrNewInstanceToDiscard;
+		enum <byte> InstanceToDiscard
+		{
+			Oldest = 0,
+			Newest = 1,
+		} instance_to_discard;
+		
+		//byte killVoiceOrUseVirtualVoiceSettings;
+		enum <byte> LimitReached
+		{
+			Kill_voice = 0,
+			Use_virtual_voice_settings = 1,
+		} when_limitreached;
+		
+		ushort limitSoundInstancesTo;
+	}
+	byte howToLimitSoundInstances;
+	byte virtualVoiceBehavior;
+	Boolean overrideParentSettingsForPlaybackLimitSection;
+	Boolean overrideParentSettingsForVirtualVoiceSection;
+	
+	// HWL All the following are borrowed from WolvenKit
+	uint stage_groups_count;
+	
+	// ========================
+	// THIS SHIT CAN BREAK!
+	// ========================
+	/*
+	if (stage_groups_count > 0)
+	{
+		local int i;
+		for (i = 0; i < stage_groups_count; ++i)
+		{
+			struct SoundStrcture_StateGroup
+			{
+				uint ID;
+				byte change_occurs;
+				ushort different;
+				
+				local int j;
+				for (j = 0; j < different; ++j)
+				{
+					uint ID;
+					uint ID_object_contain;
+				}
+				
+			} soundstructure_stategroup;
+		}
+	}
+	*/
+	
+	uint16 RTPC_count;
+	if (RTPC_count > 0)
+	{
+		local int i;
+		for (i = 0; i < RTPC_count; ++i)
+		{
+			struct SoundStrcture_RTPC
+			{
+				uint x_axis_ID;
+				uint y_axis_type;
+				uint u1;
+				byte b1;
+				ubyte points_count;
+				byte b2;
+				
+				local int j;
+				for (j = 0; j < points_count; ++j)
+				{
+					float x_coords;
+					float y_coords;
+					uint curve_shape;
+				}
+			} soundstructure_RTPC;
+		}
+	}
+	
+	uint unknown0;
+	if (unknown0 > 0)
+		byte data;
+	
+	
+	/*
+	// This stuff is different from the xentax article:
+	byte unknownCount0;
+	byte unknownCount1;
+	byte unknownCount2;
+	byte unknownCount3;
+	
+	// TODO!!!!
+	if (unknownCount0>0)
+	{
+		struct UnknownParams1
+		{
+			byte u1;
+			short unk1;
+			int unknown1;
+			int unknown2[unk1];
+		} unknownParams1[unknownCount1] <optimize=false>;
+		struct UnknownParams2
+		{
+			byte u0;
+			short unk0;
+			struct SubParam1
+			{
+				float unknown0;
+				float unknown1;
+				int unknown2;
+			} subParam[unk0];
+			int unknown0;
+			int unknown1;
+			int unknown2;
+		} unknownParams2[unknownCount2] <optimize=false>;
+		struct UnknownParams3
+		{
+			byte u0;
+			short unk0;
+			struct SubParam3
+			{
+				float unknown0;
+				float unknown1;
+				int unknown2;
+			} subParam[unk0];
+		} unknownParams3[unknownCount3] <optimize=false>;
+	}
+	
+	uint rtpcCount;
+	struct Rtpc
+	{
+		float unknown4;
+		byte unknown0;
+		ushort unknown1;
+		uint unknown2;
+		uint unknown3;
+	};
+	if (rtpcCount > 0)
+		Rtpc rtpc[rtpcCount];
+	
+	if (unknownCount0==0)
+	{
+		FSkip(6);
+	}
+	*/
+};
