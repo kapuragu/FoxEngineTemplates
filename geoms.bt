@@ -9,14 +9,14 @@ LittleEndian();
 #define COLOR_SECTION3 0xB9E8DD
 
 
-struct Vector3
+struct Float3
 {
     float x;
     float y;
     float z;
 };
 
-struct Vector4
+struct Float4
 {
     float x;
     float y;
@@ -24,29 +24,10 @@ struct Vector4
     float w;
 };
 
-struct Indices
+struct Quad
 {
 	ushort indices[4];
 };
-
-struct Header
-{
-    uint version;
-    uint endOfHeaderOffset;
-    uint fileLength;
-
-    uint u1;
-    Assert(u1 == 7050094);
-
-    uint u2 <hidden=true>;
-    uint u3 <hidden=true>;
-   
-    Assert(u2 == 0);
-    Assert(u3 == 0);
-
-    uint hash1;
-    uint hash2;
-} header <bgcolor=COLOR_HEADER>;
 
 struct SubVerticesChunk
 {
@@ -59,30 +40,25 @@ struct SubVerticesChunk
 	// another line of zeroes.
 	FSkip(16);
 	
-	Vector4 vertices[verticesCount-1];
+	Float4 vertices[verticesCount-1];
 };
 
 struct FaceChunk
 {
-    local uint terminatorCount = (datachunk_ID & 0xff000000) >> 24;
-	
-	// this "active" uint is needed in order to have a counter that
-	// decreases.
-	local uint terminatorCountActive = terminatorCount;
+    local uint quadCount = (DataChunkID & 0xff000000) >> 24;
 	
 	// always zero, so skip 'em.
 	FSkip(12);
 	uint vals[4];
-	
-	while ( terminatorCountActive > 0 )
-	{
-		Indices indices;
-		
-		// terminator byte here, so skip it.
-		FSkip(2);
-		terminatorCountActive -= 1;
-	}
 
+    local uint _i;
+    for (_i = 0; _i < quadCount; _i++)
+    {
+        Quad quadIndices;
+        FSkip(2);
+    }
+
+    // 16-byte alignment
     if (FTell() % 16 != 0)
     {
         FSkip(16 - (FTell() % 16));
@@ -93,7 +69,7 @@ struct FaceChunk
 	// file left. this check makes sure we don't make a sub
 	// vertices chunk if that happens (this doesn't work most
 	// of the time though, but just ignore the error).
-	if ( FTell() + 32 < header.fileLength )
+	if ( FTell() + 32 < header.FileSize )
 	{
 		// dirty hack: check if the number of vertices is way too
 		// ridiculous to be true. if it's normal, then it's surely a
@@ -107,25 +83,25 @@ struct FaceChunk
 
 struct DataChunk
 {
-    uint datachunk_ID;
+    uint DataChunkID;
 
 	// make sure we don't make any more headway in the data chunk if we've
 	// clearly hit the end of the file.
-	if ( FTell() + 32 < header.fileLength )
+	if ( FTell() + 32 < header.FileSize )
 	{
 		// spotted a weird case where a first wasn't 0x01020004, but it had
 		// one bit that was the same in 0x01020004, so i'm adding that
 		// to the check.
-		if (datachunk_ID == 0x01020004 || ( datachunk_ID & 0x4 ) == 0x4 )
+		if (DataChunkID == 0x01020004 || ( DataChunkID & 0x4 ) == 0x4 )
 		{
 			Printf("Position chunk");
 			Printf( " (0x%LX)\n",FTell() );
-			uint vals[28/4];
+			uint Vals[28/4];
 	
-			Vector4 p1;
-			Vector4 p2;
+			Float4 p1;
+			Float4 p2;
 		}
-		else if ((datachunk_ID & 0x00000002) == 0x00000002 && (datachunk_ID & 0xff000000) != 0)
+		else if ((DataChunkID & 0x00000002) == 0x00000002 && (DataChunkID & 0xff000000) != 0)
 		{
 			Printf("Index buffer");
 			Printf( " (0x%LX)\n",FTell() );
@@ -136,25 +112,33 @@ struct DataChunk
 
 struct Chunk16
 {
-    uint vals[4];
-    uint dataChunkOffset;
+    uint Vals[4];
+    uint DataChunkOffset;
+    uint DataBlobSize;
+    uint Unknown[DataBlobSize / sizeof(uint)];
 };
 
-
-// the continuation of Chunk16
-struct Chunk17
+struct BytePairs
 {
-	uint endOfChunk17Offset;
-	while (FTell() < chunk17startpos + endOfChunk17Offset - 12)
-	{
-		int unknownInt;
-	}
+	byte SB1;
+	byte SB2;
 };
 
-struct bytePairs
+// the continuation of Chunk10
+struct Chunk10_Subsection1
 {
-	byte b1;
-	byte b2;
+	Float3 Vector;
+	uint UI1;
+	
+	uint UI2;
+	uint UI2;
+	
+	// the ps3 files with different endianness proves this is
+	// an int64.
+	int64 L1;
+	
+    // JOEY: Huge guess: perhaps Section2Offset aka 'section1_endPointOffset' is the size of the byte pairs blob?
+    BytePairs Pairs[chunk10.BytePairsCount / 2];
 };
 
 struct Chunk10_Subsection2_Parts
@@ -163,19 +147,24 @@ struct Chunk10_Subsection2_Parts
 	// compared to the ps3 counterparts that have different
 	// endianness.
 	FSkip(1);
-	byte b1;
-	ushort some_counter;
+	byte B1;
+	ushort UnknownCount; // HWL: "Unknown counter"
 	
-	ushort u2;
+	ushort US2;
 	FSkip(2);
 	
-	ushort u3;
+	ushort US3;
 	FSkip(2);
 	
-	int i1;
-	int i2;
-	int i3;
-	double d1;
+	int I1;
+	int I2;
+	int I3;
+	double D1;
+};
+
+struct Chunk10_Subsection2
+{
+	Chunk10_Subsection2_Parts chunk10subsection2parts[chunk10.Section2Count] <optimize=false>;
 };
 
 struct Chunk10_Subsection3
@@ -218,169 +207,119 @@ struct Chunk10_Subsection3
 		while ( ReadUInt() == 0 ) FSkip(4);
 	}
 };
-
-struct Chunk10_Subsection2
-{
-	Chunk10_Subsection2_Parts chunk10subsection2parts[chunk10.section2count] <optimize=false>;
-};
-
-// the continuation of Chunk10
-struct Chunk10_Subsection1
-{
-	// the first three are surely floats, but the last isn't.
-	// maybe a flag?
-	int int_pair[3];
-	uint flag;
-	
-	// these 2 are very important, since all the byte pairs rely on these local end positions.
-	local double section1_endPoint = chunk10.chunk10StartPoint + chunk10.section1_endPointOffset;
-	local double section2_endPoint = chunk10.chunk10StartPoint + chunk10.section2_endPointOffset;
-	
-	uint somenum1;
-	uint somenum2;
-	
-	// the ps3 files with different endianness proves this is
-	// an int64.
-	int64 i64;
-	
-/*
-	// sometimes the ending position of section1 is also the starting point, meaning that
-	// there's no section1 and it goes into section2 instantly.
-	if ( section1_endPoint - FTell() > 0 )
-	{
-		bytePairs bytepairs_primary[ ( section1_endPoint - FTell() ) / 2 ];
-	}
-	bytePairs bytepairs_secondary[ ( section2_endPoint - FTell() ) / 2 ];
-*/
-    bytePairs bytepairs[chunk10.section1_endPointOffset / 2];
-};
-
-
 struct Chunk10
 {
-	local double chunk10StartPoint = FTell();
+    local long chunk10StartPos = FTell();
+
+    Float3 P1;
+    ushort BytePairsCount;
+    ushort Section2Count;
+    Float3 P2;
+	uint Section2Offset;
 	
-    Vector3 p1;
-    ushort section1_endPointOffset;
-    ushort section2count;
-    Vector3 p2;
-	uint section2_endPointOffset;
-	
-	Chunk10_Subsection1 chunk10subsection1<bgcolor=COLOR_ENTRY2>;
-	Chunk10_Subsection2 chunk10subsection2<bgcolor=COLOR_CHUNK11>;
-	Chunk10_Subsection3 chunk10subsection3<bgcolor=COLOR_SECTION3>;
+	Chunk10_Subsection1 Section1<bgcolor=COLOR_ENTRY2>;
+
+    FSeek(chunk10StartPos + Section2Offset);
+	Chunk10_Subsection2 Section2<bgcolor=COLOR_CHUNK11>;
+	Chunk10_Subsection3 Section3<bgcolor=COLOR_SECTION3>;
 };
 
 
 struct Chunk0
 {
-    uint hash1;
+    uint Hash1;
     uint u2;
-    uint flag;
-    uint nextSectionRelativeOffset;
+    uint Flag;
+    uint NextSectionOffset;
 	
 	// i think it's a flag. but it's surely an int (or uint).
-	uint flag2;
+	uint Flag2;
 };
 
 struct Entry
 {
-	local long entryStartPos = FTell();
+	local long entryPosition = FTell();
 	
-    uint hash1;
+    uint Hash1;
     uint u2;
-    uint flag;
+    uint Flag;
     uint u4;
     uint u5;
     uint u6;
-    uint nextSectionRelativeOffset;
-	
+    uint NextSectionOffset; // Size of the header + padding
     ushort u8a;
     short u8b;
+    uint NextEntryOffset; // Size of the entry + padding
 
-    uint nextEntryRelativeOffset;
-
-    FSeek(startPosition + nextSectionRelativeOffset);
+    entryPosition += NextSectionOffset;
+    FSeek(entryPosition);
     Chunk0 chunk0;
-	
-	// added this check here because if the next section offset is indeed
-	// zero, then chunk10 (or chunk16) gets applied on top of chunk0,
-	// which is no good
-	if (chunk0.nextSectionRelativeOffset != 0)
-	{
-		if (chunk0.flag == 0)
-		{
-			FSeek(startPosition + nextSectionRelativeOffset + chunk0.nextSectionRelativeOffset);
-			Chunk10 chunk10;
-			
-			//local long nextStagePos = FTell();
-			local long theNextEntryPos = entryStartPos + entry.nextEntryRelativeOffset;
-			
 
-			// if there's no entry after this one
-			if ( entry.nextEntryRelativeOffset != 0 )
-			{
-				while ( ( (FTell() + 28) < theNextEntryPos ) && entry.nextSectionRelativeOffset != 0 )
-				{
-					DataChunk data;
-				}
-			}
-			else
-			{
-				while ( (FTell() + 28) < header.fileLength )
-				{
-					DataChunk data;
-				}
-			}
-			
-		}
-		else if (chunk0.flag == 6)
-		{
-			FSeek(startPosition + nextSectionRelativeOffset + chunk0.nextSectionRelativeOffset);
-			
-			Chunk16 chunk16;
-			local long chunk16endPos = FTell();
-			
-			// Chunk17 = the continuation of Chunk16
-			local long chunk17startpos = FTell();
-			Chunk17 chunk17 <bgcolor=0xCCAA33>;
-			
-			// go to the ending position of where chunk16 ended, so that we won't have to deal
-			// with complicated offsets after the creation of chunk17
-			// (i burned half my braincells so yeah...)
-			FSeek(chunk16endPos);
-			FSkip(chunk16.dataChunkOffset - 20);
-			
-			local long theNextEntryPos = entryStartPos + entry.nextEntryRelativeOffset;
-			
-			// if there's no entry after this one
-			if ( entry.nextEntryRelativeOffset != 0 )
-			{
-				while ( ( (FTell() + 28) < theNextEntryPos ) && entry.nextSectionRelativeOffset != 0 )
-				{
-					DataChunk data;
-				}
-			}
-			else
-			{
-				while ( (FTell() + 28) < header.fileLength )
-				{
-					DataChunk data;
-				}
-			}
-		}
+    // No more sections in the entry
+    if (chunk0.NextSectionOffset == 0)
+        break;
+
+    // Next section
+    entryPosition += chunk0.NextSectionOffset;
+	FSeek(entryPosition);
+
+	if (chunk0.Flag == 0)
+	{
+		Chunk10 chunk10;
 	}
-	
+	else if (chunk0.Flag == 6)
+	{
+		Chunk16 chunk16<bgcolor=0xCCAA33>;
+
+        entryPosition += chunk16.DataChunkOffset;
+        FSeek(entryPosition);
+	}
+    else
+    {
+        Assert(false, "Unknown Entry section detected!");
+    }
+
+    local long bytesRemaining = 
+        NextEntryOffset == 0 
+        ? header.FileSize - entryPosition
+        : header.Size + entry.NextEntryOffset - entryPosition;
+
+    local long dataStartPosition = FTell();
+    while (bytesRemaining != 0)
+    {
+        DataChunk Data;
+        bytesRemaining -= FTell() - dataStartPosition;
+        dataStartPosition = FTell();
+    }
 };
 
-local long startPosition = FTell();
+struct Header
+{
+    uint Version;
+    uint Size;
+    uint FileSize;
+
+    uint u1;
+    Assert(u1 == 7050094);
+
+    uint u2 <hidden=true>;
+    uint u3 <hidden=true>;
+   
+    Assert(u2 == 0);
+    Assert(u3 == 0);
+
+    uint Hash1;
+    uint Hash2;
+} header <bgcolor=COLOR_HEADER>;
+
+local long startPosition = header.Size;
 local long nextEntry = -1;
 
 while (nextEntry != 0)
 {
     startPosition = FTell();
     Entry entry <bgcolor=COLOR_SECTION2>;
-    nextEntry = entry.nextEntryRelativeOffset;
+    nextEntry = entry.NextEntryOffset;
 
     FSeek(startPosition + nextEntry);
 }
