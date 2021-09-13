@@ -1,8 +1,8 @@
 // https://github.com/oldbanana12/GeomsParser/blob/master/Geoms.cs
 
-// =============================================================================
-// Updated version of Joey's "geom+geoms" modification of geoms_v3.5.2 template.
-// =============================================================================
+// =================
+// | Version 3.6.4 |
+// =================
 
 LittleEndian();
 
@@ -11,8 +11,7 @@ LittleEndian();
 #define COLOR_ENTRY2 0x00AAFF
 #define COLOR_CHUNK11 0xAED2E8
 #define COLOR_SECTION3 0xB9E8DD
-#define COLOR_BIZARREINT64STRUCT 0xCF85FF
-#define COLOR_POSITIONCHUNK 0xF7F205
+#define COLOR_BOUNDINGBOXCHUNK 0xF7F205
 
 struct Float3
 {
@@ -34,16 +33,24 @@ struct Quad
 	ushort indices[4];
 };
 
-struct BizarreInt64Struct
+// doing it this way so that we don't have to click twice in order to see the value.
+void EntryCollisionFlag()
 {
-	uint64 maybe_flags <comment="This one is definitely related to player collision.">;
-	uint maybe_another_flag <comment="Not related to collision as far as i can tell.">;
-	uint some_count <comment="Sometimes it can be quadCount - 1. Touching this can crash the game!">;
-};
+	uint64 collision_flags<bgcolor=0xFF00FF, fgcolor=0x00FF00, comment="64 flags of goodies!">;
+}
 
 struct SubVerticesChunk
 {
 	uint verticesCount;
+	
+	// HWL dirty (but necessary) hack so that we don't surpass the end of the file and the
+	// template abruptly stops executing
+	if ( ( FTell() + (verticesCount * 16) + 32 - 4 ) > header.FileSize )
+	{
+		Printf("WARNING: Vertices will surpass end of file, ignoring.\n");
+		return;
+	}
+	
 	uint unknown_params[3] <comment="Most often they are 1, 1 and 0.">;
 	
 	local long CurrentPos = FTell();
@@ -51,7 +58,7 @@ struct SubVerticesChunk
 	uint offset_to_vertices;
 	FSeek( CurrentPos + offset_to_vertices );
 	
-	Float4 vertices[verticesCount-1];
+	Float4 vertices[verticesCount - 1];
 };
 
 struct FaceChunk
@@ -61,7 +68,9 @@ struct FaceChunk
 	// always zero, so skip 'em.
 	FSkip(12);
 	
-	BizarreInt64Struct bizarreint64struct <bgcolor=COLOR_BIZARREINT64STRUCT>;
+	EntryCollisionFlag();
+	uint second_flag<comment="Usually zero">;
+	uint line_offset_to_vertices <comment="The amount of lines left until we hit the sub vertices chunk">;
 
     local uint _i;
     for (_i = 0; _i < quadCount; _i++)
@@ -79,6 +88,8 @@ struct FaceChunk
         FSkip(16 - (FTell() % 16));
     }
 	
+	local long posBeforeVertices = FTell();
+	
 	// there's some cases where there isn't enough space for a
 	// sub vertices chunk because there's only 2 lines of the
 	// file left. this check makes sure we don't make a sub
@@ -86,33 +97,63 @@ struct FaceChunk
 	// of the time though, but just ignore the error).
 	if ( FTell() + 32 < header.FileSize )
 	{
-		// dirty hack: check if the number of vertices is way too
-		// ridiculous to be true. if it's normal, then it's surely a
-		// vertices count.
-		if ( (ReadUInt() & 0xFFFF0000) == 0x0 )
+		// HWL a cleaner implementation of the sub vertices chunk, as of v3.6.3.
+		// instead of checking if the number of vertices is too ridiculous, we
+		// instead use the line_offset_to_vertices variable. then, the template
+		// "snaps" to that sub vertices chunk, and after it's done, it returns
+		// to the previous position.
+		// note: this doesn't happen if the sub vertices chunk is right underneath
+		// this face chunk.
+		if (line_offset_to_vertices > 0)
 		{
+			local long subVerticesChunkStartPos = (Data.DataChunk_startPos + (line_offset_to_vertices * 16) );
+			
+			FSeek(subVerticesChunkStartPos);
 			SubVerticesChunk subverticeschunk;
+			
+			// HWL very important check so that we don't accidently declare a new data chunk
+			// inside the sub vertices section.
+			if (subVerticesChunkStartPos != posBeforeVertices)
+				// return to the previous position.
+				FSeek(posBeforeVertices);
 		}
 	}
 };
 
-struct PositionChunk
+struct BoundingBoxChunk
 {
-	Printf("Position chunk");
+	Printf("Bounding Box Chunk");
 	Printf( " (0x%LX)\n",FTell() );
 	
-	uint some_num;
-	uint some_num2;
-	uint maybe_flag;
-	BizarreInt64Struct bizarreint64struct <bgcolor=COLOR_BIZARREINT64STRUCT>;
+	uint unknown <comment="Maybe a multiplier/divisor?">;
+	uint flag;
+	uint always_4 <hidden=true>;
+	EntryCollisionFlag();
 	
-	Float4 p1;
-	Float4 p2;
+	// always zero
+	FSkip(8);
+	
+	local uint pCount<comment="Always 2"> = ( (DataChunkID >> 16) & 0x000000FF );
+	Float4 boundingBox_size[pCount];
 };
+
+// HWL this is for reading the DataChunkID as two parts: count, and type
+string DataChunkID_read(uint DataChunkID)
+{
+	string s;
+	uint indices_count = (DataChunkID >> 24);
+	uint countA = ( (DataChunkID >> 16) & 0x000000FF );
+	uint ID_type = (DataChunkID & 0xFFFF);
+	
+	SPrintf(s, "Type: %d, CountA: %d, CountB: %d", ID_type, countA, indices_count);
+	
+	return s;
+}
 
 struct DataChunk
 {
-    uint DataChunkID;
+    uint DataChunkID<read=DataChunkID_read, bgcolor=0x0080ff>;
+	local long DataChunk_startPos = FTell() - 4;
 
 	// make sure we don't make any more headway in the data chunk if we've
 	// clearly hit the end of the file.
@@ -125,7 +166,7 @@ struct DataChunk
 		{
 			// I seperated this into another struct just so that we can
 			// have some more pretty colors.
-			PositionChunk positionchunk <bgcolor=COLOR_POSITIONCHUNK>;
+			BoundingBoxChunk boundingboxchunk<bgcolor=COLOR_BOUNDINGBOXCHUNK>;
 		}
 		else if ((DataChunkID & 0x00000002) == 0x00000002 && (DataChunkID & 0xff000000) != 0)
 		{
@@ -136,14 +177,13 @@ struct DataChunk
 	}
 };
 
-struct BytePairs
+struct ShortPairs
 {
-	byte SB1;
-	byte SB2;
+	short SS1;
+	short SS2;
 };
 
-// the continuation of Chunk10
-struct Chunk10_Subsection1
+struct GeomProp_Subsection1
 {
 	Float3 Vector;
 	uint UI1;
@@ -153,53 +193,60 @@ struct Chunk10_Subsection1
 	
 	// the ps3 files with different endianness proves this is
 	// an int64.
-	int64 L1;
+	EntryCollisionFlag();
 	
     // JOEY: Huge guess: perhaps Section2Offset aka 'section1_endPointOffset' is the size of the byte pairs blob?
-    BytePairs Pairs[chunk10.BytePairsCount / 2];
+	// HWL taking a look through ps3 files again, turns out these are pairs of shorts, not bytes! but are they
+	// actually pairs though?
+    ShortPairs Pairs[geomprop.BytePairsCount / 4];
 };
 
-struct Chunk10_Subsection2_Parts
+struct GeomProp_Subsection2_Parts
 {
 	// all these data types must be correct, they've been
 	// compared to the ps3 counterparts that have different
 	// endianness.
 	FSkip(1);
-	byte B1;
+	byte B1 <comment="Most common values are 3 and 5.">;
 	ushort UnknownCount; // HWL: "Unknown counter"
 	
-	ushort US2;
+	ushort offset_to_boundingBox_or_subvertices <comment="This offset is from the start of this part">;
 	FSkip(2);
 	
-	ushort US3;
+	ushort offset_to_boundingBox_or_subvertices <comment="This offset is also from the start of this part">;
 	FSkip(2);
 	
-	int I1;
-	int dataChunkoffset;
+	uint offset_to_subvertices <comment="NOTE: this offset starts from the beginning of geom properties subsection2, and NOT this specific part">;
+	uint offset_to_boundingBoxChunk;
 	uint offset_till_endofsection;
 	
-	uint64 UI64 <comment="Maybe a flag?">;
+	EntryCollisionFlag();
 };
 
-struct Chunk10_Subsection2
+struct GeomProp_Subsection2
 {
-	if ( chunk0.Flag == 0 ) Chunk10_Subsection2_Parts chunk10subsection2parts[chunk10.Section2Count] <optimize=false>;
-	else // chunk0.flag == 6
+	if ( entrysettingssecondary.Flag == 0 )
+		GeomProp_Subsection2_Parts GeomProp_subsection2parts[geomprop.Section2Count] <optimize=false>;
+	else // entrysettingssecondary.flag == 6
 	{
-		// VERY UGLY HACK: use the offset_till_endofsection of the first part to see how many more (parts) there are.
+		// HWL this reads a section from a part without actually declaring the part itself,
+		// cause that will be ugly (and that was the previous way of doing it). this is
+		// still a bit ugly though, but less than before!
+		local uint offset_till_endofsection = ReadUInt( FTell() + 20 );
+		local uint num_of_parts = ( (offset_till_endofsection / 32) - 1);
 		
-		Chunk10_Subsection2_Parts chunk10subsection2part_first;
-		
-		// get the offset_till_endofsection and divide it by 32 (32 = the size of each part). then, subtract
-		// 1 since we already declared one part and then subtract 1 again just so that we have the right number!
-		local uint remaining_subsection2parts = (chunk10subsection2part_first.offset_till_endofsection / 32) - 1 - 1;
-		Chunk10_Subsection2_Parts chunk10subsection2parts[remaining_subsection2parts] <optimize=false>;
+		local uint curNum_of_parts = num_of_parts;
+		while (curNum_of_parts > 0)
+		{
+			GeomProp_Subsection2_Parts GeomProp_subsection2parts;
+			--curNum_of_parts;
+		}
 	}
 };
 
-struct Chunk10_Subsection3
+struct GeomProp_Materials
 {
-	byte magic_byte;
+	byte magic_byte <hidden=true>;
 	
 	// padding stuff.
 	FSkip(3);
@@ -207,13 +254,13 @@ struct Chunk10_Subsection3
 	
 	FSkip(1);
 	
-	// as far as i can tell byte_pair1[0] and byte_pair1[1] are the same.
-	byte byte_pair1[3] <comment="They are often 2, 2 and 1.">;
-	local byte terminatorCount = byte_pair1[0] - 1 - 1; // -1 because i1
+	// as far as i can tell byte_pair[0] and byte_pair[1] are the same.
+	byte byte_pair[3] <comment="They are often 2, 2 and 1.">;
+	local byte terminatorCount = byte_pair[0] - 1 - 1; // -1 because i1
 														// always exists.
 	local byte terminatorCountActive = terminatorCount;
 	
-	int i1;
+	uint material_type <comment="Apparently an StrCode32 hash?">;
 	FSkip(8);
 	
 	while ( terminatorCountActive > 0 )
@@ -222,7 +269,7 @@ struct Chunk10_Subsection3
 		// not just padding?
 		if ( ReadUInt() != 0 )
 		{
-			int i;
+			uint material_type <comment="Apparently an StrCode32 hash?">;
 			terminatorCountActive -= 1;
 		}
 		// if it is padding, then skip it.
@@ -231,16 +278,16 @@ struct Chunk10_Subsection3
 	
 	// if we're finished with the int reading section, then keep
 	// reading until we hit the first data chunk.
-	if ( terminatorCountActive == 0 )
-	{
-		while ( ReadUInt() == 0 ) FSkip(4);
-	}
+	while ( ReadUInt() == 0 )
+		FSkip(4);
 };
-struct Chunk10
+
+// this was previously known as Chunk10
+struct GeomProperties
 {
-	if ( chunk0.Flag == 0 )
+	if ( entrysettingssecondary.Flag == 0 )
 	{
-		local long chunk10StartPos = FTell();
+		local long geompropStartPos = FTell();
 	
 		Float3 P1;
 		ushort BytePairsCount;
@@ -248,23 +295,47 @@ struct Chunk10
 		Float3 P2;
 		uint Section2Offset;
 		
-		Chunk10_Subsection1 Section1<bgcolor=COLOR_ENTRY2>;
+		GeomProp_Subsection1 Section1<bgcolor=COLOR_ENTRY2>;
 	
-		FSeek(chunk10StartPos + Section2Offset);
+		FSeek(geompropStartPos + Section2Offset);
 	}
-	Chunk10_Subsection2 Section2<bgcolor=COLOR_CHUNK11>;
-	Chunk10_Subsection3 Section3<bgcolor=COLOR_SECTION3>;
+	GeomProp_Subsection2 Section2<bgcolor=COLOR_CHUNK11>;
+	GeomProp_Materials Materials<bgcolor=COLOR_SECTION3>;
 };
 
-struct Chunk0
+struct EntrySettingsSecondary
 {
     uint Hash1;
-    uint u2;
+	
+	// previous uint u2 is now also skipped because it's always zero.
+    FSkip(4);
+	
     uint Flag;
     uint NextSectionOffset;
 	
 	// i think it's a flag. but it's surely an int (or uint).
-	uint Flag2;
+	// EDIT: after so long, i realized this is actually the size
+	// of the remaining entry
+	uint Size_of_remaining_entry;
+};
+
+struct EntrySettingsPrimary
+{
+    uint Hash1;
+	
+	// HWL there used to be uints here, but i skip them because they are
+	// always always zero.
+    FSkip(4);
+    uint Flag;
+    FSkip(4 + 4 + 4);
+	
+    uint NextSectionOffset; // Size of the header + padding
+	
+	// HWL these were not 2 shorts after all, but an int.
+	// thanks, ps3 files!
+	int NegativePreviousEntryOffset;
+	
+    uint NextEntryOffset; // Size of the entry + padding
 };
 
 struct Entry
@@ -272,38 +343,30 @@ struct Entry
 	local long startOfEntry = FTell();
 	local long entryPosition = FTell();
 	
-    uint Hash1;
-    uint u2;
-    uint Flag;
-    uint u4;
-    uint u5;
-    uint u6;
-    uint NextSectionOffset; // Size of the header + padding
-    ushort u8a;
-    short u8b;
-    uint NextEntryOffset; // Size of the entry + padding
+	EntrySettingsPrimary entrysettingsprimary;
 
-    entryPosition += NextSectionOffset;
+    entryPosition += entrysettingsprimary.NextSectionOffset;
     FSeek(entryPosition);
-    Chunk0 chunk0;
+    EntrySettingsSecondary entrysettingssecondary;
 
     // No more sections in the entry
-    if (chunk0.NextSectionOffset == 0)
+    if (entrysettingssecondary.NextSectionOffset == 0)
         break;
 
     // Next section
-    entryPosition += chunk0.NextSectionOffset;
+    entryPosition += entrysettingssecondary.NextSectionOffset;
 	FSeek(entryPosition);
 
-	if (chunk0.Flag == 0)
+	if (entrysettingssecondary.Flag == 0)
 	{
-		Chunk10 chunk10;
+		GeomProperties geomprop;
 	}
-	else if (chunk0.Flag == 6)
+	else if (entrysettingssecondary.Flag == 6)
 	{
-		Chunk10 chunk10;
+		GeomProperties geomprop;
 		
-		entryPosition += chunk10.Section2.chunk10subsection2part_first.dataChunkoffset;
+		// HWL updated after replacing the ugly hack with a less ugly hack
+		entryPosition += geomprop.Section2.GeomProp_subsection2parts[0].offset_to_boundingBoxChunk;
 		FSeek(entryPosition);
 	}
 	
@@ -313,11 +376,11 @@ struct Entry
     }
 	
 	local long dataChunksStartPos = FTell();
-	local long endOfEntry = startOfEntry + NextEntryOffset;
+	local long endOfEntry = startOfEntry + entrysettingsprimary.NextEntryOffset;
 
 
 	local long bytesRemaining =
-		NextEntryOffset == 0
+		entrysettingsprimary.NextEntryOffset == 0
 		? header.FileSize - dataChunksStartPos
 		: endOfEntry - dataChunksStartPos;
 
@@ -360,7 +423,7 @@ while (nextEntry != 0)
 {
     startPosition = FTell();
     Entry entry <bgcolor=COLOR_SECTION2>;
-    nextEntry = entry.NextEntryOffset;
+    nextEntry = entry.entrysettingsprimary.NextEntryOffset;
 
     FSeek(startPosition + nextEntry);
 }
