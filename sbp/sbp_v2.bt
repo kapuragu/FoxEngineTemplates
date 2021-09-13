@@ -1,6 +1,11 @@
 // SBP - SoundBank Package
-// By RLC, based on: https://wiki.xentax.com/index.php/Wwise_SoundBank_(*.bnk) https://github.com/secaproject/SBP_tool
-// Further modified by Half Way Lambda as v2.2.1
+// By RLC and Half Way Lambda, based on: https://wiki.xentax.com/index.php/Wwise_SoundBank_(*.bnk) https://github.com/secaproject/SBP_tool
+
+
+// ALWAYS UPDATE THIS VERSION NUMBER WHEN THIS TEMPLATE GETS UPDATED!
+//===============================
+//        Version 2.3.0
+//===============================
 
 enum <byte> ObjectType{
 	Settings=1,
@@ -739,6 +744,7 @@ struct Section0 {
 			break;
 		case "STMG":
 			STMG_struct stmg <bgcolor=STMG_color, comment="Found only in Init.bnk">;
+			break;
 		default:
 			Assert(2+2==5,"Unknown section!!!!!");
 			break;
