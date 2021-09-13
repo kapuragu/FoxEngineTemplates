@@ -1,28 +1,13 @@
 // SBP - SoundBank Package
 // By RLC, based on: https://wiki.xentax.com/index.php/Wwise_SoundBank_(*.bnk) https://github.com/secaproject/SBP_tool
-// Further modified by Half Way Lambda as v2
-
-
-// HWL import all the other files we need, just for the sake of decreasing
-// the size of this template
-#include "soundstructure.bt"
-#include "obj_settings.bt"
-#include "obj_sound.bt"
-#include "obj_eventaction.bt"
-
-
-#define soundBankHeader_color 0x636F13
-#define BankHeader_color 0x3CCAE0
-#define Hierarchy_color 0x1342F3
-#define StreamId_color 0x5B2F3E
-#define DataIndex_color 0x558CEA
+// Further modified by Half Way Lambda as v2.1
 
 enum <byte> ObjectType{
 	Settings=1,
 	Sound=2,
 	EventAction=3,
 	Event=4,
-	SequenceContainer=5,
+	SequenceContainer=5, // or random container
 	SwitchContainer=6,
 	ActorMixer=7,
 	AudioBus=8,
@@ -40,6 +25,21 @@ enum <byte> ObjectType{
 	AuxillaryBus=20,
 };
 
+// HWL import all the other files we need, just for the sake of decreasing
+// the size of this template
+#include "soundstructure.bt"
+#include "obj_settings.bt"
+#include "obj_sound.bt"
+#include "obj_eventaction.bt"
+
+#include "info_print.bt"
+
+#define soundBankHeader_color 0x636F13
+#define BankHeader_color 0x3CCAE0
+#define Hierarchy_color 0x1342F3
+#define StreamId_color 0x5B2F3E
+#define DataIndex_color 0x558CEA
+
 struct BankHeader
 {
 	int sectionSize;
@@ -56,7 +56,14 @@ struct Object
 {
 	ObjectType objectType <bgcolor=0xffab00>;
 	int objectSize;
-	uint objectId <comment="FNV132 hash", bgcolor=0xabff00>; 
+	uint objectId <comment="FNV132 hash", bgcolor=0xabff00>;
+	
+	// HWL for printing useful info at the console
+	printType(objectType);
+	openBracket();
+	Printf( "Obj ID: " );
+	Printf( "%u", objectId );
+	Printf("\n");
 	
 	switch (objectType)
 	{
@@ -113,6 +120,12 @@ struct Object
 			for (i = 0; i < num_event_actions; ++i)
 			{
 				uint event_action_ID <bgcolor=0x66D1FF>;
+				
+				Printf("Event #");
+				Printf("%u", i);
+				Printf(" --> ");
+				Printf("%u", event_action_ID);
+				Printf("\n");
 			}
 			break;
 
@@ -215,44 +228,77 @@ struct Object
 			break;
 			
 		case MusicSegment:
-			// HWL this is the biggest freakin' mess in the world. but it kinda works and may
-			// prove useful. still very W.I.P. these are my findings based off of custom
-			// soundbanks built through Wwise
-			int unknown[2];
+			SoundStructure soundstructure;
 			
-			// HWL this FSkip is bizarre. for the extracted soundbanks it should be 4 + 1,
-			// but for TPP's soundbanks it's just 4..and i'm not even sure if this applies
-			// all the time..
-			FSkip(4 + 1);
-			ubyte modifiers_count;
+			uint children_count;
 			
-			ubyte modifier_types[modifiers_count];
-			struct Modifier
-			{
-				FSkip(2);
-				ushort modifier_amount;
-			};
-			if (modifiers_count > 0)
-				Modifier modifiers[modifiers_count - 1];
-
-			float playback_speed <comment="The playback speed of the sound">;
-			uint maybe_flags[2] <comment="The second one is sometimes just 1">;
+			// HWL NOTE: commented this out because the sound structure has corruption
+			// problems..
 			
-			// HWL sometimes these are not all 0, for instance when changing the
-			// "tempo" setting in Wwise to a bizarre number. but i really can't 
-			// understand how this is even stored right now, so i'll skip it
-			FSkip(16);
-			uint grid_frequency;
-			FSkip(3);
+			//if (children_count > 0)
+				//uint children_IDs[children_count];
 			
-			uint grid_offset;
-			FSkip(2);
+			FSkip(5); // HWL god i hope this doesn't break anything..
+			// EDIT: oh it sure does! but i can't find any other
+			// good fix as of now..
 			
-			ushort unknown2 <comment="Related to the 'tempo' option of wwise">;
-			ubyte time_signature_primary;
-			ubyte time_signature_secondary;
+			//while ( ReadUByte() == 0 )
+			//{
+			//	FSkip(1);
+			//}
+			
+			uint num_of_music_tracks;
+			uint music_track_obj_ids[num_of_music_tracks];
+			
+			
+			double d1;
+			uint64 uint64_1;
+			
+			float tempo;
+			byte signature_one;
+			byte signature_two;
+			
+			uint u1;
+			byte b1;
+			
+			// i think this skip is also needed here
+			//FSkip(4);
+			double time_length;
+			
+			uint u2;
+			uint u3;
+			uint64 uint64_2;
+			uint u4;
+			uint u5;
+			
+			double time_length_next;
+			uint u6;
+			
+			// HWL according to WolvenKit, the rest is ignored if
+			// more stuff exists
+			
+			break;
+			
+		case MusicPlaylistContainer: // early implementation
+			SoundStructure soundstructure;
+			uint num_of_music_segments <comment="Music Segments that are part of this playlist">;
+			
+			// HWL NOTE: disabling this because of issues with the sound structure destroying
+			// everything
+			
+			//if (num_of_music_segments > 0)
+			//	uint segment_IDs[num_of_music_segments];
+			
+			// Xentax article for the following 2:
+			//FSkip(4);
+			//float unknown;
+			
 			break;
 	}
+	
+	// HWL for printing to console purposes
+	closeBracket();
+	
 };
 
 struct Hierarchy
@@ -261,9 +307,12 @@ struct Hierarchy
 	int objectCount;
 	
 	local long startObjectPos = FTell();
-	local int i;
+	local int curObj;
 	
-	for (i = 0; i < objectCount; ++i)
+	// HWL i renamed this to curObj instead of i, because 010 is
+	// dumb and would reset the number i because the same name is
+	// reused in other structures...
+	for (curObj = 0; curObj < objectCount; ++curObj)
 	{
 		Object object <optimize=false>;
 		
@@ -403,13 +452,11 @@ struct SoundBankHeader
 };
 
 if (has_soundbankheader == 1)
-	SoundBankHeader soundBankHeader <bgcolor=soundBankHeader_color>;
-
-// Don't skip any line if we don't even have a sound bank header
-if (has_soundbankheader == 1)
 {
+	SoundBankHeader soundBankHeader <bgcolor=soundBankHeader_color>;
+	
 	if (FTell() % 16 != 0)
-		FSkip(16 - (FTell() % 16));
+	FSkip(16 - (FTell() % 16));
 }
 
 local int currentSection = 0;
