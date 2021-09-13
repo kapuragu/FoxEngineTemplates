@@ -39,3 +39,38 @@ void printType(ObjectType objectType)
 		case AuxillaryBus:			Printf("Auxillary Bus"); break;
 	}
 }
+
+void printActionType(ActionType actiontype)
+{
+	Printf("Action Type: ");
+	
+	switch (actiontype)
+	{
+		case STOP: 						Printf("Stop"); break;
+		case PAUSE: 					Printf("Pause"); break;
+		case RESUME: 					Printf("Resume"); break;
+		case ACTION_PLAY: 				Printf("Action Play"); break;
+		case TRIGGER: 					Printf("Trigger"); break;
+		case MUTE: 						Printf("Mute"); break;
+		case UNMUTE: 					Printf("Unmute"); break;
+		case SET_VOICE_PITCH: 			Printf("Set Voice Pitch"); break;
+		case RESET_VOICE_PITCH: 		Printf("Reset Voice Pitch"); break;
+		case SET_VOICE_VOLUME: 			Printf("Set Voice Volume"); break;
+		case RESET_VOICE_VOLUME: 		Printf("Reset Voice Volume"); break;
+		case SET_BUS_VOLUME: 			Printf("Set Bus Volume"); break;
+		case RESET_BUS_VOLUME: 			Printf("Reset Bus Volume"); break;
+		case SET_VOICE_LOWPASS_FILTER: 	Printf("Set Voice Lowpass Filter"); break;
+		case RESET_VOICE_LOWPASS_FILTER: Printf("Reset Voice Lowpass Filter"); break;
+		case ENABLE_STATE: 				Printf("Enable State"); break;
+		case DISABLE_STATE: 			Printf("Disable State"); break;
+		case SET_STATE: 				Printf("Set State"); break;
+		case SET_GAME_PARAMETER: 		Printf("Set Game Parameter"); break;
+		case RESET_GAME_PARAMETER: 		Printf("Reset Game Parameter"); break;
+		case SET_SWITCH: 				Printf("Set Switch"); break;
+		case ENABLE_BYPASS_OR_DISABLE_BYPASS: Printf("Enable bypass or disable bypass"); break;
+		case RESET_BYPASS_EFFECT: 		Printf("Reset Bypass Effect"); break;
+		case BREAK: 					Printf("Break"); break;
+		case SEEK: 						Printf("Seek"); break;
+	}
+	Printf("\n");
+}

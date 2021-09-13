@@ -1,6 +1,6 @@
 // SBP - SoundBank Package
 // By RLC, based on: https://wiki.xentax.com/index.php/Wwise_SoundBank_(*.bnk) https://github.com/secaproject/SBP_tool
-// Further modified by Half Way Lambda as v2.1
+// Further modified by Half Way Lambda as v2.2
 
 enum <byte> ObjectType{
 	Settings=1,
@@ -42,6 +42,7 @@ enum <byte> ObjectType{
 #define Hierarchy_color 0x1342F3
 #define StreamId_color 0x5B2F3E
 #define DataIndex_color 0x558CEA
+#define STMG_color 0xFFAA00						   
 
 struct BankHeader
 {
@@ -93,6 +94,8 @@ struct Object
 		case EventAction:
 			ScopeEventAction scope_of_event_action;
 			ActionType action_type;
+			
+			printActionType(action_type);
 			uint id_of_game_obj_referenced_above <comment="This is zero if there is no game object." , bgcolor=0xD8C5EA>;
 			// Always zero, according to the wiki
 			FSkip(1);
@@ -242,7 +245,7 @@ struct Object
 			//}
 			
 			uint num_of_music_tracks;
-			uint music_track_obj_ids[num_of_music_tracks];
+			//uint music_track_obj_ids[num_of_music_tracks];
 			
 			
 			double d1;
@@ -273,6 +276,179 @@ struct Object
 			
 			break;
 			
+			
+		// as v2.2
+		case MusicTrack:
+			uint WEM_counter;
+			ushort unknown_short0;
+			ushort unknown_short1;
+			uint unknown2;
+			
+			// this is mentioned twice
+			struct WemIDs
+			{
+				uint WEM_ID_1;
+				uint WEM_ID_2;
+			};
+			WemIDs wem_ids[WEM_counter] <fgcolor=0x00FF00>;
+			
+			FSkip(1);
+			
+			break;
+			
+		// as v2.2
+		case MusicSwitchContainer:
+			SoundStructure soundstructure;
+			
+			// HWL just for the sake of ignoring the soundstructure issues,
+			// i'm skipping stuff.
+			// NOTE: this is according to the xentax wiki. WolvenKit
+			// doesn't seem to parse this at all
+			
+			// Very f**king ugly hack, but it works.
+			if ( ( ( (ReadUInt( FTell() + 12 )) >> 16) & 0xFFFFFFFF ) > 1 )
+				FSkip(8);
+			else
+				FSkip(12);
+			
+			uint num_of_children;
+			uint child_OBJs[num_of_children];
+			
+			// 4 zero bytes, even though they're not zero
+			uint apparently_zero;
+			float f1;
+			FSkip(8);
+			
+			float tempo;
+			byte time_signature_1;
+			byte time_signature_2; // usually 4/4
+			byte magic01;
+			FSkip(4);
+			
+			uint num_of_transitions;
+			//uint unknown;	
+		
+			local uint curTransition;
+			for (curTransition = 0; curTransition < num_of_transitions; ++curTransition)
+			{
+				struct Transition
+				{
+					byte unknown[62];
+					
+					while ( (ReadByte( FTell() )) == 0 )
+						FSkip(1);
+				} transitions;
+			}
+		
+			/*
+			local uint curTransition;
+			for (curTransition = 0; curTransition < num_of_transitions; ++curTransition)
+			{
+				struct Transition
+				{
+					enum <int> sourceOBJ
+					{
+						Any = 0xFFFFFFFF//,
+						//Nothing = 0
+					} source_object;
+					//sourceOBJ source_object;
+					int fadeOutTime;
+					uint shape_source_fade_out_curve;
+					int source_fadeOut_offset;
+					
+					enum <uint> exitSource
+					{
+						Immediate = 0,
+						Next_Grid = 1,
+						Next_Bar = 2,
+						Next_Beat = 3,
+						Next_Cue = 4,
+						New_Custom_cue = 5,
+						Exit_Cue = 7
+					} exit_source;
+					
+					// may be included?
+					uint next_custom_cue <comment="MAY BE included">;
+					enum <byte> checkBox0
+					{
+						//Nothing = 0,
+						Play_post_exit_section = 0xFF
+					} checkbox0;
+					
+					int destination_fade_in_time;
+					uint shape_of_destination_fadeIn_curve;
+					int destination_fade_in_offset;
+					
+					uint ID_of_match_for_custom_cue_filter <comment="Any = 0">;
+					uint jmp_playlist_item_ID <comment="It's 0 if destination isn't playlist container">;
+					
+					enum <uint16> Sync
+					{
+						Entry_Cue = 0,
+						Same_As_Playing_Segment = 1,
+						Random_Cue = 2,
+						Random_Custom_cue = 3 // see custom cue filter
+					} sync_to;
+					
+					enum <byte> checkBox1
+					{
+						//Nothing = 0,
+						Play_pre_entry_section_of_destination_obj = 1
+					} checkbox1;
+					
+					// may be included
+					byte custom_cue_filter <comment="Match source cue name = 1">;
+					
+					Boolean transition_has_transition_object_specified;
+					uint transition_object_ID <comment="0 if no transition object">;
+					
+					int transition_fadeIn_time <comment="In milliseconds">;
+					uint shape_of_transition_fadeIn_curve;
+					int transition_fadeIn_offset <comment="In milliseconds">;
+					int transition_fadeOut_time <comment="In milliseconds">;
+					uint shapeOf_transition_fadeOut_curve;
+					int transition_fadeOut_offset;
+					
+					enum <byte> checkBox2
+					{
+						//Nothing = 0,
+						Play_pre_entry_section_of_transition_object = 0xFF
+					} checkbox2;
+					enum <byte> checkBox3
+					{
+						//Nothing = 0,
+						Play_post_exit_section_of_transition_object = 0xFF
+					} checkbox3;
+					
+				} transitions;
+			}
+			*/
+			
+			enum <uint> switchType
+			{
+				cur_switch_determines_which_musicPlay = 0,
+				cur_state_determines_which_musicPlay = 0x01000000
+			} switch_type;
+			// THANK GOD this exists here (but of course it would exist)!
+			uint switch_or_state_group_obj_ID;
+			uint default_switch_or_state_ID <comment="0 if it's state 'None'">;
+			Boolean continue_playing_on_switch_change;
+			
+			uint num_of_switches_or_states;
+			local uint curSwitchOrState;
+			
+			/*
+			for (curSwitchOrState = 0; curSwitchOrState < num_of_switches_or_states; ++curSwitchOrState)
+			{
+				struct SwitchOrState
+				{
+					uint switch_or_state_ID;
+					uint music_obj_ID_played_when_this_is_set;
+				} switch_or_state_settings;
+			}
+			*/			
+			
+			break;
 		case MusicPlaylistContainer: // early implementation
 			SoundStructure soundstructure;
 			uint num_of_music_segments <comment="Music Segments that are part of this playlist">;
@@ -407,6 +583,90 @@ struct DataIndex
 	} riffEmbed[offsetsSize / 12] <optimize=false>;
 };
 
+// STMG is found only in Init.bnk, and contains useful information about project settings as well as the Switch Groups,
+// State Groups and Game Parameters
+struct STMG_struct
+{
+	uint offsetsSize;
+	float volumeThreshold;
+	
+	ushort maxVoiceInstances;
+	uint num_of_state_groups;
+	
+	local int curStateGroup;
+	local int curCTT;
+	for (curStateGroup = 0; curStateGroup < num_of_state_groups; ++curStateGroup)
+	{
+		struct stateGroup
+		{
+			uint state_group_ID;
+			
+			Printf("State Group ID: %u", state_group_ID);
+			//Printf(%u, stateGroup);
+			Printf("\n");
+			
+			uint default_transition_time <comment="in milliseconds">;
+			uint num_of_custom_transition_times;
+			
+			// HWL yes, this is a bit ugly, but i did it this way because you
+			// click through less menus in 010 when done like this
+			for (curCTT = 0; curCTT < num_of_custom_transition_times; ++curCTT)
+			{
+				struct customTransitionTimes_struct
+				{
+					uint ID_of_from_state;
+					uint ID_of_to_state;
+					uint transition_time <comment="in milliseconds">;
+				} customTransition_times_struct;
+			}
+		} stategroups;
+	}
+	
+	uint num_of_switch_groups <comment="these set the current Switch based on a game parameter">;
+	
+	local int curSwitchGroup;
+	local int curPoints;
+	for (curSwitchGroup = 0; curSwitchGroup < num_of_switch_groups; ++curSwitchGroup)
+	{
+		struct switchGroup
+		{
+			uint switchGroup_ID;
+			
+			Printf("Switch Group ID: %u", switchGroup_ID);
+			Printf("\n");
+			
+			uint game_parameter <comment="this game parameter determines currently set Switch">;
+			uint num_of_points;
+			
+			// again the same ugly 'hack' as before
+			for (curPoints = 0; curPoints < num_of_points; ++curPoints)
+			{
+				struct switchGroupPoint
+				{
+					float value_of_game_param;
+					uint switch_ID <comment="id of Switch that is set when Game Parameter >= given value">;
+					uint shape_of_curve <comment="always set to 9">;
+				} switchGroupPoints;
+			}
+			
+		} switchGroups;
+	}
+	
+	uint num_of_game_params;
+	local int curGameParam;
+	for (curGameParam = 0; curGameParam < num_of_game_params; ++curGameParam)
+	{
+		struct gameParameter
+		{
+			uint game_param_ID;
+			
+			Printf("Game Parameter ID: %u", game_param_ID);
+			Printf("\n");
+			
+			float default_value_of_game_param;
+		} gameParameters;
+	}
+};																												   
 // HWL custom soundbanks don't have any SBPL (or SBPB) section
 local int has_soundbankheader = 0;
 if ( (ReadUInt() == 1280328275) || (ReadUInt() == 1112556115) ) // == "SBPL" or "SBPB"
@@ -473,6 +733,8 @@ struct Section0 {
 		case "DIDX":
 			DataIndex dataIndex <bgcolor=DataIndex_color, comment="Embedded .wem sounds">;
 			break;
+		case "STMG":
+			STMG_struct stmg <bgcolor=STMG_color, comment="Found only in Init.bnk">;
 		default:
 			Assert(2+2==5,"Unknown section!!!!!");
 			break;

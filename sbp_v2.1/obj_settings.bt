@@ -1,7 +1,0 @@
-// Everything used for the "Settings" object
-
-enum <byte> ObjectSettingsType
-{
-	VoiceVolume=0,
-	VoiceLowPassFilter=3,
-};

@@ -167,15 +167,21 @@ struct SoundStructure
 	// HWL NOTE: all hell breaks loose from here. this bool
 	// below can sometimes have values of 4 or 5, instead of
 	// being 0 or 1
-	Boolean overrideParentSettingsForVirtualVoiceSection;
+	//Boolean overrideParentSettingsForVirtualVoiceSection;
+	byte unknown;
 	
 	// HWL All the following are borrowed from WolvenKit
 	// NOTE: this value is most often corrupt
-	uint stage_groups_count;
+	// HWL as of v2.2, i'm starting to modify this since it
+	// appears that WolvenKit isn't 100% fool-proof
+	
+	ushort unknown2;
+	ushort stage_groups_count;
 	
 	// ======================================================
 	// HWL disabling this because it is very likely to break
 	// ======================================================
+	
 	/*
 	if (stage_groups_count > 0)
 	{
@@ -201,10 +207,11 @@ struct SoundStructure
 	*/
 	
 	uint16 RTPC_count;
+	/*
 	if (RTPC_count > 0)
 	{
-		local int i;
-		for (i = 0; i < RTPC_count; ++i)
+		local int curRTPC;
+		for (curRTPC = 0; curRTPC < RTPC_count; ++curRTPC)
 		{
 			struct SoundStrcture_RTPC
 			{
@@ -225,7 +232,7 @@ struct SoundStructure
 			} soundstructure_RTPC;
 		}
 	}
-	
+	*/
 	uint unknown0;
 	if (unknown0 > 0)
 		byte data;
