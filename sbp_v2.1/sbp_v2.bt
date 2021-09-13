@@ -34,6 +34,9 @@ enum <byte> ObjectType{
 
 #include "info_print.bt"
 
+#include "sbp_sab.bt"
+#include "sbp_laddie.bt"
+
 #define soundBankHeader_color 0x636F13
 #define BankHeader_color 0x3CCAE0
 #define Hierarchy_color 0x1342F3
@@ -351,13 +354,12 @@ struct StreamedPackage
 	local int index = 0;
 	struct RiffStreamed
 	{
-		if (hasLipSync == 1)
+		local int preLipIndexCheck = FTell();
+		if (hasLipSync==1)
 		{
-			struct LipFile
-			{
-				char libBytes[streamedWemDefinition[index].offsetToWem - streamedWemDefinition[index].offsetToLip];
-				
-			} lipFile;
+			if ((streamedWemDefinition[index].offsetToWem-streamedWemDefinition[index].offsetToLip)>0)
+				Laddie lipFile;
+			Assert(FTell()-(streamedWemDefinition[index].offsetToWem-streamedWemDefinition[index].offsetToLip)==preLipIndexCheck,"Laddie didn't parse all!!!");
 		}
 		
 		local int size = 0;
@@ -496,26 +498,7 @@ struct Sections
 	}
 	else if (soundBankHeader.sectionDefinition[currentSection].sign == "sab")
 	{
-		FSkip(soundBankHeader.sectionDefinition[currentSection].sectionSize);
-		/*
- 		struct Section1
-		{
-			char sign[4];
-			int entryCount;
-			struct Sa3Params
-			{
-				uint64 unknown0;
-				int unknown1;
-				int unknown2;
-				
-			} sa3Params[entryCount];
-			struct Sa3Entry
-			{
-				// No idea lol
-			} sa3Entry[entryCount];
-			
-		} section1;
-		*/
+		StreamAnimationLip streamAnimationLip;
 	}
 	else if (soundBankHeader.sectionDefinition[currentSection].sign == "stp")
 	{

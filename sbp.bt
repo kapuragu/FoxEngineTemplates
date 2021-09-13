@@ -1,6 +1,88 @@
 // SBP - SoundBank Package
 // By RLC, based on: https://wiki.xentax.com/index.php/Wwise_SoundBank_(*.bnk) https://github.com/secaproject/SBP_tool
 
+enum LipAnimIndex
+{
+	A	=	0,
+	AH	=	1,
+	AY	=	2,
+	B	=	3,
+	C	=	4,
+	CH	=	5,
+	D	=	6,
+	E	=	7,
+	EE	=	8,
+	ER	=	9,
+	F	=	10,
+	G	=	11,
+	H	=	12,
+	I	=	13,
+	J	=	14,
+	L	=	15,
+	M	=	16,
+	N	=	17,
+	NG	=	18,
+	OH	=	19,
+	OO	=	20,
+	OU	=	21,
+	OW	=	22,
+	OY	=	23,
+	P	=	24,
+	R	=	25,
+	S	=	26,
+	SH	=	27,
+	T	=	28,
+	TH	=	29,
+	TT	=	30,
+	U	=	31,
+	V	=	32,
+	W	=	33,
+	Y	=	34,
+	Z	=	35,
+	_i	=	36,
+	_tH	=	37,
+};
+
+struct Laddie
+{
+	struct Header
+	{
+		int64 fileName <comment="StrCode64 hash of the file name, string embedded in .wem file">;
+		int keyCount;
+		short offsetToKey[keyCount] <bgcolor=0x94A6AA>;
+		
+	} header;
+
+	if (FTell() % 4 != 0)
+		FSkip(4-FTell() % 4);
+	
+	struct Keys
+	{
+		ushort unknown0 <fgcolor=0xFF0000, bgcolor=0x87E7FF>;
+		ushort unknown1 <fgcolor=0x0000FF, bgcolor=0x87E7FF>;
+		byte lipAnimCount <bgcolor=0xB9C199>; Assert(lipAnimCount==3,"Laddie keyZero lipAnimCount isn't right!!!");
+		FSkip(3);
+		int keyZeroParam0 <bgcolor=0xB9C199>;
+		int realKeyCount <bgcolor=0xB9C199>;
+		int keyZeroParam2 <bgcolor=0xB9C199>;
+		
+		struct Key
+		{
+			ushort unknown0 <fgcolor=0xFF0000, bgcolor=0x87E7FF>;
+			ushort unknown1 <fgcolor=0x0000FF, bgcolor=0x87E7FF>;
+			byte lipAnimCount <bgcolor=0xB8F8EB>;
+			byte unknownFloatCount <bgcolor=0xA3D0D1>;
+			FSkip(2);
+			LipAnimIndex lipAnimIndex[lipAnimCount] <bgcolor=0xB8F8EB>;
+			float unknownFloat[unknownFloatCount] <bgcolor=0xA3D0D1>;
+		} key[realKeyCount] <optimize=false>;
+		
+	} keys;
+
+	if (FTell() % 16 != 0)
+		FSkip(16 - (FTell() % 16));
+};
+
 enum <byte> ObjectType{
 	Settings=1,
 	Sound=2,
@@ -384,13 +466,12 @@ struct StreamedPackage
 	local int index = 0;
 	struct RiffStreamed
 	{
+		local int preLipIndexCheck = FTell();
 		if (hasLipSync==1)
 		{
-			struct LipFile
-			{
-				char libBytes[streamedWemDefinition[index].offsetToWem-streamedWemDefinition[index].offsetToLip];
-				
-			} lipFile;
+			if ((streamedWemDefinition[index].offsetToWem-streamedWemDefinition[index].offsetToLip)>0)
+				Laddie lipFile;
+			Assert(FTell()-(streamedWemDefinition[index].offsetToWem-streamedWemDefinition[index].offsetToLip)==preLipIndexCheck,"Laddie didn't parse all!!!");
 		}
 		
 		local int size = 0;
@@ -511,24 +592,103 @@ struct Sections
 	}
 	else if (soundBankHeader.sectionDefinition[currentSection].sign == "sab")
 	{
-		FSkip(soundBankHeader.sectionDefinition[currentSection].sectionSize);
-/* 		struct Section1
+		struct StreamAnimationLip
 		{
 			char sign[4];
 			int entryCount;
+			
 			struct Sa3Params
 			{
-				uint64 unknown0;
-				int unknown1;
-				int unknown2;
+				uint64 fileName <comment="StrCode64 hash of the file name, string embedded in .wem file, *not* tolowered", bgcolor=0x776C7C>;
+				int offsetToEntryStart <bgcolor=0x94A6AA>;
+				FSkip(4);
 				
 			} sa3Params[entryCount];
+			
 			struct Sa3Entry
 			{
-				// No idea lol
-			} sa3Entry[entryCount];
+				int subEntryCount;//2
+				struct SubEntryData{
+					char entryType[];
+					FSkip(1);
+					int offsetToEntry;
+				} subEntryData[subEntryCount] <bgcolor=0x776C7C>;
+				
+				local int index = 0;
+				
+				struct SubEntry
+				{
+					if (subEntryData[index].entryType=="ls")
+					{
+						struct KeysGZ
+						{
+							int keyCount <comment="Key count including metadata key zero">;
+							short offsetsToKeys[keyCount] <comment="Offset from keyCount", bgcolor=0x94A6AA>;
+							//vox_player_common.sbp TPP-only: <
+							// if (FTell() % 4 != 0)
+								// FSkip(4 - FTell() % 4);
+							//>
+							
+							ushort unk0 <fgcolor=0xFF0000, bgcolor=0x87E7FF>;
+							ushort unk1 <fgcolor=0x0000FF, bgcolor=0x87E7FF>;
+							byte paramsCount <bgcolor=0xB9C199>;
+							FSkip(3);
+							if (paramsCount>0)
+								int keyZeroParam0 <bgcolor=0xB9C199>;
+							if (paramsCount>1)
+								int realKeyCount <bgcolor=0xB9C199>;
+							if (paramsCount>2)
+								int keyZeroParam2 <bgcolor=0xB9C199>;
+										
+							struct KeyGZ
+							{
+								ushort unk0 <fgcolor=0xFF0000, bgcolor=0x87E7FF>;
+								ushort unk1 <fgcolor=0x0000FF, bgcolor=0x87E7FF>;
+								byte lipGzAnimCount <bgcolor=0xB8F8EB>;
+								byte unknownFloatCount <bgcolor=0xA3D0D1>;
+								FSkip(2);
+								LipAnimIndex lipAnimIndexGz[lipGzAnimCount] <bgcolor=0xB8F8EB,optimize=false>;
+								float unknownFloat[unknownFloatCount] <bgcolor=0xA3D0D1>;
+								
+							} keyGZ[realKeyCount] <optimize=false>;
+							
+							//vox_player_common.sbp TPP-only: <
+							// FSkip(1);
+							// if (FTell() % 8 != 0)
+								// FSkip((8 - (FTell() % 8)-2));
+							//>
+							
+						} keysGZ <optimize=false>;
+					}
+					else if (subEntryData[index].entryType=="st")
+					{
+						struct MessageIdSection
+						{
+							int unknown0 <bgcolor=0x58D7E9>;
+							ushort unk0 <bgcolor=0x58D7E9>;
+							int unknown1 <bgcolor=0x58D7E9>;
+							ushort unk1 <bgcolor=0x58D7E9>;
+							ushort unk2 <bgcolor=0x58D7E9>;
+							int unknown3 <bgcolor=0x58D7E9>;
+							char messageId[] <bgcolor=0x737329>;
+							
+							if (FTell() % 4 != 0)
+								FSkip(4 - FTell() % 4);
+							
+						} messageIdSection <optimize=false>;
+					};
+					int64 fileNameAgain;
+					
+					if (FTell() % 16 != 0)
+						FSkip(16 - (FTell() % 16));
+					
+					index+=1;
+				
+				} subEntry[subEntryCount] <optimize=false>;
+				
+			} sa3Entry[entryCount] <optimize=false>;
 			
-		} section1; */
+		} streamAnimationLip;
 	}
 	else if (soundBankHeader.sectionDefinition[currentSection].sign == "stp")
 	{

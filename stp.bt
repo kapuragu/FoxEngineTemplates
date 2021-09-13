@@ -1,0 +1,132 @@
+// STP - Streamed Package
+// By RLC - inspired by other FOX templates by the researchers of Modders' Heaven!
+enum LipAnimIndex
+{
+	A	=	0,
+	AH	=	1,
+	AY	=	2,
+	B	=	3,
+	C	=	4,
+	CH	=	5,
+	D	=	6,
+	E	=	7,
+	EE	=	8,
+	ER	=	9,
+	F	=	10,
+	G	=	11,
+	H	=	12,
+	I	=	13,
+	J	=	14,
+	L	=	15,
+	M	=	16,
+	N	=	17,
+	NG	=	18,
+	OH	=	19,
+	OO	=	20,
+	OU	=	21,
+	OW	=	22,
+	OY	=	23,
+	P	=	24,
+	R	=	25,
+	S	=	26,
+	SH	=	27,
+	T	=	28,
+	TH	=	29,
+	TT	=	30,
+	U	=	31,
+	V	=	32,
+	W	=	33,
+	Y	=	34,
+	Z	=	35,
+	_i	=	36,
+	_tH	=	37,
+};
+
+struct Laddie
+{
+	struct Header
+	{
+		int64 fileName <comment="StrCode64 hash of the file name, string embedded in .wem file, *not* tolowered">;
+		int keyCount;
+		short offsetToKey[keyCount] <bgcolor=0x94A6AA>;
+	} header <bgcolor=0x776C7C>;
+
+	if (FTell() % 4 != 0)
+		FSkip(4 - FTell() % 4);
+
+	struct Keys
+	{
+		ushort unknown0 <fgcolor=0xFF0000, bgcolor=0x87E7FF>;
+		ushort unknown1 <fgcolor=0x0000FF, bgcolor=0x87E7FF>;
+		byte paramsCount <bgcolor=0xB9C199>; Assert(paramsCount==3,"Laddie Keys paramsCount isn't right!!!");
+		FSkip(3);
+		int keyZeroParam0 <bgcolor=0xB9C199>;
+		int keyCount2 <bgcolor=0xB9C199>; //inaccurate in vox_ene_common_ru?
+		int keyZeroParam2 <bgcolor=0xB9C199>;
+		
+		local int realKeyCount = header.keyCount-1;
+		
+		struct Key
+		{
+			ushort unknown0 <fgcolor=0xFF0000, bgcolor=0x87E7FF>;
+			ushort unknown1 <fgcolor=0x0000FF, bgcolor=0x87E7FF>;
+			byte lipAnimCount <bgcolor=0xB8F8EB>;
+			byte unknownFloatCount <bgcolor=0xA3D0D1>;
+			FSkip(2);
+			LipAnimIndex lipAnimIndex[lipAnimCount] <bgcolor=0xB8F8EB>;
+			float unknownFloat[unknownFloatCount] <bgcolor=0xA3D0D1>;
+		} key[realKeyCount] <optimize=false>;
+
+	} keys <optimize=false>;
+
+	if (FTell() % 16 != 0)
+		FSkip(16 - (FTell() % 16));
+
+};
+
+struct StreamedPackage
+{
+	char sign[4];
+	short wemCount;
+	byte hasLipSync;
+	FSkip(1);
+	
+	struct StreamedWemDefiniton
+	{
+		uint streamedPackageId <comment=".wem name", bgcolor=0x58D7E9>;
+		int offsetToWem <bgcolor=0x58D7E9>;
+		if (hasLipSync==1)
+			int offsetToLip <bgcolor=0x5285FF>;
+		
+	} streamedWemDefinition[wemCount];
+	
+	if (FTell() % 16 != 0)
+		FSkip(16 - (FTell() % 16));
+	
+	local int index = 0;
+	struct RiffStreamed
+	{
+		local int preLipIndexCheck = FTell();
+		if (hasLipSync==1)
+		{
+			if ((streamedWemDefinition[index].offsetToWem-streamedWemDefinition[index].offsetToLip)>0)
+				Laddie lipFile <bgcolor=0x5285FF>;
+			Assert(FTell()-(streamedWemDefinition[index].offsetToWem-streamedWemDefinition[index].offsetToLip)==preLipIndexCheck,"Laddie didn't parse all!!!");
+		}
+		
+		local int size = 0;
+		if (index+1<wemCount)
+			if (hasLipSync==1)
+				size = (streamedWemDefinition[index+1].offsetToLip-streamedWemDefinition[index].offsetToWem);
+			else
+				size = (streamedWemDefinition[index+1].offsetToWem-streamedWemDefinition[index].offsetToWem);
+		else
+			size = (FileSize()-streamedWemDefinition[index].offsetToWem);
+		
+		char riffData[size] <bgcolor=0x58D7E9>;
+		
+		index+=1;
+		
+	} riffStreamed[wemCount] <optimize=false>;
+	
+} streamedPackage;
