@@ -83,7 +83,7 @@ struct SoundStructure
 	uint parentObjectId <bgcolor=0xDED272>;
 	
 	// for printing to console
-	Printf("%u", parentObjectId);
+	Printf("Parent ID: %u", parentObjectId);
 	Printf("\n");
 	
 	Boolean overrideSettingsForPlaybackPriority;

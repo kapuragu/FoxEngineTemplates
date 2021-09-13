@@ -1,6 +1,6 @@
 // SBP - SoundBank Package
 // By RLC, based on: https://wiki.xentax.com/index.php/Wwise_SoundBank_(*.bnk) https://github.com/secaproject/SBP_tool
-// Further modified by Half Way Lambda as v2.2
+// Further modified by Half Way Lambda as v2.2.1
 
 enum <byte> ObjectType{
 	Settings=1,
@@ -82,6 +82,10 @@ struct Object
 			ObjectSoundEmbedOrStream embedOrStream;
 			uint audioFileId;
 			uint sourceId <comment="If streamed, same as audioFileId. If embedded, the soundBankId.">;
+			
+			Printf("Audio File ID: %u\n", audioFileId);
+			Printf("Source File ID: %u", sourceId);
+			Printf("\n");
 			if (embedOrStream==Embedded)
 			{
 				int offsetToSoundFile;
