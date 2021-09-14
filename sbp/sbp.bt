@@ -4,7 +4,7 @@
 
 // ALWAYS UPDATE THIS VERSION NUMBER WHEN THIS TEMPLATE GETS UPDATED!
 //===============================
-//        Version 2.3.0
+//        Version 2.3.1
 //===============================
 
 enum <byte> ObjectType{
@@ -199,36 +199,60 @@ struct Object
 		case DialogueEvent:
 			struct DialogueEventObject{
 				byte unknown0;
-				uint groupCount;
+				uint argumentsCount;
 				
-				uint groupName[groupCount] <comment="Definitely an object ID, so an FNV132 hash">;
+				uint arguments[argumentsCount] <comment="Definitely an object ID, so an FNV132 hash">;
 				//RLC: Real-time radio notes;
 				// 434268486 chara
 				// 3703962904 condition
 				
-				byte switchOrState[groupCount];
+				enum <byte> GroupType
+				{
+					SwitchGroup = 0x00,
+					StateGroup = 0x01,
+					
+				} groupType[argumentsCount] <optimize=false>;
 				
 				uint sizeOfEntryArray;
 				
 				byte unknown7;
 				
-				struct groupDefinition
+				struct GroupDefinition
 				{
 					uint groupName;
-					ushort parentStateGroupIndex;
+					ushort firstEntryIndex <comment="Minus the amount of groups">;
 					ushort childrenCount;
-					ushort probability;
 					ushort weight;
+					ushort probability;
 					
-				} dialogueEventEntr0[groupCount];
+				};
+				
+				GroupDefinition groupDefiniton <comment="Default state">;
+				
+				GroupDefinition groupDefinitions[groupDefiniton.childrenCount] <optimize=false>; 
 				
 				struct Path
 				{
-					uint voiceId;
-					uint wemId;
-					ushort probability;
+					uint stateId;
+					uint soundObjectId;
 					ushort weight;
-				} dialogueEntry[(sizeOfEntryArray/12)-(groupCount)] <optimize=false>;
+					ushort probability;
+				};
+				
+				local int i;
+				local int pathCollections[groupDefiniton.childrenCount] <optimize=false>;
+				for (i = 0; i < groupDefiniton.childrenCount; ++i)
+				{
+					pathCollections[i]=groupDefinitions[i].childrenCount;
+				};
+				
+				local int j = 0;
+				struct Paths
+				{
+					Path path[pathCollections[j]] <optimize=false>;
+					j+=1;
+						
+				} paths[groupDefiniton.childrenCount] <optimize=false>;
 				
 			} dialogueEventObject;
 			break;
