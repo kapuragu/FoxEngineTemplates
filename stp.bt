@@ -59,8 +59,8 @@ struct Laddie
 	struct Keys
 	{
 		// this is "key zero" - this counts as a key for everything before it
-		ushort unk0 <comment="Something to do with timing?", fgcolor=0xFF0000, bgcolor=0x87E7FF>;
-		ushort unk1 <comment="Something to do with timing?", fgcolor=0x0000FF, bgcolor=0x87E7FF>;
+		ushort defaultPosition <comment="Position of a keyframe in the timeline.", fgcolor=0xFF0000, bgcolor=0x87E7FF>;
+		ushort defaultIntensity <comment="Always empty?", fgcolor=0x0000FF, bgcolor=0x87E7FF>;
 		byte paramsCount <bgcolor=0xB9C199>; Assert(paramsCount==3,"Laddie keyZero lipAnimCount isn't right!!!");
 		FSkip(3);
 		int keyZeroParam0 <bgcolor=0xB9C199>;
@@ -72,13 +72,13 @@ struct Laddie
 		struct Key
 		{
 			//these are keyframes
-			ushort unk0 <comment="Something to do with timing?", fgcolor=0xFF0000, bgcolor=0x87E7FF>;
-			ushort unk1 <comment="Something to do with timing?", fgcolor=0x0000FF, bgcolor=0x87E7FF>;
+			ushort position <comment="Position of a keyframe in the timeline.", fgcolor=0xFF0000, bgcolor=0x87E7FF>;
+			ushort intensity <comment="Duration or intensity?", fgcolor=0x0000FF, bgcolor=0x87E7FF>;
 			byte lipAnimCount <bgcolor=0xB8F8EB>;
-			byte unknownFloatCount <comment="GZ doesn't have this, but TPP absolutely requires it!", bgcolor=0xA3D0D1>;
+			byte strengthCount <comment="GZ doesn't have this, but TPP absolutely requires it!", bgcolor=0xA3D0D1>;
 			FSkip(2);
 			LipAnimIndex lipAnimIndex[lipAnimCount] <comment="Index of the mouth animation to play", bgcolor=0xB8F8EB>;
-			float unknownFloat[unknownFloatCount] <comment="GZ doesn't have this, but TPP absolutely requires it!", bgcolor=0xA3D0D1>;
+			float strength[strengthCount] <comment="GZ doesn't have this, but TPP absolutely requires it!", bgcolor=0xA3D0D1>;
 			
 		} key[realKeyCount] <optimize=false>;
 

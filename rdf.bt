@@ -220,6 +220,7 @@ else if (header.version == 1) // if GZ
 				{
 					uint sec2Name;				// Not sure what these are, some sort of radio label sets?
 					uint sec2EntryOffset;		// Local (Section 2 start) offset to Section 3 entry
+					
 				} sec2Entries[entriesCount] <optimize=false>;
 				
 				struct sec2OffsetSetEntry
