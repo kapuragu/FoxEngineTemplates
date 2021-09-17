@@ -35,7 +35,7 @@ void printType(ObjectType objectType)
 		case MotionBus:				Printf("Motion Bus"); break;
 		case MotionFX:				Printf("Motion FX"); break;
 		case Effect:				Printf("Effect"); break;
-		case Unknown:				Printf("Unknown"); break;
+		case SoundEffect:			Printf("Sound Effect"); break;
 		case AuxillaryBus:			Printf("Auxillary Bus"); break;
 	}
 }

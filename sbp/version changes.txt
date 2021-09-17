@@ -1,0 +1,13 @@
+Just a file that details all the changes to the template with every new
+version. This is only for looking back at the progress we've made (and
+hopefully find bugs more easily)!
+
+Version 2.4:
++ Massive upgrade to the sound structure. Now the template parses it much,
+much better than before.
++ Renamed the 'Unknown' object type to 'SoundEffect', since Wwise always
+automatically creates this object when a sound/music segment has an
+effect applied on it.
++ Added an FSKip(4) to the music segment/music switch container after it
+declares a sound structure, just so that it parses properly (for now at
+least).

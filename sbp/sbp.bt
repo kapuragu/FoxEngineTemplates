@@ -4,7 +4,7 @@
 
 // ALWAYS UPDATE THIS VERSION NUMBER WHEN THIS TEMPLATE GETS UPDATED!
 //===============================
-//        Version 2.3.1
+//        Version 2.4
 //===============================
 
 enum <byte> ObjectType{
@@ -26,7 +26,7 @@ enum <byte> ObjectType{
 	MotionBus=16,
 	MotionFX=17,
 	Effect=18,
-	Unknown=19,
+	SoundEffect=19,
 	AuxillaryBus=20,
 };
 
@@ -260,7 +260,12 @@ struct Object
 		case MusicSegment:
 			SoundStructure soundstructure;
 			
+			// HWL adding this as of v2.4
+			FSkip(4);
+			
 			uint children_count;
+			if (children_count < 256) // doing this in case it breaks
+				uint children_IDs[children_count];
 			
 			// HWL NOTE: commented this out because the sound structure has corruption
 			// problems..
@@ -339,10 +344,8 @@ struct Object
 			// doesn't seem to parse this at all
 			
 			// Very f**king ugly hack, but it works.
-			if ( ( ( (ReadUInt( FTell() + 12 )) >> 16) & 0xFFFFFFFF ) > 1 )
-				FSkip(8);
-			else
-				FSkip(12);
+			// EDIT: deleting this hack because it doesn't work!
+			FSkip(4);
 			
 			uint num_of_children;
 			uint child_OBJs[num_of_children];
@@ -484,7 +487,12 @@ struct Object
 			break;
 		case MusicPlaylistContainer: // early implementation
 			SoundStructure soundstructure;
+			
+			// HWL adding this FSkip as of v2.4
+			FSkip(4);
 			uint num_of_music_segments <comment="Music Segments that are part of this playlist">;
+			if (num_of_music_segments < 256) // magic number for cases that this would break
+				uint music_segment_IDs[num_of_music_segments];
 			
 			// HWL NOTE: disabling this because of issues with the sound structure destroying
 			// everything

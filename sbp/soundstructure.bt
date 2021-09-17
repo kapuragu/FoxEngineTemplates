@@ -25,6 +25,9 @@ enum <byte> SoundStrctureParameterType
 	GeneralSettingsGameDefinedAuxillarySendsVolume=22,
 	GeneralSettingsOutputBusVolume=23,
 	GeneralSettingsOutputBusLowPassFilter=24,
+	
+	// newer effect as of Wwise 2013!
+	InitialDelay = 25,
 };
 
 enum <byte> CoordinateDimension
@@ -86,23 +89,52 @@ struct SoundStructure
 	Printf("Parent ID: %u", parentObjectId);
 	Printf("\n");
 	
-	Boolean overrideSettingsForPlaybackPriority;
-	Boolean activateOffsetPriorityByDistanceSetting;
-	byte additionalParametersCount;
-	
-	if (additionalParametersCount > 0)
-		SoundStrctureParameterType additionalParameters[additionalParametersCount];
-	
-    local int index;
-    for (index = 0; index < additionalParametersCount; index++)
+	if (outputBusId == 0)
 	{
-		if (additionalParameters[index]==7)
-			uint32 parameterValueInt;
-		else
-			float parameterValueFloat;
+		Printf("HALT! NO FREAKING OUTPUT BUS!\n");
+		uint __NO_OUTPUT_BUS__;
+		break;
 	}
 	
-	Boolean includePositioningSection;
+	Boolean overrideSettingsForPlaybackPriority;
+	Boolean activateOffsetPriorityByDistanceSetting;
+	ubyte additionalParametersCount;
+	
+	struct AdditionalParameters
+	{
+		if (additionalParametersCount > 0)
+		{
+			SoundStrctureParameterType additionalParameters[additionalParametersCount];
+		}
+		
+		local int index;
+		for (index = 0; index < additionalParametersCount; index++)
+		{
+			if (additionalParameters[index]==7)
+				uint32 parameterValueInt;
+			else
+				float parameterValueFloat;
+		}
+	};
+	if (additionalParametersCount > 0) 
+		AdditionalParameters additionalparameters;
+	
+	//Boolean includePositioningSection;
+	ubyte additionalRandomizerParametersCount;
+	if (additionalRandomizerParametersCount > 0)
+	{
+		struct Randomizer
+		{
+			SoundStrctureParameterType Parameters[additionalRandomizerParametersCount];
+			struct RandomizerMinMax
+			{
+				//SoundStrctureParameterType Parameter;
+				float min;
+				float max;
+			} randomizerminmax[additionalRandomizerParametersCount];
+		} randomizer;
+	}
+	/*
 	if (includePositioningSection == is_true)
 	{
 		CoordinateDimension coordinateDimension;
@@ -129,21 +161,94 @@ struct SoundStructure
 			uint u2;
 		}
 	}
+	*/
 	Boolean overrideParentSettingsForGameDefinedAuxillarySends;
-	Boolean useGameDefinedAuxillarySends;
-	Boolean overrideParentSettingsForUserDefinedAuxillarySends;
-	Boolean isUserDefinedAuxillarySends;
+	//byte howToLimitSoundInstances;
 	
-	if (isUserDefinedAuxillarySends == is_true)
+	struct Positioning
 	{
-		uint auxillaryBus0Id;
-		uint auxillaryBus1Id;
-		uint auxillaryBus2Id;
-		uint auxillaryBus3Id;
-	}
+		enum <byte> SoundPositioningType
+		{
+			Three_Dimensional = 0,
+			Two_Dimensional = 1
+		} soundpositioningtype;
+		
+		// BIG NOTE: when you set Wwise to have an RTPC effect of 'Positioning
+		// type' (aka when you want the sound to switch between 2D and 3D), then
+		// the sound bank will always set the SoundPositioningType to 2D and this
+		// boolean will be set to 1! but the important fact is: when this happens,
+		// the structure will be in the 3D form, even though the SoundPositioningType
+		// is set to 2D!
+		Boolean uses_RTPC_if_2D <comment="This one ONLY matters if the sound positioning type is also 2D!">;
+		//Boolean overrideParentSettingsForUserDefinedAuxillarySends;
+		// this got swapped with isUserDefinedAuxillarySends
+		
+		if (soundpositioningtype == Two_Dimensional && !uses_RTPC_if_2D)
+		{
+			Boolean enable_panner;
+		}
+		else // 3D
+		{
+			// this is only true if we're using an RTPC that changes the positioning
+			// type!
+			if (uses_RTPC_if_2D && soundpositioningtype != Three_Dimensional)
+			{
+				Boolean enable_panner_when_set_to_2D;
+			}
+			
+			enum <int> PositionSourceTypee
+			{
+				User_Defined = 0,
+				Game_Defined = 1
+			} positionsourcetype;
+			uint attenuationObjectId;
+			Boolean enableSpatialization;
+			
+			if (positionsourcetype == User_Defined)
+			{
+				PlayType playType;
+				Boolean isLoop <comment="only when Play Type is Continuous, otherwise ignore value of this field -Xentax">;
+				uint transitionTime <comment="only when Play Type is Continuous, otherwise ignore value of this field -Xentax">;
+				Boolean followListenerOrientation;
+				
+				uint num_of_positions;
+				local uint curNumOfPositions;
+				for (curNumOfPositions = 0; curNumOfPositions < num_of_positions; curNumOfPositions++)
+				{
+					struct TwoDimensionalPoint
+					{
+						float X_coordinate;
+						uint maybe_zero;
+						float Y_coordinate;
+						uint seperator;
+					} twodimensionalpoint;
+				}
+				
+				uint num_of_paths;
+				uint who_knows[num_of_paths * 2];
+				local uint curNumOfPaths;
+				for (curNumOfPaths = 0; curNumOfPaths < num_of_paths; curNumOfPaths++)
+				{
+					struct Random_Range_Of_Path
+					{
+						float rr_horizontal;
+						float rr_vertical;
+					} random_range_of_path;
+				}
+			}
+			else if (positionsourcetype == Game_Defined)
+			{
+				Boolean updateAtEachFrame;
+			}
+		}
+		FSkip(1); // appears to be always zero
+		
+	} positioning;
+	//Boolean overrideParentSettingsForPlaybackLimitSection;
 	
-	Boolean unknownParameterForPlaybackLimitSection;
+	//Boolean unknownParameterForPlaybackLimitSection;
 	
+	/*
 	if (unknownParameterForPlaybackLimitSection == is_true)
 	{
 		enum <byte> InstanceToDiscard
@@ -160,80 +265,175 @@ struct SoundStructure
 		
 		ushort limitSoundInstancesTo;
 	}
-	byte howToLimitSoundInstances;
-	byte virtualVoiceBehavior;
-	Boolean overrideParentSettingsForPlaybackLimitSection;
+	*/
 	
-	// HWL NOTE: all hell breaks loose from here. this bool
-	// below can sometimes have values of 4 or 5, instead of
-	// being 0 or 1
+	struct General_Settings
+	{
+		Boolean useGameDefinedAuxillarySends;
+		
+		byte virtualVoiceBehavior;
+		
+		Boolean isUserDefinedAuxillarySends;
+		
+		if (isUserDefinedAuxillarySends == is_true)
+		{
+			uint auxillaryBus0Id;
+			uint auxillaryBus1Id;
+			uint auxillaryBus2Id;
+			uint auxillaryBus3Id;
+		}
+	} general_settings;
+	
 	//Boolean overrideParentSettingsForVirtualVoiceSection;
 	byte unknown;
 	
-	// HWL All the following are borrowed from WolvenKit
-	// NOTE: this value is most often corrupt
-	// HWL as of v2.2, i'm starting to modify this since it
-	// appears that WolvenKit isn't 100% fool-proof
-	
-	ushort unknown2;
-	ushort stage_groups_count;
-	
-	// ======================================================
-	// HWL disabling this because it is very likely to break
-	// ======================================================
-	
-	/*
-	if (stage_groups_count > 0)
+	//ushort unknown2;
+	struct Advanced_Settings
 	{
-		local int i;
-		for (i = 0; i < stage_groups_count; ++i)
+		
+		struct Playback_limit
 		{
-			struct SoundStrcture_StateGroup
+			enum <byte> InstanceToDiscard
 			{
-				uint ID;
-				byte change_occurs;
-				ushort different;
-				
-				local int j;
-				for (j = 0; j < different; ++j)
+				Oldest = 0,
+				Newest = 1,
+			} instance_to_discard;
+			
+			enum <byte> LimitReached
+			{
+				Kill_voice = 0,
+				Use_virtual_voice_settings = 1,
+			} when_limitreached;
+			
+			//ushort stage_groups_count;
+			ushort limitSoundInstancesTo <comment="If 0, then this setting is disabled.">;
+			enum <ubyte> SoundInstanceType
+			{
+				Per_game_object = 0,
+				Globally = 1
+			} soundinstancetype;
+		} playback_limit;
+		
+		struct Virtual_voice
+		{
+			enum <byte> Virtual_voice_behavior
+			{
+				Continue_to_play = 0,
+				Killvoice = 1,
+				Send_to_virtual_voice = 2
+			} virtual_voice_behavior;
+		} virtual_voice;
+		
+	} advanced_settings;
+	
+	// NOTE: there's always 10 empty bytes here, which i guess is for the states section
+	// EDIT: even after implementing the states section, it looks like a 6-byte skip is
+	// still needed. wtf WWise?!
+	FSkip(6);
+	
+	struct States
+	{
+		uint state_groups_count;
+		local uint curStateGroupsCount;
+		
+		// used later
+		local ushort curNumOfStatesCustomSettings;
+		
+		for (curStateGroupsCount = 0; curStateGroupsCount < state_groups_count; curStateGroupsCount++)
+		{
+			struct State_Group
+			{
+				uint state_group_ID;
+				enum <byte> Changes_Occur_At
 				{
-					uint ID;
-					uint ID_object_contain;
+					Immediate = 0,
+					Next_Grid = 1,
+					Next_Bar = 2,
+					Next_Beat = 3,
+					Next_Cue = 4,
+					Custom_Cue = 5,
+					Entry_Cue = 6,
+					Exit_Cue = 7,
+				} changes_occur_at <comment="Only used for music. Otherwise, it's always Immediate.">;
+			} state_group;
+			
+			ushort num_of_states_with_custom_settings;
+			
+			for (curNumOfStatesCustomSettings = 0; curNumOfStatesCustomSettings < num_of_states_with_custom_settings; curNumOfStatesCustomSettings++)
+			{
+				uint state_object_ID;
+				uint settings_object_ID;
+			}
+		}
+	} states;
+	
+	struct RTPC
+	{
+		ushort num_of_RTPC_effects;
+		local uint curRTPC_effects;
+		for (curRTPC_effects = 0; curRTPC_effects < num_of_RTPC_effects; curRTPC_effects++)
+		{
+			struct RTPC_effect
+			{
+				uint x_axis_game_param_name <comment="Fnv132 Hash">;
+				enum <uint> Y_Axis_Effect_Type
+				{
+					Voice_Volume = 0,
+					Voice_Low_Pass_Filter = 3,
+					// newer effect as of Wwise 2013!
+					Initial_Delay = 6,
+					Priority = 8,
+					Sound_Instance_Limit = 9,
+					// newer effect as of Wwise 2013!
+					Positioning_Type = 10,
+					User_Defined_Auxiliary_Sends_Volume_Zero = 0x0F,
+					User_Defined_Auxiliary_Sends_Volume_One = 0x10,
+					User_Defined_Auxiliary_Sends_Volume_Two = 0x11,
+					User_Defined_Auxiliary_Sends_Volume_Three = 0x12,
+					Game_Defined_Auxiliary_Sends_Volume = 0x13,
+					Output_Bus_Volume = 0x16,
+					Output_Bus_Low_pass_Filter = 0x17,
+					Bypass_Effect_Zero = 0x18,
+					Bypass_Effect_One = 0x19,
+					Bypass_Effect_Two = 0x1A,
+					Bypass_Effect_Three = 0x1B,
+					Bypass_All_Effects = 0x1C,
+					Motion_Volume_Offset = 0x1D,
+					Motion_Low_Pass = 0x1E,
+					// newer effects as of Wwise 2013!
+					HDR_Active_Range = 0x23,
+					Make_Up_Gain = 0x24
+				} y_axis_effecttype;
+				
+				uint unknown;
+				ubyte unkn_byte;
+				
+				ushort num_of_points;
+				local uint curNumPoints;
+				for (curNumPoints = 0; curNumPoints < num_of_points; curNumPoints++)
+				{
+					struct Point
+					{
+						float X_coordinate;
+						float Y_coordinate;
+						enum <uint> Curve_Shape
+						{
+							Logarithmic_Base3 = 0, // (Base 3)
+							Sine_FadeIn = 1, // (Constant Power Fade In)
+							Logarithmic_Base141 = 2, // (Base 1.41)
+							Inverted_S_Curve = 3,
+							Linear = 4,
+							S_Curve = 5,
+							Exponential_Base141 = 6, // (Base 1.41)
+							Sine_FadeOut = 7, // (Constant Power Fade Out)
+							Exponential_Base3 = 8, // (Base 3)
+							Constant = 9
+						} curve_shape;
+						
+					} point <comment="NOTE: these points work differently if the Y axis effect is set to 'Positioning Type'.">;
 				}
 				
-			} soundstructure_stategroup;
+			} rtpc_effect;
 		}
-	}
-	*/
-	
-	uint16 RTPC_count;
-	/*
-	if (RTPC_count > 0)
-	{
-		local int curRTPC;
-		for (curRTPC = 0; curRTPC < RTPC_count; ++curRTPC)
-		{
-			struct SoundStrcture_RTPC
-			{
-				uint x_axis_ID;
-				uint y_axis_type;
-				uint u1;
-				byte b1;
-				ubyte points_count;
-				byte b2;
-				
-				local int j;
-				for (j = 0; j < points_count; ++j)
-				{
-					float x_coords;
-					float y_coords;
-					uint curve_shape;
-				}
-			} soundstructure_RTPC;
-		}
-	}
-	*/
-	uint unknown0;
-	if (unknown0 > 0)
-		byte data;
+	} rtpc;
 };
