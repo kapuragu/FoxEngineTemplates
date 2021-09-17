@@ -42,6 +42,8 @@ enum LipAnimIndex
 	_tH	=	37,
 };
 
+local int GzsOrTpp = 1;
+
 struct StreamAnimationLip
 {
 	char sign[4];
@@ -60,8 +62,10 @@ struct StreamAnimationLip
 		int subEntryCount;//2
 		struct SubEntryData{
 			char entryType[];
-			FSkip(1);
+			if (FTell() % 4 != 0)
+				FSkip(4 - FTell() % 4);
 			int offsetToEntry;
+			
 		} subEntryData[subEntryCount] <bgcolor=0x776C7C>;
 
 		local int index = 0;
@@ -74,6 +78,9 @@ struct StreamAnimationLip
 				{
 					int keyCount <comment="Key count including key zero">;
 					short offsetToKey[keyCount] <comment="Offset from keyCount", bgcolor=0x94A6AA>;
+					if (GzsOrTpp == 1)
+						if (FTell() % 4 != 0)
+							FSkip(4 - FTell() % 4);
 					
 				} header <bgcolor=0x776C7C>;
 				
@@ -84,11 +91,15 @@ struct StreamAnimationLip
 					ushort defaultIntensity <comment="Always empty?", fgcolor=0x0000FF, bgcolor=0x87E7FF>;
 					byte paramsCount <bgcolor=0xB9C199>;
 					FSkip(3);
-					int keyZeroParam0 <bgcolor=0xB9C199>;
+					int keyZeroParam0 <bgcolor=0xB9C199>; Assert(keyZeroParam0==0,".ls KeyZero Param0 Isn't 0!!!!");
 					int keyCount2 <comment="Amount of keys aside from key zero... most of the time", bgcolor=0xB9C199>; //inaccurate in vox_ene_common_ru?
-					int keyZeroParam2 <comment="Always 1?", bgcolor=0xB9C199>;
+					int keyZeroParam2 <comment="Most of the time 1, rarely 2 (vox_0100e chico-paz)", bgcolor=0xB9C199>; Assert(keyZeroParam2==1||keyZeroParam2==2,".ls KeyZero Param2 Isn't 1 or 2!!!!");
+					if (keyZeroParam2==2)
+						Printf("\n keyZeroParam2==2");
 					
 					local int realKeyCount = header.keyCount - 1;
+					
+					Assert(keyCount2==realKeyCount,"Wierd Keycount!!!!");
 					
 					struct KeyGZ
 					{
@@ -103,11 +114,18 @@ struct StreamAnimationLip
 
 					} keyGZ[realKeyCount] <optimize=false>;
 					
-					//TPP-only: <
-					FSkip(1);
-					if (FTell() % 8 != 0)
-						FSkip((8 - (FTell() % 8)-2));
-					//>
+					if (GzsOrTpp == 1)
+					{
+						FSkip(1);
+						if (FTell() % 8 != 0)
+							FSkip((8 - (FTell() % 8)-2));
+					}
+					else
+					{
+						FSkip(1);
+						if (FTell() % 2 != 0)
+							FSkip((2 - (FTell() % 2)));
+					}
 				
 				} keysGZ <optimize=false>;
 			}
@@ -128,7 +146,8 @@ struct StreamAnimationLip
 					
 				} messageIdSection <optimize=false>;
 			};
-			int64 fileNameAgain;
+			
+			char fileNameBackwards[6] <comment="Just backwards endianness file name?">;
 				
 			if (FTell() % 16 != 0)
 				FSkip(16 - (FTell() % 16));
