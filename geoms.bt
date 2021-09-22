@@ -1,7 +1,7 @@
 // https://github.com/oldbanana12/GeomsParser/blob/master/Geoms.cs
 
 // =================
-// | Version 3.6.4 |
+// | Version 3.6.5 |
 // =================
 
 LittleEndian();
@@ -90,33 +90,27 @@ struct FaceChunk
 	
 	local long posBeforeVertices = FTell();
 	
-	// there's some cases where there isn't enough space for a
-	// sub vertices chunk because there's only 2 lines of the
-	// file left. this check makes sure we don't make a sub
-	// vertices chunk if that happens (this doesn't work most
-	// of the time though, but just ignore the error).
-	if ( FTell() + 32 < header.FileSize )
+	// HWL removed a very old if check as of v3.6.5.
+
+	// HWL a cleaner implementation of the sub vertices chunk, as of v3.6.3.
+	// instead of checking if the number of vertices is too ridiculous, we
+	// instead use the line_offset_to_vertices variable. then, the template
+	// "snaps" to that sub vertices chunk, and after it's done, it returns
+	// to the previous position.
+	// note: this doesn't happen if the sub vertices chunk is right underneath
+	// this face chunk.
+	if (line_offset_to_vertices > 0)
 	{
-		// HWL a cleaner implementation of the sub vertices chunk, as of v3.6.3.
-		// instead of checking if the number of vertices is too ridiculous, we
-		// instead use the line_offset_to_vertices variable. then, the template
-		// "snaps" to that sub vertices chunk, and after it's done, it returns
-		// to the previous position.
-		// note: this doesn't happen if the sub vertices chunk is right underneath
-		// this face chunk.
-		if (line_offset_to_vertices > 0)
-		{
-			local long subVerticesChunkStartPos = (Data.DataChunk_startPos + (line_offset_to_vertices * 16) );
-			
-			FSeek(subVerticesChunkStartPos);
-			SubVerticesChunk subverticeschunk;
-			
-			// HWL very important check so that we don't accidently declare a new data chunk
-			// inside the sub vertices section.
-			if (subVerticesChunkStartPos != posBeforeVertices)
-				// return to the previous position.
-				FSeek(posBeforeVertices);
-		}
+		local long subVerticesChunkStartPos = (Data.DataChunk_startPos + (line_offset_to_vertices * 16) );
+		
+		FSeek(subVerticesChunkStartPos);
+		SubVerticesChunk subverticeschunk;
+		
+		// HWL very important check so that we don't accidently declare a new data chunk
+		// inside the sub vertices section.
+		if (subVerticesChunkStartPos != posBeforeVertices)
+			// return to the previous position.
+			FSeek(posBeforeVertices);
 	}
 };
 
@@ -133,46 +127,67 @@ struct BoundingBoxChunk
 	// always zero
 	FSkip(8);
 	
-	local uint pCount<comment="Always 2"> = ( (DataChunkID >> 16) & 0x000000FF );
-	Float4 boundingBox_size[pCount];
+	// Thanks to Jinmar for figuring out that the center transform is what 
+	// the second Float4 is used for!
+	Float4 boundingBox_size;
+	Float4 boundingBox_centertransform;
 };
 
-// HWL this is for reading the DataChunkID as two parts: count, and type
+// ===============================================
+// Functions for properly reading the DataChunkID.
+// ===============================================
+ushort DataChunkID_readType(uint DataChunkID)
+{
+	return DataChunkID & 0xFF; // This basically reads the uint's first byte.
+}
+
+// HWL this is for reading the DataChunkID as four parts: countA, countB, type,
+// and an unknown count (the second byte).
 string DataChunkID_read(uint DataChunkID)
 {
 	string s;
 	uint indices_count = (DataChunkID >> 24);
 	uint countA = ( (DataChunkID >> 16) & 0x000000FF );
-	uint ID_type = (DataChunkID & 0xFFFF);
 	
-	SPrintf(s, "Type: %d, CountA: %d, CountB: %d", ID_type, countA, indices_count);
+	uint ID_type = DataChunkID_readType(DataChunkID);
+	uint second_unknown_ID_type = ( (DataChunkID & 0xFF00) >> 8); // This is the second byte
+	// in the uint.
+	
+	SPrintf(s, "Type: %d, CountA: %d, CountB: %d, Unknown: %d", ID_type, countA, indices_count, second_unknown_ID_type);
 	
 	return s;
 }
+// =================
+// End of functions.
+// =================
 
 struct DataChunk
 {
     uint DataChunkID<read=DataChunkID_read, bgcolor=0x0080ff>;
+	
 	local long DataChunk_startPos = FTell() - 4;
 
 	// make sure we don't make any more headway in the data chunk if we've
 	// clearly hit the end of the file.
 	if ( FTell() + 32 < header.FileSize )
 	{
-		// spotted a weird case where a first wasn't 0x01020004, but it had
-		// one bit that was the same in 0x01020004, so i'm adding that
-		// to the check.
-		if (DataChunkID == 0x01020004 || ( DataChunkID & 0x4 ) == 0x4 )
+		// HWL This got updated after so long!
+		if (DataChunkID_readType(DataChunkID) == 4) // type 4 is for bounding boxes
 		{
 			// I seperated this into another struct just so that we can
 			// have some more pretty colors.
 			BoundingBoxChunk boundingboxchunk<bgcolor=COLOR_BOUNDINGBOXCHUNK>;
 		}
-		else if ((DataChunkID & 0x00000002) == 0x00000002 && (DataChunkID & 0xff000000) != 0)
+		// HWL This also got updated, as of v3.6.5. No more messy bit shifts!
+		else if (DataChunkID_readType(DataChunkID) == 2)
 		{
 			Printf("Index buffer");
 			Printf( " (0x%LX)\n",FTell() );
 			FaceChunk facechunk;
+		}
+		else if ( (DataChunkID >> 16) == 0) // are CountA and CountB zero?
+		{
+			haltDataChunks = 1;
 		}
 	}
 };
@@ -343,6 +358,11 @@ struct Entry
 	local long startOfEntry = FTell();
 	local long entryPosition = FTell();
 	
+	// HWL Used for the last section of an entry that can have
+	// empty sub vertex chunks. the template freaks out if this
+	// isn't implemented
+	local byte haltDataChunks = 0;
+	
 	EntrySettingsPrimary entrysettingsprimary;
 
     entryPosition += entrysettingsprimary.NextSectionOffset;
@@ -389,7 +409,7 @@ struct Entry
 	// changed the != to a > , because in rare cases the bytesRemaining would be negative.
 	// i think this newer fix doesn't need that anymore though, but i'm leaving it just in
 	// case.
-    while (bytesRemaining > 0)
+    while (bytesRemaining > 0 && haltDataChunks == 0)
     {
         DataChunk Data;
         bytesRemaining -= FTell() - dataStartPosition;
