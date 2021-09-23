@@ -4,7 +4,7 @@
 
 // ALWAYS UPDATE THIS VERSION NUMBER WHEN THIS TEMPLATE GETS UPDATED!
 //===============================
-//        Version 2.4
+//        Version 2.4.1
 //===============================
 
 enum <byte> ObjectType{
@@ -160,7 +160,7 @@ struct Object
 			
 			ubyte u5;
 			uint unknown1;
-			uint parentObjectId <bgcolor=0xDED272>;
+			uint unknown2;
 			ushort u55;
 			
 			ubyte u6;
@@ -175,13 +175,7 @@ struct Object
 			ushort u9;
 			ubyte u10;
 			
-			FSkip(1);
-			ubyte u11;
-			
-			FSkip(3);
-			
-			uint unknown5;
-			uint object_ID <comment="Definitely an object ID, so an FNV132 hash">;
+			uint parentObjectId <bgcolor=0xDED272>;
 			
 			// HWL can't remember why i commented this out..i guess it went out of range?
 			/*
