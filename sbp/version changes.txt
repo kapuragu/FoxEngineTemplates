@@ -2,6 +2,11 @@ Just a file that details all the changes to the template with every new
 version. This is only for looking back at the progress we've made (and
 hopefully find bugs more easily)!
 
+Version 2.4.2:
++ Another tiny upgrade to the actor mixer. Now it parses the first section
+as a sound structure, which appears to properly parse a big part of the
+object now!
+
 Version 2.4.1:
 + Tiny update to the actor-mixer parsing, so that it (hopefully) shows the
 parent object ID as it should.
