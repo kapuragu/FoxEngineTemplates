@@ -1,5 +1,8 @@
 // SAL - Stream Animation
 // By RLC - inspired by other FOX templates by the researchers of Modders' Heaven!
+
+local int GzsOrTpp = 0;
+
 enum LipAnimIndex
 {
 	A	=	0,
@@ -41,8 +44,6 @@ enum LipAnimIndex
 	_i	=	36,
 	_tH	=	37,
 };
-
-local int GzsOrTpp = 1;
 
 struct StreamAnimationLip
 {

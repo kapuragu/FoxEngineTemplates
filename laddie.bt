@@ -46,13 +46,13 @@ struct Laddie
 {
 	struct Header
 	{
-		int64 fileName <comment="StrCode64 hash of the file name, string embedded in .wem file, *not* tolowered">;
+		int64 fileName <comment="StrCode64 hash of the file name, string embedded in .wem file, *not* tolowered">; //This hash is the file name in .sab files and would have to be inserted for a GZ-TPP conversion
 		int keyCount <comment="Key count including key zero">;
-		short offsetToKey[keyCount] <comment="Offset from keyCount", bgcolor=0x94A6AA>;
+		short offsetToKey[keyCount] <comment="Offset from keyCount", bgcolor=0x94A6AA>; //These offsets are important and would have to be adjusted for a GZ-TPP conversion
 		
 	} header <bgcolor=0x776C7C>;
 	
-	// align the stream
+	// align the stream: GZ ls does not align the stream here!!! would have to be accounted for and adjusted in a GZ-TPP conversion
 	if (FTell() % 4 != 0)
 		FSkip(4 - FTell() % 4);
 
@@ -75,10 +75,10 @@ struct Laddie
 			ushort position <comment="Position of a keyframe in the timeline.", fgcolor=0xFF0000, bgcolor=0x87E7FF>;
 			ushort intensity <comment="Duration or intensity?", fgcolor=0x0000FF, bgcolor=0x87E7FF>;
 			byte lipAnimCount <bgcolor=0xB8F8EB>;
-			byte strengthCount <comment="GZ doesn't have this, but TPP absolutely requires it!", bgcolor=0xA3D0D1>;
+			byte strengthCount <comment="GZ doesn't have this, but TPP absolutely requires it!", bgcolor=0xA3D0D1>; //GZ always have this as zero, would have to be adjusted for a GZ-TPP conversion
 			FSkip(2);
 			LipAnimIndex lipAnimIndex[lipAnimCount] <comment="Index of the mouth animation to play", bgcolor=0xB8F8EB>;
-			float strength[strengthCount] <comment="GZ doesn't have this, but TPP absolutely requires it!", bgcolor=0xA3D0D1>;
+			float strength[strengthCount] <comment="GZ doesn't have this, but TPP absolutely requires it!", bgcolor=0xA3D0D1>; //GZ doesn't have these at all, would have to be added for a GZ-TPP conversion
 			
 		} key[realKeyCount] <optimize=false>;
 
