@@ -1,0 +1,97 @@
+//------------------------------------------------
+// Note: Values hardcoded from e20020_area.frt
+//------------------------------------------------
+LittleEndian();
+
+struct Vector4
+{
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+struct Divisor
+{
+    short x;
+    short y;
+    short z;
+    short w;
+};
+
+char ROUT[4] <bgcolor=0xFCE7A3>;
+
+struct Header
+{
+    ushort version;
+
+    if (version == 512)
+    {
+        BigEndian();
+    }
+
+    ushort routeCount;
+    
+    ushort u1;
+    ushort u1b;
+    ushort u2;
+    ushort u2b;
+    Vector4 origin;
+
+    uint routeIdsOffset;
+    uint routeDefinitionsOffset;
+    uint nodesOffset;
+    uint eventTablesOffset;
+    uint eventsOffset;
+    uint fileSize;
+	
+    byte falseDivisor[8] <comment="Most likely irrelevant bytes">;
+	
+} header <bgcolor=0x85C426>;
+
+uint routeIds[header.routeCount] <bgcolor=0x8F9032>;
+
+struct RouteDefinition
+{
+    local int position = FTell();
+
+    uint nodesOffset;
+    uint eventTableOffset;
+    uint eventsOffset;
+    ushort nodeCount;
+    ushort eventCount;
+
+    // Maps nodes to events
+    FSeek(position + eventTableOffset);
+    struct EventTable
+    {
+        ushort eventCount;
+        ushort eventIndex;
+    } eventTables[nodeCount];
+    FSeek(position + eventsOffset);
+
+    struct Event
+    {
+        uint type;
+        uint params[10];
+        char snippet[4];
+    } events[eventCount];
+
+    FSeek(position + 16);
+} routeDefinitions[header.routeCount] <bgcolor=0x413A55, fgcolor=0xFFFFFF, optimize=false>;
+
+local int nodeCount = 0;
+local int eventCount = 0;
+local int i = 0;
+for (i = 0; i < header.routeCount; i++)
+{
+    nodeCount += routeDefinitions[i].nodeCount;
+    eventCount += routeDefinitions[i].eventCount;
+}
+
+struct Node
+{
+    int64 xBits : 16;
+    int64 yBits : 32;
+    int64 zBits : 16;
+} nodes[nodeCount] <bgcolor=0x01062F, fgcolor=0xFFFFFF, optimize=false>;
