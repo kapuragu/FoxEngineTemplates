@@ -32,10 +32,8 @@ struct Header
 
     ushort routeCount;
     
-    ushort u1;
-    ushort u1b;
-    ushort u2;
-    ushort u2b;
+    FSkip(8); //Irrelevant memory leak bytes
+	
     Vector4 origin;
 
     uint routeIdsOffset;
@@ -44,8 +42,8 @@ struct Header
     uint eventTablesOffset;
     uint eventsOffset;
     uint fileSize;
-	
-    byte falseDivisor[8] <comment="Most likely irrelevant bytes">;
+    
+    FSkip(8); //Irrelevant memory leak bytes
 	
 } header <bgcolor=0x85C426>;
 
@@ -91,7 +89,11 @@ for (i = 0; i < header.routeCount; i++)
 
 struct Node
 {
-    int64 xBits : 16;
-    int64 yBits : 32;
-    int64 zBits : 16;
+    int64 xBits : 20;
+    int64 yBits : 24;
+    int64 zBits : 20;
+	local int x = (xBits*4096);
+	local int y = (yBits*256);
+	local int z = (zBits*4096);
+	
 } nodes[nodeCount] <bgcolor=0x01062F, fgcolor=0xFFFFFF, optimize=false>;
