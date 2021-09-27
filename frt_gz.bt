@@ -60,14 +60,15 @@ struct RouteDefinition
     ushort eventCount;
 
     // Maps nodes to events
+	
     FSeek(position + eventTableOffset);
     struct EventTable
     {
         ushort eventCount;
         ushort eventIndex;
     } eventTables[nodeCount];
+	
     FSeek(position + eventsOffset);
-
     struct Event
     {
         uint type;
@@ -75,25 +76,12 @@ struct RouteDefinition
         char snippet[4];
     } events[eventCount];
 
-    FSeek(position + 16);
-} routeDefinitions[header.routeCount] <bgcolor=0x413A55, fgcolor=0xFFFFFF, optimize=false>;
-
-local int nodeCount = 0;
-local int eventCount = 0;
-local int i = 0;
-for (i = 0; i < header.routeCount; i++)
-{
-    nodeCount += routeDefinitions[i].nodeCount;
-    eventCount += routeDefinitions[i].eventCount;
-}
-
-struct Node
-{
-    int64 xBits : 20;
-    int64 yBits : 24;
-    int64 zBits : 20;
-	local int x = (xBits*4096);
-	local int y = (yBits*256);
-	local int z = (zBits*4096);
+    FSeek(position + nodesOffset);
+	struct Node
+	{
+		uint64 Coordinate;
+	} nodes[nodeCount] <bgcolor=0x01062F>;
 	
-} nodes[nodeCount] <bgcolor=0x01062F, fgcolor=0xFFFFFF, optimize=false>;
+    FSeek(position + 16);
+	
+} routeDefinitions[header.routeCount] <bgcolor=0x413A55, fgcolor=0xFFFFFF, optimize=false>;
