@@ -1,7 +1,7 @@
 // https://github.com/oldbanana12/GeomsParser/blob/master/Geoms.cs
 
 // =================
-// | Version 3.6.5 |
+// | Version 3.6.6 |
 // =================
 
 LittleEndian();
@@ -119,7 +119,7 @@ struct BoundingBoxChunk
 	Printf("Bounding Box Chunk");
 	Printf( " (0x%LX)\n",FTell() );
 	
-	uint unknown <comment="Maybe a multiplier/divisor?">;
+	uint linesOffsetNextDataChunk <comment="Number of lines left until next DataChunk (FaceChunk excluded). For the first DataChunk of a Section it's always 0">;
 	uint flag;
 	uint always_4 <hidden=true>;
 	EntryCollisionFlag();
@@ -129,8 +129,8 @@ struct BoundingBoxChunk
 	
 	// Thanks to Jinmar for figuring out that the center transform is what 
 	// the second Float4 is used for!
-	Float4 boundingBox_size;
-	Float4 boundingBox_centertransform;
+	Float4 boundingBoxSize <bgcolor=0xDBC48F, comment="Width/2, Height/2, Depth/2">;
+	Float4 boundingBoxPivotCenter <bgcolor=0xDBC48F, comment="Pivot Center">;
 };
 
 // ===============================================
@@ -222,8 +222,8 @@ struct GeomProp_Subsection2_Parts
 	// compared to the ps3 counterparts that have different
 	// endianness.
 	FSkip(1);
-	byte B1 <comment="Most common values are 3 and 5.">;
-	ushort UnknownCount; // HWL: "Unknown counter"
+	byte sectionOffset <comment="Nb of DataChunks until next Section.">;
+	ushort bytesPerSection <comment="Nb of bytes per Section, Data[0] next Section - Data[0] current Section.">;
 	
 	ushort offset_to_boundingBox_or_subvertices <comment="This offset is from the start of this part">;
 	FSkip(2);
