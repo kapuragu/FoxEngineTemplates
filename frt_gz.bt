@@ -19,6 +19,22 @@ struct Divisor
     short w;
 };
 
+enum <ubyte> RouteAimTargetType
+{
+    ROUTE_AIM_NO_TARGET = 0,
+    ROUTE_AIM_STATIC_POINT = 1,
+    ROUTE_AIM_CHARACTER = 2,
+    ROUTE_AIM_ROUTE_AS_SIGHT_MOVE_PATH = 3,
+    ROUTE_AIM_ROUTE_AS_OBJECT = 4
+};
+
+struct Vector3
+{
+    float x;
+    float y;
+    float z;
+};
+
 char ROUT[4] <bgcolor=0xFCE7A3>;
 
 struct Header
@@ -44,15 +60,20 @@ struct Header
     uint fileSize;
     
     FSkip(8); //Irrelevant memory leak bytes
-	
 } header <bgcolor=0x85C426>;
 
-uint routeIds[header.routeCount] <bgcolor=0x8F9032>;
+local int routeIdsPosition = FTell();
+local int i = 0;
 
-struct RouteDefinition
+struct Route
 {
-    local int position = FTell();
-
+	//Get route id first for Jump to Template Variable
+	FSeek(routeIdsPosition + ( 0x4 * i ) );
+	uint routeId <bgcolor=0x8F9032>;
+	//Offset to the start of current route definitions
+	FSeek(routeIdsPosition + ( header.routeCount * 0x4 ) + ( 0x10 * i ) );
+    local int routeDefinitionsPosition = FTell();
+	
     uint nodesOffset;
     uint eventTableOffset;
     uint eventsOffset;
@@ -60,28 +81,96 @@ struct RouteDefinition
     ushort eventCount;
 
     // Maps nodes to events
-	
-    FSeek(position + eventTableOffset);
+    FSeek(routeDefinitionsPosition + eventTableOffset);
     struct EventTable
     {
         ushort eventCount;
         ushort eventIndex;
     } eventTables[nodeCount];
 	
-    FSeek(position + eventsOffset);
+    FSeek(routeDefinitionsPosition + eventsOffset);
     struct Event
     {
         uint type;
-        uint params[10];
-        char snippet[4];
-    } events[eventCount];
+		ubyte isNodeEvent;
+		RouteAimTargetType aimPointType;
+		ubyte flagA <hidden = true>; Assert(flagA == 0);
+		ubyte flagB;
+		
+		ushort time; //A common wait time is 479 or 299.
+		short dir; //Counter-clockwise from 0 to ushort max, in Unity looking at blue Z
 
-    FSeek(position + nodesOffset);
+		byte u0; Assert(u0==-1||u0==0);
+		byte u1 <hidden = true>; Assert(u1==0);
+		byte u2 <hidden = true>; Assert(u2==0);
+		byte u3 <hidden = true>; Assert(u3==0);
+		
+		if (aimPointType == ROUTE_AIM_NO_TARGET)
+		{
+			uint unknown0 <hidden = true>; Assert(unknown0==0);
+			uint unknown1 <hidden = true>; Assert(unknown1==0);
+			uint unknown2 <hidden = true>; Assert(unknown2==0);
+			uint unknown3 <hidden = true>; Assert(unknown3==0);
+			
+			uint unknown4;
+			uint unknown5;
+			uint unknown6;
+			uint unknown7;
+		}
+		else if (aimPointType == ROUTE_AIM_STATIC_POINT)
+		{
+			Vector3 aimPos;
+			uint unknown3 <hidden = true>; Assert(unknown3==0);
+			
+			uint unknown4;
+			int unknown5;
+			uint unknown6 <hidden = true>; Assert(unknown6==0);
+			uint unknown7 <hidden = true>; Assert(unknown7==0);
+		}
+		else if (aimPointType == ROUTE_AIM_CHARACTER)
+		{
+			uint64 characterId;
+			uint unknown2 <hidden = true>; Assert(unknown2==0);
+			uint unknown3 <hidden = true>; Assert(unknown3==0);
+			
+			uint unknown4;
+			uint unknown5;
+			uint unknown6;
+			uint unknown7 <hidden = true>; Assert(unknown7==0);
+		}
+		else if (aimPointType == ROUTE_AIM_ROUTE_AS_SIGHT_MOVE_PATH)
+		{
+			uint sightRouteId;
+			Vector3 aimPos;
+			
+			uint unknown4;
+			uint unknown5 <hidden = true>; Assert(unknown5==0);
+			uint unknown6 <hidden = true>; Assert(unknown6==0);
+			uint unknown7 <hidden = true>; Assert(unknown7==0);
+		}
+		else if (aimPointType == ROUTE_AIM_ROUTE_AS_OBJECT)
+		{
+			uint objectId;
+			Vector3 aimPos;
+			
+			uint unknown4 <hidden = true>; Assert(unknown4==0);
+			uint unknown5 <hidden = true>; Assert(unknown5==0);
+			uint unknown6 <hidden = true>; Assert(unknown6==0);
+			uint unknown7 <hidden = true>; Assert(unknown7==0);
+		}
+		else
+		{
+			Assert(2+2==5,"Unknown aimpointtype!!!");
+		}
+		
+    } events[eventCount] <optimize=false>;
+
+    FSeek(routeDefinitionsPosition + nodesOffset);
 	struct Node
 	{
-		uint64 Coordinate;
+		uint64 coordinate;
 	} nodes[nodeCount] <bgcolor=0x01062F>;
 	
-    FSeek(position + 16);
-	
-} routeDefinitions[header.routeCount] <bgcolor=0x413A55, fgcolor=0xFFFFFF, optimize=false>;
+	i++;
+	FSeek(routeIdsPosition + ( 0x4 * i ) ); //Reset to next start position so Jump to Template Variable works on hashes
+} route[header.routeCount] <bgcolor=0x413A55, fgcolor=0xFFFFFF, optimize=false>;
