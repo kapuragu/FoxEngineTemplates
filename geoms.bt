@@ -15,17 +15,17 @@ LittleEndian();
 
 struct Float3
 {
-    float x;
-    float y;
-    float z;
+	float x;
+	float y;
+	float z;
 };
 
 struct Float4
 {
-    float x;
-    float y;
-    float z;
-    float w;
+	float x;
+	float y;
+	float z;
+	float w;
 };
 
 struct Quad
@@ -63,7 +63,7 @@ struct SubVerticesChunk
 
 struct FaceChunk
 {
-    local uint quadCount = (DataChunkID & 0xff000000) >> 24;
+	local uint quadCount = (DataChunkID & 0xff000000) >> 24;
 	
 	// always zero, so skip 'em.
 	FSkip(12);
@@ -72,21 +72,21 @@ struct FaceChunk
 	uint second_flag<comment="Usually zero">;
 	uint line_offset_to_vertices <comment="The amount of lines left until we hit the sub vertices chunk">;
 
-    local uint _i;
-    for (_i = 0; _i < quadCount; _i++)
-    {
-        Quad quadIndices;
+	local uint _i;
+	for (_i = 0; _i < quadCount; _i++)
+	{
+		Quad quadIndices;
 		
 		// note: this FSkip(2) skips two bytes that in some cases are "FF FF" and in
 		// others "02 FE". i can't find any difference between those two thus far though.
-        FSkip(2);
-    }
+		FSkip(2);
+	}
 
-    // 16-byte alignment
-    if (FTell() % 16 != 0)
-    {
-        FSkip(16 - (FTell() % 16));
-    }
+	// 16-byte alignment
+	if (FTell() % 16 != 0)
+	{
+		FSkip(16 - (FTell() % 16));
+	}
 	
 	local long posBeforeVertices = FTell();
 	
@@ -163,7 +163,7 @@ string DataChunkID_read(uint DataChunkID)
 
 struct DataChunk
 {
-    uint DataChunkID<read=DataChunkID_read, bgcolor=0x0080ff>;
+	uint DataChunkID<read=DataChunkID_read, bgcolor=0x0080ff>;
 	
 	local long DataChunk_startPos = FTell() - 4;
 
@@ -210,10 +210,10 @@ struct GeomProp_Subsection1
 	// an int64.
 	EntryCollisionFlag();
 	
-    // JOEY: Huge guess: perhaps Section2Offset aka 'section1_endPointOffset' is the size of the byte pairs blob?
+	// JOEY: Huge guess: perhaps Section2Offset aka 'section1_endPointOffset' is the size of the byte pairs blob?
 	// HWL taking a look through ps3 files again, turns out these are pairs of shorts, not bytes! but are they
 	// actually pairs though?
-    ShortPairs Pairs[geomprop.BytePairsCount / 4];
+	ShortPairs Pairs[geomProperties.BytePairsCount / 4];
 };
 
 struct GeomProp_Subsection2_Parts
@@ -240,8 +240,8 @@ struct GeomProp_Subsection2_Parts
 
 struct GeomProp_Subsection2
 {
-	if ( entrysettingssecondary.Flag == 0 )
-		GeomProp_Subsection2_Parts GeomProp_subsection2parts[geomprop.Section2Count] <optimize=false>;
+	if (entrySecondaryHeaderSection.Type == GEOM_SECTION_TYPE_DEFAULT)
+		GeomProp_Subsection2_Parts GeomProp_subsection2parts[geomProperties.Section2Count] <optimize=false>;
 	else // entrysettingssecondary.flag == 6
 	{
 		// HWL this reads a section from a part without actually declaring the part itself,
@@ -300,7 +300,7 @@ struct GeomProp_Materials
 // this was previously known as Chunk10
 struct GeomProperties
 {
-	if ( entrysettingssecondary.Flag == 0 )
+	if (entrySecondaryHeaderSection.Type == GEOM_SECTION_TYPE_DEFAULT)
 	{
 		local long geompropStartPos = FTell();
 	
@@ -318,122 +318,117 @@ struct GeomProperties
 	GeomProp_Materials Materials<bgcolor=COLOR_SECTION3>;
 };
 
-struct EntrySettingsSecondary
+enum GEOM_SECTION_TYPE
 {
-    uint Hash1;
-	
-	// previous uint u2 is now also skipped because it's always zero.
-    FSkip(4);
-	
-    uint Flag;
-    uint NextSectionOffset;
-	
-	// i think it's a flag. but it's surely an int (or uint).
-	// EDIT: after so long, i realized this is actually the size
-	// of the remaining entry
-	uint Size_of_remaining_entry;
+	GEOM_SECTION_TYPE_DEFAULT = 0,
+	GEOM_SECTION_TYPE_BOUNDING_BOX = 6,
 };
 
-struct EntrySettingsPrimary
+struct EntrySecondaryHeaderSection
 {
-    uint Hash1;
+	uint Hash1;
 	
-	// HWL there used to be uints here, but i skip them because they are
-	// always always zero.
-    FSkip(4);
-    uint Flag;
-    FSkip(4 + 4 + 4);
+	// previous uint u2 is now also skipped because it's always zero.
+	Assert(ReadUInt() == 0);
+	FSkip(4);
 	
-    uint NextSectionOffset; // Size of the header + padding
+	GEOM_SECTION_TYPE Type;
+	uint NextSectionOffset;
 	
-	// HWL these were not 2 shorts after all, but an int.
-	// thanks, ps3 files!
+	uint EntryDataSize;
+};
+
+struct EntryHeaderSection
+{
+	uint Hash1;
+	
+	Assert(ReadUInt() == 0);
+	FSkip(4);
+	uint Flag;
+	Assert(ReadUInt64() == 0);
+	FSkip(8);
+	Assert(ReadUInt() == 0);
+	FSkip(4);
+	
+	uint NextSectionOffset; // Size of the header + padding
+	
 	int NegativePreviousEntryOffset;
 	
-    uint NextEntryOffset; // Size of the entry + padding
+	uint NextEntryOffset; // Size of the entry + padding
 };
 
 struct Entry
 {
-	local long startOfEntry = FTell();
-	local long entryPosition = FTell();
+	local long entryStartPosition = FTell();
+	local long entryRelativePosition = FTell();
 	
 	// HWL Used for the last section of an entry that can have
 	// empty sub vertex chunks. the template freaks out if this
 	// isn't implemented
 	local byte haltDataChunks = 0;
 	
-	EntrySettingsPrimary entrysettingsprimary;
+	EntryHeaderSection entryHeaderSection;
 
-    entryPosition += entrysettingsprimary.NextSectionOffset;
-    FSeek(entryPosition);
-    EntrySettingsSecondary entrysettingssecondary;
+	entryRelativePosition += entryHeaderSection.NextSectionOffset;
+	FSeek(entryRelativePosition);
+	EntrySecondaryHeaderSection entrySecondaryHeaderSection;
 
-    // No more sections in the entry
-    if (entrysettingssecondary.NextSectionOffset == 0)
-        break;
+	// No more sections in the entry
+	if (entrySecondaryHeaderSection.NextSectionOffset == 0)
+		break;
 
-    // Next section
-    entryPosition += entrysettingssecondary.NextSectionOffset;
-	FSeek(entryPosition);
+	// Next section
+	entryRelativePosition += entrySecondaryHeaderSection.NextSectionOffset;
+	FSeek(entryRelativePosition);
 
-	if (entrysettingssecondary.Flag == 0)
+	GeomProperties geomProperties;
+
+	if (entrySecondaryHeaderSection.Type == GEOM_SECTION_TYPE_BOUNDING_BOX)
 	{
-		GeomProperties geomprop;
+		entryRelativePosition += geomProperties.Section2.GeomProp_subsection2parts[0].offset_to_boundingBoxChunk;
+		FSeek(entryRelativePosition);
 	}
-	else if (entrysettingssecondary.Flag == 6)
-	{
-		GeomProperties geomprop;
-		
-		// HWL updated after replacing the ugly hack with a less ugly hack
-		entryPosition += geomprop.Section2.GeomProp_subsection2parts[0].offset_to_boundingBoxChunk;
-		FSeek(entryPosition);
-	}
-	
-    else
-    {
-        Assert(false, "Unknown Entry section detected!");
-    }
+	Assert((entrySecondaryHeaderSection.Type == GEOM_SECTION_TYPE_DEFAULT) || (entrySecondaryHeaderSection.Type == GEOM_SECTION_TYPE_BOUNDING_BOX), "Unknown Entry section detected!");
 	
 	local long dataChunksStartPos = FTell();
-	local long endOfEntry = startOfEntry + entrysettingsprimary.NextEntryOffset;
+	local long endOfEntry = entryStartPosition + entryHeaderSection.NextEntryOffset;
 
 
 	local long bytesRemaining =
-		entrysettingsprimary.NextEntryOffset == 0
+		entryHeaderSection.NextEntryOffset == 0
 		? header.FileSize - dataChunksStartPos
 		: endOfEntry - dataChunksStartPos;
 
-    local long dataStartPosition = FTell();
+	local long dataStartPosition = FTell();
 	
 	// changed the != to a > , because in rare cases the bytesRemaining would be negative.
 	// i think this newer fix doesn't need that anymore though, but i'm leaving it just in
 	// case.
-    while (bytesRemaining > 0 && haltDataChunks == 0)
-    {
-        DataChunk Data;
-        bytesRemaining -= FTell() - dataStartPosition;
-        dataStartPosition = FTell();
-    }
+	while (bytesRemaining > 0 && haltDataChunks == 0)
+	{
+		DataChunk Data;
+		bytesRemaining -= FTell() - dataStartPosition;
+		dataStartPosition = FTell();
+	}
 };
 
 struct Header
 {
-    uint Version;
-    uint Size;
-    uint FileSize;
+	uint Version;
+	uint Size;
+	uint FileSize;
 
-    uint u1;
-    Assert(u1 == 7050094);
+	uint u1;
+	Assert(u1 == 7050094);
 
-    uint u2 <hidden=true>;
-    uint u3 <hidden=true>;
+	uint u2 <hidden=true>;
+	uint u3 <hidden=true>;
    
-    Assert(u2 == 0);
-    Assert(u3 == 0);
+	Assert(u2 == 0);
+	Assert(u3 == 0);
 
-    uint Hash1;
-    uint Hash2;
+	uint Hash1;
+	uint Hash2;
 } header <bgcolor=COLOR_HEADER>;
 
 local long startPosition = header.Size;
@@ -441,9 +436,9 @@ local long nextEntry = -1;
 
 while (nextEntry != 0)
 {
-    startPosition = FTell();
-    Entry entry <bgcolor=COLOR_SECTION2>;
-    nextEntry = entry.entrysettingsprimary.NextEntryOffset;
+	startPosition = FTell();
+	Entry entry <bgcolor=COLOR_SECTION2>;
+	nextEntry = entry.entryHeaderSection.NextEntryOffset;
 
-    FSeek(startPosition + nextEntry);
+	FSeek(startPosition + nextEntry);
 }
