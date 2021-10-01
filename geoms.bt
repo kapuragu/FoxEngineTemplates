@@ -50,7 +50,7 @@ void EntryCollisionFlag()
 
 struct SubVerticesChunk
 {
-	uint verticesCount;
+	uint VertexCount;
 	
 	// HWL dirty (but necessary) hack so that we don't surpass the end of the file and the
 	// template abruptly stops executing
@@ -60,14 +60,14 @@ struct SubVerticesChunk
 		return;
 	}
 	
-	uint unknown_params[3] <comment="Most often they are 1, 1 and 0.">;
+	uint UnknownUInts[3] <comment="Most often they are 1, 1 and 0.">;
 	
 	local long CurrentPos = FTell();
 	
-	uint offset_to_vertices;
+	uint VertexOffset;
 	FSeek( CurrentPos + offset_to_vertices );
 	
-	Float4 vertices[verticesCount - 1];
+	Float4 Vertices[verticesCount - 1];
 };
 
 // Slightly incorrect because this does not flip based on endian-ness.
@@ -149,7 +149,7 @@ struct DataChunk
 		    local long subVerticesChunkStartPos = (dataChunkRelativeStartPosition + (LinesOffsetToVertices * 16) );
 		    
 		    FSeek(subVerticesChunkStartPos);
-		    SubVerticesChunk subverticeschunk;
+		    SubVerticesChunk Subverticeschunk;
 		    
 		    // HWL very important check so that we don't accidently declare a new data chunk
 		    // inside the sub vertices section.
