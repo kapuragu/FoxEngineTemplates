@@ -197,37 +197,37 @@ struct ShortPairs
 	short SS2;
 };
 
-struct GeomProp_Subsection2_Parts
+struct EntrySubsection2Entry
 {
-	byte isFinalEntry;
+	byte IsFinalEntry;
 
-	byte sectionOffset <comment="Nb of DataChunks until next Section.">;
-	ushort bytesPerSection <comment="Nb of bytes per Section, Data[0] next Section - Data[0] current Section.">;
+	byte SectionOffset <comment="Nb of DataChunks until next Section.">;
+	ushort BytesPerSection <comment="Nb of bytes per Section, Data[0] next Section - Data[0] current Section.">;
 	
-	ushort offset_to_boundingBox_or_subvertices <comment="This offset is from the start of this part">;
+	ushort OffsetToBoundingBoxOrSubvertices <comment="This offset is from the start of this part">;
 	FSkip(2);
 	
-	ushort offset_to_boundingBox_or_subvertices <comment="This offset is also from the start of this part">;
+	ushort OffsetToBoundingBoxOrSubvertices <comment="This offset is also from the start of this part">;
 	FSkip(2);
 	
-	uint offset_to_subvertices <comment="NOTE: this offset starts from the beginning of geom properties subsection2, and NOT this specific part">;
-	uint offset_to_boundingBoxChunk;
-	uint offset_till_endofsection;
+	uint OffsetToSubvertices <comment="NOTE: this offset starts from the beginning of geom properties subsection2, and NOT this specific part">;
+	uint OffsetToBoundingBoxChunk;
+	uint NextSectionOffset;
 	
 	EntryCollisionFlag();
 };
 
-struct GeomProp_Subsection2
+struct EntrySubsection2
 {
 	while(!ReadUByte())
 	{
-		GeomProp_Subsection2_Parts GeomProp_subsection2parts;
+		EntrySubsection2Entry Subsection2Entry;
 	}
 
 	FSkip(32);
 };
 
-struct GeomProp_Materials
+struct EntryMaterialsSection
 {
 	byte MagicByte <hidden=true>;
     Assert(MagicByte == 0);
@@ -251,8 +251,8 @@ struct GeomProp_Materials
 
 enum GEOM_SECTION_TYPE
 {
-	GEOM_SECTION_TYPE_DEFAULT = 0,
-	GEOM_SECTION_TYPE_BOUNDING_BOX = 6,
+	GEOM_SECTION_TYPE_0 = 0,
+	GEOM_SECTION_TYPE_6 = 6,
 };
 
 struct EntrySecondaryHeaderSection
@@ -263,7 +263,9 @@ struct EntrySecondaryHeaderSection
 	FSkip(4);
 	
 	GEOM_SECTION_TYPE Type;
-	uint NextSectionOffset;
+	Assert((entrySecondaryHeaderSection.Type == GEOM_SECTION_TYPE_0) || (entrySecondaryHeaderSection.Type == GEOM_SECTION_TYPE_6), "Unknown Entry section detected!");
+	
+    uint NextSectionOffset;
 	
 	uint EntryDataSize;
 };
@@ -280,7 +282,7 @@ struct EntryHeaderSection
 	Assert(ReadUInt() == 0);
 	FSkip(4);
 	
-	uint NextSectionOffset; // Size of the header + padding
+	uint OffsetToSecondaryHeader; // Size of the header + padding
 	
 	int NegativePreviousEntryOffset;
 	
@@ -299,7 +301,7 @@ struct Entry
 	
 	EntryHeaderSection entryHeaderSection;
 
-	entryRelativePosition += entryHeaderSection.NextSectionOffset;
+	entryRelativePosition += entryHeaderSection.OffsetToSecondaryHeader;
 	FSeek(entryRelativePosition);
 	EntrySecondaryHeaderSection entrySecondaryHeaderSection;
 
@@ -311,7 +313,7 @@ struct Entry
 	entryRelativePosition += entrySecondaryHeaderSection.NextSectionOffset;
 	FSeek(entryRelativePosition);
 	
-	if (entrySecondaryHeaderSection.Type == GEOM_SECTION_TYPE_DEFAULT)
+	if (entrySecondaryHeaderSection.Type == GEOM_SECTION_TYPE_0)
 	{
 		Float3 EntryBoundingBoxCorner;
 		ushort ShortPairsTotalSizeInBytes;
@@ -319,7 +321,7 @@ struct Entry
 		Float3 EntryBoundingBoxExtents;
 		uint Section2Offset;
 		
-		struct GeomProp_Subsection1
+		struct EntrySubsection1
 		{
 			Float3 Vector;
 			uint UI1;
@@ -336,22 +338,10 @@ struct Entry
 		// Next section
 		entryRelativePosition += Section2Offset;
 		FSeek(entryRelativePosition);
-		
-		GeomProp_Subsection2 Section2<bgcolor=COLOR_CHUNK11>;
-		GeomProp_Materials Materials<bgcolor=COLOR_SECTION3>;
 	}
-	else
-	{
-        Assert(entrySecondaryHeaderSection.Type == GEOM_SECTION_TYPE_BOUNDING_BOX);
-
-
-		GeomProp_Subsection2 Section2<bgcolor=COLOR_CHUNK11>;
-		GeomProp_Materials Materials<bgcolor=COLOR_SECTION3>;
-
-		entryRelativePosition += Section2.GeomProp_subsection2parts[0].offset_to_boundingBoxChunk;
-		FSeek(entryRelativePosition);
-	}
-	Assert((entrySecondaryHeaderSection.Type == GEOM_SECTION_TYPE_DEFAULT) || (entrySecondaryHeaderSection.Type == GEOM_SECTION_TYPE_BOUNDING_BOX), "Unknown Entry section detected!");
+	
+	EntrySubsection2 Section2<bgcolor=COLOR_CHUNK11>;
+	EntryMaterialsSection Materials<bgcolor=COLOR_SECTION3>;
 	
 	local long dataChunksStartPos = FTell();
 	local long endOfEntry = entryStartPosition + entryHeaderSection.NextEntryOffset;
