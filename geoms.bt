@@ -7,10 +7,10 @@
 LittleEndian();
 
 #define COLOR_HEADER 0xDFEFAA
-#define COLOR_SECTION2 0x7DE39E
-#define COLOR_ENTRY2 0x00AAFF
+#define COLOR_ENTRY 0x7DE39E
+#define COLOR_ENTRYSUBSECTION1 0x00AAFF
 #define COLOR_CHUNK11 0xAED2E8
-#define COLOR_SECTION3 0xB9E8DD
+#define COLOR_ENTRYMATERIALSECTION 0xB9E8DD
 #define COLOR_BOUNDINGBOXCHUNK 0xF7F205
 
 struct StrCode32
@@ -18,7 +18,7 @@ struct StrCode32
     uint hash;
 };
 
-struct MtrHash
+struct MtrCode32
 {
     uint hash;
 };
@@ -110,7 +110,7 @@ struct FaceChunk
 	// this face chunk.
 	if (line_offset_to_vertices > 0)
 	{
-		local long subVerticesChunkStartPos = (Data.DataChunk_startPos + (line_offset_to_vertices * 16) );
+		local long subVerticesChunkStartPos = (parentof(this).DataChunk_startPos + (line_offset_to_vertices * 16) );
 		
 		FSeek(subVerticesChunkStartPos);
 		SubVerticesChunk subverticeschunk;
@@ -211,7 +211,7 @@ struct EntrySubsection2Entry
 {
 	byte IsFinalEntry;
 
-	byte SectionOffset <comment="Nb of DataChunks until next Section.">;
+	byte DataChunkCount <comment="Nb of DataChunks until next Section.">;
 	ushort BytesPerSection <comment="Nb of bytes per Section, Data[0] next Section - Data[0] current Section.">;
 	
 	ushort OffsetToBoundingBoxOrSubvertices <comment="This offset is from the start of this part">;
@@ -231,7 +231,7 @@ struct EntrySubsection2
 {
 	while(!ReadUByte())
 	{
-		EntrySubsection2Entry Subsection2Entry;
+		EntrySubsection2Entry Entry;
 	}
 
 	FSkip(32);
@@ -249,7 +249,7 @@ struct EntryMaterialsSection
     local uint i = 0;
     for (i = 0; i < (InfoTriplet[0] - 1); i++)
     {
-		MtrHash MaterialNameHash;
+		MtrCode32 MaterialNameHash;
 		FSkip(8);
     }
 
@@ -292,11 +292,11 @@ struct EntrySecondaryHeaderSection
 	FSkip(4);
 	
 	GEOM_SECTION_TYPE Type;
-	Assert((entrySecondaryHeaderSection.Type == GEOM_SECTION_TYPE_0) || (entrySecondaryHeaderSection.Type == GEOM_SECTION_TYPE_6), "Unknown Entry section detected!");
+	Assert((SecondaryHeaderSection.Type == GEOM_SECTION_TYPE_0) || (SecondaryHeaderSection.Type == GEOM_SECTION_TYPE_6), "Unknown Entry section detected!");
 	
     uint NextSectionOffset;
 	
-	uint EntryDataSize;
+	uint SizeOfRemainingEntryData;
 };
 
 struct EntryHeaderSection
@@ -320,60 +320,48 @@ struct EntryHeaderSection
 
 struct Entry
 {
-	local long entryStartPosition = FTell();
-	local long entryRelativePosition = FTell();
+	local long entryRelativeStartPosition = FTell();
 	
-	// HWL Used for the last section of an entry that can have
-	// empty sub vertex chunks. the template freaks out if this
-	// isn't implemented
-	local byte haltDataChunks = 0;
-	
-	EntryHeaderSection entryHeaderSection;
+	EntryHeaderSection HeaderSection;
 
-	entryRelativePosition += entryHeaderSection.SecondaryHeaderOffset;
-	FSeek(entryRelativePosition);
-	EntrySecondaryHeaderSection entrySecondaryHeaderSection;
+	entryRelativeStartPosition += HeaderSection.SecondaryHeaderOffset;
+	FSeek(entryRelativeStartPosition);
+	EntrySecondaryHeaderSection SecondaryHeaderSection;
 
 	// No more sections in the entry
-	if (entrySecondaryHeaderSection.NextSectionOffset == 0)
+	if (SecondaryHeaderSection.NextSectionOffset == 0)
 		break;
 
 	// Next section
-	entryRelativePosition += entrySecondaryHeaderSection.NextSectionOffset;
-	FSeek(entryRelativePosition);
+	entryRelativeStartPosition += SecondaryHeaderSection.NextSectionOffset;
+	FSeek(entryRelativeStartPosition);
 	
-	if (entrySecondaryHeaderSection.Type == GEOM_SECTION_TYPE_0)
+	if (SecondaryHeaderSection.Type == GEOM_SECTION_TYPE_0)
 	{
-		EntrySubsection1 Section1<bgcolor=COLOR_ENTRY2>;
+		EntrySubsection1 Section1<bgcolor=COLOR_ENTRYSUBSECTION1>;
 	
 		// Next section
-		entryRelativePosition += Section1.Section2Offset;
-		FSeek(entryRelativePosition);
+		entryRelativeStartPosition += Section1.Section2Offset;
+		FSeek(entryRelativeStartPosition);
 	}
 	
 	EntrySubsection2 Section2<bgcolor=COLOR_CHUNK11>;
-	EntryMaterialsSection Materials<bgcolor=COLOR_SECTION3>;
+	EntryMaterialsSection Materials<bgcolor=COLOR_ENTRYMATERIALSECTION>;
 	
-	local long dataChunksStartPos = FTell();
-	local long endOfEntry = entryStartPosition + entryHeaderSection.NextEntryOffset;
-
-
-	local long bytesRemaining =
-		entryHeaderSection.NextEntryOffset == 0
-		? header.FileSize - dataChunksStartPos
-		: endOfEntry - dataChunksStartPos;
-
-	local long dataStartPosition = FTell();
-	
-	// changed the != to a > , because in rare cases the bytesRemaining would be negative.
-	// i think this newer fix doesn't need that anymore though, but i'm leaving it just in
-	// case.
-	while (bytesRemaining > 0 && haltDataChunks == 0)
-	{
-		DataChunk Data;
-		bytesRemaining -= FTell() - dataStartPosition;
-		dataStartPosition = FTell();
-	}
+    struct DataChunks
+    {
+	    local uint i = 0;
+	    local uint j = 0;
+	    while(exists(Section2.Entry[i]))
+	    {
+		    for (j = 0; j < Section2.Entry[i].DataChunkCount; j++)
+		    {
+			    DataChunk chunks;
+		    }
+    
+		    i++;
+	    }
+    } Data;
 };
 
 struct Header
@@ -398,8 +386,8 @@ local long nextEntry = -1;
 while (nextEntry != 0)
 {
 	startPosition = FTell();
-	Entry entry <bgcolor=COLOR_SECTION2>;
-	nextEntry = entry.entryHeaderSection.NextEntryOffset;
+	Entry entry <bgcolor=COLOR_ENTRY>;
+	nextEntry = entry.HeaderSection.NextEntryOffset;
 
 	FSeek(startPosition + nextEntry);
 }
