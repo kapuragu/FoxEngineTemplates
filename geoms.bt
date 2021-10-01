@@ -255,6 +255,26 @@ enum GEOM_SECTION_TYPE
 	GEOM_SECTION_TYPE_6 = 6,
 };
 
+struct EntrySubsection1
+{
+	Float3 EntryBoundingBoxCorner;
+	ushort ShortPairsTotalSizeInBytes;
+	ushort Section2Count;
+	Float3 EntryBoundingBoxExtents;
+	uint Section2Offset;
+
+	Float3 Vector;
+	uint UI1;
+	
+	uint UI2;
+	uint UI2;
+	
+	EntryCollisionFlag();
+	
+	// HWL are they actually pairs?
+	ShortPairs Pairs[ShortPairsTotalSizeInBytes / sizeof(ShortPairs)];
+};
+
 struct EntrySecondaryHeaderSection
 {
 	uint StrCode32Hash1;
@@ -282,7 +302,7 @@ struct EntryHeaderSection
 	Assert(ReadUInt() == 0);
 	FSkip(4);
 	
-	uint OffsetToSecondaryHeader; // Size of the header + padding
+	uint SecondaryHeaderOffset; // Size of the header + padding
 	
 	int NegativePreviousEntryOffset;
 	
@@ -301,7 +321,7 @@ struct Entry
 	
 	EntryHeaderSection entryHeaderSection;
 
-	entryRelativePosition += entryHeaderSection.OffsetToSecondaryHeader;
+	entryRelativePosition += entryHeaderSection.SecondaryHeaderOffset;
 	FSeek(entryRelativePosition);
 	EntrySecondaryHeaderSection entrySecondaryHeaderSection;
 
@@ -315,28 +335,10 @@ struct Entry
 	
 	if (entrySecondaryHeaderSection.Type == GEOM_SECTION_TYPE_0)
 	{
-		Float3 EntryBoundingBoxCorner;
-		ushort ShortPairsTotalSizeInBytes;
-		ushort Section2Count;
-		Float3 EntryBoundingBoxExtents;
-		uint Section2Offset;
-		
-		struct EntrySubsection1
-		{
-			Float3 Vector;
-			uint UI1;
-			
-			uint UI2;
-			uint UI2;
-			
-			EntryCollisionFlag();
-			
-			// HWL are they actually pairs?
-			ShortPairs Pairs[ShortPairsTotalSizeInBytes / sizeof(ShortPairs)];
-		} Section1<bgcolor=COLOR_ENTRY2>;
+		EntrySubsection1 Section1<bgcolor=COLOR_ENTRY2>;
 	
 		// Next section
-		entryRelativePosition += Section2Offset;
+		entryRelativePosition += Section1.Section2Offset;
 		FSeek(entryRelativePosition);
 	}
 	
