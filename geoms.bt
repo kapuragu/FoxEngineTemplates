@@ -13,35 +13,35 @@ LittleEndian();
 #define COLOR_ENTRYMATERIALSECTION 0xB9E8DD
 #define COLOR_BOUNDINGBOXCHUNK 0xF7F205
 
-struct StrCode32
+typedef struct
 {
-    uint hash;
-};
+    uint hash<format=hex>;
+} StrCode32 <read=(hash)>;
 
-struct MtrCode32
+typedef struct 
 {
-    uint hash;
-};
+    uint hash<format=hex>;
+} MtrCode32 <read=(hash)>;
 
-struct Float3
+typedef struct
 {
 	float x;
 	float y;
 	float z;
-};
+} Float3 <read=Str("(%g, %g, %g)", x, y, z)>;
 
-struct Float4
+typedef struct
 {
 	float x;
 	float y;
 	float z;
 	float w;
-};
+} Float4 <read=Str("(%g, %g, %g, %g)", x, y, z, w)>;
 
-struct Quad
+typedef struct
 {
 	ushort indices[4];
-};
+} Quad <read=Str("(%d, %d, %d, %d)", indices[0], indices[1], indices[2], indices[3])>;
 
 void EntryCollisionFlag()
 {
@@ -70,134 +70,93 @@ struct SubVerticesChunk
 	Float4 vertices[verticesCount - 1];
 };
 
-struct FaceChunk
+// Slightly incorrect because this does not flip based on endian-ness.
+typedef struct
 {
-	local uint quadCount = (DataChunkID & 0xff000000) >> 24;
-	
-	// always zero, so skip 'em.
-	FSkip(12);
-	
-	EntryCollisionFlag();
-	uint second_flag<comment="Usually zero">;
-	uint line_offset_to_vertices <comment="The amount of lines left until we hit the sub vertices chunk">;
-
-	local uint _i;
-	for (_i = 0; _i < quadCount; _i++)
-	{
-		Quad quadIndices;
-		
-		// note: this FSkip(2) skips two bytes that in some cases are "FF FF" and in
-		// others "02 FE". i can't find any difference between those two thus far though.
-		FSkip(2);
-	}
-
-	// 16-byte alignment
-	if (FTell() % 16 != 0)
-	{
-		FSkip(16 - (FTell() % 16));
-	}
-	
-	local long posBeforeVertices = FTell();
-	
-	// HWL removed a very old if check as of v3.6.5.
-
-	// HWL a cleaner implementation of the sub vertices chunk, as of v3.6.3.
-	// instead of checking if the number of vertices is too ridiculous, we
-	// instead use the line_offset_to_vertices variable. then, the template
-	// "snaps" to that sub vertices chunk, and after it's done, it returns
-	// to the previous position.
-	// note: this doesn't happen if the sub vertices chunk is right underneath
-	// this face chunk.
-	if (line_offset_to_vertices > 0)
-	{
-		local long subVerticesChunkStartPos = (parentof(this).DataChunk_startPos + (line_offset_to_vertices * 16) );
-		
-		FSeek(subVerticesChunkStartPos);
-		SubVerticesChunk subverticeschunk;
-		
-		// HWL very important check so that we don't accidently declare a new data chunk
-		// inside the sub vertices section.
-		if (subVerticesChunkStartPos != posBeforeVertices)
-			// return to the previous position.
-			FSeek(posBeforeVertices);
-	}
-};
-
-struct BoundingBoxChunk
-{
-	Printf("Bounding Box Chunk");
-	Printf( " (0x%LX)\n",FTell() );
-	
-	uint linesOffsetNextDataChunk <comment="Number of lines left until next DataChunk (FaceChunk excluded). For the first DataChunk of a Section it's always 0">;
-	uint flag;
-	uint always_4 <hidden=true>;
-	EntryCollisionFlag();
-	
-	// always zero
-	FSkip(8);
-	
-	// Thanks to Jinmar for figuring out that the center transform is what 
-	// the second Float4 is used for!
-	Float4 boundingBoxSize <bgcolor=0xDBC48F, comment="Width/2, Height/2, Depth/2">;
-	Float4 boundingBoxPivotCenter <bgcolor=0xDBC48F, comment="Pivot Center">;
-};
-
-// ===============================================
-// Functions for properly reading the DataChunkID.
-// ===============================================
-ushort DataChunkID_readType(uint DataChunkID)
-{
-	return DataChunkID & 0xFF; // This basically reads the uint's first byte.
-}
-
-// HWL this is for reading the DataChunkID as four parts: countA, countB, type,
-// and an unknown count (the second byte).
-string DataChunkID_read(uint DataChunkID)
-{
-	string s;
-	uint indices_count = (DataChunkID >> 24);
-	uint countA = ( (DataChunkID >> 16) & 0x000000FF );
-	
-	uint ID_type = DataChunkID_readType(DataChunkID);
-	uint second_unknown_ID_type = ( (DataChunkID & 0xFF00) >> 8); // This is the second byte
-	// in the uint.
-	
-	SPrintf(s, "Type: %d, CountA: %d, CountB: %d, Unknown: %d", ID_type, countA, indices_count, second_unknown_ID_type);
-	
-	return s;
-}
-// =================
-// End of functions.
-// =================
+    enum <ubyte> DATA_CHUNK_TYPE
+    {
+        DATA_CHUNK_TYPE_INDICES = 2,
+        DATA_CHUNK_TYPE_BOUNDING_BOX = 4,
+    } Type;
+    
+    ushort UnknownFlags <format=binary>;
+    ubyte QuadCount;
+} DataChunkInfo <read=(EnumToString(Type))>;
 
 struct DataChunk
 {
-	uint DataChunkID<read=DataChunkID_read, bgcolor=0x0080ff>;
-	
-	local long DataChunk_startPos = FTell() - 4;
+	local long dataChunkRelativeStartPosition = FTell();
 
-	// make sure we don't make any more headway in the data chunk if we've
-	// clearly hit the end of the file.
-	if ( FTell() + 32 < header.FileSize )
+    DataChunkInfo Info<bgcolor=0x0080ff>;
+
+	if (Info.Type == DATA_CHUNK_TYPE_BOUNDING_BOX) 
 	{
-		// HWL This got updated after so long!
-		if (DataChunkID_readType(DataChunkID) == 4) // type 4 is for bounding boxes
-		{
-			// I seperated this into another struct just so that we can
-			// have some more pretty colors.
-			BoundingBoxChunk boundingboxchunk<bgcolor=COLOR_BOUNDINGBOXCHUNK>;
-		}
-		// HWL This also got updated, as of v3.6.5. No more messy bit shifts!
-		else if (DataChunkID_readType(DataChunkID) == 2)
-		{
-			Printf("Index buffer");
-			Printf( " (0x%LX)\n",FTell() );
-			FaceChunk facechunk;
-		}
-		else if ( (DataChunkID >> 16) == 0) // are CountA and CountB zero?
-		{
-			haltDataChunks = 1;
-		}
+        SetBackColor(COLOR_BOUNDINGBOXCHUNK);
+        {
+            // NEED MORE INVESTIGATION
+	        uint LinesOffsetToNextDataChunk <comment="Number of lines left until next DataChunk (FaceChunk excluded). For the first DataChunk of a Section it's always 0">;
+	        uint Flag;
+        
+	        Assert(ReadUInt() == 4);
+	        FSkip(4);
+        
+	        EntryCollisionFlag();
+        
+	        Assert(ReadUInt64() == 0);
+	        FSkip(8);
+	        
+	        Float4 BoundingBoxRadii <bgcolor=0xDBC48F, comment="Width/2, Height/2, Depth/2">;
+	        Float4 BoundingBoxCenter <bgcolor=0xDBC48F>;
+        }
+        SetBackColor(cNone);
+	}
+	else
+	{
+        Assert(Info.Type == DATA_CHUNK_TYPE_INDICES, "Unknown DataChunk Type Detected!");
+		
+	    Assert(ReadUInt64() == 0);
+	    FSkip(8);
+	    Assert(ReadUInt() == 0);
+	    FSkip(4);
+	    
+	    EntryCollisionFlag();
+	    float UnknownFloat <comment="Sometimes a uint">;
+	    uint LinesOffsetToVertices <comment="The amount of lines left until we hit the sub vertices chunk">;
+    
+	    local uint _i;
+	    for (_i = 0; _i < Info.QuadCount; _i++)
+	    {
+		    Quad QuadIndices;
+		    short UnknownOffset <comment="Always negative.">;
+	    }
+		
+	    // 16-byte alignment - THIS SKIPS DATA
+        FSeek(((FTell() - 1) | 15) + 1);
+	    
+	    local long posBeforeVertices = FTell();
+	    
+	    // HWL removed a very old if check as of v3.6.5.
+    
+	    // HWL a cleaner implementation of the sub vertices chunk, as of v3.6.3.
+	    // instead of checking if the number of vertices is too ridiculous, we
+	    // instead use the line_offset_to_vertices variable. then, the template
+	    // "snaps" to that sub vertices chunk, and after it's done, it returns
+	    // to the previous position.
+	    // note: this doesn't happen if the sub vertices chunk is right underneath
+	    // this face chunk.
+	    if (LinesOffsetToVertices > 0)
+	    {
+		    local long subVerticesChunkStartPos = (dataChunkRelativeStartPosition + (LinesOffsetToVertices * 16) );
+		    
+		    FSeek(subVerticesChunkStartPos);
+		    SubVerticesChunk subverticeschunk;
+		    
+		    // HWL very important check so that we don't accidently declare a new data chunk
+		    // inside the sub vertices section.
+		    if (subVerticesChunkStartPos != posBeforeVertices)
+			    // return to the previous position.
+			    FSeek(posBeforeVertices);
+	    }
 	}
 };
 
@@ -211,8 +170,8 @@ struct EntrySubsection2Entry
 {
 	byte IsFinalEntry;
 
-	byte DataChunkCount <comment="Nb of DataChunks until next Section.">;
-	ushort BytesPerSection <comment="Nb of bytes per Section, Data[0] next Section - Data[0] current Section.">;
+	byte DataChunkCount;
+	ushort TotalDataChunksSizeInBytes;
 	
 	ushort OffsetToBoundingBoxOrSubvertices <comment="This offset is from the start of this part">;
 	FSkip(2);
@@ -356,7 +315,7 @@ struct Entry
 	    {
 		    for (j = 0; j < Section2.Entry[i].DataChunkCount; j++)
 		    {
-			    DataChunk chunks;
+			    DataChunk Chunk;
 		    }
     
 		    i++;
