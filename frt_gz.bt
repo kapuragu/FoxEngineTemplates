@@ -3,56 +3,180 @@
 //------------------------------------------------
 LittleEndian();
 
-struct Vector4
+struct Vector3
 {
     float x;
     float y;
     float z;
-    float w;
 };
 
-struct Divisor
+enum <ubyte> IsNodeEvent
 {
-    short x;
-    short y;
-    short z;
-    short w;
+    EDGE = 0,
+    NODE = 1,
 };
 
-char ROUT[4] <bgcolor=0xFCE7A3>;
+enum <ubyte> RouteContinueType
+{
+    CONTINUE_ROUTE = 0,
+    LOOP_EVENT = 1,
+};
+
+enum <ubyte> RouteAimTargetType
+{
+    ROUTE_AIM_NO_TARGET = 0,
+    ROUTE_AIM_STATIC_POINT = 1,
+    ROUTE_AIM_CHARACTER = 2,
+    ROUTE_AIM_ROUTE_AS_SIGHT_MOVE_PATH = 3,
+    ROUTE_AIM_ROUTE_AS_OBJECT = 4,
+    // AIM_TARGET_TYPE_NO_TARGET = 0,
+    // AIM_TARGET_TYPE_POSITION = 1,
+    // AIM_TARGET_TYPE_CHARA = 2,
+    // AIM_TARGET_TYPE_AIM_ROUTE_AS_SIGHT_MOVE_PATH = 3,
+    // AIM_TARGET_TYPE_AIM_ROUTE_AS_OBJECT = 4,
+    // AIM_TARGET_TYPE_TPP_TWO_POINTS_ROUND_TRIP = 5,
+    // AIM_TARGET_TYPE_TPP_RANDOM_MOVE_INC_CIRCLE = 6,
+};
+
+enum <uint> EventType
+{
+	Wait = 561913624,
+	SetTargetSpeed = 1375828191,
+	RelaxedStandWalkAct = 3641577009,
+	Conversation = 3952237029,
+	ForwardChangeSpeed = 4126739186,
+	Move = 4202868537,
+};
+
+// Route Aim Params
+
+struct RouteAimStaticPointParams
+{
+	Vector3 aimPos;
+	FSkip(0x4);
+};
+
+struct RouteAimCharacterParams
+{
+	uint64 characterId; //Does TPP use a 64-bit has too?
+	FSkip(0x4 * 2);
+};
+
+struct RouteAimRouteAsSightParams
+{
+	uint sightRouteId;
+	Vector3 aimPos;
+};
+
+struct RouteAimRouteAsObjectParams
+{
+	uint objectRouteId; //No idea how this differs from RouteAsSightMove
+	Vector3 aimPos;
+};
+
+// Event Type Params
+
+struct EventTypeWaitParams
+{
+	int eventWaitTime; 
+	FSkip(0x4 * 3);
+};
+
+struct EventType_1179698897_Params
+{
+	int eventParam0;
+	int eventParam1;
+	int eventParam2; 
+	FSkip(0x4);
+};
+
+struct EventTypeSetTargetSpeedParams
+{
+	int eventSpeed0;
+	int eventSpeed1;
+	FSkip(0x4 * 2);
+};
+
+struct EventType_1521517928_Params
+{
+	int eventParam0; 
+	FSkip(0x4 * 3);
+};
+
+struct EventType_1597064337_Params
+{
+	int eventParam0;
+	int eventParam1;
+	FSkip(0x4 * 2);
+};
+
+struct EventType_3240040728_Params
+{
+	int eventParam0;
+	int eventParam1;
+	int eventParam2;
+	int eventParam3;
+};
+
+struct EventTypeRelaxedStandWalkActParams
+{
+	int eventParam0;
+	FSkip(0x4 * 3);
+};
+
+struct EventTypeConversationParams
+{
+	uint conversationList; //Hash of a string found in EnemyConversationList .json files.
+	FSkip(0x4); //With both hashes, they're read and written as 32-bit hashes on PC and PS3, but...
+	uint friendCharacterId; //...presumably the extra two bytes are just leftovers, as endianness is flipped independently on them.
+	FSkip(0x4); //These could be swapped for two StrCode64 hashes in exchange for PS3 routes not being readable, which is fine.
+};
+
+struct EventTypeForwardChangeSpeedParams
+{
+	int eventSpeed;
+	FSkip(0x4 * 3);
+};
+
+struct EventTypeMoveParams
+{
+	int eventSpeed;
+	int eventEulerAngle; //Values include -45, -90, 180, etc.
+	FSkip(0x4 * 2);
+};
 
 struct Header
 {
-    ushort version;
-
-    if (version == 512)
-    {
-        BigEndian();
-    }
-
+	char ROUT[4] <bgcolor=0xFCE7A3, hidden=true>;
+    ushort version; if (version == 512) {BigEndian();}
     ushort routeCount;
-    
-    FSkip(8); //Irrelevant memory leak bytes
+    FSkip(0x4 * 2); //Irrelevant memory leak bytes
 	
-    Vector4 origin;
+    Vector3 origin; 
+	FSkip(0x4);
 
     uint routeIdsOffset;
     uint routeDefinitionsOffset;
     uint nodesOffset;
     uint eventTablesOffset;
+	
     uint eventsOffset;
     uint fileSize;
-    
-    FSkip(8); //Irrelevant memory leak bytes
-	
+    FSkip(0x4 * 2); //Irrelevant memory leak bytes
 } header <bgcolor=0x85C426>;
 
-uint routeIds[header.routeCount] <bgcolor=0x8F9032>;
+local int routeIdsPosition = FTell();
+local int i = 0;
 
-struct RouteDefinition
+struct Route
 {
-    local int position = FTell();
-
+	//Get route id first for Jump to Template Variable
+	FSeek(routeIdsPosition + ( 0x4 * i ) );
+	uint routeId <bgcolor=0x8F9032>;
+	//Offset to the start of current route definitions
+	FSeek(routeIdsPosition + ( header.routeCount * 0x4 ) + ( 0x10 * i ) );
+    local int routeDefinitionsPosition = FTell();
+	
     uint nodesOffset;
     uint eventTableOffset;
     uint eventsOffset;
@@ -60,28 +184,76 @@ struct RouteDefinition
     ushort eventCount;
 
     // Maps nodes to events
-	
-    FSeek(position + eventTableOffset);
+    FSeek(routeDefinitionsPosition + eventTableOffset);
     struct EventTable
     {
         ushort eventCount;
         ushort eventIndex;
     } eventTables[nodeCount];
 	
-    FSeek(position + eventsOffset);
+    FSeek(routeDefinitionsPosition + eventsOffset);
     struct Event
     {
-        uint type;
-        uint params[10];
-        char snippet[4];
-    } events[eventCount];
+        EventType eventType;
+		//"Param0" in TPP
+		IsNodeEvent isNodeEvent;
+		RouteAimTargetType aimPointType;
+		FSkip(0x1);
+		RouteContinueType routeContinueType; //Assumption that this bool is responsible for soldiers looping on an event node of a route, like searchlights
+		//"Param1" in TPP
+		ushort time; //A common wait time is 479 or 299.
+		short dir <hidden=true>; local float eulerDir = -((float)dir / 180); //Counter-clockwise from 0 to ushort max, in Unity looking at blue/Z
+		//"Param1.5". This isn't in TPP. Its removal in TPP could have caused the "snippet" memory leak param bytes to appear. 
+		byte u0; Assert(u0==-1||u0==0); FSkip(0x3);
+		
+		//"Param2 to Param5" in TPP. Possibly identical to TPP too.
+		if (aimPointType == ROUTE_AIM_NO_TARGET)
+			FSkip(0x4 * 4);
+		else if (aimPointType == ROUTE_AIM_STATIC_POINT)
+			RouteAimStaticPointParams aimParams;
+		else if (aimPointType == ROUTE_AIM_CHARACTER)
+			RouteAimCharacterParams aimParams;
+		else if (aimPointType == ROUTE_AIM_ROUTE_AS_SIGHT_MOVE_PATH)
+			RouteAimRouteAsSightParams aimParams;
+		else if (aimPointType == ROUTE_AIM_ROUTE_AS_OBJECT)
+			RouteAimRouteAsObjectParams aimParams;
+		else
+			Assert(2+2==5,"Unknown aimpointtype!!!");
+		
+		//"Param6-Param9" in TPP. Fully depends on the event type, currently 48 of them, though most are empty. Sometimes hashes, sometimes ints.
+		if (eventType==Wait)
+			EventTypeWaitParams eventParams;
+		else if (eventType==1179698897)
+			EventType_1179698897_Params eventParams;
+		else if (eventType==SetTargetSpeed)
+			EventTypeSetTargetSpeedParams eventParams;
+		else if (eventType==1521517928) // Smoking
+			EventType_1521517928_Params eventParams;
+		else if (eventType==1597064337)
+			EventType_1597064337_Params eventParams;
+		else if (eventType==3240040728)
+			EventType_3240040728_Params eventParams;
+		else if (eventType==RelaxedStandWalkAct)
+			EventTypeRelaxedStandWalkActParams eventParams;
+		else if (eventType==Conversation)
+			EventTypeConversationParams eventParams;
+		else if (eventType==ForwardChangeSpeed)
+			EventTypeForwardChangeSpeedParams eventParams;
+		else if (eventType==Move)
+			EventTypeMoveParams eventParams;
+		else
+			FSkip(0x4 * 4);
+    } events[eventCount] <optimize=false>;
 
-    FSeek(position + nodesOffset);
-	struct Node
+    FSeek(routeDefinitionsPosition + nodesOffset);
+	struct Nodes
 	{
-		uint64 Coordinate;
-	} nodes[nodeCount] <bgcolor=0x01062F>;
+		struct Node
+		{
+			int64 nodeBits;
+		} node[nodeCount] <optimize=false>;
+	} nodes <bgcolor=0x01062F>;
 	
-    FSeek(position + 16);
-	
-} routeDefinitions[header.routeCount] <bgcolor=0x413A55, fgcolor=0xFFFFFF, optimize=false>;
+	i++;
+	FSeek(routeIdsPosition + ( 0x4 * i ) ); //Reset to next start position so Jump to Template Variable works on hashes
+} route[header.routeCount] <bgcolor=0x413A55, fgcolor=0xFFFFFF, optimize=false>;
