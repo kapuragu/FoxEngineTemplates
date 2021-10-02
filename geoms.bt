@@ -1,7 +1,7 @@
 // https://github.com/oldbanana12/GeomsParser/blob/master/Geoms.cs
 
 // =================
-// | Version 3.6.6 |
+// | Version 3.8 |
 // =================
 
 LittleEndian();
@@ -54,7 +54,7 @@ struct SubVerticesChunk
 	
 	// HWL dirty (but necessary) hack so that we don't surpass the end of the file and the
 	// template abruptly stops executing
-	if ( ( FTell() + (verticesCount * 16) + 32 - 4 ) > header.FileSize )
+	if ( ( FTell() + (VertexCount * 16) + 32 - 4 ) > header.FileSize )
 	{
 		Printf("WARNING: Vertices will surpass end of file, ignoring.\n");
 		return;
@@ -65,9 +65,9 @@ struct SubVerticesChunk
 	local long CurrentPos = FTell();
 	
 	uint VertexOffset;
-	FSeek( CurrentPos + offset_to_vertices );
+	FSeek( CurrentPos + VertexOffset );
 	
-	Float4 Vertices[verticesCount - 1];
+	Float4 Vertices[VertexCount - 1];
 };
 
 // Slightly incorrect because this does not flip based on endian-ness.
@@ -120,7 +120,14 @@ struct DataChunk
 	    FSkip(4);
 	    
 	    EntryCollisionFlag();
-	    float UnknownFloat <comment="Sometimes a uint">;
+		
+		// HWL just experimenting. this seems to be correct.
+		// EDIT: no it's not damn it!
+		if (Info.UnknownFlags != 0)
+			float UnknownFloat <comment="Sometimes a uint">;
+		else
+			uint UnknownOffset;
+		
 	    uint LinesOffsetToVertices <comment="The amount of lines left until we hit the sub vertices chunk">;
     
 	    local uint _i;
@@ -213,8 +220,8 @@ struct EntryMaterialsSection
     }
 
 	// Align to nearest 16-byte boundary, then skip 32 more bytes.
-	FSeek(((FTell() - 1) | 15) + 1);
-	FSkip(32);
+	//FSeek(((FTell() - 1) | 15) + 1);
+	//FSkip(32);
 };
 
 enum GEOM_SECTION_TYPE
@@ -304,8 +311,13 @@ struct Entry
 		FSeek(entryRelativeStartPosition);
 	}
 	
+	local long Subsection2_StartPos = FTell();
+	
 	EntrySubsection2 Section2<bgcolor=COLOR_CHUNK11>;
 	EntryMaterialsSection Materials<bgcolor=COLOR_ENTRYMATERIALSECTION>;
+	
+	// HWL fix for the padding between Materials and DataChunks.
+	FSeek(Subsection2_StartPos + Section2.Entry[0].OffsetToBoundingBoxChunk);
 	
     struct DataChunks
     {
@@ -313,11 +325,14 @@ struct Entry
 	    local uint j = 0;
 	    while(exists(Section2.Entry[i]))
 	    {
+			Printf("Current subsection2: %u\n", i);
+			
 		    for (j = 0; j < Section2.Entry[i].DataChunkCount; j++)
 		    {
 			    DataChunk Chunk;
+				Printf("Current subsection2 entry: %u\n", j);
 		    }
-    
+	
 		    i++;
 	    }
     } Data;
