@@ -323,17 +323,29 @@ struct Entry
     {
 	    local uint i = 0;
 	    local uint j = 0;
+		
+		local long curDataChunkArrayStartPos = 0;
 	    while(exists(Section2.Entry[i]))
 	    {
+			curDataChunkArrayStartPos = FTell();
 			Printf("Current subsection2: %u\n", i);
-			
 		    for (j = 0; j < Section2.Entry[i].DataChunkCount; j++)
 		    {
-			    DataChunk Chunk;
 				Printf("Current subsection2 entry: %u\n", j);
+				
+				//Printf("FTell - curDataChunkArrayStartPos = %u\n", FTell() - curDataChunkArrayStartPos);
+				
+				//Printf(">> IF CHECK RESULT: %u < %u\n", FTell() - curDataChunkArrayStartPos, Section2.Entry.TotalDataChunksSizeInBytes);
+				
+				// HWL this is just a temporary if check. it fixes part of the problem of too many
+				// data chunks being declared, but it causes issues elsewhere. in some geom files, such as
+				// afgh_gate002.geom, the opposite issue happens: too few data chunks. and yes, this
+				// specific too few data chunks problem doesn't happen if this if check doesn't exist.
+				if (FTell() - curDataChunkArrayStartPos < Section2.Entry.TotalDataChunksSizeInBytes) 
+					DataChunk Chunk;
 		    }
-	
 		    i++;
+			//Printf("i == %u\n", i);
 	    }
     } Data;
 };
