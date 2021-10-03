@@ -202,7 +202,7 @@ struct Route
 		RouteContinueType routeContinueType; //Assumption that this bool is responsible for soldiers looping on an event node of a route, like searchlights
 		//"Param1" in TPP
 		ushort time; //A common wait time is 479 or 299.
-		short dir <hidden=true>; local float eulerDir = -((float)dir / 180); //Counter-clockwise from 0 to ushort max, in Unity looking at blue/Z
+		short dir <hidden=true>; local float eulerDir = (float)dir / 180; //Counter-clockwise from 0 to ushort max, in Unity looking at blue/Z. Negative
 		//"Param1.5". This isn't in TPP. Its removal in TPP could have caused the "snippet" memory leak param bytes to appear. 
 		byte u0; Assert(u0==-1||u0==0); FSkip(0x3);
 		
@@ -250,7 +250,23 @@ struct Route
 	{
 		struct Node
 		{
+			//Vector3 Bit Unpacking by Joey:
+			//https://discord.com/channels/364177293133873153/364178190588968970/894215344099573760
+			//https://cdn.discordapp.com/attachments/364178190588968970/894215342069538907/unknown.png
 			int64 nodeBits;
+			local uint packed_x = nodeBits & 0x003FFFFF;
+			if (nodeBits & 0x100000)
+				packed_x |= 0xFFC00000;
+			local uint packed_y = (nodeBits >> 22) & 0x000FFFFF;
+			if (nodeBits & 0x0000020000000000)
+				packed_y |= 0xFFF00000;
+			local uint packed_z = (nodeBits >> 42) & 0x003FFFFF;
+			if (nodeBits & 0x8000000000000000)
+				packed_z |= 0xFFC00000;
+			local Vector3 pos;
+			pos.x = header.origin.x+(float)(int)packed_x/1024;
+			pos.y = header.origin.y+(float)(int)packed_y/1024;
+			pos.z = header.origin.z+(float)(int)packed_z/1024;
 		} node[nodeCount] <optimize=false>;
 	} nodes <bgcolor=0x01062F>;
 	
