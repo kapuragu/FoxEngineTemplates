@@ -254,15 +254,15 @@ struct Route
 			//https://discord.com/channels/364177293133873153/364178190588968970/894215344099573760
 			//https://cdn.discordapp.com/attachments/364178190588968970/894215342069538907/unknown.png
 			int64 nodeBits;
-			local uint packed_x = nodeBits & 0x003FFFFF;
-			if (nodeBits & 0x100000)
-				packed_x |= 0xFFC00000;
-			local uint packed_y = (nodeBits >> 22) & 0x000FFFFF;
-			if (nodeBits & 0x0000020000000000)
-				packed_y |= 0xFFF00000;
-			local uint packed_z = (nodeBits >> 42) & 0x003FFFFF;
-			if (nodeBits & 0x8000000000000000)
-				packed_z |= 0xFFC00000;
+			local uint packed_x = nodeBits & 0x003FFFFF;			// Bits [0, 21] (first 22)
+			if (packed_x & (1 << 21))								// Is bit 21 (the most significant) set?
+				packed_x |= 0xFFC00000;								// Set the rest of the bits, [22, 31] in the uint 
+			local uint packed_y = (nodeBits >> 22) & 0x000FFFFF;	// Bits [22, 41] (next 20)
+			if (packed_y & (1 << 19))								// Is bit 19 (the most significant) set?
+				packed_y |= 0xFFF00000;								// Set the rest of the bits, [20, 31] in the uint 
+			local uint packed_z = (nodeBits >> 42) & 0x003FFFFF;	// Bits [42, 63] (last 22)
+			if (packed_z & (1 << 21))								// Is bit 21 (the most significant) set?
+				packed_z |= 0xFFC00000;								// Set the rest of the bits, [22, 31] in the uint 
 			local Vector3 pos;
 			pos.x = header.origin.x+(float)(int)packed_x/1024;
 			pos.y = header.origin.y+(float)(int)packed_y/1024;
