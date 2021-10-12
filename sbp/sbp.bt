@@ -4,7 +4,7 @@
 
 // ALWAYS UPDATE THIS VERSION NUMBER WHEN THIS TEMPLATE GETS UPDATED!
 //===============================
-//        Version 2.5
+//        Version 2.5.5
 //===============================
 
 enum <byte> ObjectType{
@@ -582,6 +582,49 @@ struct Object
 			// Xentax article for the following 2:
 			//FSkip(4);
 			//float unknown;
+			
+			break;
+			
+		case AuxillaryBus:
+			uint parentObjectId <bgcolor=0xDED272>;
+		
+			AudioBus_Parameters audiobus_parameters;
+			
+			Boolean enable_positioning;
+			Boolean enable_panner;
+			
+			// why are they here twice???
+			Boolean override_parent_channel_configuration;
+			Boolean override_parent_channel_configuration;
+			
+			if (override_parent_channel_configuration[0] == is_true)
+			{
+				// ushort instead of uint...the hell WWise???
+				enum <ushort> Channel_Configuration_Short
+				{
+					_Parent = 0,
+					_One_point_zero = 4, // 1.0
+					_Two_point_zero = 3, // 2.0
+					_Three_point_zero = 7, // 3.0
+					_Four_point_zero = 51, // 4.0
+					_Five_point_one = 63, // 5.1
+					_Seven_point_one = 1599 // 7.1
+				} channelconfigurationshort;
+				FSkip(1);
+				
+				Channel_Configuration channelconfiguration;
+			}
+			else 
+				FSkip(4 + 3); // HWL i don't know why there's such a huge gap here.
+				// there's literally no other setting that exists within an
+				// Auxillary Bus..
+			
+			HDR hdr_parent <comment="Probably the settings of a parent, given that these don't exist in auxiliary busses">;
+			Auto_Ducking autoducking_parent <comment="Probably the settings of a parent, given that these don't exist in auxiliary busses">;
+			
+			Effects effects;
+			RTPC rtpc;
+			States states;
 			
 			break;
 	}

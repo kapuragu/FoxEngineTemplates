@@ -93,7 +93,8 @@ struct SoundStructure
 		{
 			byte effectIndex;
 			uint effectObjectId;
-			FSkip(2);
+			//FSkip(2);
+			ushort unknown;
 		}; 
 		if (effectsCount > 0)
 			SoundStrctureEffects soundstructure_effects[effectsCount] <optimize=false>;
@@ -380,18 +381,18 @@ struct SoundStructure
 					Entry_Cue = 6,
 					Exit_Cue = 7,
 				} changes_occur_at <comment="Only used for music. Otherwise, it's always Immediate.">;
-			} state_group;
 			
-			ushort num_of_states_with_custom_settings;
-			
-			for (curNumOfStatesCustomSettings = 0; curNumOfStatesCustomSettings < num_of_states_with_custom_settings; curNumOfStatesCustomSettings++)
-			{
-				struct State
+				ushort num_of_states_with_custom_settings;
+				
+				for (curNumOfStatesCustomSettings = 0; curNumOfStatesCustomSettings < num_of_states_with_custom_settings; curNumOfStatesCustomSettings++)
 				{
-					uint state_object_ID;
-					uint settings_object_ID;
-				} state;
-			}
+					struct State
+					{
+						uint state_object_ID;
+						uint settings_object_ID;
+					} state;
+				}
+			} state_group;
 		}
 	} states;
 	

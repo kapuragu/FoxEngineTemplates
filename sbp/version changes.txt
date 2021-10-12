@@ -2,7 +2,11 @@ Just a file that details all the changes to the template with every new
 version. This is only for looking back at the progress we've made (and
 hopefully find bugs more easily)!
 
-Version 2.5:
+Version 2.5.5 [21-10-12]:
++ Added parsing for Auxiliary Busses.
++ Organized the States struct so that it's more readable.
+
+Version 2.5 [21-10-12]:
 + Added sound structure parsing for sequence containers, blend
 containers and switch containers.
 + Organized the last for loop in States so that both uints are inside
