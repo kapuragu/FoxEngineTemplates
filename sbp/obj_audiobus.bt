@@ -1,0 +1,110 @@
+// HWL structures that are found in audio busses
+
+struct AudioBus_Parameters
+{
+	ubyte additionalParametersCount;
+	
+	/*
+	if (additionalParametersCount > 4)
+	{
+		// an audio bus already has 4 parameters by default.
+		local uint additionalParametersRealCount = additionalParametersCount - 4;
+		
+		SoundStrctureParameterType additionalParameters[additionalParametersRealCount];
+		
+		ubyte weird_offsets[4];
+		
+		float parameterValueFloat[additionalParametersRealCount];
+	}
+	else 
+		ubyte weird_offsets[4];
+	*/
+	SoundStrctureParameterType additionalParameters[additionalParametersCount];
+	
+	local uint parameters_index;
+	for (parameters_index = 0; parameters_index < additionalParametersCount; parameters_index++)
+	{
+		if (additionalParameters[parameters_index]==29)
+			uint32 parameterValueInt;
+		else
+			float parameterValueFloat;
+	}
+};
+
+
+// a version of advanced settings with less settings
+struct Advanced_Settings_AudioBus
+{
+	InstanceToDiscard instance_to_discard;
+	LimitReached when_limitreached;
+	
+	//ushort stage_groups_count;
+	ushort limitSoundInstancesTo <comment="If 0, then this setting is disabled.">;
+	
+	Boolean override_parent_playback_limit;
+};
+
+
+enum <uint> Channel_Configuration
+{
+	Parent = 0,
+	One_point_zero = 4, // 1.0
+	Two_point_zero = 3, // 2.0
+	Three_point_zero = 7, // 3.0
+	Four_point_zero = 51, // 4.0
+	Five_point_one = 63, // 5.1
+	Seven_point_one = 1599 // 7.1
+};
+
+
+struct HDR
+{
+	Boolean Enable_HDR;
+	
+	enum <ubyte> HDR_Dynamics_ReleaseMode
+	{
+		_Linear = 0,
+		Exponential = 1
+	} releasemode;
+};
+
+
+struct Auto_Ducking
+{
+	uint recovery_time <comment="In milliseconds">;
+	float maximum_ducking_volume;
+	
+	uint num_of_busses;
+	
+	local uint curNOB;
+	for (curNOB = 0; curNOB < num_of_busses; ++curNOB)
+	{
+		struct Bus
+		{
+			uint audio_bus_ID <bgcolor=0xEE82EE>;
+			float volume;
+			uint fade_out_ms <comment="Milliseconds">;
+			uint fade_in_ms <comment="Milliseconds">;
+			enum <ubyte> Curve_Shape_Byte
+			{
+				_Logarithmic_Base3 = 0, // (Base 3)
+				_Sine_FadeIn = 1, // (Constant Power Fade In)
+				_Logarithmic_Base141 = 2, // (Base 1.41)
+				_Inverted_S_Curve = 3,
+				__Linear = 4,
+				_S_Curve = 5,
+				_Exponential_Base141 = 6, // (Base 1.41)
+				_Sine_FadeOut = 7, // (Constant Power Fade Out)
+				_Exponential_Base3 = 8, // (Base 3)
+				_Constant = 9
+			} curve_shapebyte;
+			
+			enum <ubyte> Target
+			{
+				_Voice_Volume = 0,
+				Bus_Volume = 4,
+			} target;
+			
+		} bus;
+	}
+};

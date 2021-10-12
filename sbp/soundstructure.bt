@@ -11,6 +11,7 @@ enum <byte> SoundStrctureParameterType
 	GeneralSettingsVoiceVolume=0,
 	GeneralSettingsVoicePitch=2,
 	GeneralSettingsVoiceLowPassFilter=3,
+	GeneralSettingsAudioBusVolume=4,
 	AdvancedSettingsPlaybackPriorityPriority=5, // this is the playback speed!
 	AdvancedSettingsPlaybackPriorityOffsetPriorityByMaxDistance=6,
 	Loop=7,
@@ -28,6 +29,14 @@ enum <byte> SoundStrctureParameterType
 	
 	// newer effect as of Wwise 2013!
 	InitialDelay = 25,
+	
+	// these are used in Audio Busses.
+	HDR_Dynamics_Threshold = 26,
+	HDR_Dynamics_Ratio = 27,
+	HDR_Dynamics_ReleaseTime = 28,
+	Window_TopOutput_GameParameter_ID = 29,
+	Window_TopOutput_GameParameter_Min = 30,
+	Window_TopOutput_GameParameter_Max = 31,
 };
 
 enum <byte> CoordinateDimension
@@ -60,27 +69,35 @@ enum <uint> PlayType
 struct SoundStructure
 {
 	Boolean overrideParentSettings;
-	byte effectsCount;
-	if (effectsCount > 0)
-	{
-		enum <byte> BitMask
-		{
-			BYPASS_EFFECT_0 = 0x00000001,
-			BYPASS_EFFECT_1 = 0x00000010,
-			BYPASS_EFFECT_2 = 0x00000100,
-			BYPASS_EFFECT_3 = 0x00001000,
-			BYPASS_ALL = 0x00010000
-		} bitmask;
-	}
 	
-	struct SoundStrctureEffects
+	// HWL todo 21-10-12: find a better way to organize this effect
+	// struct, just like how it's done in Audio Bus.
+	// EDIT: the one in Audio Bus had mistakes, so this is actually
+	// the better one.
+	struct Effects
 	{
-		byte effectIndex;
-		uint effectObjectId;
-		FSkip(2);
-	}; 
-	if (effectsCount > 0)
-		SoundStrctureEffects soundstructure_effects[effectsCount] <optimize=false>;
+		ubyte effectsCount;
+		if (effectsCount > 0)
+		{
+			enum <byte> BitMask
+			{
+				BYPASS_EFFECT_0 = 0x00000001,
+				BYPASS_EFFECT_1 = 0x00000010,
+				BYPASS_EFFECT_2 = 0x00000100,
+				BYPASS_EFFECT_3 = 0x00001000,
+				BYPASS_ALL = 0x00010000
+			} bitmask;
+		}
+		
+		struct SoundStrctureEffects
+		{
+			byte effectIndex;
+			uint effectObjectId;
+			FSkip(2);
+		}; 
+		if (effectsCount > 0)
+			SoundStrctureEffects soundstructure_effects[effectsCount] <optimize=false>;
+	} effects;
 	
 	uint outputBusId;
 	uint parentObjectId <bgcolor=0xDED272>;
@@ -88,13 +105,6 @@ struct SoundStructure
 	// for printing to console
 	Printf("Parent ID: %u", parentObjectId);
 	Printf("\n");
-	
-	if (outputBusId == 0)
-	{
-		Printf("HALT! NO FREAKING OUTPUT BUS!\n");
-		uint __NO_OUTPUT_BUS__;
-		break;
-	}
 	
 	Boolean overrideSettingsForPlaybackPriority;
 	Boolean activateOffsetPriorityByDistanceSetting;
@@ -162,7 +172,10 @@ struct SoundStructure
 		}
 	}
 	*/
-	Boolean overrideParentSettingsForGameDefinedAuxillarySends;
+	
+	//Boolean overrideParentSettingsForGameDefinedAuxillarySends;
+	Boolean overridePositioningSettings;
+	
 	//byte howToLimitSoundInstances;
 	
 	struct Positioning
@@ -241,9 +254,13 @@ struct SoundStructure
 				Boolean updateAtEachFrame;
 			}
 		}
-		FSkip(1); // appears to be always zero
+		//FSkip(1); // appears to be always zero
 		
-	} positioning;
+	};
+	if (overridePositioningSettings == is_true) 
+		Positioning positioning;
+	
+	
 	//Boolean overrideParentSettingsForPlaybackLimitSection;
 	
 	//Boolean unknownParameterForPlaybackLimitSection;
@@ -269,9 +286,12 @@ struct SoundStructure
 	
 	struct General_Settings
 	{
+		Boolean overrideGameDefinedAuxillarySends;
+		
 		Boolean useGameDefinedAuxillarySends;
 		
-		byte virtualVoiceBehavior;
+		//byte virtualVoiceBehavior;
+		Boolean overrideUserDefinedAuxillarySends;
 		
 		Boolean isUserDefinedAuxillarySends;
 		
@@ -324,13 +344,18 @@ struct SoundStructure
 			} virtual_voice_behavior;
 		} virtual_voice;
 		
+		Boolean overridePlaybackLimit;
+		Boolean overrideVirtualVoice;
+		
 	} advanced_settings;
-	
+
 	// NOTE: there's always 10 empty bytes here, which i guess is for the states section
 	// EDIT: even after implementing the states section, it looks like a 6-byte skip is
 	// still needed. wtf WWise?!
-	FSkip(6);
+	// EDIT as of v2.5, turns out you only need to skip 4 bytes. this is common behavior
+	// with WWise it seems.
 	
+	FSkip(4);
 	struct States
 	{
 		uint state_groups_count;
@@ -361,11 +386,15 @@ struct SoundStructure
 			
 			for (curNumOfStatesCustomSettings = 0; curNumOfStatesCustomSettings < num_of_states_with_custom_settings; curNumOfStatesCustomSettings++)
 			{
-				uint state_object_ID;
-				uint settings_object_ID;
+				struct State
+				{
+					uint state_object_ID;
+					uint settings_object_ID;
+				} state;
 			}
 		}
 	} states;
+	
 	
 	struct RTPC
 	{
@@ -379,6 +408,7 @@ struct SoundStructure
 				enum <uint> Y_Axis_Effect_Type
 				{
 					Voice_Volume = 0,
+					Voice_Pitch = 2,
 					Voice_Low_Pass_Filter = 3,
 					// newer effect as of Wwise 2013!
 					Initial_Delay = 6,

@@ -4,7 +4,7 @@
 
 // ALWAYS UPDATE THIS VERSION NUMBER WHEN THIS TEMPLATE GETS UPDATED!
 //===============================
-//        Version 2.4.1
+//        Version 2.5
 //===============================
 
 enum <byte> ObjectType{
@@ -36,6 +36,7 @@ enum <byte> ObjectType{
 #include "obj_settings.bt"
 #include "obj_sound.bt"
 #include "obj_eventaction.bt"
+#include "obj_audiobus.bt"
 
 #include "info_print.bt"
 
@@ -85,8 +86,11 @@ struct Object
 		case Sound:
 			uint flagsUnknown;
 			ObjectSoundEmbedOrStream embedOrStream;
-			uint audioFileId;
+			uint audioFileId <fgcolor=0x00FF00>;
 			uint sourceId <comment="If streamed, same as audioFileId. If embedded, the soundBankId.">;
+			
+			if ( (flagsUnknown >> 1) & 1 == 1 )
+				FSkip(4);
 			
 			Printf("Audio File ID: %u\n", audioFileId);
 			Printf("Source File ID: %u", sourceId);
@@ -96,6 +100,17 @@ struct Object
 				int offsetToSoundFile;
 				int lengthOfSoundFile;
 			}
+			else if (embedOrStream==StreamedZeroLatency)
+			{
+				// HWL always zero from what i can tell
+				FSkip(4);
+				
+				// HWL the Prefetch length (ms) setting is ignored in the end, and this
+				// offset is what's actually saved.
+				uint offset_to_wem_data <comment="An offset that goes backwards in the file, to the WEM data, starting just before the HIRC section">;
+				//FSkip(1);
+			}
+			
 			ObjectSoundType soundType;
 			SoundStructure soundStructure <optimize=false>;
 			break;
@@ -142,6 +157,16 @@ struct Object
 				Printf("%u", event_action_ID);
 				Printf("\n");
 			}
+			break;
+			
+		// as of v2.5
+		case SequenceContainer:
+			SoundStructure soundstructure;
+			break;
+		
+		// as of v2.5
+		case SwitchContainer:
+			SoundStructure soundstructure;
 			break;
 
 		case ActorMixer: // HWL According to PS3 files. This is ugly.
@@ -202,6 +227,52 @@ struct Object
 				uint wem_IDs_with_offset[wems_counter] <comment="These wem IDs are +2 of their wem ID from what I can tell.">;
 			}
 			*/
+			break;
+			
+		case AudioBus:
+			uint parentObjectId <bgcolor=0xDED272>;
+			
+			AudioBus_Parameters audiobus_parameters;
+			
+			Boolean enable_positioning;
+			Boolean enable_panner;
+			
+			Advanced_Settings_AudioBus advancedsettingsaudiobus;
+			Channel_Configuration channelconfiguration;
+			HDR hdr;
+			Auto_Ducking autoducking;
+			
+			// HWL this one works differently than the usual
+			// effect struct found in SoundStructure, but it
+			// is cleaner and works better.
+			// EDIT: no, it isn't.
+			/*
+			struct EffectStruct
+			{
+				ubyte effectsCount;
+				if (effectsCount > 0)
+				{
+					BitMask bitmask;
+					byte unknown;
+					uint effect_object_ID;
+					FSkip(2);
+				}
+			} effectstruct;
+			*/
+			Effects effects;
+			
+			//FSkip(4);
+			
+			// HWL i like how these two switch positions compared to
+			// how it is in the SoundStructure you usually have.
+			// what the hell WWise??
+			RTPC rtpc;
+			States states;
+			
+			break;
+			
+		case BlendContainer:
+			SoundStructure soundstructure;
 			break;
 			
 		case DialogueEvent:

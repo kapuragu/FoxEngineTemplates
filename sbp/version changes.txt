@@ -2,6 +2,20 @@ Just a file that details all the changes to the template with every new
 version. This is only for looking back at the progress we've made (and
 hopefully find bugs more easily)!
 
+Version 2.5:
++ Added sound structure parsing for sequence containers, blend
+containers and switch containers.
++ Organized the last for loop in States so that both uints are inside
+their own struct.
++ Organized the General_Settings struct so it looks & works better.
++ Implemented some code in the sound structure that accounts for the zero
+latency check box when a sound is streamed.
++ Added a check in the sound structure for the "flagsUnknown" so that 4
+bytes are skipped when flag #1 (starting from 0) is enabled.
++ Added parsing for Audio Busses.
++ Added missing Voice_Pitch setting for Y_Axis_Effect_Type in RTPCs.
++ Added missing GeneralSettingsAudioBusVolume setting for audio busses.
+
 Version 2.4.2:
 + Another tiny upgrade to the actor mixer. Now it parses the first section
 as a sound structure, which appears to properly parse a big part of the
