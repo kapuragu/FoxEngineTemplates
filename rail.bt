@@ -3,31 +3,22 @@
 // Based on notes from Ventos!
 LittleEndian();
 
-struct Vector4
-{
-	float x;
-	float y;
-	float z;
-	float w;
-};
-
 struct Vector3
 {
 	float x;
 	float y;
 	float z;
-	FSkip(4);
 };
 
 struct Header
 {
 	char signature[4] <hidden=true>;
-	short version <hidden=true>;
+	ushort version <hidden=true>;
 	if (version!=2)
 	{
 		BigEndian();
 	}
-	short railsCount;
+	ushort railsCount;
 	
 } header <bgcolor=0x8694EB>;
 
@@ -43,81 +34,52 @@ else
 {
 	FSkip(8);
 	
-	struct Rails
+	local uint railIndex = 0;
+	
+	struct Rail
 	{
-		struct RailDefinition
-		{
-			Vector3 startPoint;
-			Vector3 endPoint;
-			int offsetToStartOfRailNodes;
-			int offsetToConnect0;
-			int offsetToConnect1;
-			short nodeCount;
-			short connectCount;
-			
-		} railDefinition[header.railsCount] <bgcolor=0x01062F, optimize=true>;
+		FSeek( 0x10 + 0x30 * railIndex );
 		
-		local int nodeCountTotal = 0;
-		local int i = 0;
+		Vector3 startPoint; FSkip(4);
+		Vector3 endPoint; FSkip(4);
+		uint offsetToStartOfRailNodes;
+		uint offsetToSec2;
+		uint offsetToSec3;
+		ushort nodeCount;
+		ushort sect23UnkCount;
 		
-		for (i=0;i<header.railsCount;i++)
-		{
-			nodeCountTotal+=railDefinition[i].nodeCount;
-		}
-		
+		FSeek(offsetToStartOfRailNodes);
+		local uint nodeIndex = 0;
+		local float totalW01 = 0;
+		local float maxW00 = 0;
 		struct RailNode
 		{
-			Vector4 coordinates;
-			Vector4 parameters;
-		} railNodes[nodeCountTotal] <bgcolor=0x8ADEF3, optimize=true>; 
+			Vector3 coordinates; float keyframePos; if (maxW00<keyframePos) {maxW00=keyframePos;} // Usually W is empty in first node
+			Vector3 parameters; float unknown; totalW01+=unknown; // Usually entirely empty in first node and sometimes in the last node
+			nodeIndex++;
+			
+		} railNode[nodeCount] <bgcolor=0x8ADEF3, optimize=false>; 
 		
-	} rails;
-	
-	// Not ready yet
-	struct Connect
-	{
-		local int connectCountTotal = 0;
-		local int n = 0;
-		
-		for (n=0;n<header.railsCount;n++)
+		FSeek(offsetToSec2);
+		struct Section2Entry
 		{
-			if (rails.railDefinition[n].connectCount>0)
-			{
-				connectCountTotal+=1;
-			}
-		}
-		
-		struct ConnectDefinition
-		{
-			FSkip(6);
+			float unknownFloat1;
+			ushort unknownShort1;
 			ubyte byte0;
 			ubyte byte1;
-			FSkip(4);
-			ushort short0;
-			ubyte byte2;
-			ubyte byte3;
 			
-			uint railName0;
-			FSkip(2);
-			ubyte byte4;
-			ubyte byte5;
-			uint railName1;
-			ushort short1;
-			ubyte byte6;
-			ubyte byte7;
-			
-		} connectDefinition[connectCountTotal] <bgcolor=0xCAE7B9, optimize=true>;
+		} section2Entry[sect23UnkCount] <bgcolor=0xCAE7B9, optimize=true>;
 		
-		struct Connects
+		FSeek(offsetToSec3);
+		struct Section3Entry
 		{
-			int int0;
-			int int1;
-			FSkip(24);
+			float unknown0;
 			
-		} connects[connectCountTotal] <bgcolor=0x97A7B3, optimize=true>;
+		} section3Entry[sect23UnkCount/2] <bgcolor=0x97A7B3, optimize=true>;
 		
-	} connect;
+		railIndex++;
+		FSeek( 0x10 + 0x30 * railIndex );
+	
+	} rail[header.railsCount] <bgcolor=0x01062F, optimize=false>;
 	
 }
-
-Assert(FTell() == FileSize(), "Failed to reach EoF.");

@@ -45,7 +45,7 @@ struct StreamAnimationLip
 					int keyCount2 <bgcolor=0xB9C199>; //inaccurate in vox_ene_common_ru?
 					int keyZeroParam2 <bgcolor=0xB9C199>;
 		
-					local int realKeyCount = header.keyCount-1;
+					local int realKeyCount = keyCount-1;
 
 					struct KeyGZ
 					{
