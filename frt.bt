@@ -2,46 +2,31 @@
 //--- 010 Editor v7.0.2 Binary Template
 //
 //      File: frt.bt (TppRouteSet)
-//   Version: 1.0
+//   Version: 1.1
 //------------------------------------------------
+// Original template by youarebritish
 LittleEndian();
 
-struct Header
-{
-    char ROUT[4] <hidden = true>;
-    ushort version;
-    ushort routeIdCount;
-    uint routeIdsOffset;
-
-    uint routeDefinitionsOffset;
-    uint routeNodesOffset;
-    uint routeEventTablesOffset;
-    uint routeNodeEventsOffset;
-    
-    uint routeIds[header.routeIdCount];
-} header;
-
-struct RouteDefinition
-{
-    uint nodeOffset;
-    uint edgeOffset;
-    uint eventTableOffset;
-    ushort numNodes;
-    ushort numEvents;
-} routeDefinitions[header.routeIdCount];
+local byte legacyParam = 0;
 
 struct Vector3
 {
     float x;
     float y;
     float z;
-} routeNodes[(header.routeEventTablesOffset - header.routeNodesOffset)/sizeof(Vector3)];
+};
 
-struct RouteNodeEventTable
+enum <ubyte> IsNodeEvent
 {
-    ushort nodeEventCount;
-    ushort edgeEventIndex;
-} routeNodeEventTables[(header.routeNodeEventsOffset - header.routeEventTablesOffset)/sizeof(RouteNodeEventTable)];
+    EDGE = 0,
+    NODE = 1,
+};
+
+enum <ubyte> IsLoop
+{
+    CONTINUE = 0,
+    LOOP = 1,
+};
 
 enum <ubyte> RouteAimTargetType
 {
@@ -49,48 +34,331 @@ enum <ubyte> RouteAimTargetType
     ROUTE_AIM_STATIC_POINT = 1,
     ROUTE_AIM_CHARACTER = 2,
     ROUTE_AIM_ROUTE_AS_SIGHT_MOVE_PATH = 3,
-    ROUTE_AIM_ROUTE_AS_OBJECT = 4
+    ROUTE_AIM_ROUTE_AS_OBJECT = 4,
+    // AIM_TARGET_TYPE_NO_TARGET = 0,
+    // AIM_TARGET_TYPE_POSITION = 1,
+    // AIM_TARGET_TYPE_CHARA = 2,
+    // AIM_TARGET_TYPE_AIM_ROUTE_AS_SIGHT_MOVE_PATH = 3,
+    // AIM_TARGET_TYPE_AIM_ROUTE_AS_OBJECT = 4,
+    // AIM_TARGET_TYPE_TPP_TWO_POINTS_ROUND_TRIP = 5,
+    // AIM_TARGET_TYPE_TPP_RANDOM_MOVE_INC_CIRCLE = 6,
 };
 
-struct RouteNodeEvent
+enum <uint> EventType
 {
-    uint type;
-	ubyte isNodeEvent;
-    RouteAimTargetType aimPointType;
-    ubyte flagA;
-    ubyte flagB;
+	CautionIdleAct = 2973097149,
+	chase = 804119634,
+	ConversationIdle = 1536918290,
+	Dash = 244962479,
+	DropPoint = 3100429757,
+	ForwardChangeSpeed = 4126739186,
+	Hovering = 3396619717,
+	move = 368586264,
+	Move = 4202868537,
+	Normal = 3371498678,
+	PermitGettingOff = 728879063,
+	PutHostageInVehicle = 2829631605,
+	RelaxedIdleAct = 4019510599,
+	SendMessage = 2265318157,
+	SetTargetSpeed = 1375828191,
+	SwitchRoute = 385624276,
+	SyncRoute = 3369952648,
+	TakeHostageOutOfVehicle = 2481191805,
+	VehicleBackFast = 370178288,
+	VehicleBackNormal = 3157073279,
+	VehicleBackSlow = 895529986,
+	VehicleMoveFast = 3487140098,
+	VehicleMoveNormal = 4258228081,
+	VehicleMoveSlow = 3297759236,
+	Wait = 561913624,
+	Walk = 591731182,
+	RelaxedStandWalkAct = 3641577009,
+	RelaxedWalkAct = 1472482162,
+};
 
-    Assert(flagA == 0);
-	
-	ushort time; //A common wait time is 479 or 299.
-	ushort dir; //Counter-clockwise from 0 to ushort max, in Unity looking at blue Z
+// Route Aim Params
 
-    if (aimPointType == ROUTE_AIM_NO_TARGET)
-    {
-        uint dummy1 <hidden = true>;
-        uint dummy2 <hidden = true>;
-        uint dummy3 <hidden = true>;
+struct RouteAimStaticPointParams
+{
+	Vector3 aimPos;
+	FSkip(0x4);
+};
 
-        Assert(dummy1 == 0 && dummy2 == 0 && dummy3 == 0);
-    }
-    else if (aimPointType == ROUTE_AIM_STATIC_POINT)
-    {
-        Vector3 aimPos;
-    }
-    else if (aimPointType == ROUTE_AIM_CHARACTER)
-    {
-        uint characterId;
-        uint unknown1;
-        uint dummy <hidden = true>;
-    }
-    else
-    {
-        uint routeId;
-        uint unknown1;
-        uint unknown2;
-    }
+struct RouteAimCharacterParams
+{
+	uint64 characterId;
+	FSkip(0x4 * 2);
+};
 
-    uint unknown3;
-	uint extensions[4]; //These vary depending on event type
-    char snippet[4];
-} routeNodeEvents[(FileSize() - header.routeNodeEventsOffset)/48] <optimize=false>;
+struct RouteAimRouteAsSightParams
+{
+	uint sightRouteAId;
+	uint sightRouteBId; //Almost always the rest are empty string hashes
+	uint sightRouteCId;
+	uint sightRouteDId;
+};
+
+struct RouteAimRouteAsObjectParams
+{
+	uint objectRouteAId; //No idea how this differs from Route As Sight Move
+	uint objectRouteBId; //Almost always the rest are empty string hashes
+	uint objectRouteCId;
+	uint objectRouteDId;
+};
+
+struct EventExtensions_Common_IdleAct //CautionIdleAct RelaxedIdleAct
+{
+	uint animationAct;
+	uint unk; //RelaxedIdleAct 4b2d/19245 along with 496717012/StandActNormal in s10030, doesn't seem like a 64 bit leftover
+	FSkip(sizeof(uint) * 2);
+};
+
+struct EventExtensions_chase
+{
+	int chaseIntA;
+	int chaseIntB;
+	int chaseIntC;
+	FSkip(sizeof(uint));
+};
+
+struct EventExtensions_ConversationIdle
+{
+	uint conversationLabel;
+	uint friendCharacterId; //read and written as 32-bit hashes on PC and PS3, but...
+	FSkip(sizeof(uint)); //...presumably the extra two bytes are just leftovers, as endianness is flipped independently on them.
+	int unknown3;
+};
+
+struct EventExtensions_Common_SpeedInt //EventExtensions_Dash EventExtensions_ForwardChangeSpeed EventExtensions_move EventExtensions_Move EventExtensions_SetTargetSpeed
+{
+	int speed; //SetTargetSpeed has two ints in gz
+	FSkip(sizeof(uint)*3);
+};
+
+struct EventExtensions_DropPoint
+{
+	int unknown0;
+	FSkip(sizeof(uint)*3);
+};
+
+struct EventExtensions_Hovering
+{
+	int unknown0;
+	FSkip(sizeof(uint) * 3);
+};
+
+struct EventExtensions_Normal
+{
+	int unknown0;
+	int unknown1;
+	int unknown2;
+	int unknown3;
+};
+
+struct EventExtensions_PermitGettingOff
+{
+	int unknown0;
+	int unknown1;
+	int unknown2;
+	int unknown3;
+};
+
+struct EventExtensions_Common_HostageVehicle
+{
+	FSkip(sizeof(uint)); //...presumably the extra two bytes are just leftovers, as endianness is flipped independently on them.
+	uint messageId; //read and written as 32-bit hashes on PC and PS3, but...
+	FSkip(sizeof(uint) * 2);
+};
+
+struct EventExtensions_SendMessage
+{
+	int unknown0;
+	uint messageId;
+	uint routeId;
+	FSkip(sizeof(uint));
+};
+
+struct EventExtensions_SwitchRoute
+{
+	uint routeId;
+	uint function; //TppEnemy.SwitchRouteFunc "IsNotGimmickBroken" "IsGimmickBroken" "CanUseSearchLight" "CanNotUseSearchLight" 
+	uint argument; //TppEnemy.SwitchRouteFunc "gntn_srlg001_vrtn002_gim_n0003|srt_gntn_srlg001_gm", gimmickIds from location gimmick table
+	FSkip(sizeof(uint));
+};
+
+struct EventExtensions_SyncRoute
+{
+	uint syncTableId; // TppEnemy.OnAllocate missionTable.enemy.syncRouteTable SyncRouteManager s10150_enemy02
+	int syncRouteStep; // step index
+	FSkip(sizeof(uint) * 2);
+};
+
+struct EventExtensions_Common_Vehicle
+{
+	uint railId;
+	int speed;
+	FSkip(sizeof(uint) * 2);
+};
+
+struct EventExtensions_Wait
+{
+	int unknown0; // 0 1
+};
+
+struct Event
+{
+	if (legacyParam==1)
+	{
+		//Less detailed ones for unity:
+		EventType eventType;
+		uint param0;
+		uint param1;
+		uint param2;
+		uint param3;
+		uint param4;
+		uint param5;
+		uint param6;
+		uint param7;
+		uint param8;
+		uint param9;
+	}
+	else
+	{
+		EventType eventType;
+		//"Param0" in TPP
+		IsNodeEvent isNodeEvent;
+		RouteAimTargetType aimPointType;
+		FSkip(0x1);
+		IsLoop isLoop; //Assumption that this bool is responsible for soldiers looping on an event node of a route, like searchlights
+		//"Param1" in TPP
+		ushort time; //A common wait time is 479 or 299.
+		short dir <hidden=true>; local float eulerDir = (float)dir / 180; //Counter-clockwise from 0 to ushort max, in Unity looking at blue/Z. Negative
+		
+		//"Param2 to Param5" in TPP. Possibly identical to TPP too.
+		if (aimPointType == ROUTE_AIM_NO_TARGET)
+			FSkip(sizeof(uint) * 4);
+		else if (aimPointType == ROUTE_AIM_STATIC_POINT)
+			RouteAimStaticPointParams aimParams;
+		else if (aimPointType == ROUTE_AIM_CHARACTER)
+			RouteAimCharacterParams aimParams;
+		else if (aimPointType == ROUTE_AIM_ROUTE_AS_SIGHT_MOVE_PATH)
+			RouteAimRouteAsSightParams aimParams;
+		else if (aimPointType == ROUTE_AIM_ROUTE_AS_OBJECT)
+			RouteAimRouteAsObjectParams aimParams;
+		else
+			Assert(2+2==5,"Unknown aimpointtype!!!");
+		
+		//"Param6-Param9" in TPP. Fully depends on the event type, currently 48 of them, though most are empty. Sometimes hashes, sometimes ints.
+		if (eventType==CautionIdleAct)
+			EventExtensions_Common_IdleAct extensions;
+		else if (eventType==chase)
+			EventExtensions_chase extensions;
+		else if (eventType==ConversationIdle)
+			EventExtensions_ConversationIdle extensions;
+		else if (eventType==Dash||
+				eventType==ForwardChangeSpeed||
+				eventType==move||
+				eventType==Move||
+				eventType==SetTargetSpeed||
+				eventType==Walk||
+				eventType==RelaxedStandWalkAct||
+				eventType==RelaxedWalkAct)
+			EventExtensions_Common_SpeedInt extensions;
+		else if (eventType==DropPoint)
+			EventExtensions_DropPoint extensions;
+		else if (eventType==Hovering)
+			EventExtensions_Hovering extensions;
+		else if (eventType==Normal)
+			EventExtensions_Normal extensions;
+		else if (eventType==PermitGettingOff)
+			EventExtensions_PermitGettingOff extensions;
+		else if (eventType==PutHostageInVehicle
+				||eventType==TakeHostageOutOfVehicle)
+			EventExtensions_Common_HostageVehicle extensions;
+		else if (eventType==RelaxedIdleAct)
+			EventExtensions_Common_IdleAct extensions;
+		else if (eventType==SendMessage)
+			EventExtensions_SendMessage extensions;
+		else if (eventType==SwitchRoute)
+			EventExtensions_SwitchRoute extensions;
+		else if (eventType==SyncRoute)
+			EventExtensions_SyncRoute extensions;
+		else if (eventType==VehicleBackFast||
+				eventType==VehicleBackNormal||
+				eventType==VehicleBackSlow||
+				eventType==VehicleMoveFast||
+				eventType==VehicleMoveNormal||
+				eventType==VehicleMoveSlow||
+				eventType==41204288)
+			EventExtensions_Common_Vehicle extensions;
+		else if (eventType==Wait)
+			EventExtensions_Wait extensions;
+		else
+		{
+			uint extensions[4];
+			if ((extensions[0]>0)||(extensions[1]>0)||(extensions[2]>0)||(extensions[3]>0))
+				Printf("\n%u: param0: %u, param1: %u, param2: %u, param3: %u", eventType, extensions[0],  extensions[1],  extensions[2],  extensions[3]);
+		}
+		char snippet[4] <hidden=true>;
+	}
+};
+
+struct RouteDefinitions
+{
+    uint nodesOffset;
+    uint eventTableOffset;
+    uint eventsOffset;
+    ushort nodeCount;
+    ushort eventCount;
+};
+
+struct EventTable
+{
+	ushort eventNodeCount;
+	ushort eventStartIndex;
+};
+
+struct Header
+{
+    char ROUT[4] <bgcolor=0xFCE7A3, hidden=true>;
+    ushort version; if (version==768) {BigEndian();}
+    ushort routeCount;
+    uint routeIdsOffset;
+    uint routeDefinitionsOffset;
+    uint routeNodesOffset;
+    uint routeEventTablesOffset;
+    uint routeEventsOffset;
+} header <bgcolor=0x85C426>;
+
+local int routeIndex = 0;
+
+struct Route
+{
+	//Get route id first for Jump to Template Variable
+	FSeek(header.routeIdsOffset + ( routeIndex * sizeof(uint) ) );
+	uint routeId <bgcolor=0x8F9032>;
+	//Offset to the start of current route definitions
+    local int routeDefinitionsPosition = header.routeDefinitionsOffset + ( routeIndex * sizeof(RouteDefinitions) );
+	FSeek(routeDefinitionsPosition);
+	RouteDefinitions routeDefinitions <hidden=true>;
+	local int nodeIndex = 0;
+	local int eventIndex = 0;
+	struct Node
+	{
+		// Maps nodes to events
+		FSeek(routeDefinitionsPosition + routeDefinitions.eventTableOffset + (nodeIndex * sizeof(EventTable)));
+		EventTable eventTable <hidden=true>;
+		FSeek(routeDefinitionsPosition + routeDefinitions.nodesOffset + (nodeIndex * sizeof(Vector3)));
+		Vector3 pos;
+		if (legacyParam==1)
+			pos.x = -pos.x; // for unity
+		FSeek(routeDefinitionsPosition + routeDefinitions.eventsOffset + (eventIndex * 0x30)); //sizeof Event
+		Event edgeEvent <optimize=false>;
+		Event nodeEvent[eventTable.eventNodeCount-1] <optimize=false>;
+		eventIndex+=eventTable.eventNodeCount;
+		nodeIndex++;
+		FSeek(routeDefinitionsPosition + routeDefinitions.eventTableOffset + (nodeIndex * sizeof(EventTable))); //Reset to next start position, sizeof EventTable
+	} node[routeDefinitions.nodeCount] <bgcolor=0x01062F, optimize=false>;
+	routeIndex++;
+	FSeek(header.routeIdsOffset + ( routeIndex * sizeof(uint) ) ); //Reset to next start position so Jump to Template Variable works on hashes
+} route[header.routeCount] <bgcolor=0x413A55, fgcolor=0xFFFFFF, optimize=false>;
