@@ -4,7 +4,7 @@
 
 // ALWAYS UPDATE THIS VERSION NUMBER WHEN THIS TEMPLATE GETS UPDATED!
 //===============================
-//        Version 2.5.5
+//        Version 2.6
 //===============================
 
 enum <byte> ObjectType{
@@ -32,11 +32,14 @@ enum <byte> ObjectType{
 
 // HWL import all the other files we need, just for the sake of decreasing
 // the size of this template
+#include "common.bt"
+
 #include "soundstructure.bt"
 #include "obj_settings.bt"
 #include "obj_sound.bt"
 #include "obj_eventaction.bt"
 #include "obj_audiobus.bt"
+#include "obj_musicswitchcontainer.bt"
 
 #include "info_print.bt"
 
@@ -285,12 +288,7 @@ struct Object
 				// 434268486 chara
 				// 3703962904 condition
 				
-				enum <byte> GroupType
-				{
-					SwitchGroup = 0x00,
-					StateGroup = 0x01,
-					
-				} groupType[argumentsCount] <optimize=false>;
+				GroupType groupType[argumentsCount] <optimize=false>;
 				
 				uint sizeOfEntryArray;
 				
@@ -364,7 +362,8 @@ struct Object
 			uint num_of_music_tracks;
 			//uint music_track_obj_ids[num_of_music_tracks];
 			
-			
+			// HWL break here, the results aren't good.
+			break;
 			double d1;
 			uint64 uint64_1;
 			
@@ -414,154 +413,38 @@ struct Object
 			break;
 			
 		// as v2.2
+		// huge update as of v2.6
 		case MusicSwitchContainer:
 			SoundStructure soundstructure;
+			struct Stingers stingers;
 			
-			// HWL just for the sake of ignoring the soundstructure issues,
-			// i'm skipping stuff.
-			// NOTE: this is according to the xentax wiki. WolvenKit
-			// doesn't seem to parse this at all
+			// HWL this section doesn't exist in normal WWise banks,
+			// so i guess it's a unique section to TPP?
+			// change this to false when parsing normal banks.
+			if (true)
+			{
+				struct Children
+				{
+					uint num_of_children;
+					uint children[num_of_children];
+				} children;
+			}
 			
-			// Very f**king ugly hack, but it works.
-			// EDIT: deleting this hack because it doesn't work!
-			FSkip(4);
+			struct MSC_GeneralSettings msc_gs; // MSC = MusicSwitchContainer
 			
-			uint num_of_children;
-			uint child_OBJs[num_of_children];
+			Boolean unknown;
+			uint num_of_stinger_triggers;
+			if (num_of_stinger_triggers > 0) 
+				TriggerConnection triggerconnections[num_of_stinger_triggers] <optimize=false>;
 			
-			// 4 zero bytes, even though they're not zero
-			uint apparently_zero;
-			float f1;
-			FSkip(8);
-			
-			float tempo;
-			byte time_signature_1;
-			byte time_signature_2; // usually 4/4
-			byte magic01;
-			FSkip(4);
-			
+			//FSkip(1);
 			uint num_of_transitions;
-			//uint unknown;	
-		
-			local uint curTransition;
-			for (curTransition = 0; curTransition < num_of_transitions; ++curTransition)
-			{
-				struct Transition
-				{
-					byte unknown[62];
-					
-					while ( (ReadByte( FTell() )) == 0 )
-						FSkip(1);
-				} transitions;
-			}
-		
-			/*
-			local uint curTransition;
-			for (curTransition = 0; curTransition < num_of_transitions; ++curTransition)
-			{
-				struct Transition
-				{
-					enum <int> sourceOBJ
-					{
-						Any = 0xFFFFFFFF//,
-						//Nothing = 0
-					} source_object;
-					//sourceOBJ source_object;
-					int fadeOutTime;
-					uint shape_source_fade_out_curve;
-					int source_fadeOut_offset;
-					
-					enum <uint> exitSource
-					{
-						Immediate = 0,
-						Next_Grid = 1,
-						Next_Bar = 2,
-						Next_Beat = 3,
-						Next_Cue = 4,
-						New_Custom_cue = 5,
-						Exit_Cue = 7
-					} exit_source;
-					
-					// may be included?
-					uint next_custom_cue <comment="MAY BE included">;
-					enum <byte> checkBox0
-					{
-						//Nothing = 0,
-						Play_post_exit_section = 0xFF
-					} checkbox0;
-					
-					int destination_fade_in_time;
-					uint shape_of_destination_fadeIn_curve;
-					int destination_fade_in_offset;
-					
-					uint ID_of_match_for_custom_cue_filter <comment="Any = 0">;
-					uint jmp_playlist_item_ID <comment="It's 0 if destination isn't playlist container">;
-					
-					enum <uint16> Sync
-					{
-						Entry_Cue = 0,
-						Same_As_Playing_Segment = 1,
-						Random_Cue = 2,
-						Random_Custom_cue = 3 // see custom cue filter
-					} sync_to;
-					
-					enum <byte> checkBox1
-					{
-						//Nothing = 0,
-						Play_pre_entry_section_of_destination_obj = 1
-					} checkbox1;
-					
-					// may be included
-					byte custom_cue_filter <comment="Match source cue name = 1">;
-					
-					Boolean transition_has_transition_object_specified;
-					uint transition_object_ID <comment="0 if no transition object">;
-					
-					int transition_fadeIn_time <comment="In milliseconds">;
-					uint shape_of_transition_fadeIn_curve;
-					int transition_fadeIn_offset <comment="In milliseconds">;
-					int transition_fadeOut_time <comment="In milliseconds">;
-					uint shapeOf_transition_fadeOut_curve;
-					int transition_fadeOut_offset;
-					
-					enum <byte> checkBox2
-					{
-						//Nothing = 0,
-						Play_pre_entry_section_of_transition_object = 0xFF
-					} checkbox2;
-					enum <byte> checkBox3
-					{
-						//Nothing = 0,
-						Play_post_exit_section_of_transition_object = 0xFF
-					} checkbox3;
-					
-				} transitions;
-			}
-			*/
+			Transitions transitions[num_of_transitions] <optimize=false>;
+			Boolean unknown <comment="Always true?">;
+			StateSwitchGroupList ssgl;
 			
-			enum <uint> switchType
-			{
-				cur_switch_determines_which_musicPlay = 0,
-				cur_state_determines_which_musicPlay = 0x01000000
-			} switch_type;
-			// THANK GOD this exists here (but of course it would exist)!
-			uint switch_or_state_group_obj_ID;
-			uint default_switch_or_state_ID <comment="0 if it's state 'None'">;
-			Boolean continue_playing_on_switch_change;
-			
-			uint num_of_switches_or_states;
-			local uint curSwitchOrState;
-			
-			/*
-			for (curSwitchOrState = 0; curSwitchOrState < num_of_switches_or_states; ++curSwitchOrState)
-			{
-				struct SwitchOrState
-				{
-					uint switch_or_state_ID;
-					uint music_obj_ID_played_when_this_is_set;
-				} switch_or_state_settings;
-			}
-			*/			
+			local long startOfConnectionStruct = FTell() + 4;
+			PathsSection pathssection;	
 			
 			break;
 		case MusicPlaylistContainer: // early implementation

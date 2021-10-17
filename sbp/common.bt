@@ -1,0 +1,53 @@
+// HWL commonly used structs in WWise soundbanks
+
+enum <byte> Boolean
+{
+	is_false = 0,
+	is_true = 1,
+};
+
+enum <int> Boolean32
+{
+	_is_false = 0,
+	_is_true = 1,
+};
+
+enum <byte> GroupType
+{
+	SwitchGroup = 0x00,
+	StateGroup = 0x01,
+	
+};
+
+enum <byte> SoundStrctureParameterType
+{
+	GeneralSettingsVoiceVolume=0,
+	GeneralSettingsVoicePitch=2,
+	GeneralSettingsVoiceLowPassFilter=3,
+	GeneralSettingsAudioBusVolume=4,
+	AdvancedSettingsPlaybackPriorityPriority=5, // this is the playback speed!
+	AdvancedSettingsPlaybackPriorityOffsetPriorityByMaxDistance=6,
+	Loop=7,
+	MotionAudioToMotionSettingsMotionVolumeOffset=8,
+	Positioning2DPannerXCoordinate=11,
+	Positioning2DPannerXCoordinate2=12,
+	PositioningCenterPercent=13,
+	GeneralSettingsUserDefinedAuxillarySendsBus0Volume=18,
+	GeneralSettingsUserDefinedAuxillarySendsBus1Volume=19,
+	GeneralSettingsUserDefinedAuxillarySendsBus2Volume=20,
+	GeneralSettingsUserDefinedAuxillarySendsBus3Volume=21,
+	GeneralSettingsGameDefinedAuxillarySendsVolume=22,
+	GeneralSettingsOutputBusVolume=23,
+	GeneralSettingsOutputBusLowPassFilter=24,
+	
+	// newer effect as of Wwise 2013!
+	InitialDelay = 25,
+	
+	// these are used in Audio Busses.
+	HDR_Dynamics_Threshold = 26,
+	HDR_Dynamics_Ratio = 27,
+	HDR_Dynamics_ReleaseTime = 28,
+	Window_TopOutput_GameParameter_ID = 29,
+	Window_TopOutput_GameParameter_Min = 30,
+	Window_TopOutput_GameParameter_Max = 31,
+};

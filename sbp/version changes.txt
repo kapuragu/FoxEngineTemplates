@@ -2,6 +2,12 @@ Just a file that details all the changes to the template with every new
 version. This is only for looking back at the progress we've made (and
 hopefully find bugs more easily)!
 
+Version 2.6 [21-10-17]:
++ Added parsing for music switch containers.
++ Moved some commonly used structs from soundstructure.bt to common.bt.
++ Added a break to the music segment, because the results after that
+are not good.
+
 Version 2.5.5 [21-10-12]:
 + Added parsing for Auxiliary Busses.
 + Organized the States struct so that it's more readable.
