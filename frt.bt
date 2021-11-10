@@ -147,12 +147,25 @@ struct EventExtensions_Hovering
 	FSkip(sizeof(uint) * 3);
 };
 
+enum<int> Side
+{
+	LEFT=0,
+	RIGHT=1,
+};
+
 struct EventExtensions_Normal
 {
-	int unknown0;
+	int flags; // 512 - Right door, 1024 - Left door
 	int unknown1;
-	int unknown2;
+	int speed;
 	int unknown3;
+	if (flags!=0||unknown1!=0||speed!=0||unknown3!=0)
+		Printf("\nparam6: %u\nparam7: %u\nparam8: %u\nparam9: %u",flags,unknown1,speed,unknown3);
+	if (flags & 512)
+		local Side doorOpenSide = RIGHT;
+	else if (flags & 1024)
+		local Side doorOpenSide = LEFT;
+	//There's more flags, but no idea.
 };
 
 struct EventExtensions_PermitGettingOff
