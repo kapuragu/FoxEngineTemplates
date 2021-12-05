@@ -5,6 +5,11 @@ LittleEndian();
 
 typedef struct
 {
+    uint hash<format=hex>;
+} StrCode32 <read=(hash)>;
+
+typedef struct
+{
 	float x;
 	float y;
 	float z;
@@ -15,28 +20,35 @@ typedef struct
 	float x;
 	float y;
 	float z;
+    uint padding<hidden=true>; Assert(padding == 0);
+} Float3Padded <read=Str("(%g, %g, %g)", x, y, z)>;
+
+typedef struct
+{
+	float x;
+	float y;
+	float z;
 	float w;
 } Float4 <read=Str("(%g, %g, %g, %g)", x, y, z, w)>;
 
-struct Header
+struct
 {
-	char signature[4] <hidden=true>;
-	ushort version <hidden=true>;
-	if (version!=2)
+	char Signature[4] <hidden=true>;
+	ushort Version <hidden=true>;
+	if (Version!=2)
 	{
 		BigEndian();
 	}
-	ushort railsCount;
-	
-} header <bgcolor=0x8694EB>;
+	ushort RailsCount;
+} Header <bgcolor=0x8694EB>;
 
-if ( FileSize() == ( FTell() + ( header.railsCount * 4 ) ) )
+if ( FileSize() == ( FTell() + (Header.RailsCount * 4) ) )
 {
 	struct RailIds
 	{
-		uint railHash;
+		StrCode32 RailHash;
 
-	} railIds[header.railsCount] <bgcolor=0xB9E7CA, optimize=true>;
+	} RailIDs[Header.RailsCount] <bgcolor=0xB9E7CA, optimize=true>;
 }
 else
 {
@@ -47,45 +59,41 @@ else
     // Uses a Cubic Hermite Spline
 	struct Rail
 	{
-		FSeek( 0x10 + 0x30 * railIndex );
+        Float3 StartPoint; FSkip(4);
+		Float3 EndPoint; FSkip(4);
+		uint RailNodeDataOffset;
+		uint Section2Offset;
+		uint Section3Offset;
+		ushort NodeCount;
+		ushort Section23UnknownCount;
 		
-		Float3 startPoint; FSkip(4);
-		Float3 endPoint; FSkip(4);
-		uint offsetToStartOfRailNodes;
-		uint offsetToSec2;
-		uint offsetToSec3;
-		ushort nodeCount;
-		ushort sect23UnkCount;
-		
-		FSeek(offsetToStartOfRailNodes);
-		local uint nodeIndex = 0;
+        local ulong resumePos = FTell();
+		FSeek(RailNodeDataOffset);
 
-        // HermiteCurve 
-		struct Curve
+        // Hermite Spline Segments
+		struct Segment
 		{
-			Float3 position; float arcLength; // Length of Hermite
-			Float3 tangent; float tangentLength; // tangentLength == length(tangent) == sqrt(tangent.x^2 + tangent.y^2 + tangent.z^2)
-			nodeIndex++;
-		} splineSegments[nodeCount] <bgcolor=0x8ADEF3, optimize=false>; 
+			Float3 Position; float ArcLength; // Length of Hermite
+			Float3 Tangent; float TangentLength; // TangentLength == length(Tangent) == sqrt(Tangent.x^2 + Tangent.y^2 + Tangent.z^2)
+		} Segments[NodeCount] <bgcolor=0x8ADEF3, optimize=false>; 
 		
-		FSeek(offsetToSec2);
+		FSeek(Section2Offset);
 		struct Section2Entry
 		{
-			float unknownFloat1;
-			ushort unknownShort1;
-			ubyte byte0;
-			ubyte byte1;
-		} section2Entry[sect23UnkCount] <bgcolor=0xCAE7B9, optimize=true>;
+			float UnknownFloat1;
+			ushort UnknownShort1;
+			ubyte UnknownByte0;
+			ubyte UnknownByte1;
+		} Section2Entries[Section23UnknownCount] <bgcolor=0x00AAFF, optimize=true>;
 		
-		FSeek(offsetToSec3);
+		FSeek(Section3Offset);
 		struct Section3Entry
 		{
 			float unknown0;
-		} section3Entry[sect23UnkCount/2] <bgcolor=0x97A7B3, optimize=true>;
+		} Section3Entries[Section23UnknownCount/2] <bgcolor=0xB3A797, optimize=true>;
 		
-		railIndex++;
-		FSeek( 0x10 + 0x30 * railIndex );
+		FSeek(resumePos);
 	
-	} rail[header.railsCount] <bgcolor=0x01062F, optimize=false>;
+	} rail[Header.RailsCount] <bgcolor=0x7DE39E, optimize=false>;
 	
 }
