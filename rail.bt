@@ -3,12 +3,20 @@
 // Based on notes from Ventos!
 LittleEndian();
 
-struct Vector3
+typedef struct
 {
 	float x;
 	float y;
 	float z;
-};
+} Float3 <read=Str("(%g, %g, %g)", x, y, z)>;
+
+typedef struct
+{
+	float x;
+	float y;
+	float z;
+	float w;
+} Float4 <read=Str("(%g, %g, %g, %g)", x, y, z, w)>;
 
 struct Header
 {
@@ -36,12 +44,13 @@ else
 	
 	local uint railIndex = 0;
 	
+    // Uses a Cubic Hermite Spline
 	struct Rail
 	{
 		FSeek( 0x10 + 0x30 * railIndex );
 		
-		Vector3 startPoint; FSkip(4);
-		Vector3 endPoint; FSkip(4);
+		Float3 startPoint; FSkip(4);
+		Float3 endPoint; FSkip(4);
 		uint offsetToStartOfRailNodes;
 		uint offsetToSec2;
 		uint offsetToSec3;
@@ -50,15 +59,14 @@ else
 		
 		FSeek(offsetToStartOfRailNodes);
 		local uint nodeIndex = 0;
-		local float totalW01 = 0;
-		local float maxW00 = 0;
-		struct RailNode
+
+        // HermiteCurve 
+		struct Curve
 		{
-			Vector3 coordinates; float keyframePos; if (maxW00<keyframePos) {maxW00=keyframePos;} // Usually W is empty in first node
-			Vector3 parameters; float unknown; totalW01+=unknown; // Usually entirely empty in first node and sometimes in the last node
+			Float3 position; float arcLength; // Length of Hermite
+			Float3 tangent; float tangentLength; // tangentLength == length(tangent) == sqrt(tangent.x^2 + tangent.y^2 + tangent.z^2)
 			nodeIndex++;
-			
-		} railNode[nodeCount] <bgcolor=0x8ADEF3, optimize=false>; 
+		} splineSegments[nodeCount] <bgcolor=0x8ADEF3, optimize=false>; 
 		
 		FSeek(offsetToSec2);
 		struct Section2Entry
@@ -67,14 +75,12 @@ else
 			ushort unknownShort1;
 			ubyte byte0;
 			ubyte byte1;
-			
 		} section2Entry[sect23UnkCount] <bgcolor=0xCAE7B9, optimize=true>;
 		
 		FSeek(offsetToSec3);
 		struct Section3Entry
 		{
 			float unknown0;
-			
 		} section3Entry[sect23UnkCount/2] <bgcolor=0x97A7B3, optimize=true>;
 		
 		railIndex++;
