@@ -8,16 +8,16 @@
 struct Header
 {
     uint u1;						// Always 3? rlc now a uint
-    uint u2;						// Always 32? rlc now a uint
-    uint fileSize;
+    uint TopHeaderSize;			    // Always 32? rlc now a uint
+    uint FileSize;
     uint ObjectBrush <hidden=true>; // Hash for "ObjectBrush"
-    uint ObjectBrushOffset;         // Points to the text "ObjectBrush"
+    uint ObjectBrushStrOffset;         // Points to the text "ObjectBrush"
 
     FSkip(5*4);
 
     uint u3;                        // Always 1?
-    uint numBlocksHOffset;
-    uint offset1;                   // Near the bottom if there are objects
+    uint DataOffset;                // Object entries start at TopHeaderSize + DataOffset
+    uint DataSize;                  // Does not include padding to fit 16-byte boundary
 
     FSkip(4*4);
 
@@ -28,19 +28,19 @@ struct Header
     
     struct HeaderMetadata0
     {
-        ushort u1;
+        ushort VariableType; // 0: uint, 2: float
         ushort u2;
-        uint variableNameHash <hidden=true>;
-        uint u3 <hidden=true>;                    // Always 76?
+        uint VariableNameHash <hidden=true>;
+        uint StringOffset <hidden=true>;                    // Always 76?
         uint value;					// numBlocksWmetadata and numBlocksHmetadata - Block count in height/width of block field. Even if dataset numBlocks is 0, it can be 2 here.
     };
     
     struct HeaderMetadata1
     {
-        ushort u1;
+        ushort VariableType; // 0: uint, 2: float
         ushort u2;
-        uint variableNameHash <hidden=true>;
-        uint u3 <hidden=true>;                    // Always 76?
+        uint VariableNameHash <hidden=true>;
+        uint StringOffset <hidden=true>;                    // Always 76?
         float value;				// block size in meters
     };
 

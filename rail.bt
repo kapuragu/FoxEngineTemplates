@@ -75,6 +75,7 @@ else
 		{
 			Float3 Position; float ArcLength; // Length of Hermite
 			Float3 Tangent; float TangentLength; // TangentLength == length(Tangent) == sqrt(Tangent.x^2 + Tangent.y^2 + Tangent.z^2)
+            Printf("%f, %f\n", -Tangent.x, Tangent.z);
 		} Segments[NodeCount] <bgcolor=0x8ADEF3, optimize=false>; 
 		
 		FSeek(Section2Offset);
@@ -95,5 +96,4 @@ else
 		FSeek(resumePos);
 	
 	} rail[Header.RailsCount] <bgcolor=0x7DE39E, optimize=false>;
-	
 }
