@@ -7,7 +7,7 @@
 //------------------------------------------------
 struct Header
 {
-    uint u1;						// Always 3? rlc now a uint
+    uint Type;						// Always 3? rlc now a uint
     uint TopHeaderSize;			    // Always 32? rlc now a uint
     uint FileSize;
     uint ObjectBrush <hidden=true>; // Hash for "ObjectBrush"
@@ -21,34 +21,37 @@ struct Header
 
     FSkip(4*4);
 
-    uint u4;
+    uint u4;                        // Code makes sure this is not 0
 
     FSkip(8);
     FSkip(16);
     
-    struct HeaderMetadata0
+    struct HeaderMetadataFloat
     {
         ushort VariableType; // 0: uint, 2: float
-        ushort u2;
+        ushort NextMetadataOffset; //sizeof(HeaderMetadata0)
         uint VariableNameHash <hidden=true>;
-        uint StringOffset <hidden=true>;                    // Always 76?
-        uint value;					// numBlocksWmetadata and numBlocksHmetadata - Block count in height/width of block field. Even if dataset numBlocks is 0, it can be 2 here.
+        uint StringOffset <hidden=true>;
+        float value;
     };
     
-    struct HeaderMetadata1
+    struct HeaderMetadataUInt
     {
         ushort VariableType; // 0: uint, 2: float
-        ushort u2;
+        ushort NextMetadataOffset; //sizeof(HeaderMetadata0)
         uint VariableNameHash <hidden=true>;
-        uint StringOffset <hidden=true>;                    // Always 76?
-        float value;				// block size in meters
+        uint StringOffset <hidden=true>;
+        uint value;
     };
 
-    HeaderMetadata1 blockSizeWMetadata;
-    HeaderMetadata1 blockSizeHMetadata;
-    HeaderMetadata0 numBlocksWMetadata;
-    HeaderMetadata0 numBlocksHMetadata;
-    HeaderMetadata0 numObjectsMetadata;
+	// block size in meters
+    HeaderMetadataFloat blockSizeWMetadata;
+    HeaderMetadataFloat blockSizeHMetadata;
+	// numBlocksWmetadata and numBlocksHmetadata - Block count in height/width of block field. 
+    // Even if dataset numBlocks is 0, it can be 2 here.
+    HeaderMetadataUInt numBlocksWMetadata;
+    HeaderMetadataUInt numBlocksHMetadata;
+    HeaderMetadataUInt numObjectsMetadata;
 	
 } header <bgcolor=0x7E846B>;
 

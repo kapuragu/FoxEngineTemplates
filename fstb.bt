@@ -8,7 +8,7 @@ struct Header
 
     uint sections;
     uint section0Offset;        // Always 24 in TPP format, 0 in GZ format
-    uint isTppFormat;           // 1 in TPP, 0 in GZ
+    uint section1Count;           // 1 in TPP, 0 in GZ
 
     uint packCommonFpkOffset;   // This is 0 in gntn?
 } header <bgcolor=0xFCFCFC>;
