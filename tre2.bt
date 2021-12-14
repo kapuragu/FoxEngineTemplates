@@ -6,13 +6,13 @@ typedef struct
     uint hash<format=hex>;
 } StrCode32 <read=(hash)>;
 
-struct Pixel
+typedef struct
 {
     ubyte r<fgcolor=0xaaaaff>;
     ubyte g<fgcolor=0xaaffaa>;
     ubyte b<fgcolor=0xffaaaa>;
     ubyte a<fgcolor=0xaaaaaa>;
-};
+} Pixel <read=Str("#%02x%02x%02x%02x", r, g, b, a)>;
 
 typedef struct
 {
@@ -21,7 +21,7 @@ typedef struct
     StrCode32 NameHash;
     uint NameStringOffset;
     float Value;
-} HeaderMetadataFloat <read=Str("(%s, %f)", HashLookup(NameHash), Value)>;
+} FloatMetadata <read=Str("(%s, %f)", HashLookup(NameHash), Value)>;
 
 typedef struct
 {
@@ -30,7 +30,7 @@ typedef struct
     StrCode32 NameHash;
     uint NameStringOffset;
     uint Value;
-} HeaderMetadataUInt <read=Str("(%s, %d)", HashLookup(NameHash), Value)>;
+} UIntMetadata <read=Str("(%s, %d)", HashLookup(NameHash), Value)>;
 
 typedef struct
 {
@@ -38,17 +38,17 @@ typedef struct
 
     StrCode32 NameHash;
     uint NameStringOffsetRelative;
-    uint padding0<hidden=true>; Assert(padding0 == 0);
-    uint DataOffset;
-    uint DataSize;
-    uint padding1<hidden=true>; Assert(padding1 == 0);
-    uint Unknown0;
-    int PreviousEntryOffset;
-    int NextEntryOffset;
-    uint Unknown1; // Assert(Unknown1 == 0x30 || Unknown1 == 0);
+    uint Unknown<hidden=true>; Assert(Unknown == 0); // Only nonzero in HTRE Type==4 files
+    uint DataOffset; // 0 means no data
+    uint DataSize; // 0 means no data
+    uint EditParamOffset; Assert(EditParamOffset == 0);             // Only nonzero for configrationIds entry in HTRE Type==3 files
+    uint ConfigrationIdsOffset; Assert(ConfigrationIdsOffset == 0); // exe searches for this entry, Only nonzero for editParam entry in HTRE Type==3 files
+    int PreviousEntryOffset; // 0 means no previous entries
+    int NextEntryOffset; // 0 means no more entries
+    uint ScalarSubParamOffset; // 0 means no subparams
     uint padding2<hidden=true>; Assert(padding2 == 0);
     uint padding3<hidden=true>; Assert(padding3 == 0);
-} HeaderMetadataTexture <read=Str("%s", HashLookup(NameHash))>;
+} TextureMetadata <read=Str("%s", HashLookup(NameHash))>;
 
 struct
 {
@@ -57,33 +57,40 @@ struct
     uint FileSize;
     StrCode32 NameHash <read=HashLookup(this)>;
     uint NameStringOffset;
-
-    FSeek(FirstSectionOffset);
-
-    HeaderMetadataTexture ParamParameterDefinition<bgcolor=0xff9999>;
-    HeaderMetadataUInt WidthParameter<bgcolor=0xff9900>;
-    HeaderMetadataUInt HeightParameter<bgcolor=0x00ff99>;
-    HeaderMetadataUInt HighPerLowParameter<bgcolor=0x0099ff>;
-    HeaderMetadataUInt MaxLodLevelParameter<bgcolor=0xff0099>;
-    HeaderMetadataFloat GridDistanceParameter<bgcolor=0x009999>;
-
-    HeaderMetadataTexture HeightMapParameterDefinition<bgcolor=0x999900>;
-    HeaderMetadataUInt HeightFormatParameter<bgcolor=0x990099>;
-    HeaderMetadataFloat HeightRangeMaxParameter<bgcolor=0xff0909>;
-    HeaderMetadataFloat HeightRangeMinParameter<bgcolor=0x09ff09>;
-
-    HeaderMetadataTexture ComboTextureParameterDefinition<bgcolor=0x0909ff>;
-    HeaderMetadataUInt ComboFormatParameter<bgcolor=0xaacc99>;
-
-    HeaderMetadataTexture MaxHeightParameterDefinition<bgcolor=0x9999ff>;
-    HeaderMetadataTexture MinHeightParameterDefinition<bgcolor=0xff99ff>;
-    HeaderMetadataTexture MaterialIdsParameterDefinition<bgcolor=0x99ffff>;
-    HeaderMetadataTexture ConfigrationIdsParameterDefinition<bgcolor=0x99ff99>;
-    HeaderMetadataTexture LayoutDescriptionParameterDefinition<bgcolor=0xffff99>;
 } Header<bgcolor=0xaaaaaa>;
 
-FSeek(Header.LayoutDescriptionParameterDefinition.SelfStartPos);
-FSkip(Header.LayoutDescriptionParameterDefinition.DataOffset);
+FSeek(Header.FirstSectionOffset);
+
+struct 
+{
+    TextureMetadata ParamDefinition<bgcolor=0xff9999>;
+    UIntMetadata WidthParameter<bgcolor=0xff9900>;
+    UIntMetadata HeightParameter<bgcolor=0x00ff99>;
+    UIntMetadata HighPerLowParameter<bgcolor=0x0099ff>;
+    UIntMetadata MaxLodLevelParameter<bgcolor=0xff0099>;
+    FloatMetadata GridDistanceParameter<bgcolor=0x009999>;
+
+    TextureMetadata HeightMapDefinition<bgcolor=0x999900>;
+    UIntMetadata HeightFormatParameter<bgcolor=0x990099>;
+    FloatMetadata HeightRangeMaxParameter<bgcolor=0xff0909>;
+    FloatMetadata HeightRangeMinParameter<bgcolor=0x09ff09>;
+
+    TextureMetadata ComboTextureDefinition<bgcolor=0x0909ff>;
+    UIntMetadata ComboFormatParameter<bgcolor=0xaacc99>;
+
+    TextureMetadata MaxHeightDefinition<bgcolor=0x9999ff>;
+
+    TextureMetadata MinHeightDefinition<bgcolor=0xff99ff>;
+
+    TextureMetadata MaterialIdsDefinition<bgcolor=0x99ffff>;
+
+    TextureMetadata ConfigrationIdsDefinition<bgcolor=0x99ff99>;
+
+    TextureMetadata LayoutDescriptionDefinition<bgcolor=0xffff99>;
+} Metadata;
+
+FSeek(Metadata.LayoutDescriptionDefinition.SelfStartPos);
+FSkip(Metadata.LayoutDescriptionDefinition.DataOffset);
 FSkip(16);
 struct 
 {
@@ -108,53 +115,53 @@ struct
     short vals3[10];
 } LayoutDescriptionData;
 
-FSeek(Header.ParamParameterDefinition.SelfStartPos);
-FSkip(Header.ParamParameterDefinition.DataOffset);
+FSeek(Metadata.ParamDefinition.SelfStartPos);
+FSkip(Metadata.ParamDefinition.DataOffset);
 struct
 {
-    float data[Header.ParamParameterDefinition.DataSize / sizeof(float)];
-} ParamMap <bgcolor=0x00aaff>;
+    float data[Metadata.ParamDefinition.DataSize / sizeof(float)];
+} Param <bgcolor=0x00aaff>;
 
-FSeek(Header.MaxHeightParameterDefinition.SelfStartPos);
-FSkip(Header.MaxHeightParameterDefinition.DataOffset);
+FSeek(Metadata.MaxHeightDefinition.SelfStartPos);
+FSkip(Metadata.MaxHeightDefinition.DataOffset);
 struct
 {
-    float data[Header.MaxHeightParameterDefinition.DataSize / sizeof(float)];
-} MaxHeightMap <bgcolor=0xff00aa>;
+    float data[Metadata.MaxHeightDefinition.DataSize / sizeof(float)];
+} MaxHeight <bgcolor=0xff00aa>;
 
-FSeek(Header.MinHeightParameterDefinition.SelfStartPos);
-FSkip(Header.MinHeightParameterDefinition.DataOffset);
+FSeek(Metadata.MinHeightDefinition.SelfStartPos);
+FSkip(Metadata.MinHeightDefinition.DataOffset);
 struct
 {
-    float data[Header.MinHeightParameterDefinition.DataSize / sizeof(float)];
-} MinHeightMap <bgcolor=0xaaff00>;
+    float data[Metadata.MinHeightDefinition.DataSize / sizeof(float)];
+} MinHeight <bgcolor=0xaaff00>;
 
-FSeek(Header.HeightMapParameterDefinition.SelfStartPos);
-FSkip(Header.HeightMapParameterDefinition.DataOffset);
+FSeek(Metadata.HeightMapDefinition.SelfStartPos);
+FSkip(Metadata.HeightMapDefinition.DataOffset);
 struct
 {
-    float data[Header.HeightMapParameterDefinition.DataSize / sizeof(float)];
+    float data[Metadata.HeightMapDefinition.DataSize / sizeof(float)];
 } HeightMap <bgcolor=0x99aacc>;
 
-FSeek(Header.ComboTextureParameterDefinition.SelfStartPos);
-FSkip(Header.ComboTextureParameterDefinition.DataOffset);
+FSeek(Metadata.ComboTextureDefinition.SelfStartPos);
+FSkip(Metadata.ComboTextureDefinition.DataOffset);
 struct
 {
-    Pixel data[Header.ComboTextureParameterDefinition.DataSize / sizeof(Pixel)];
+    Pixel data[Metadata.ComboTextureDefinition.DataSize / sizeof(Pixel)];
 } ComboTexture <bgcolor=0x111199>;
 
-FSeek(Header.MaterialIdsParameterDefinition.SelfStartPos);
-FSkip(Header.MaterialIdsParameterDefinition.DataOffset);
+FSeek(Metadata.MaterialIdsDefinition.SelfStartPos);
+FSkip(Metadata.MaterialIdsDefinition.DataOffset);
 struct
 {
-    Pixel data[Header.MaterialIdsParameterDefinition.DataSize / sizeof(Pixel)];
+    Pixel data[Metadata.MaterialIdsDefinition.DataSize / sizeof(Pixel)];
 } MaterialIds <bgcolor=0x991111>;
 
-FSeek(Header.ConfigrationIdsParameterDefinition.SelfStartPos);
-FSkip(Header.ConfigrationIdsParameterDefinition.DataOffset);
+FSeek(Metadata.ConfigrationIdsDefinition.SelfStartPos);
+FSkip(Metadata.ConfigrationIdsDefinition.DataOffset);
 struct
 {
-    Pixel data[Header.ConfigrationIdsParameterDefinition.DataSize / sizeof(Pixel)];
+    Pixel data[Metadata.ConfigrationIdsDefinition.DataSize / sizeof(Pixel)];
 } ConfigrationIds <bgcolor=0x119911>;
 
 string HashLookup( StrCode32& hash )

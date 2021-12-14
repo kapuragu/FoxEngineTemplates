@@ -10,189 +10,259 @@ LittleEndian();
 #define COLOR_6 0xa59f71
 #define COLOR_7 0x7e6d41
 
-struct Pixel
+typedef struct
 {
-    ubyte r;
-    ubyte g;
-    ubyte b;
-    ubyte a;
-};
+    uint hash<format=hex>;
+} StrCode32 <read=(hash)>;
 
-struct Header
+typedef struct
 {
-    uint version;
-    uint block0Offset;
-    Assert(block0Offset == 32);
+    ubyte r<fgcolor=0xaaaaff>;
+    ubyte g<fgcolor=0xaaffaa>;
+    ubyte b<fgcolor=0xffaaaa>;
+    ubyte a<fgcolor=0xaaaaaa>;
+} Pixel <read=Str("#%02x%02x%02x%02x", r, g, b, a)>;
 
-    uint fileBytes;
-    uint terrainHighBlockHash;
-    uint headerSize;
-} header <bgcolor=COLOR_HEADER, fgcolor=COLOR_TEXT>;
+typedef struct
+{
+    ushort VariableType; // 0: uint, 2: float
+    ushort NextMetadataOffset; //sizeof(HeaderMetadata0)
+    StrCode32 NameHash;
+    uint NameStringOffset;
+    float Value;
+} FloatMetadata <read=Str("(%s, %f)", HashLookup(NameHash), Value)>;
 
-FSkip(12);
+typedef struct
+{
+    ushort VariableType; // 0: uint, 2: float
+    ushort NextMetadataOffset; // sizeof(HeaderMetadata0) or 0
+    StrCode32 NameHash;
+    uint NameStringOffset;
+    uint Value;
+} UIntMetadata <read=Str("(%s, %d)", HashLookup(NameHash), Value)>;
 
-if (header.version == 3)
+typedef struct
+{
+    local uint SelfStartPos = FTell();
+
+    StrCode32 NameHash;
+    uint NameStringOffsetRelative;
+    uint Unknown<hidden=true>; // Only nonzero in HTRE Type==4 files
+    uint DataOffset; // 0 means no data
+    uint DataSize; // 0 means no data
+    uint EditParamOffset;       // Only nonzero for configrationIds entry in HTRE Type==3 files
+    uint ConfigrationIdsOffset; // exe searches for this entry, Only nonzero for editParam entry in HTRE Type==3 files
+    int PreviousEntryOffset; // 0 means no previous entries
+    int NextEntryOffset; // 0 means no more entries
+    uint ScalarSubParamOffset; // 0 means no subparams
+    uint padding2<hidden=true>; Assert(padding2 == 0);
+    uint padding3<hidden=true>; Assert(padding3 == 0);
+} TextureMetadata <read=Str("%s", HashLookup(NameHash))>;
+
+struct
+{
+    uint Type;
+    uint FirstSectionOffset; Assert(FirstSectionOffset == 0x20);
+    uint FileSize;
+    StrCode32 NameHash <read=HashLookup(this)>;
+    uint NameStringOffset;
+
+    FSeek(FirstSectionOffset);
+} Header <bgcolor=0xaaaaaa>;
+
+if (Header.Type == 3)
 {
     // The header is identical in two random afgh and cypr htres.
-    struct V3Metadata
+    struct
     {
-        struct TextureParamMetadata
-        {
-            uint nameHash;
-            uint nameStringOffset;
+        TextureMetadata HeightMapDefinition<bgcolor=0xff9999>;
+        UIntMetadata PitchParameter<bgcolor=0xff9900>;
     
-            FSkip(4);
-    
-            uint textureOffset;
-            uint textureSizeBytes;
-            int editParamOffset;
-            int configrationIdsOffset;
-    
-            int previousBlockOffset;
-            int nextBlockOffset;
-            int o2;
-        };
+        TextureMetadata WeightMapDefinition<bgcolor=0x999900>; // code mistakenly put "heightMap" twice
 
-        struct ScalarParamMetadata
-        {
-            uint nameHash;
-            uint nameStringOffset;
-            uint value;
-        };
+        TextureMetadata EditParamDefinition<bgcolor=0x0909ff>;
+        UIntMetadata MaxLodLevelParameter<bgcolor=0xaacc99>;
 
-        TextureParamMetadata heightMapMeta;
-        FSkip(12);
-    
-        ScalarParamMetadata pitchMeta;
-    
-        TextureParamMetadata weightMapMeta;
-        FSkip(8);
+        TextureMetadata LodParameterDefinition<bgcolor=0xffff99>;
 
-        TextureParamMetadata editParamMeta;
-        FSkip(12);
+        TextureMetadata MaxHeightDefinition<bgcolor=0x9999ff>;
     
-        ScalarParamMetadata maxLodLevelMeta;
+        TextureMetadata MinHeightDefinition<bgcolor=0xff99ff>;
+    
+        TextureMetadata MaterialIdsDefinition<bgcolor=0x99ffff>;
 
-        TextureParamMetadata lodParameterMeta;
-        FSkip(8);        
+        TextureMetadata ConfigrationIdsDefinition<bgcolor=0x99ff99>;
+    } Metadata;
 
-        TextureParamMetadata maxHeightMeta;
-        FSkip(8);
-    
-        TextureParamMetadata minHeightMeta;
-        FSkip(8);
-    
-        TextureParamMetadata materialIdsMeta;
-        FSkip(8);
+    FSeek(Metadata.HeightMapDefinition.SelfStartPos);
+    FSkip(Metadata.HeightMapDefinition.DataOffset);
+    struct
+    {
+        float data[Metadata.HeightMapDefinition.DataSize / sizeof(float)];
+    } HeightMap <bgcolor=0x99aacc>;
 
-        TextureParamMetadata configrationIdsMeta;
-        FSkip(8);
-        
-    } meta <bgcolor=COLOR_HEADER, fgcolor=COLOR_TEXT>;
+    FSeek(Metadata.WeightMapDefinition.SelfStartPos);
+    FSkip(Metadata.WeightMapDefinition.DataOffset);
+    struct
+    {
+        Pixel data[Metadata.WeightMapDefinition.DataSize / sizeof(Pixel)];
+    } WeightMap <bgcolor=0x111199>;
+
+    FSeek(Metadata.LodParameterDefinition.SelfStartPos);
+    FSkip(Metadata.LodParameterDefinition.DataOffset);
+    struct
+    {
+        float data[Metadata.LodParameterDefinition.DataSize / sizeof(float)];
+    } LodParameter <bgcolor=0x00aaff>;
+
+    FSeek(Metadata.MaxHeightDefinition.SelfStartPos);
+    FSkip(Metadata.MaxHeightDefinition.DataOffset);
+    struct
+    {
+        float data[Metadata.MaxHeightDefinition.DataSize / sizeof(float)];
+    } MaxHeight <bgcolor=0xff00aa>;
+
+    FSeek(Metadata.MinHeightDefinition.SelfStartPos);
+    FSkip(Metadata.MinHeightDefinition.DataOffset);
+    struct
+    {
+        float data[Metadata.MinHeightDefinition.DataSize / sizeof(float)];
+    } MinHeight <bgcolor=0xaaff00>;
     
-    FSkip(192);
-    
-    float heightMap[meta.heightMapMeta.textureSizeBytes / sizeof(float)] <bgcolor=COLOR_1, fgcolor=COLOR_TEXT>;
-    Pixel materialWeightMap[meta.heightMapMeta.textureSizeBytes / sizeof(Pixel)] <bgcolor=COLOR_2, fgcolor=COLOR_TEXT>;
-    float lodParameter[16] <bgcolor=COLOR_3>;
-    float maxHeight[4] <bgcolor=COLOR_4>;
-    float minHeight[4] <bgcolor=COLOR_5>;
-    Pixel materialSelectMap[16 / sizeof(Pixel)] <bgcolor=COLOR_6>;
-    Pixel configrationIds[16 / sizeof(Pixel)] <bgcolor=COLOR_7, fgcolor=COLOR_TEXT>;
+    FSeek(Metadata.MaterialIdsDefinition.SelfStartPos);
+    FSkip(Metadata.MaterialIdsDefinition.DataOffset);
+    struct
+    {
+        Pixel data[Metadata.MaterialIdsDefinition.DataSize / sizeof(Pixel)];
+    } MaterialIds <bgcolor=0x991111>;
+
+    FSeek(Metadata.ConfigrationIdsDefinition.SelfStartPos);
+    FSkip(Metadata.ConfigrationIdsDefinition.DataOffset);
+    struct
+    {
+        Pixel data[Metadata.ConfigrationIdsDefinition.DataSize / sizeof(Pixel)];
+    } ConfigrationIds <bgcolor=0x119911>;
 }
-else if (header.version == 4)
+else if (Header.Type == 4)
 {
-    struct V4Metadata
+    struct
     {
-        struct TextureParamMetadataV4
-        {
-            uint nameHash;
-            uint nameStringOffset;
-            int textureIndexMaybe;
-    
-            uint textureOffset;
-            uint textureSizeBytes;
-            int editParamOffset;
-            int configrationIdsOffset;
-    
-            int previousBlockOffset;
-            int nextBlockOffset;
-            int o2;
-        
-            int u3;
-            int u4;
-        };
+        TextureMetadata HeightMapDefinition<bgcolor=0x999900>;
+        UIntMetadata PitchParameter<bgcolor=0x99aacc>;
+        UIntMetadata HeightFormatParameter<bgcolor=0x990099>;
+        FloatMetadata HeightRangeMaxParameter<bgcolor=0xff0909>;
+        FloatMetadata HeightRangeMinParameter<bgcolor=0x09ff09>;
 
-        struct ScalarParamMetadataV4
-        {
-            uint nameHash;
-            uint nameStringOffset;
-            uint value;
-        };
+        TextureMetadata ComboTextureDefinition<bgcolor=0x0909ff>;
+        UIntMetadata ComboFormatParameter<bgcolor=0xaacc99>;
 
-        TextureParamMetadataV4 heightMap;
-        short u0;
-        short u1;
+        TextureMetadata EditParamDefinition<bgcolor=0xccaa99>;
+        UIntMetadata MaxLodLevelParameter<bgcolor=0xff0099>;
 
-        ScalarParamMetadataV4 pitch;
-        short u0;
-        short u1;
+        TextureMetadata LodParameterDefinition<bgcolor=0xff9999>;
 
-        ScalarParamMetadataV4 heightFormat;
-        short u2;
-        short u3;
+        TextureMetadata MaxHeightDefinition<bgcolor=0x9999ff>;
 
-        ScalarParamMetadataV4 heightRangeMax;
-        short u4;
-        short u5;
+        TextureMetadata MinHeightDefinition<bgcolor=0xff99ff>;
 
-        ScalarParamMetadataV4 heightRangeMin;
+        TextureMetadata MaterialIdsDefinition<bgcolor=0x99ffff>;
 
-        TextureParamMetadataV4 comboTexture;
-        short u4;
-        short u5;
+        TextureMetadata ConfigrationIdsDefinition<bgcolor=0x99ff99>;
 
-        ScalarParamMetadataV4 comboFormat;
-        TextureParamMetadataV4 editParam;
-        short u4;
-        short u5;
+        TextureMetadata PatchDescriptionDefinition<bgcolor=0xffff99>;
+    } Metadata;
 
-        ScalarParamMetadataV4 maxLodLevel;
-        TextureParamMetadataV4 lodParameter;
-        TextureParamMetadataV4 maxHeight;
-        TextureParamMetadataV4 minHeight;
-        TextureParamMetadataV4 materialIds;
-        TextureParamMetadataV4 configrationIds;
-        TextureParamMetadataV4 patchDescription;
-    } meta <bgcolor=COLOR_HEADER, fgcolor=COLOR_TEXT>;
-
-    // No idea what this is, seems to have texture offsets?
-    uint64 patchDescription[14] <bgcolor=COLOR_3>;
-
-    FSeek(672);
-
-    float heightMap[meta.heightMap.textureSizeBytes / sizeof(float)] <bgcolor=COLOR_1, fgcolor=COLOR_TEXT>;
-    Pixel comboTexture[meta.comboTexture.textureSizeBytes / sizeof(Pixel)] <bgcolor=COLOR_2, fgcolor=COLOR_TEXT>;
-    
-    struct LodParameterV4
+    FSeek(Metadata.PatchDescriptionDefinition.SelfStartPos);
+    FSkip(Metadata.PatchDescriptionDefinition.DataOffset);
+    struct
     {
-        float u1[16];
-        int u2[4];
-    } lodParameter <bgcolor=COLOR_3>;
+        uint data[Metadata.PatchDescriptionDefinition.DataSize / sizeof(uint)];
+    } PatchDescription <bgcolor=0x999900>;
 
-    float maxHeight[4] <bgcolor=COLOR_4>;
-    float minHeight[4] <bgcolor=COLOR_5>;
-    Pixel materialSelectMap[16 / sizeof(Pixel)] <bgcolor=COLOR_6>;
-    Pixel configrationIds[16 / sizeof(Pixel)] <bgcolor=COLOR_7, fgcolor=COLOR_TEXT>;
+    FSeek(Metadata.HeightMapDefinition.SelfStartPos);
+    FSkip(Metadata.HeightMapDefinition.DataOffset);
+    struct
+    {
+        float data[Metadata.HeightMapDefinition.DataSize / sizeof(float)];
+    } HeightMap <bgcolor=0x99aacc>;
+
+    FSeek(Metadata.ComboTextureDefinition.SelfStartPos);
+    FSkip(Metadata.ComboTextureDefinition.DataOffset);
+    struct
+    {
+        Pixel data[Metadata.ComboTextureDefinition.DataSize / sizeof(Pixel)];
+    } ComboTexture <bgcolor=0x111199>;
+    
+    FSeek(Metadata.LodParameterDefinition.SelfStartPos);
+    FSkip(Metadata.LodParameterDefinition.DataOffset);
+    struct
+    {
+        float data[Metadata.LodParameterDefinition.DataSize / sizeof(float)];
+    } LodParameter <bgcolor=0x00aaff>;
+
+    FSeek(Metadata.MaxHeightDefinition.SelfStartPos);
+    FSkip(Metadata.MaxHeightDefinition.DataOffset);
+    struct
+    {
+        float data[Metadata.MaxHeightDefinition.DataSize / sizeof(float)];
+    } MaxHeight <bgcolor=0xff00aa>;
+
+    FSeek(Metadata.MinHeightDefinition.SelfStartPos);
+    FSkip(Metadata.MinHeightDefinition.DataOffset);
+    struct
+    {
+        float data[Metadata.MinHeightDefinition.DataSize / sizeof(float)];
+    } MinHeight <bgcolor=0xaaff00>;
+    
+    FSeek(Metadata.MaterialIdsDefinition.SelfStartPos);
+    FSkip(Metadata.MaterialIdsDefinition.DataOffset);
+    struct
+    {
+        Pixel data[Metadata.MaterialIdsDefinition.DataSize / sizeof(Pixel)];
+    } MaterialIds <bgcolor=0x991111>;
+
+    FSeek(Metadata.ConfigrationIdsDefinition.SelfStartPos);
+    FSkip(Metadata.ConfigrationIdsDefinition.DataOffset);
+    struct
+    {
+        Pixel data[Metadata.ConfigrationIdsDefinition.DataSize / sizeof(Pixel)];
+    } ConfigrationIds <bgcolor=0x119911>;
 }
 
-// terrainHighBlock 2767142850
-// heightMap 4283592115
-// pitch 1011123561
-// editParam 3806600625
-// maxLodLevel 443065316
-// lodParameter 2901004164
-// maxHeight 2170562455
-// minHeight 316436384
-// materialIds 3214045617
-// configrationIds 2104978212
+string HashLookup( StrCode32& hash )
+{
+ if( hash.hash == 2767142850 )
+     return "terrainHighBlock";
+ else if( hash.hash == 4283592115 )
+     return "heightMap";
+ else if( hash.hash == 1011123561 )
+     return "pitch";
+ else if( hash.hash == 3806600625 )
+     return "editParam";
+ else if( hash.hash == 443065316 )
+     return "maxLodLevel";
+ else if( hash.hash == 2901004164 )
+     return "lodParameter";
+ else if( hash.hash == 2170562455 )
+     return "maxHeight";
+ else if( hash.hash == 316436384 )
+     return "minHeight";
+ else if( hash.hash == 3214045617 )
+     return "materialIds";
+ else if( hash.hash == 2104978212 )
+     return "configrationIds";
+ else if( hash.hash == 3548226499 )
+     return "heightFormat";
+ else if( hash.hash == 4167755735 )
+     return "heightRangeMax";
+ else if( hash.hash == 3494717177 )
+     return "heightRangeMin";
+ else if( hash.hash == 1508369315 )
+     return "comboTexture";
+ else if( hash.hash == 2003906452 )
+     return "comboFormat";
+ else if( hash.hash == 734927665 )
+     return "patchDescription";
+ else
+     return "";
+}
