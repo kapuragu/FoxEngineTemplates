@@ -91,29 +91,38 @@ struct
 
 FSeek(Metadata.LayoutDescriptionDefinition.SelfStartPos);
 FSkip(Metadata.LayoutDescriptionDefinition.DataOffset);
-FSkip(16);
 struct 
 {
-    uint width;
-    uint height;
-    uint headerUnknown5; //bit
-    float maxHeight;
-    float minHeight;
+    local uint SelfStartPos = FTell();
 
-    float headerUnknown6;
-    int headerUnknown7;
-    int headerUnknown8;
-    int headerUnknown9;
+    FSkip(16);
 
-    float maxHeightAgain;
-    float minHeightAgain;
+    uint WidthWS;
+    uint HeightWS;
+    uint SubEntryOffset;
+    float MaxHeightWS;
+    float MinHeightWS;
 
-    // Many of these appear to be offsets into the heightMap.
-    short vals2[28];
-    uint miniHeightMapWidth;
-    uint miniHeightMapHeight;
-    short vals3[10];
-} LayoutDescriptionData;
+    float unknown0;
+    uint unknown1;
+    uint unknown2;
+
+    FSeek(SelfStartPos + 0x18 + SubEntryOffset);
+
+    struct 
+    {
+        uint unknown0;
+    
+        float MaxHeightWS;
+        float MinHeightWS;
+    
+        // Many of these appear to be offsets into the heightMap.
+        short vals2[28];
+        uint miniHeightMapWidth;
+        uint miniHeightMapHeight;
+        short vals3[10];
+    } LayoutDescriptionSubEntry;
+} LayoutDescription;
 
 FSeek(Metadata.ParamDefinition.SelfStartPos);
 FSkip(Metadata.ParamDefinition.DataOffset);
@@ -161,7 +170,7 @@ FSeek(Metadata.ConfigrationIdsDefinition.SelfStartPos);
 FSkip(Metadata.ConfigrationIdsDefinition.DataOffset);
 struct
 {
-    Pixel data[Metadata.ConfigrationIdsDefinition.DataSize / sizeof(Pixel)];
+    uint data[Metadata.ConfigrationIdsDefinition.DataSize / sizeof(uint)];
 } ConfigrationIds <bgcolor=0x119911>;
 
 string HashLookup( StrCode32& hash )
