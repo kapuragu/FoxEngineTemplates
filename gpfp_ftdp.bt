@@ -7,7 +7,7 @@
 // As of v0.2, it can now read .ftdp files as well!
 
 // ============================
-// 		  Version 0.2.1
+// 		  Version 0.2.2
 // ============================
 
 #define HEADER_COLOR 0x00AA00
@@ -28,6 +28,12 @@ typedef struct
 	float z;
 	float w;
 } Float4 <read=Str("(%g, %g, %g, %g)", x, y, z, w)>;
+
+typedef struct
+{
+	float x, y, z;
+	uint nodeTags;
+} Node <read=Str("(%g, %g, %g, noteTags: %u)", x, y, z, nodeTags)>;
 
 struct OffsetSector
 {
@@ -90,7 +96,7 @@ struct DataChunk
 		// empty
 		FSkip(12);
 		
-		uint64 maybeSelectIndex <comment="this usually has values like 0, 1, 4, 8 etc">;
+		uint64 pathTags <comment="the tags for the whole entity">;
 		
 		uint gimmickHash;
 		uint sizeOfDatachunkMinusNodes;
@@ -104,7 +110,7 @@ struct DataChunk
 		Edges edges[info.num_of_nodes] <optimize=true>;
 		
 		FSeek(DataChunkStartPos + sizeOfDatachunkMinusNodes);
-		Float4 nodes[info.num_of_nodes + 1] <bgcolor=0x00BB00>;
+		Node nodes[info.num_of_nodes + 1] <bgcolor=0x00BB00>;
 	}
 	else // for FTDP
 	{
