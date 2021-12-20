@@ -1,0 +1,194 @@
+// GPFP Entry - GeoPathPack Entry
+// By RLC - inspired by other FOX templates by the researchers of Modders' Heaven!
+// https://metalgearmodding.fandom.com/wiki/GPFP
+// Special thanks to Joey for the flag parsing parts and the original header template!
+
+// Further modified by Half Way Lambda.
+// As of v0.2, it can now read .ftdp files as well!
+
+// ============================
+// 		  Version 0.2.1
+// ============================
+
+#define HEADER_COLOR 0x00AA00
+#define FIRSTENTRY_COLOR 0xAABBCC
+#define OFFSET_TABLE_COLOR 0x8694EB
+#define DATACHUNK_COLOR 0xFFCC00
+
+#define OFFSET_AMOUNT_COLOR 0xFFAA00
+#define OFFSET_COLOR 0x00FF00
+
+LittleEndian();
+local int isFTDP = 0;
+
+typedef struct
+{
+	float x;
+	float y;
+	float z;
+	float w;
+} Float4 <read=Str("(%g, %g, %g, %g)", x, y, z, w)>;
+
+struct OffsetSector
+{
+	uint num_of_offsets <fgcolor=OFFSET_AMOUNT_COLOR>;
+	uint offsets[num_of_offsets] <fgcolor=OFFSET_COLOR>;
+};
+
+typedef struct
+{
+	short datachunk_type <comment="72 for GPFP, differs a lot for FTDP">;
+	byte unknown <comment="-128 for GPFP, 0 for FTDP">;
+	ubyte num_of_nodes;
+} DataChunkInfo <read=Str("Type: %d, Unknown: %d, Nodes: %u", datachunk_type, unknown, num_of_nodes)>;
+
+struct Header
+{
+	uint fileFormatDate;
+	
+	uint sizeOfHeader;
+	uint fileSize;
+	uint formatDifferentiatorNumber <comment="A neat way to differentiate a GPFP and an FTDP!", hidden=true>;
+	if (formatDifferentiatorNumber != 3205930904)
+		isFTDP = 1;
+	
+	FSeek(sizeOfHeader);
+	
+} header <bgcolor=HEADER_COLOR, optimize=true>;
+
+struct FirstEntry
+{
+	local ulong startofFirstEntry = FTell();
+	
+	FSkip(8);
+	uint magicNumber;
+	Assert(magicNumber == 12, "Error with magicNumber.");
+	
+	uint sizeOfSection;
+	uint fileSize_plus_or_minus_16 <comment="Why does this exist is beyond me.">;
+	
+	FSeek(startofFirstEntry + sizeOfSection);
+} firstentry <bgcolor=FIRSTENTRY_COLOR>;
+
+// ==============================================================
+// HWL 90% of the offsets in the file are based on this position!
+local long BoundingBoxesStartPos = FTell();
+
+struct BoundingBoxes
+{
+	Float4 min_coordinate;
+	Float4 max_coordinate;
+} boundingboxes <bgcolor=0xAABAA0>;
+
+struct DataChunk
+{
+	local long DataChunkStartPos = FTell();
+	DataChunkInfo info;
+	
+	if (isFTDP == 0)
+	{
+		// empty
+		FSkip(12);
+		
+		uint64 maybeSelectIndex <comment="this usually has values like 0, 1, 4, 8 etc">;
+		
+		uint gimmickHash;
+		uint sizeOfDatachunkMinusNodes;
+		
+		typedef struct
+		{
+			uint edgeTags <bgcolor=0x204FFF>;
+			short prevNode;
+			short nextNode;
+		} Edges <read=Str("edgeTags: %u, prevNode: %u, nextNode: %u", edgeTags, prevNode, nextNode)>;
+		Edges edges[info.num_of_nodes] <optimize=true>;
+		
+		FSeek(DataChunkStartPos + sizeOfDatachunkMinusNodes);
+		Float4 nodes[info.num_of_nodes + 1] <bgcolor=0x00BB00>;
+	}
+	else // for FTDP
+	{
+		uint num_of_vertices;
+		uint unknown <comment="usually 0, but can be in the range of 0-2?">;
+		
+		uint maybeHash;
+		Float4 maybeRoadSize;
+		
+		float f0;
+		uint u1;
+		float f1;
+		FSkip(4);
+		
+		Float4 vertices[num_of_vertices + 1];
+		
+		typedef struct
+		{
+			float fl;
+			uint flags[3];
+		} maybeRoadInfo <read=Str("float: %f, flags: %Lx, %Lx, %Lx", fl, flags[0], flags[1], flags[2])>;
+		maybeRoadInfo roadinfo[4] <bgcolor=0x00DDDD>;
+	}
+};
+
+struct OffsetTable
+{
+	float magicFloat <comment="8 for GPFP, 16 for FTDP">;
+
+	uint width;
+	uint countB <comment="in the range of 1-4? unknown use">;
+	uint height;
+
+	uint main_offset_table_end_offset <comment="useless because offset_to_datachunk_offset_table does the same thing, only -64!!">;
+	uint magicNumber <hidden=true, comment="Always 64!">;
+	Assert(magicNumber == 64, "magicNumber error.");
+	
+	uint offset_to_adatachunk_vertices <comment="i assume this reads the 10 float4s in that offset for some reason?">;
+	uint offset_to_datachunk_offset_table;
+	
+	struct MainOffsetTable
+	{
+		struct TableRow
+		{
+			short maintable_offsets[height];
+			
+			struct OffsetContents
+			{
+				local int i;
+				local int j;
+				local long currentPos;
+				for (i = 0; i < height; i++)
+				{
+					currentPos = FTell();
+					
+					if (maintable_offsets[i] != -1)
+					{
+						// HWL go to the second offset table, which points to
+						// the data chunks
+						FSeek(BoundingBoxesStartPos + maintable_offsets[i]);
+						OffsetSector offsetsector;
+						
+						for (j = 0; j < offsetsector.num_of_offsets; j++)
+						{
+							FSeek(BoundingBoxesStartPos + offsetsector.offsets[j]);
+							DataChunk datachunk <bgcolor=DATACHUNK_COLOR>;
+						}
+						
+						// HWL return back to the position just before we declared
+						// the offset contents, so we can declare the next table
+						// rows
+						FSeek(currentPos);
+					}
+				}
+			} offsetcontents;
+		} tablerow[width] <optimize=false>;
+	} mof;
+	
+	FSeek(BoundingBoxesStartPos + offset_to_datachunk_offset_table);
+	struct DataChunkOffsetTable // perhaps used by the game for faster lookup? useless otherwise
+	{
+		// HWL i didn't make this an offset sector since it's the num_of_offsets + 1
+		uint num_of_offsets;
+		uint offsets[num_of_offsets + 1];
+	} dcot <optimize=false, bgcolor=0xAA00AA>;
+	
+} offsettable <bgcolor=OFFSET_TABLE_COLOR>;
