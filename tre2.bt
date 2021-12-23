@@ -1,4 +1,7 @@
-LittleEndian();
+if (ReadUShort() == 0)
+    BigEndian();
+else
+    LittleEndian();
 
 typedef struct
 {
@@ -111,26 +114,26 @@ struct
     float MaxHeightWS;
     float MinHeightWS;
 
-    float MetersPerPixel;
-    uint Unknown2; // Only uses 2 least significant bytes
-    uint padding0<hidden=true>; Assert(padding0 == 0);
+    float GridDistance;
+    uint Unknown2;
+    uint Unknown3;
 
     FSeek(SelfStartPos + 0x18 + SubEntryOffset);
 
     struct 
     {
-        uint Unknown8;
+        uint HeightFormat;
     
         float MaxHeightWS;
         float MinHeightWS;
     
         uint HeightMapOffset; // selfpos + HeightMapOffset points to start of heightMap
         uint HeightMapSize; // guess: heightMap size in bytes
-        uint Type; // Reader throws an error if Type => 7
+        uint ComboFormat; // Reader throws an error if Type => 7
         uint ComboTextureOffset; // selfpos + ComboTextureOffset points to start of comboTexture
         uint ComboTextureSize; // guess: comboTexture size in bytes
 
-        uint64 Unknown3;
+        uint64 Unknown1;
 
         uint MaterialIdsOffset; // selfpos + MaterialIdsOffset points to start of materialIds
 
@@ -141,17 +144,22 @@ struct
 
         uint ParamOffset; // selfpos + ParamOffset points to start of param
 
-        uint OffsetUnknown6;
-        uint OffsetUnknown7;
+        uint padding0 <hidden=true>; Assert(padding0 == 0);
+        uint padding1 <hidden=true>; Assert(padding1 == 0);
         
         uint MapChunkWidthWS;
         uint MapChunkHeightWS;
 
-        ushort Unknown0;
-        ushort Unknown1;
-        ushort Unknown2;
+        ushort Unknown2; Assert(Unknown2 == 32);
+        ushort Unknown3; Assert(Unknown3 == 4);
+        ushort Unknown4; // Often 5, CYPR is 1
 
-        ushort vals5[7];
+        ushort padding2 <hidden=true>; Assert(padding0 == 0);
+        uint padding3 <hidden=true>; Assert(padding1 == 0);
+
+        hfloat Unknown5;
+        hfloat Unknown6;
+        hfloat Unknown7;
 
         //FSeek(
     } LayoutDescriptionSubEntry;
