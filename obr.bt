@@ -1,78 +1,107 @@
 //------------------------------------------------
-//--- 010 Editor v7.0.2 Binary Template
-//
-//      File: obr.bt
-//   Authors: youarebritish
-//   Version: 0.2
-//------------------------------------------------
-struct Header
+LittleEndian();
+
+typedef struct
 {
-    uint Type;						// Always 3? rlc now a uint
-    uint TopHeaderSize;			    // Always 32? rlc now a uint
+    uint hash<format=hex>;
+} StrCode32 <read=(hash)>;
+
+typedef struct
+{
+    hfloat x;
+    hfloat y;
+    hfloat z;
+    hfloat w;
+} HQuaternion <read=Str("(%f, %f, %f, %f)", x, y, z, w)>;
+
+typedef struct
+{
+    ushort VariableType; // 0: uint, 2: float
+    ushort NextMetadataOffset; //sizeof(HeaderMetadata0)
+    StrCode32 NameHash;
+    uint NameStringOffset;
+    float Value;
+} FloatMetadata <read=Str("(%s, %f)", HashLookup(NameHash), Value)>;
+
+typedef struct
+{
+    ushort VariableType; // 0: uint, 2: float
+    ushort NextMetadataOffset; // sizeof(HeaderMetadata0) or 0
+    StrCode32 NameHash;
+    uint NameStringOffset;
+    uint Value;
+} UIntMetadata <read=Str("(%s, %d)", HashLookup(NameHash), Value)>;
+
+typedef struct
+{
+    local uint SelfStartPos = FTell();
+
+    StrCode32 NameHash <read=HashLookup(this)>; // 0 in OBR Type==3 ObjectBrush entry
+    uint NameStringOffsetRelative;
+    uint Unknown<hidden=true>; // Only nonzero in HTRE Type==4 files and OBR Type==3 files
+    uint DataOffset; // 0 means no data
+    uint DataSize; // 0 means no data
+    uint EditParamOffset; Assert(EditParamOffset == 0);             // Only nonzero for configrationIds entry in HTRE Type==3 files
+    uint ConfigrationIdsOffset; Assert(ConfigrationIdsOffset == 0); // exe searches for this entry, Only nonzero for editParam entry in HTRE Type==3 files
+    int PreviousEntryOffset; // 0 means no previous entries
+    int NextEntryOffset; // 0 means no more entries
+    uint ScalarSubParamOffset; // 0 means no subparams
+    uint padding2<hidden=true>; Assert(padding2 == 0);
+    uint padding3<hidden=true>; Assert(padding3 == 0);
+} SectionMetadata <read=Str("%s", HashLookup(NameHash))>;
+
+struct
+{
+    uint Type;
+    uint FirstSectionOffset; Assert(FirstSectionOffset == 0x20);
     uint FileSize;
-    uint ObjectBrush <hidden=true>; // Hash for "ObjectBrush"
-    uint ObjectBrushStrOffset;         // Points to the text "ObjectBrush"
+    StrCode32 NameHash <read=HashLookup(this)>;
+    uint NameStringOffset;
+} Header<bgcolor=0xaaaaaa>;
 
-    FSkip(5*4);
+FSeek(Header.FirstSectionOffset);
 
-    uint u3;                        // Always 1?
-    uint DataOffset;                // Object entries start at TopHeaderSize + DataOffset
-    uint DataSize;                  // Does not include padding to fit 16-byte boundary
+struct 
+{
+    SectionMetadata ObjectBrushDefinition;
+    FSeek(ObjectBrushDefinition.SelfStartPos);
+    FSkip(ObjectBrushDefinition.ScalarSubParamOffset);
+    FloatMetadata BlockSizeWParameter; // block size in meters
+    FloatMetadata BlockSizeHParameter; // block size in meters
+    UIntMetadata NumBlocksWParameter; // numBlocksWmetadata and numBlocksHmetadata - Block count in height/width of block field. 
+    UIntMetadata NumBlocksHParameter; // Even if dataset numBlocks is 0, it can be 2 here.
+    UIntMetadata NumObjectsParameter;
+} Metadata <bgcolor=0x7E846B>;
 
-    FSkip(4*4);
-
-    uint u4;                        // Code makes sure this is not 0
-
-    FSkip(8);
-    FSkip(16);
-    
-    struct HeaderMetadataFloat
-    {
-        ushort VariableType; // 0: uint, 2: float
-        ushort NextMetadataOffset; //sizeof(HeaderMetadata0)
-        uint VariableNameHash <hidden=true>;
-        uint StringOffset <hidden=true>;
-        float value;
-    };
-    
-    struct HeaderMetadataUInt
-    {
-        ushort VariableType; // 0: uint, 2: float
-        ushort NextMetadataOffset; //sizeof(HeaderMetadata0)
-        uint VariableNameHash <hidden=true>;
-        uint StringOffset <hidden=true>;
-        uint value;
-    };
-
-	// block size in meters
-    HeaderMetadataFloat blockSizeWMetadata;
-    HeaderMetadataFloat blockSizeHMetadata;
-	// numBlocksWmetadata and numBlocksHmetadata - Block count in height/width of block field. 
-    // Even if dataset numBlocks is 0, it can be 2 here.
-    HeaderMetadataUInt numBlocksWMetadata;
-    HeaderMetadataUInt numBlocksHMetadata;
-    HeaderMetadataUInt numObjectsMetadata;
-	
-} header <bgcolor=0x7E846B>;
-
-FSkip (80);
+FSeek(Metadata.ObjectBrushDefinition.SelfStartPos);
+FSkip(Metadata.ObjectBrushDefinition.DataOffset);
 
 struct Object
 {
-    float yTranslation;
-	short xTranslation;
-	short zTranslation;
-    // local float xTranslation = header.blockSizeWMetadata.value*((float)(ReadUShort(FTell() + 12 % header.numBlocksWMetadata.value) + 0.5 - (float)header.numBlocksWMetadata.value / 2) + header.blockSizeWMetadata.value * (float)ReadShort() / 32640;
-    // FSkip(2);
-    // local float zTranslation = header.blockSizeHMetadata.value*((float)(blockID / header.numBlocksHMetadata.value) + 0.5 - (float)header.numBlocksHMetadata.value / 2) + header.blockSizeHMetadata.value * (float)ReadShort()/ 32640;
-    // FSkip(2);
-    hfloat xQuat;
-    hfloat yQuat;
-    hfloat zQuat;
-    hfloat wQuat;
-    ushort blockID; // Index of ObjBrush dataset entity's pluginHandle list entry
-    ubyte pluginBrushID;
-    ubyte yScale;
-    uint objectIndex;
-	
-} objects[header.numObjectsMetadata.value] <bgcolor=0x8CAF5A>;
+    float YPositionFWS;
+	short XPositionEFOS;
+	short ZPositionEFOS;
+    HQuaternion Rotation;
+    ushort BlockIndex;
+    ubyte PluginBrushIndex; // Index of ObjBrush dataset entity's pluginHandle list entry
+    ubyte NormalizedScale; // scale = lerp(minScale, maxScale, NormalizedScale) found in DataSet plugin definition
+    uint GlobalObjectIndex;
+} Objects[Metadata.NumObjectsParameter.Value] <bgcolor=0x8CAF5A>;
+
+string HashLookup( StrCode32& hash )
+{
+ if( hash.hash == 2283831924 )
+     return "ObjectBrush";
+ else if( hash.hash == 1412644188 )
+     return "blockSizeW";
+ else if( hash.hash == 2407288378 )
+     return "blockSizeH";
+ else if( hash.hash == 2914376208 )
+     return "numBlocksW";
+ else if( hash.hash == 2310196218 )
+     return "numBlocksH";
+ else if( hash.hash == 3310217448 )
+     return "numObjects";
+ else
+     return "";
+}

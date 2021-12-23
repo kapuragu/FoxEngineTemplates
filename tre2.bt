@@ -1,4 +1,3 @@
-//------------------------------------------------
 LittleEndian();
 
 typedef struct
@@ -16,8 +15,16 @@ typedef struct
 
 typedef struct
 {
+    float near;
+    float offset;
+    float height;
+    float scale;
+} LodParam <read=Str("(%f, %f, %f, %f)", near, offset, height, scale)>;
+
+typedef struct
+{
     ushort VariableType; // 0: uint, 2: float
-    ushort NextMetadataOffset; //sizeof(HeaderMetadata0)
+    ushort NextMetadataOffset; //sizeof(FloatMetadata) or 0
     StrCode32 NameHash;
     uint NameStringOffset;
     float Value;
@@ -26,7 +33,7 @@ typedef struct
 typedef struct
 {
     ushort VariableType; // 0: uint, 2: float
-    ushort NextMetadataOffset; // sizeof(HeaderMetadata0) or 0
+    ushort NextMetadataOffset; // sizeof(UIntMetadata) or 0
     StrCode32 NameHash;
     uint NameStringOffset;
     uint Value;
@@ -36,9 +43,9 @@ typedef struct
 {
     local uint SelfStartPos = FTell();
 
-    StrCode32 NameHash;
+    StrCode32 NameHash <read=HashLookup(this)>;  // 0 in OBR Type==3 ObjectBrush entry;
     uint NameStringOffsetRelative;
-    uint Unknown<hidden=true>; Assert(Unknown == 0); // Only nonzero in HTRE Type==4 files
+    uint Unknown<hidden=true>; // Only nonzero in HTRE Type==4 files and OBR Type==3 files
     uint DataOffset; // 0 means no data
     uint DataSize; // 0 means no data
     uint EditParamOffset; Assert(EditParamOffset == 0);             // Only nonzero for configrationIds entry in HTRE Type==3 files
@@ -48,7 +55,7 @@ typedef struct
     uint ScalarSubParamOffset; // 0 means no subparams
     uint padding2<hidden=true>; Assert(padding2 == 0);
     uint padding3<hidden=true>; Assert(padding3 == 0);
-} TextureMetadata <read=Str("%s", HashLookup(NameHash))>;
+} SectionMetadata <read=Str("%s", HashLookup(NameHash))>;
 
 struct
 {
@@ -63,30 +70,30 @@ FSeek(Header.FirstSectionOffset);
 
 struct 
 {
-    TextureMetadata ParamDefinition<bgcolor=0xff9999>;
+    SectionMetadata ParamDefinition<bgcolor=0xff9999>;
     UIntMetadata WidthParameter<bgcolor=0xff9900>;
     UIntMetadata HeightParameter<bgcolor=0x00ff99>;
     UIntMetadata HighPerLowParameter<bgcolor=0x0099ff>;
     UIntMetadata MaxLodLevelParameter<bgcolor=0xff0099>;
     FloatMetadata GridDistanceParameter<bgcolor=0x009999>;
 
-    TextureMetadata HeightMapDefinition<bgcolor=0x999900>;
+    SectionMetadata HeightMapDefinition<bgcolor=0x999900>;
     UIntMetadata HeightFormatParameter<bgcolor=0x990099>;
     FloatMetadata HeightRangeMaxParameter<bgcolor=0xff0909>;
     FloatMetadata HeightRangeMinParameter<bgcolor=0x09ff09>;
 
-    TextureMetadata ComboTextureDefinition<bgcolor=0x0909ff>;
+    SectionMetadata ComboTextureDefinition<bgcolor=0x0909ff>;
     UIntMetadata ComboFormatParameter<bgcolor=0xaacc99>;
 
-    TextureMetadata MaxHeightDefinition<bgcolor=0x9999ff>;
+    SectionMetadata MaxHeightDefinition<bgcolor=0x9999ff>;
 
-    TextureMetadata MinHeightDefinition<bgcolor=0xff99ff>;
+    SectionMetadata MinHeightDefinition<bgcolor=0xff99ff>;
 
-    TextureMetadata MaterialIdsDefinition<bgcolor=0x99ffff>;
+    SectionMetadata MaterialIdsDefinition<bgcolor=0x99ffff>;
 
-    TextureMetadata ConfigrationIdsDefinition<bgcolor=0x99ff99>;
+    SectionMetadata ConfigrationIdsDefinition<bgcolor=0x99ff99>;
 
-    TextureMetadata LayoutDescriptionDefinition<bgcolor=0xffff99>;
+    SectionMetadata LayoutDescriptionDefinition<bgcolor=0xffff99>;
 } Metadata;
 
 FSeek(Metadata.LayoutDescriptionDefinition.SelfStartPos);
@@ -128,7 +135,7 @@ FSeek(Metadata.ParamDefinition.SelfStartPos);
 FSkip(Metadata.ParamDefinition.DataOffset);
 struct
 {
-    float data[Metadata.ParamDefinition.DataSize / sizeof(float)];
+    LodParam data[Metadata.ParamDefinition.DataSize / sizeof(LodParam)];
 } Param <bgcolor=0x00aaff>;
 
 FSeek(Metadata.MaxHeightDefinition.SelfStartPos);
