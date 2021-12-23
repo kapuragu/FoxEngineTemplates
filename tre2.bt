@@ -102,7 +102,8 @@ struct
 {
     local uint SelfStartPos = FTell();
 
-    FSkip(16);
+    uint64 Unknown0;
+    uint64 Unknown1;
 
     uint WidthWS;
     uint HeightWS;
@@ -110,24 +111,49 @@ struct
     float MaxHeightWS;
     float MinHeightWS;
 
-    float unknown0;
-    uint unknown1;
-    uint unknown2;
+    float MetersPerPixel;
+    uint Unknown2; // Only uses 2 least significant bytes
+    uint padding0<hidden=true>; Assert(padding0 == 0);
 
     FSeek(SelfStartPos + 0x18 + SubEntryOffset);
 
     struct 
     {
-        uint unknown0;
+        uint Unknown8;
     
         float MaxHeightWS;
         float MinHeightWS;
     
-        // Many of these appear to be offsets into the heightMap.
-        short vals2[28];
-        uint miniHeightMapWidth;
-        uint miniHeightMapHeight;
-        short vals3[10];
+        uint HeightMapOffset; // selfpos + HeightMapOffset points to start of heightMap
+        uint HeightMapSize; // guess: heightMap size in bytes
+        uint Type; // Reader throws an error if Type => 7
+        uint ComboTextureOffset; // selfpos + ComboTextureOffset points to start of comboTexture
+        uint ComboTextureSize; // guess: comboTexture size in bytes
+
+        uint64 Unknown3;
+
+        uint MaterialIdsOffset; // selfpos + MaterialIdsOffset points to start of materialIds
+
+        uint ConfigrationIdsOffset; // selfpos + ConfigrationIdsOffset points to start of configrationIds
+
+        uint MaxHeightOffset; // selfpos + MaxHeightOffset points to start of maxHeight
+        uint MinHeightOffset; // selfpos + MaxHeightOffset points to start of minHeight
+
+        uint ParamOffset; // selfpos + ParamOffset points to start of param
+
+        uint OffsetUnknown6;
+        uint OffsetUnknown7;
+        
+        uint MapChunkWidthWS;
+        uint MapChunkHeightWS;
+
+        ushort Unknown0;
+        ushort Unknown1;
+        ushort Unknown2;
+
+        ushort vals5[7];
+
+        //FSeek(
     } LayoutDescriptionSubEntry;
 } LayoutDescription;
 
