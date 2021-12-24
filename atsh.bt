@@ -1,78 +1,112 @@
 LittleEndian();
 
-typedef unsigned int offset;
-typedef unsigned int size;
-typedef unsigned int count;
-typedef unsigned int hash;
-
-struct Header
+void AlignRead(int alignment)
 {
-    uint u1;                                // Always 1
-    uint u2;                                // Always 32
-    size fileBytes;
-    hash AtmosphereSHCoefficients;
-    offset AtmosphereSHCoefficientsLiteral;
-    uint u3;                                // Always 0
-
-    FSkip(4*4);
-
-    uint u4;                                // Always 1
-    offset block1;
-    size bodyBytes;
-
-    FSkip(4*4);
-
-    size block1Bytes;
-
-    FSkip(4*10);
-} header;
-
-struct Block1
-{
-    struct NumDiv
-    {
-        ushort u1;
-        ushort u2;          // Always 16?
-        hash numDiv;
-        count n1;           // Always 28?
-        count num;
-    } numDivMetadata;
-
-    struct NumWeathers
-    {
-        ushort u1;          // Always 0?
-        ushort u2;          // Always 0?
-        hash numWeathers;
-        count n1;           // Always 28?
-        count num;          // Always 2?
-    } numWeathersMetadata;
-} block1;
-
-FSkip(32);
-
-// Time values in seconds
-uint divs[block1.numDivMetadata.num];
-
-// Amount of padding weirdly based on block1.numDivMetadata.num
-// Need to calculate how much to skip
-long roundUp(long n, long m)
-{
-    return n >= 0 ? ((n + m - 1) / m) * m : (n / m) * m;
+    local long alignmentRequired = FTell() % alignment;
+    if (alignmentRequired > 0)
+        FSeek(FTell() + alignment - alignmentRequired);
 }
 
-local uint n2 = block1.numDivMetadata.num * 4;
-local long coefficientsOffset = 176 + roundUp(n2, 16);
-FSeek(coefficientsOffset);
-
-struct SphericalHarmonics
+typedef struct
 {
-	struct Entry
-	{
-		struct ShCoefficientSet
-		{
-			hfloat r;
-			hfloat g;
-			hfloat b;
-		} coefficients[9];
-	} entries[block1.numDivMetadata.num * block1.numWeathersMetadata.num ];
-} sh;
+    uint hash<format=hex>;
+} StrCode32 <read=(hash)>;
+
+typedef struct
+{
+    hfloat x;
+    hfloat y;
+    hfloat z;
+} Half3 <read=Str("(%f, %f, %f)", x, y, z)>;
+
+struct ShCoefficients
+{
+    Half3 coefficients[10];
+};
+
+typedef struct
+{
+    ushort VariableType; // 0: uint, 2: float
+    ushort NextMetadataOffset; //sizeof(FloatMetadata) or 0
+    StrCode32 NameHash;
+    uint NameStringOffset;
+    float Value;
+} FloatMetadata <read=Str("(%s, %f)", HashLookup(NameHash), Value)>;
+
+typedef struct
+{
+    ushort VariableType; // 0: uint, 2: float
+    ushort NextMetadataOffset; // sizeof(UIntMetadata) or 0
+    StrCode32 NameHash;
+    uint NameStringOffset;
+    uint Value;
+} UIntMetadata <read=Str("(%s, %d)", HashLookup(NameHash), Value)>;
+
+typedef struct
+{
+    local uint SelfStartPos = FTell();
+
+    StrCode32 NameHash <read=HashLookup(this)>; // 0 in OBR Type==3 ObjectBrush entry
+    uint NameStringOffsetRelative;
+    uint Unknown<hidden=true>; // Only nonzero in HTRE Type==4 files and OBR Type==3 files
+    uint DataOffset; // 0 means no data
+    uint DataSize; // 0 means no data
+    uint EditParamOffset; Assert(EditParamOffset == 0);             // Only nonzero for configrationIds entry in HTRE Type==3 files
+    uint ConfigrationIdsOffset; Assert(ConfigrationIdsOffset == 0); // exe searches for this entry, Only nonzero for editParam entry in HTRE Type==3 files
+    int PreviousEntryOffset; // 0 means no previous entries
+    int NextEntryOffset; // 0 means no more entries
+    uint ScalarSubParamOffset; // 0 means no subparams
+    uint padding2<hidden=true>; Assert(padding2 == 0);
+    uint padding3<hidden=true>; Assert(padding3 == 0);
+} SectionMetadata <read=Str("%s", HashLookup(NameHash))>;
+
+struct
+{
+    uint Type;
+    uint FirstSectionOffset; Assert(FirstSectionOffset == 0x20);
+    uint FileSize;
+    StrCode32 NameHash <read=HashLookup(this)>;
+    uint NameStringOffset;
+} Header<bgcolor=0xaaaaaa>;
+
+FSeek(Header.FirstSectionOffset);
+
+struct
+{
+    SectionMetadata AtmosphereSHCoefficientsDefinition<bgcolor=0xff9999>;
+    FSeek(AtmosphereSHCoefficientsDefinition.SelfStartPos);
+    FSkip(AtmosphereSHCoefficientsDefinition.ScalarSubParamOffset);
+    UIntMetadata NumDivParameter<bgcolor=0xff9900>;
+    UIntMetadata NumWeathersParameter<bgcolor=0x00ff99>;
+} Metadata;
+
+FSeek(Metadata.AtmosphereSHCoefficientsDefinition.SelfStartPos);
+FSkip(Metadata.AtmosphereSHCoefficientsDefinition.DataOffset);
+
+struct
+{
+    uint Times[Metadata.NumDivParameter.Value];
+
+    AlignRead(16);
+
+    local int i = 0;
+    for (i = 0; i < Metadata.NumWeathersParameter.Value; i++)
+    {
+        struct
+        {
+            ShCoefficients Coefficients [Metadata.NumDivParameter.Value];
+        } ShSet;
+    }
+} AtmosphereSHCoefficients <bgcolor=0x00aaff>;;
+
+string HashLookup( StrCode32& hash )
+{
+ if( hash.hash == 4127755893 )
+     return "AtmosphereSHCoefficients";
+ else if( hash.hash == 3667462730 )
+     return "numDiv";
+ else if( hash.hash == 75172507 )
+     return "numWeathers";
+ else
+     return "";
+}
