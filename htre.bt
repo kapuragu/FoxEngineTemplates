@@ -184,7 +184,53 @@ else if (Header.Type == 4)
     FSkip(Metadata.PatchDescriptionDefinition.DataOffset);
     struct
     {
-        uint data[Metadata.PatchDescriptionDefinition.DataSize / sizeof(uint)];
+        local uint SelfStartPos = FTell();
+    
+        uint64 Unknown0;
+        uint64 Unknown1;
+        uint64 Unknown2;
+
+        struct 
+        {
+            uint HeightFormat;
+        
+            float MaxHeightWS;
+            float MinHeightWS;
+        
+            uint HeightMapOffset; // selfpos + HeightMapOffset points to start of heightMap
+            uint HeightMapSize; // guess: heightMap size in bytes
+            uint ComboFormat; // Reader throws an error if Type => 7
+            uint ComboTextureOffset; // selfpos + ComboTextureOffset points to start of comboTexture
+            uint ComboTextureSize; // guess: comboTexture size in bytes
+    
+            uint64 Unknown1;
+    
+            uint MaterialIdsOffset; // selfpos + MaterialIdsOffset points to start of materialIds
+    
+            uint ConfigrationIdsOffset; // selfpos + ConfigrationIdsOffset points to start of configrationIds
+    
+            uint MaxHeightOffset; // selfpos + MaxHeightOffset points to start of maxHeight
+            uint MinHeightOffset; // selfpos + MaxHeightOffset points to start of minHeight
+    
+            uint ParamOffset; // selfpos + ParamOffset points to start of param
+    
+            uint padding0 <hidden=true>; Assert(padding0 == 0);
+            uint padding1 <hidden=true>; Assert(padding1 == 0);
+            
+            uint MapChunkWidthWS;
+            uint MapChunkHeightWS;
+    
+            ushort Unknown2; Assert(Unknown2 == 32);
+            ushort Unknown3; // Often 4, HTREs are 0
+            ushort Unknown4; // Often 5, CYPR is 1
+    
+            ushort padding2 <hidden=true>; Assert(padding0 == 0);
+            uint padding3 <hidden=true>; Assert(padding1 == 0);
+    
+            hfloat Unknown5;
+            hfloat Unknown6;
+            hfloat Unknown7;
+        } LayoutDescriptionSubEntry;
     } PatchDescription <bgcolor=0x999900>;
 
     FSeek(Metadata.HeightMapDefinition.SelfStartPos);

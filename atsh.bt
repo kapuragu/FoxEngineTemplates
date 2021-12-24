@@ -21,7 +21,9 @@ typedef struct
 
 struct ShCoefficients
 {
-    Half3 coefficients[10];
+    local int i = 0;
+    for (i = 0; i < 10; i++)
+        Half3 coefficients;
 };
 
 typedef struct
@@ -94,7 +96,7 @@ struct
     {
         struct
         {
-            ShCoefficients Coefficients [Metadata.NumDivParameter.Value];
+            ShCoefficients Coefficients [Metadata.NumDivParameter.Value]<optimize=true>;
         } ShSet;
     }
 } AtmosphereSHCoefficients <bgcolor=0x00aaff>;;
