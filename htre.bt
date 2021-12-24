@@ -25,16 +25,8 @@ typedef struct
 
 typedef struct
 {
-    float near;
-    float offset;
-    float height;
-    float scale;
-} LodParam <read=Str("(%f, %f, %f, %f)", near, offset, height, scale)>;
-
-typedef struct
-{
     ushort VariableType; // 0: uint, 2: float
-    ushort NextMetadataOffset; //sizeof(FloatMetadata) or 0
+    ushort NextMetadataOffset; //sizeof(HeaderMetadata0)
     StrCode32 NameHash;
     uint NameStringOffset;
     float Value;
@@ -43,7 +35,7 @@ typedef struct
 typedef struct
 {
     ushort VariableType; // 0: uint, 2: float
-    ushort NextMetadataOffset; // sizeof(UIntMetadata) or 0
+    ushort NextMetadataOffset; // sizeof(HeaderMetadata0) or 0
     StrCode32 NameHash;
     uint NameStringOffset;
     uint Value;
@@ -120,7 +112,7 @@ if (Header.Type == 3)
     FSkip(Metadata.LodParameterDefinition.DataOffset);
     struct
     {
-        LodParam data[Metadata.LodParameterDefinition.DataSize / sizeof(LodParam)];
+        float data[Metadata.LodParameterDefinition.DataSize / sizeof(float)];
     } LodParameter <bgcolor=0x00aaff>;
 
     FSeek(Metadata.MaxHeightDefinition.SelfStartPos);
@@ -205,7 +197,7 @@ else if (Header.Type == 4)
     FSkip(Metadata.LodParameterDefinition.DataOffset);
     struct
     {
-        LodParam data[Metadata.LodParameterDefinition.DataSize / sizeof(LodParam)];
+        float data[Metadata.LodParameterDefinition.DataSize / sizeof(float)];
     } LodParameter <bgcolor=0x00aaff>;
 
     FSeek(Metadata.MaxHeightDefinition.SelfStartPos);

@@ -7,134 +7,111 @@ void AlignRead(int alignment)
         FSeek(FTell() + alignment - alignmentRequired);
 }
 
-typedef struct
+struct Header
 {
-    uint hash<format=hex>;
-} StrCode32 <read=(hash)>;
+    uint version;   // 4 for TPP, 3 for GZ
+    uint unknown1;
+    uint fileSize;
+    uint LightProbeSHCoefficientsHash;
 
-typedef struct
+    uint LightProbeSHCoefficientsLiteralOffset <hidden=true>;
+
+    int64 empty1 <hidden=true>;
+    int64 empty2 <hidden=true>;    
+    int empty3 <hidden=true>;
+
+    int unknown5;
+    uint numDivNameOffset;// <hidden=true>;
+
+    uint dataBlockSize;
+    int64 empty4 <hidden=true>;
+    int64 empty5 <hidden=true>;
+
+    uint fileFormatNameOffset;// <hidden=true>;
+    FSkip(40);
+
+    struct MetadataStruct
+    {
+        ushort unknown8a;
+        ushort unknown8b;
+        uint variableNameHash <hidden=true>;
+        uint unknown9;
+        uint value;
+    };
+
+    MetadataStruct numLightProbes;
+    MetadataStruct numDiv;
+	if (version==4)
+	{
+		MetadataStruct formatType;
+	}
+
+    FSkip(32);
+	if (version==4)
+	{
+		FSkip(16);
+	}
+
+    // Time of day in seconds.
+    uint timeValues[numDiv.value];
+    AlignRead(16);
+
+    struct LightProbeMetadata
+    {
+        int nameAddress;
+        int shDataAddress;
+
+        // Might be related to number of SH sets? An enum? 0 = 1 set, 3 = 28 sets, 4 = 3 sets, 7 = 30 sets. But not true in mgo?
+        uint unknownNum;
+    } lightProbeMetadata[numLightProbes.value] <optimize=false>;
+
+    ReadLine(FTell()); 
+
+} header;
+
+// Skip names
+FSeek(header.lightProbeMetadata[0].shDataAddress);
+
+struct ShCoefficients
 {
     hfloat r;
     hfloat g;
     hfloat b;
     hfloat skyVisibility;
-} ShCoefficients <read=Str("(%f, %f, %f, %f)", r, g, b, skyVisibility)>;
+};
 
 struct ShCoefficientSet
 {
-    ShCoefficients coefficients[9];
+    ShCoefficients coefficients[9] <optimize=false>;
 };
 
-typedef struct
+struct SphericalHarmonics
 {
-    ushort VariableType; // 0: uint, 2: float
-    ushort NextMetadataOffset; //sizeof(HeaderMetadata0) or 0
-    StrCode32 NameHash;
-    uint NameStringOffset;
-    float Value;
-} FloatMetadata <read=Str("(%s, %f)", HashLookup(NameHash), Value)>;
-
-typedef struct
-{
-    ushort VariableType; // 0: uint, 2: float
-    ushort NextMetadataOffset; // sizeof(HeaderMetadata0) or 0
-    StrCode32 NameHash;
-    uint NameStringOffset;
-    uint Value;
-} UIntMetadata <read=Str("(%s, %d)", HashLookup(NameHash), Value)>;
-
-typedef struct
-{
-    local uint SelfStartPos = FTell();
-
-    StrCode32 NameHash <read=HashLookup(this)>; // 0 in OBR Type==3 ObjectBrush entry
-    uint NameStringOffsetRelative;
-    uint Unknown<hidden=true>; // Only nonzero in HTRE Type==4 files and OBR Type==3 files
-    uint DataOffset; // 0 means no data
-    uint DataSize; // 0 means no data
-    uint EditParamOffset; Assert(EditParamOffset == 0);             // Only nonzero for configrationIds entry in HTRE Type==3 files
-    uint ConfigrationIdsOffset; Assert(ConfigrationIdsOffset == 0); // exe searches for this entry, Only nonzero for editParam entry in HTRE Type==3 files
-    int PreviousEntryOffset; // 0 means no previous entries
-    int NextEntryOffset; // 0 means no more entries
-    uint ScalarSubParamOffset; // 0 means no subparams
-    uint padding2<hidden=true>; Assert(padding2 == 0);
-    uint padding3<hidden=true>; Assert(padding3 == 0);
-} SectionMetadata <read=Str("%s", HashLookup(NameHash))>;
-
-struct
-{
-    uint Type;
-    uint FirstSectionOffset; Assert(FirstSectionOffset == 0x20);
-    uint FileSize;
-    StrCode32 NameHash <read=HashLookup(this)>;
-    uint NameStringOffset;
-} Header<bgcolor=0xaaaaaa>;
-
-FSeek(Header.FirstSectionOffset);
-
-struct
-{
-    SectionMetadata LightProbeSHCoefficientsDefinition;
-    FSeek(LightProbeSHCoefficientsDefinition.SelfStartPos);
-    FSkip(LightProbeSHCoefficientsDefinition.ScalarSubParamOffset);
-    UIntMetadata NumLightProbesParameter;
-    UIntMetadata NumDivParameter;
-	if (Header.Type ==4)
-	{
-		UIntMetadata FormatTypeParameter;
-	}
-} Metadata;
-
-FSeek(Metadata.LightProbeSHCoefficientsDefinition.SelfStartPos);
-FSkip(Metadata.LightProbeSHCoefficientsDefinition.DataOffset);
-struct
-{
-    uint Times[Metadata.NumDivParameter.Value];
-
-    AlignRead(16);
-
-    struct
-    {
-        int NameStringOffset;
-        int DataOffset;
-    
-        // Might be related to number of SH sets? An enum? 0 = 1 set, 3 = 28 sets, 4 = 3 sets, 7 = 30 sets. But not true in mgo?
-        uint Unknown;
-    } ProbeMetadata[Metadata.NumLightProbesParameter.Value];
-
     local int i = 0;
-    for (i = 0; i < Metadata.NumLightProbesParameter.Value; i++)
+    while (i < header.numLightProbes.value)
     {
-        FSeek(ProbeMetadata[i].DataOffset);
-
-        struct LightProbe
+        if (i == header.numLightProbes.value - 1)
         {
-            local uint readBound; // Hack
-            if (i == (Metadata.NumLightProbesParameter.Value - 1))
-                readBound = FileSize() - 0x8;
-            else
-                readBound = Metadata.lightProbeMetadata[i + 1].DataOffset;
-    
-            while (FTell() < readBound && FTell() < FileSize())
+            struct LightProbe1
             {
-                ShCoefficientSet Coefficients;
-            }
-        } Probes <optimize=false>;
-    }
-} LightProbeSHCoefficients <bgcolor=0x00aaff>;
+                while (FTell() < FileSize() - 0x8 && FTell() < FileSize())
+                {
+                    ShCoefficientSet sh;
+                }
+            } lightProbeSet;
+        }
+        else
+        {
+            struct LightProbe2
+            {
+                while (FTell() < header.lightProbeMetadata[i + 1].shDataAddress)
+                {
+                    ShCoefficientSet sh;
+                }
+            } lightProbeSet;
+        }
+        i++;
+    }    
+} sh <optimize=false>;
 
-string HashLookup( StrCode32& hash )
-{
- if( hash.hash == 981817376 )
-     return "LightProbeSHCoefficients";
- else if( hash.hash == 3466735186 )
-     return "numLightProbes";
- else if( hash.hash == 3667462730 )
-     return "numDiv";
- else if( hash.hash == 3457030085 )
-     return "formatType";
- else if( hash.hash == 2310196218 )
-     return "LP_auto_0000";
- else
-     return "";
-}
+AlignRead(16);

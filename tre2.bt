@@ -1,7 +1,5 @@
-if (ReadUShort() == 0)
-    BigEndian();
-else
-    LittleEndian();
+//------------------------------------------------
+LittleEndian();
 
 typedef struct
 {
@@ -18,16 +16,8 @@ typedef struct
 
 typedef struct
 {
-    float near;
-    float offset;
-    float height;
-    float scale;
-} LodParam <read=Str("(%f, %f, %f, %f)", near, offset, height, scale)>;
-
-typedef struct
-{
     ushort VariableType; // 0: uint, 2: float
-    ushort NextMetadataOffset; //sizeof(FloatMetadata) or 0
+    ushort NextMetadataOffset; //sizeof(HeaderMetadata0)
     StrCode32 NameHash;
     uint NameStringOffset;
     float Value;
@@ -36,7 +26,7 @@ typedef struct
 typedef struct
 {
     ushort VariableType; // 0: uint, 2: float
-    ushort NextMetadataOffset; // sizeof(UIntMetadata) or 0
+    ushort NextMetadataOffset; // sizeof(HeaderMetadata0) or 0
     StrCode32 NameHash;
     uint NameStringOffset;
     uint Value;
@@ -46,9 +36,9 @@ typedef struct
 {
     local uint SelfStartPos = FTell();
 
-    StrCode32 NameHash <read=HashLookup(this)>;  // 0 in OBR Type==3 ObjectBrush entry;
+    StrCode32 NameHash;
     uint NameStringOffsetRelative;
-    uint Unknown<hidden=true>; // Only nonzero in HTRE Type==4 files and OBR Type==3 files
+    uint Unknown<hidden=true>; Assert(Unknown == 0); // Only nonzero in HTRE Type==4 files
     uint DataOffset; // 0 means no data
     uint DataSize; // 0 means no data
     uint EditParamOffset; Assert(EditParamOffset == 0);             // Only nonzero for configrationIds entry in HTRE Type==3 files
@@ -58,7 +48,7 @@ typedef struct
     uint ScalarSubParamOffset; // 0 means no subparams
     uint padding2<hidden=true>; Assert(padding2 == 0);
     uint padding3<hidden=true>; Assert(padding3 == 0);
-} SectionMetadata <read=Str("%s", HashLookup(NameHash))>;
+} TextureMetadata <read=Str("%s", HashLookup(NameHash))>;
 
 struct
 {
@@ -73,30 +63,30 @@ FSeek(Header.FirstSectionOffset);
 
 struct 
 {
-    SectionMetadata ParamDefinition<bgcolor=0xff9999>;
+    TextureMetadata ParamDefinition<bgcolor=0xff9999>;
     UIntMetadata WidthParameter<bgcolor=0xff9900>;
     UIntMetadata HeightParameter<bgcolor=0x00ff99>;
     UIntMetadata HighPerLowParameter<bgcolor=0x0099ff>;
     UIntMetadata MaxLodLevelParameter<bgcolor=0xff0099>;
     FloatMetadata GridDistanceParameter<bgcolor=0x009999>;
 
-    SectionMetadata HeightMapDefinition<bgcolor=0x999900>;
+    TextureMetadata HeightMapDefinition<bgcolor=0x999900>;
     UIntMetadata HeightFormatParameter<bgcolor=0x990099>;
     FloatMetadata HeightRangeMaxParameter<bgcolor=0xff0909>;
     FloatMetadata HeightRangeMinParameter<bgcolor=0x09ff09>;
 
-    SectionMetadata ComboTextureDefinition<bgcolor=0x0909ff>;
+    TextureMetadata ComboTextureDefinition<bgcolor=0x0909ff>;
     UIntMetadata ComboFormatParameter<bgcolor=0xaacc99>;
 
-    SectionMetadata MaxHeightDefinition<bgcolor=0x9999ff>;
+    TextureMetadata MaxHeightDefinition<bgcolor=0x9999ff>;
 
-    SectionMetadata MinHeightDefinition<bgcolor=0xff99ff>;
+    TextureMetadata MinHeightDefinition<bgcolor=0xff99ff>;
 
-    SectionMetadata MaterialIdsDefinition<bgcolor=0x99ffff>;
+    TextureMetadata MaterialIdsDefinition<bgcolor=0x99ffff>;
 
-    SectionMetadata ConfigrationIdsDefinition<bgcolor=0x99ff99>;
+    TextureMetadata ConfigrationIdsDefinition<bgcolor=0x99ff99>;
 
-    SectionMetadata LayoutDescriptionDefinition<bgcolor=0xffff99>;
+    TextureMetadata LayoutDescriptionDefinition<bgcolor=0xffff99>;
 } Metadata;
 
 FSeek(Metadata.LayoutDescriptionDefinition.SelfStartPos);
@@ -105,8 +95,7 @@ struct
 {
     local uint SelfStartPos = FTell();
 
-    uint64 Unknown0;
-    uint64 Unknown1;
+    FSkip(16);
 
     uint WidthWS;
     uint HeightWS;
@@ -114,54 +103,24 @@ struct
     float MaxHeightWS;
     float MinHeightWS;
 
-    float GridDistance;
-    uint Unknown2;
-    uint Unknown3;
+    float unknown0;
+    uint unknown1;
+    uint unknown2;
 
     FSeek(SelfStartPos + 0x18 + SubEntryOffset);
 
     struct 
     {
-        uint HeightFormat;
+        uint unknown0;
     
         float MaxHeightWS;
         float MinHeightWS;
     
-        uint HeightMapOffset; // selfpos + HeightMapOffset points to start of heightMap
-        uint HeightMapSize; // guess: heightMap size in bytes
-        uint ComboFormat; // Reader throws an error if Type => 7
-        uint ComboTextureOffset; // selfpos + ComboTextureOffset points to start of comboTexture
-        uint ComboTextureSize; // guess: comboTexture size in bytes
-
-        uint64 Unknown1;
-
-        uint MaterialIdsOffset; // selfpos + MaterialIdsOffset points to start of materialIds
-
-        uint ConfigrationIdsOffset; // selfpos + ConfigrationIdsOffset points to start of configrationIds
-
-        uint MaxHeightOffset; // selfpos + MaxHeightOffset points to start of maxHeight
-        uint MinHeightOffset; // selfpos + MaxHeightOffset points to start of minHeight
-
-        uint ParamOffset; // selfpos + ParamOffset points to start of param
-
-        uint padding0 <hidden=true>; Assert(padding0 == 0);
-        uint padding1 <hidden=true>; Assert(padding1 == 0);
-        
-        uint MapChunkWidthWS;
-        uint MapChunkHeightWS;
-
-        ushort Unknown2; Assert(Unknown2 == 32);
-        ushort Unknown3; Assert(Unknown3 == 4);
-        ushort Unknown4; // Often 5, CYPR is 1
-
-        ushort padding2 <hidden=true>; Assert(padding0 == 0);
-        uint padding3 <hidden=true>; Assert(padding1 == 0);
-
-        hfloat Unknown5;
-        hfloat Unknown6;
-        hfloat Unknown7;
-
-        //FSeek(
+        // Many of these appear to be offsets into the heightMap.
+        short vals2[28];
+        uint miniHeightMapWidth;
+        uint miniHeightMapHeight;
+        short vals3[10];
     } LayoutDescriptionSubEntry;
 } LayoutDescription;
 
@@ -169,7 +128,7 @@ FSeek(Metadata.ParamDefinition.SelfStartPos);
 FSkip(Metadata.ParamDefinition.DataOffset);
 struct
 {
-    LodParam data[Metadata.ParamDefinition.DataSize / sizeof(LodParam)];
+    float data[Metadata.ParamDefinition.DataSize / sizeof(float)];
 } Param <bgcolor=0x00aaff>;
 
 FSeek(Metadata.MaxHeightDefinition.SelfStartPos);
