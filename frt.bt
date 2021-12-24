@@ -126,7 +126,7 @@ struct EventExtensions_ConversationIdle
 	uint conversationLabel;
 	uint friendCharacterId; //read and written as 32-bit hashes on PC and PS3, but...
 	FSkip(sizeof(uint)); //...presumably the extra two bytes are just leftovers, as endianness is flipped independently on them.
-	int unknown3;
+	int range; // just like sendcommand's range? 50 in s10052
 };
 
 struct EventExtensions_Common_SpeedInt //EventExtensions_Dash EventExtensions_ForwardChangeSpeed EventExtensions_move EventExtensions_Move EventExtensions_SetTargetSpeed
