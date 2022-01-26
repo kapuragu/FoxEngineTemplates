@@ -115,8 +115,9 @@ struct
     float MinHeightWS;
 
     float GridDistance;
-    uint Unknown2;
-    uint Unknown3;
+    ushort Unknown2;
+    ushort Unknown3;
+    uint Unknown4;
 
     FSeek(SelfStartPos + 0x18 + SubEntryOffset);
 
@@ -160,8 +161,6 @@ struct
         hfloat Unknown5;
         hfloat Unknown6;
         hfloat Unknown7;
-
-        //FSeek(
     } LayoutDescriptionSubEntry;
 } LayoutDescription;
 
