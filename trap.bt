@@ -4,6 +4,44 @@
 // Special thanks to Joey, BobDoleOwndU and OldBanana!
 LittleEndian();
 
+enum <uint64> Tag
+{
+	Intrude = 0x1,
+	Tower = 0x2,
+	InRoom = 0x4,
+	FallDeath = 0x8,
+
+	NearCamera1 = 0x10,
+	NearCamera2 = 0x20,
+	NearCamera3 = 0x40,
+	NearCamera4 = 0x80,
+
+	x9978c8d36f7 = 0x100,
+	NoRainEffect = 0x200,
+	x60e79a58dcc3 = 0x400,
+	GimmickNoFulton = 0x800,
+
+	innerZone = 0x1000,
+	outerZone = 0x2000,
+	hotZone = 0x4000,
+	x439898dcbf83 = 0x8000,
+
+	xe780e431a068 = 0x10000,
+	x53827eed3fbc = 0x20000,
+	x7e1121c5cb93 = 0x40000,
+	xcadd57b76a83 = 0x80000,
+
+	xe689072c4df8 = 0x100000,
+	x6d14396ebbe5 = 0x200000,
+	xd1ee7dc34fff = 0x400000,
+	xb07e254afcae = 0x800000,
+
+	xd6ee65d20b7a = 0x10000000,
+	xf287ba9cb7e3 = 0x20000000,
+	NoFulton = 0x40000000,
+	x24330b0e33cb = 0xffffffff80000000,
+};
+
 struct Vector4
 {
 	float x;
@@ -37,7 +75,7 @@ struct Header
 	{
 		BigEndian();
 	}
-    uint version;               // TPP/SSD is 20.
+    uint version;               // TPP/SSD is 32.
     uint fileSize;
     uint dataSetPathCode32Hash; // PathCode32 hash of the path to the .fox2, same name as the file.
 
@@ -78,8 +116,8 @@ struct Shapes
 		if (header.fileVersionDate!=1144389900)
 		{
 			uint shapeType : 8;
-			uint shapeDefinition1 : 8 <hidden=true>;
-			uint shapeDefinition2 : 8 <hidden=true>;
+			uint shapeDefinition1 : 8;
+			uint shapeDefinition2 : 8;
 			uint shapeCount : 8;
 		}
 		else
@@ -94,18 +132,45 @@ struct Shapes
 		// According to PS3/PC endianness difference, it's an int64
 		if (header.fileVersionDate!=1144389900)
 		{
-			uint64 tagValue0 : 4; // tagValues that define the functions of the trigger	
-			uint64 tagValue1 : 4;
-			uint64 tagValue2 : 4;
-			uint64 tagValue3 : 4;
-			uint64 tagValue4 : 4;
-			uint64 tagValue5 : 4;
-			uint64 tagValue6 : 4; // always 2
-			uint64 tagValue7 : 4;
-			uint64 tagValue8 : 8 <hidden=true>;
-			uint64 tagValue9 : 8 <hidden=true>;
-			uint64 tagValueA : 8 <hidden=true>;
-			uint64 tagValueB : 8 <hidden=true>;
+			uint64 Intrude : 1; // tagValues that define the functions of the trigger	
+			uint64 Tower : 1;
+			uint64 InRoom : 1;
+			uint64 FallDeath : 1;
+			
+			uint64 NearCamera1 : 1;
+			uint64 NearCamera2 : 1;
+			uint64 NearCamera3 : 1;
+			uint64 NearCamera4 : 1;
+			
+			uint64 x9978c8d36f7 : 1;
+			uint64 NoRainEffect : 1;
+			uint64 x60e79a58dcc3 : 1;
+			uint64 GimmickNoFulton : 1;
+			
+			uint64 innerZone : 1;
+			uint64 outerZone : 1;
+			uint64 hotZone : 1;
+			uint64 x439898dcbf83 : 1;
+			
+			uint64 xe780e431a068 : 1;
+			uint64 x53827eed3fbc : 1;
+			uint64 x7e1121c5cb93 : 1;
+			uint64 xcadd57b76a83 : 1;
+			
+			uint64 xe689072c4df8 : 1;
+			uint64 x6d14396ebbe5 : 1;
+			uint64 xd1ee7dc34fff : 1;
+			uint64 xb07e254afcae : 1;
+			
+			uint64 : 1;
+			uint64 : 1;
+			uint64 : 1;
+			uint64 : 1;
+			
+			uint64 xd6ee65d20b7a : 1;
+			uint64 xf287ba9cb7e3 : 1;
+			uint64 NoFulton : 1;
+			uint64 x24330b0e33cb : 1;
 		}
 		else
 		{

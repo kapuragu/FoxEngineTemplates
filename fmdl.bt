@@ -1,0 +1,671 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: fmdl
+//   Authors: JinMar, based on Fmdl.cs written by BobDoleOwndU : https://github.com/BobDoleOwndU/FMDL-Studio-v2
+//   Version: 1
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+
+LittleEndian();
+
+#define COLOR_Header 0xDFEFAA
+#define COLOR_Section0Info 0x7DE39E
+#define COLOR_Section1Info 0x00AAFF
+#define COLOR_FmdlBone 0xAED2E8
+#define COLOR_FmdlMeshGroup 0xB9E8DD
+#define COLOR_FmdlMeshGroupEntry 0xF7F205
+#define COLOR_FmdlMeshInfo 0x763765
+#define COLOR_FmdlMaterialInstance 0x3C8D86
+#define COLOR_FmdlBoneGroup 0x8A9872
+#define COLOR_FmdlTexture 0xED688E
+#define COLOR_FmdlMaterialParameter 0x7C706F
+#define COLOR_FmdlMaterial 0x939FC8
+#define COLOR_FmdlMeshFormatInfo 0x000080
+#define COLOR_FmdlMeshFormat 0x008000
+#define COLOR_FmdlVertexFormat 0x008080
+#define COLOR_FmdlStringInfo 0x800000
+#define COLOR_FmdlBoundingBox 0x800080
+#define COLOR_FmdlBufferOffset 0x808000
+#define COLOR_FmdlLodInfo 0x808080
+#define COLOR_FmdlFaceInfo 0x000040
+#define COLOR_FmdlType12 0x0000c0
+#define COLOR_FmdlType14 0x008040
+#define COLOR_FmdlPathCode64 0x0080c0
+#define COLOR_FmdlStrCode64 0x800040
+#define COLOR_FmdlMaterialParameterVector 0x8000c0
+
+
+#define COLOR_Vertices 0x00c0c0
+#define COLOR_BoneWeights 0x808040
+#define COLOR_Normals 0x8080c0
+#define COLOR_Colors 0x004000
+#define COLOR_BoneIndices 0x004080
+#define COLOR_Uv 0x804000
+#define COLOR_Uv2 0x804080
+#define COLOR_Uv3 0x80c000
+#define COLOR_Uv4 0x80c080
+#define COLOR_UnknownWeights 0x004040
+#define COLOR_UnknownIndices 0x0040c0
+#define COLOR_Tangents 0x00c040
+#define COLOR_Triangles 0x804040
+
+
+struct Float3
+{
+    float x;
+    float y;
+    float z;
+}; //struct
+
+struct Float4
+{
+    float x;
+    float y;
+    float z;
+    float w;
+}; //struct
+
+struct HalfFloat4
+{
+    hfloat x;
+    hfloat y;
+    hfloat z;
+    hfloat w;
+}; //struct
+
+struct HalfFloat2
+{
+    hfloat x;
+    hfloat y;
+}; //struct
+
+struct UByte4
+{
+    ubyte x;
+    ubyte y;
+    ubyte z;
+    ubyte w;
+}; //struct
+
+struct Section0Info
+{
+	ushort type;
+	ushort entryCount;
+	uint32 offset;
+}; //struct
+
+struct Section1Info
+{
+	uint32 type;
+	uint32 offset;
+	uint32 length;
+}; //struct
+
+//0x0
+struct FmdlBone
+{
+	ushort nameIndex;
+	short parentIndex;
+	ushort boundingBoxIndex;
+	ushort unknown0; //always 0x1?
+    FSkip(8);
+	Float4 localPosition;
+	Float4 worldPosition;
+}; //struct
+
+//0x1
+struct FmdlMeshGroup
+{
+	ushort nameIndex;
+	ushort invisibilityFlag;
+	short parentIndex;
+	short unknown0; //always 0xFF
+}; //struct
+
+//0x2
+struct FmdlMeshGroupEntry
+{
+	FSkip(4);
+    ushort meshGroupIndex;
+	ushort meshCount;
+	ushort firstMeshIndex;
+	ushort index;
+    FSkip(4);
+	ushort firstFaceInfoIndex;
+    FSkip(0xE);
+}; //struct
+
+//0x3
+struct FmdlMeshInfo
+{
+	byte alphaEnum;
+	byte shadowEnum;
+	byte unknown0;
+	byte unknown1; //Used by net fmdls in PES
+	ushort materialInstanceIndex;
+	ushort boneGroupIndex;
+	ushort index;
+	ushort vertexCount;
+    FSkip(4);
+	uint32 firstFaceVertexIndex;
+	uint32 faceVertexCount;
+	uint64 firstFaceInfoIndex;
+    FSkip(0x10);
+}; //struct
+
+//0x4
+struct FmdlMaterialInstance
+{
+	ushort nameIndex;
+    FSkip(2);
+	ushort materialIndex;
+	byte textureCount;
+	byte parameterCount;
+	ushort firstTextureIndex;
+	ushort firstParameterIndex;
+    FSkip(4);
+}; //struct
+
+//0x5
+struct FmdlBoneGroup
+{
+	ushort unknown0;
+	ushort boneIndexCount;
+	ushort boneIndices[boneIndexCount];
+    FSkip(0x40 - boneIndexCount * 2);
+}; //struct
+
+//0x6
+struct FmdlTexture
+{
+	ushort nameIndex;
+	ushort pathIndex;
+}; //struct
+
+//0x7
+struct FmdlMaterialParameter
+{
+	ushort nameIndex;
+	ushort referenceIndex;
+}; //struct
+
+//0x8
+struct FmdlMaterial
+{
+	ushort nameIndex;
+	ushort typeIndex;
+}; //struct
+
+//0x9
+struct FmdlMeshFormatInfo
+{
+	byte meshFormatCount;
+	byte vertexFormatCount;
+	byte unknown0; //Possibly the first UV set's index.
+	byte uvCount;
+	ushort firstMeshFormatIndex;
+	ushort firstVertexFormatIndex;
+}; //Section0Block9Entry
+
+//0xA
+struct FmdlMeshFormat
+{
+	byte bufferOffsetIndex;
+	byte vertexFormatCount;
+	byte length;
+	byte type;
+	uint32 offset;
+}; //struct
+
+//0xB
+struct FmdlVertexFormat
+{
+	byte type;
+	byte dataType;
+	ushort offset;
+}; //struct
+
+//0xC
+struct FmdlStringInfo
+{
+	ushort section1BlockIndex;
+	ushort length;
+	uint32 offset;
+}; //struct
+
+//0xD
+struct FmdlBoundingBox
+{
+	Float4 max;
+	Float4 min;
+}; //struct
+
+//0xE
+struct FmdlBufferOffset
+{
+	uint32 unknown0; //Flag of some sort?
+	uint32 length;
+	uint32 offset;
+    FSkip(4);
+}; //struct
+
+//0x10
+struct FmdlLodInfo
+{
+	uint32 lodCount;
+	float unknown0;
+	float unknown1;
+	float unknown2;
+}; //struct
+
+//0x11
+struct FmdlFaceInfo
+{
+	uint32 firstFaceVertexIndex;
+	uint32 faceVertexCount;
+}; //struct
+
+//0x12
+struct FmdlType12
+{
+	uint64 unknown0; //Always 0.
+}; //struct
+
+//0x14
+struct FmdlType14
+{
+	FSkip(4);
+    float unknown0; //Nulling triggers lowest LOD faces.
+	float unknown1;
+	float unknown2;
+	float unknown3; //Always a whole number?
+    FSkip(8);
+	uint32 unknown4;
+	uint32 unknown5;
+    FSkip(0x5C);
+}; //struct
+
+struct FmdlPathCode64
+{
+    uint64 fmdlPathCode64s;
+}; //struct
+
+struct FmdlStrCode64  
+{
+    uint64 fmdlStrCode64s ;
+}; //struct
+
+struct FmdlMaterialParameterVector  
+{
+    Float4 fmdlMaterialParameterVectors ;
+}; //struct
+
+//section0 indices
+local int bonesIndex = -1;
+local int meshGroupsIndex = -1;
+local int meshGroupEntriesIndex = -1;
+local int meshInfoIndex = -1;
+local int materialInstancesIndex = -1;
+local int boneGroupsIndex = -1;
+local int texturesIndex = -1;
+local int materialParametersIndex = -1;
+local int materialsIndex = -1;
+local int meshFormatInfoIndex = -1;
+local int meshFormatsIndex = -1;
+local int vertexFormatsIndex = -1;
+local int stringInfoIndex = -1;
+local int boundingBoxesIndex = -1;
+local int bufferOffsetsIndex = -1;
+local int lodInfoIndex = -1;
+local int faceInfoIndex = -1;
+local int type12Index = -1;
+local int type14Index = -1;
+local int pathCode64sIndex = -1;
+local int strCode64sIndex = -1;
+
+//section1 indices
+local int materialParameterVectorsIndex = -1;
+local int bufferIndex = -1;
+local int stringsIndex = -1;
+
+
+struct Header
+{
+    uint32 signature;
+    float version;
+    uint64 sectionInfoOffset;
+    uint64 section0BlockFlags;
+    uint64 section1BlockFlags;
+    uint32 section0BlockCount;
+    uint32 section1BlockCount;
+    uint32 section0Offset;
+    uint32 section0Length;
+    uint32 section1Offset;
+    uint32 section1Length;
+}; //struct
+
+Header header <bgcolor=COLOR_Header>;
+
+// to get the different indexes
+local struct SectionInfo
+{   
+    FSeek(header.sectionInfoOffset);
+    local int i;
+    for (i = 0; i < header.section0BlockCount; i++) 
+    {
+        Section0Info section0Info; 
+        switch (section0Info.type)
+        {
+            case 0:
+	            bonesIndex = i;
+	            break;
+            case 1:
+	            meshGroupsIndex = i;
+	            break;
+            case 2:
+	            meshGroupEntriesIndex = i;
+	            break;
+            case 3:
+	            meshInfoIndex = i;
+	            break;
+            case 4:
+	            materialInstancesIndex = i;
+	            break;
+            case 5:
+	            boneGroupsIndex = i;
+	            break;
+            case 6:
+	            texturesIndex = i;
+	            break;
+            case 7:
+	            materialParametersIndex = i;
+	            break;
+            case 8:
+	            materialsIndex = i;
+	            break;
+            case 9:
+	            meshFormatInfoIndex = i;
+	            break;
+            case 10:
+	            meshFormatsIndex = i;
+	            break;
+            case 11:
+	            vertexFormatsIndex = i;
+	            break;
+            case 12:
+	            stringInfoIndex = i;
+	            break;
+            case 13:
+	            boundingBoxesIndex = i;
+	            break;
+            case 14:
+	            bufferOffsetsIndex = i;
+	            break;
+            case 16:
+	            lodInfoIndex = i;
+	            break;
+            case 17:
+	            faceInfoIndex = i;
+	            break;
+            case 19:
+	            type12Index = i;
+	            break;
+            case 20:
+	            type14Index = i;
+	            break;
+            case 21:
+	            pathCode64sIndex = i;
+	            break;
+            case 22:
+	            strCode64sIndex = i;
+	            break;
+        } //switch
+    } //for
+    for (i = 0; i < header.section1BlockCount; i++) 
+    {
+        Section1Info section1Info;
+        switch (section1Info.type)
+        {
+            case 0:
+                materialParameterVectorsIndex = i;
+                break;
+            case 2:
+                bufferIndex = i;
+                break;
+            case 3:
+                stringsIndex = i;
+                break;
+        } //switch
+    } //for
+} sectionInfo;
+
+
+FSeek(header.sectionInfoOffset);
+Section0Info section0Infos[header.section0BlockCount] <bgcolor=COLOR_Section0Info>;
+Section1Info section1Infos[header.section1BlockCount] <bgcolor=COLOR_Section1Info>;
+
+
+
+struct Triangles(int i)
+{
+    ushort triangles[fmdlMeshInfos[i].faceVertexCount];;
+}; //struct
+
+
+struct FmdlString(int j)
+{   
+    FSeek(header.section1Offset + section1Infos[stringsIndex].offset + fmdlStringInfos[j].offset);
+    char fmdlStrings[fmdlStringInfos[j].length];
+}; //struct
+
+struct FmdlStrings
+{   
+    local int j;
+    for (j = 0; j < section0Infos[stringInfoIndex].entryCount; j++)
+    { 
+        FmdlString fmdlString(j);
+    }
+}; //struct
+
+ 
+struct FmdlMeshAttributes 
+{
+    local int h;
+    local int position = FTell();
+
+    for (h = fmdlMeshFormatInfos[i].firstVertexFormatIndex; h < fmdlMeshFormatInfos[i].firstVertexFormatIndex + fmdlMeshFormatInfos[i].vertexFormatCount; h++)
+    {
+        FSeek(position + fmdlVertexFormats[h].offset);
+        switch (fmdlVertexFormats[h].type)
+        {
+            case 0:
+                break;
+            case 1:
+                UByte4 boneWeights <bgcolor=COLOR_BoneWeights>;
+                break;
+            case 2:
+                HalfFloat4 normals <bgcolor=COLOR_Normals>;
+                break;
+            case 3:
+                UByte4 colors <bgcolor=COLOR_Colors>;
+                break;
+            case 7:
+                UByte4 boneIndices <bgcolor=COLOR_BoneIndices>;
+                break;
+            case 8:
+                HalfFloat2 uv <bgcolor=COLOR_Uv>;
+                break;
+            case 9:
+                HalfFloat2 uv2 <bgcolor=COLOR_Uv2>;
+                break;
+            case 0xA:
+                HalfFloat2 uv3 <bgcolor=COLOR_Uv3>;
+                break;
+            case 0xB:
+                HalfFloat2 uv4 <bgcolor=COLOR_Uv4>;
+                break;
+            case 0xC:
+                UByte4 unknownWeights <bgcolor=COLOR_UnknownWeights>;
+                break;
+            case 0xD:
+                UByte4 unknownIndices <bgcolor=COLOR_UnknownIndices>;
+                break;
+            case 0xE:
+                HalfFloat4 tangents <bgcolor=COLOR_Tangents>;
+                break;
+            default:
+                Printf("Unknown Case");
+                break;
+        } //switch
+    }//for
+    FSeek(position + fmdlMeshFormats[fmdlMeshFormatInfos[i].firstMeshFormatIndex + 1].length);
+}; // struct
+
+struct FmdlMesh(int i) {
+    FSeek(header.section1Offset + section1Infos[bufferIndex].offset + fmdlBufferOffsets[0].offset + fmdlMeshFormats[fmdlMeshFormatInfos[i].firstMeshFormatIndex].offset);
+    Float3 vertices[fmdlMeshInfos[i].vertexCount] <bgcolor=COLOR_Vertices, optimize=true>;
+    FSeek(header.section1Offset + section1Infos[bufferIndex].offset + fmdlBufferOffsets[1].offset + fmdlMeshFormats[fmdlMeshFormatInfos[i].firstMeshFormatIndex + 1].offset);
+    
+    FmdlMeshAttributes fmdlMeshAttributes[fmdlMeshInfos[i].vertexCount] <optimize=true>;;
+    FSeek(header.section1Offset + section1Infos[bufferIndex].offset + fmdlBufferOffsets[2].offset + fmdlMeshInfos[i].firstFaceVertexIndex * 2);
+    Triangles triangles(i) <bgcolor=COLOR_Triangles, optimize=true>;
+}; // struct
+
+struct FmdlMeshes {
+    local int i;
+    for (i = 0; i < section0Infos[meshInfoIndex].entryCount; i++)
+    {
+        FmdlMesh fmdlMesh(i);
+    }//for
+};//struct
+
+struct FmdlEntry
+{   
+    if (bonesIndex != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[bonesIndex].offset);
+        FmdlBone fmdlBones[section0Infos[bonesIndex].entryCount] <bgcolor=COLOR_FmdlBone, optimize=true> ;
+    } //if
+    if (meshGroupsIndex != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[meshGroupsIndex].offset);
+        FmdlMeshGroup fmdlMeshGroups[section0Infos[meshGroupsIndex].entryCount] <bgcolor=COLOR_FmdlMeshGroup, optimize=true>;
+    } //if
+    if (meshGroupEntriesIndex != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[meshGroupEntriesIndex].offset);
+        FmdlMeshGroupEntry fmdlMeshGroupEntries[section0Infos[meshGroupEntriesIndex].entryCount] <bgcolor=COLOR_FmdlMeshGroupEntry, optimize=true>;
+    } //if
+    if (meshInfoIndex != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[meshInfoIndex].offset);
+        FmdlMeshInfo fmdlMeshInfos[section0Infos[meshInfoIndex].entryCount] <bgcolor=COLOR_FmdlMeshInfo, optimize=true>;
+    } //if
+    if (materialInstancesIndex != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[materialInstancesIndex].offset);
+        FmdlMaterialInstance fmdlMaterialInstances[section0Infos[materialInstancesIndex].entryCount] <bgcolor=COLOR_FmdlMaterialInstance, optimize=true>;
+    } //if
+    if (boneGroupsIndex != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[boneGroupsIndex].offset);
+        FmdlBoneGroup fmdlBoneGroups[section0Infos[boneGroupsIndex].entryCount] <bgcolor=COLOR_FmdlBoneGroup, optimize=true>;
+    } //if
+    if (texturesIndex != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[texturesIndex].offset);
+        FmdlTexture fmdlTextures[section0Infos[texturesIndex].entryCount] <bgcolor=COLOR_FmdlTexture, optimize=true>;
+    } //if
+    if (materialParametersIndex != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[materialParametersIndex].offset);
+        FmdlMaterialParameter fmdlMaterialParameters[section0Infos[materialParametersIndex].entryCount] <bgcolor=COLOR_FmdlMaterialParameter, optimize=true>;
+    } //if
+    if (materialsIndex != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[materialsIndex].offset);
+        FmdlMaterial fmdlMaterials[section0Infos[materialsIndex].entryCount] <bgcolor=COLOR_FmdlMaterial, optimize=true>;
+    } //if
+    if (meshFormatInfoIndex != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[meshFormatInfoIndex].offset);
+        FmdlMeshFormatInfo fmdlMeshFormatInfos[section0Infos[meshFormatInfoIndex].entryCount]<bgcolor=COLOR_FmdlMeshFormatInfo, optimize=true>;
+    } //if
+    if (meshFormatsIndex != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[meshFormatsIndex].offset);
+        FmdlMeshFormat fmdlMeshFormats[section0Infos[meshFormatsIndex].entryCount]<bgcolor=COLOR_FmdlMeshFormat, optimize=true>;
+    } //if
+    if (vertexFormatsIndex != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[vertexFormatsIndex].offset);
+        FmdlVertexFormat fmdlVertexFormats[section0Infos[vertexFormatsIndex].entryCount]<bgcolor=COLOR_FmdlVertexFormat, optimize=true>;
+    } //if
+    if (stringInfoIndex  != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[stringInfoIndex].offset);
+        FmdlStringInfo fmdlStringInfos[section0Infos[stringInfoIndex].entryCount]<bgcolor=COLOR_FmdlStringInfo, optimize=true>;
+    } //if
+    if (boundingBoxesIndex  != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[boundingBoxesIndex].offset);
+        FmdlBoundingBox fmdlBoundingBoxes[section0Infos[boundingBoxesIndex].entryCount]<bgcolor=COLOR_FmdlBoundingBox, optimize=true>;
+    } //if
+    if (bufferOffsetsIndex  != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[bufferOffsetsIndex].offset);
+        FmdlBufferOffset fmdlBufferOffsets[section0Infos[bufferOffsetsIndex].entryCount]<bgcolor=COLOR_FmdlBufferOffset, optimize=true>;
+    } //if
+    if (lodInfoIndex  != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[lodInfoIndex].offset);
+        FmdlLodInfo fmdlLodInfos[section0Infos[lodInfoIndex].entryCount]<bgcolor=COLOR_FmdlLodInfo, optimize=true>;
+    } //if
+    if (faceInfoIndex != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[faceInfoIndex].offset);
+        FmdlFaceInfo fmdlFaceInfos[section0Infos[faceInfoIndex].entryCount]<bgcolor=COLOR_FmdlFaceInfo, optimize=true>;
+    } //if
+    if (type12Index != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[type12Index].offset);
+        FmdlType12 fmdlType12s[section0Infos[type12Index].entryCount]<bgcolor=COLOR_FmdlType12, optimize=true>;
+    } //if
+    if (type14Index != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[type14Index].offset);
+        FmdlType14 fmdlType14s[section0Infos[type14Index].entryCount]<bgcolor=COLOR_FmdlType14, optimize=true>;
+    } //if
+    if (pathCode64sIndex != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[pathCode64sIndex].offset);
+        FmdlPathCode64 fmdlPathCode64[section0Infos[pathCode64sIndex].entryCount]<bgcolor=COLOR_FmdlPathCode64, optimize=true>;
+    } //if
+    if (strCode64sIndex != -1)
+    {   
+        FSeek(header.section0Offset + section0Infos[strCode64sIndex].offset);
+        FmdlStrCode64 fmdlStrCode64[section0Infos[strCode64sIndex].entryCount]<bgcolor=COLOR_FmdlStrCode64, optimize=true>;
+    } //if
+    if (materialParameterVectorsIndex  != -1)
+    {   
+        FSeek(header.section0Offset + section1Infos[materialParameterVectorsIndex].offset);
+        FmdlMaterialParameterVector fmdlMaterialParameterVector[section1Infos[materialParameterVectorsIndex].length / 10]<bgcolor=COLOR_FmdlMaterialParameterVector, optimize=true>;
+    } //if
+    if (bufferIndex  != -1)
+    {   
+        FmdlMeshes fmdlMeshes;
+    } //if
+    if (stringsIndex  != -1)
+    {   
+        FmdlStrings fmdlStrings;
+    } //if
+}; //struct
+
+FmdlEntry fmdlEntry;
+

@@ -77,7 +77,7 @@ enum <uint> EventType
 	hashed_EnterVehicle = 1597064337,
 	hashed_UsingSearchLight = 1847252103,
 	hashed_RelaxedWalk = 710958087,
-	hashed_RelaxedWalk2 = 32956284,
+	hashed_RelaxedWalkRun = 32956284,
 	hashed_UsingFlashLight = 1014362962,
 	EMPTY_STRING = 3205930904,
 };
