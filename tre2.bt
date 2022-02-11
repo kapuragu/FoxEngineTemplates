@@ -145,7 +145,9 @@ struct
 
         uint ParamOffset; // selfpos + ParamOffset points to start of param
 
-        uint padding0 <hidden=true>; Assert(padding0 == 0);
+        hfloat Unknown1_MGO;
+		FSkip(2);
+		
         uint padding1 <hidden=true>; Assert(padding1 == 0);
         
         uint MapChunkWidthWS;
@@ -155,7 +157,7 @@ struct
         ushort Unknown3; Assert(Unknown3 == 4);
         ushort Unknown4; // Often 5, CYPR is 1
 
-        ushort padding2 <hidden=true>; Assert(padding0 == 0);
+        ushort Unknown2_MGO <comment="Not convinced this is a half-float">;
         uint padding3 <hidden=true>; Assert(padding1 == 0);
 
         hfloat Unknown5;
