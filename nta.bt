@@ -1,5 +1,6 @@
 //NTA - NavTacticalAction File
 //Based on youarebritish's documentation, by RLC
+//https://metalgearmodding.fandom.com/wiki/NTA
 LittleEndian();
 
 //Coolors
