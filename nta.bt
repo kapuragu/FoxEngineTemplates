@@ -1,0 +1,76 @@
+//NTA - NavTacticalAction File
+//Based on youarebritish's documentation, by RLC
+LittleEndian();
+
+//Coolors
+#define SpringGreen 0x8DFC5E
+#define ElectricBlue 0xF3F98E
+#define PaleCerulean 0xDFBE93
+#define VioletBlueCrayola 0xD17783
+#define OldLavender 0x725A6D
+
+//These hashes are used in GkTacticalActionEdge entities as actionName
+enum <uint64> Str64
+{
+    EmptyHash=203000540209048,
+    StepOn=221776209274273,
+    StepDown=74196699949876,
+    LadderUp=188057460958932,
+    LadderDown=263911609609000,
+};
+
+enum <uint> Str32
+{
+    EmptyHash32=3205930904,
+    StepOn32=1277978017,
+    StepDown32=1139911476,
+    LadderUp32=2317903572,
+    LadderDown32=3049138984,
+};
+
+struct Vector3
+{
+    float x;
+    float y;
+    float z;
+};
+
+struct Header 
+{
+    char sign[4];
+    short magic1; if (magic1==256) {BigEndian();}; //For Big End/PS3
+    short magic2; Assert(magic2==1,"Magic2 isn't 1!!!");
+    uint headerSize; Assert(headerSize==12,"headerSize is incorrect!!!");
+} header <bgcolor=SpringGreen, hidden=true>;
+
+struct Metadata
+{
+    Str64 hash; Assert(hash==EmptyHash,"Metadata hash isn't empty!!!");
+    uint entryCount;
+    int magic4 <hidden=true>; Assert(magic4==24,"Magic4 isn't 24!!! Where is the bomb?!!!");
+    uint hashTableOffset <hidden=true>;
+    uint fileSize <hidden=true>;
+} metadata<bgcolor=ElectricBlue>;
+
+struct Entry
+{
+    Vector3 entryPosition <fgcolor=PaleCerulean>;
+    Str32 enterActionName;
+    Vector3 exitPosition <fgcolor=PaleCerulean>;
+    Str32 exitActionName;
+    Str64 emptyHash; //Not always empty! Ex: gntn_common.nta
+    short unk0; //These unknowns scare me the most
+    short unk1;
+    short unk2;
+    short unk3;
+} entry[metadata.entryCount] <bgcolor=OldLavender, optimize=false>;
+
+local uint hashTableStart = header.headerSize + metadata.hashTableOffset;
+Assert(hashTableStart==FTell(),"Not at hash table start!!!");
+
+//Having each entry here have the name it in its struct would make a real ugly mess
+//So leave it in the lap of the gods
+uint64 entryHash[metadata.entryCount] <bgcolor=VioletBlueCrayola, optimize=false>;
+
+local uint totalFileSize = header.headerSize + metadata.fileSize;
+Assert(totalFileSize==FTell(),"File size is incorrect!!!");
