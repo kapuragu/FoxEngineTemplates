@@ -1,0 +1,54 @@
+//.wem real name ripper, based on gocha's template
+//https://www.sweetscape.com/010editor/repository/templates/file_info.php?file=RIFF.bt
+
+//coolors
+#define DarkOrange 0x1188FF
+#define OrangeYellowCrayola 0x6FD0F4
+#define FloralWhite 0xF0F8FF
+#define MiddleBlueGreen 0xD2D99D
+#define SpaceCadet 0x5A2F39
+
+struct Header
+{
+    char groupId[4];
+    uint chunkSize;
+    char riffType[4];
+
+} header;
+
+struct GenericChunk
+{
+    uint chunkSize;
+    char data[chunkSize];
+
+};
+
+struct ListChunk
+{
+    uint chunkSize;
+    char subChunkType[4];
+    char tag[4];
+    uint tagSize;
+    uint unknownCount;
+    char embeddedName[] <bgcolor=DarkOrange>;
+    
+    if (FTell() % 2 != 0)
+		FSkip(2 - (FTell() % 2));
+};
+
+while( FTell() < header.chunkSize )
+{
+    struct Chunk
+    {
+        char chunkName[4];
+        switch( chunkName )
+        {
+            case "LIST":
+                ListChunk listChunk;
+                break;
+            default:
+                GenericChunk genericChunk;
+                break;
+        };
+    } chunk;
+};
