@@ -1,5 +1,7 @@
-//.wem real name ripper, based on gocha's template
+//By RLC, made with gocha's template:
 //https://www.sweetscape.com/010editor/repository/templates/file_info.php?file=RIFF.bt
+//And with ww2ogg source code:
+//https://github.com/hcs64/ww2ogg/blob/master/src/wwriff.cpp
 
 //coolors
 #define DarkOrange 0x1188FF
@@ -23,17 +25,34 @@ struct GenericChunk
 
 };
 
+struct ListSubChunk
+{
+    char subChunkType[4];
+    uint subChunkSize;
+    uint unknownCount;
+    char embeddedFileNameMarker[] <bgcolor=DarkOrange>;
+};
+
 struct ListChunk
 {
     uint chunkSize;
-    char subChunkType[4];
-    char tag[4];
-    uint tagSize;
-    uint unknownCount;
-    char embeddedName[] <bgcolor=DarkOrange>;
-    
+    char chunkType[4];
+    ListSubChunk subChunk;
     if (FTell() % 2 != 0)
-		FSkip(2 - (FTell() % 2));
+        FSkip(2 - (FTell() % 2));
+};
+
+struct FormatChunk
+{
+    uint chunkSize;
+    short format;
+    short channels;
+    uint sampleRate;
+    uint avgBps;
+    ushort blockSize_0;
+    ushort blockSize_1;
+    ushort framing;
+    FSkip(framing); //idk
 };
 
 while( FTell() < header.chunkSize )
@@ -43,9 +62,13 @@ while( FTell() < header.chunkSize )
         char chunkName[4];
         switch( chunkName )
         {
+            case "fmt ":
+                FormatChunk formatChunk;
+                break;
             case "LIST":
                 ListChunk listChunk;
                 break;
+            case "data":
             default:
                 GenericChunk genericChunk;
                 break;
