@@ -1,5 +1,8 @@
-// "Laddie" - Lip Animation Data Track
+// "LS2" - Lip Sync v2 (own name, offshoot of .ls, which is real name)
 // By RLC - inspired by other FOX templates by the researchers of Modders' Heaven!
+
+local byte version = 1; //0 = ls, 1 = ls2
+
 enum LipAnimIndex
 {
 	A	=	0,
@@ -46,7 +49,10 @@ struct Laddie
 {
 	struct Header
 	{
-		int64 fileName <comment="StrCode64 hash of the file name, string embedded in .wem file, *not* tolowered">; //This hash is the file name in .sab files and would have to be inserted for a GZ-TPP conversion
+        if (version==1)
+        {
+            int64 fileName <comment="StrCode64 hash of the file name, string embedded in .wem file, *not* tolowered">; //This hash is the file name in .sab files and would have to be inserted for a GZ-TPP conversion
+		};
 		int keyCount <comment="Key count including key zero">;
 		short offsetToKey[keyCount] <comment="Offset from keyCount", bgcolor=0x94A6AA>; //These offsets are important and would have to be adjusted for a GZ-TPP conversion
 		
