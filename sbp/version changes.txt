@@ -4,7 +4,10 @@ hopefully find bugs more easily)!
 
 [2022-Aug-2]:
 + Renamed the "SoundEffect" object to "Custom", which is its true name
-+ Removed the version names from the template
+- Removed the version names from the template
+- Removed all the empty indent lines
++ Improved Sound object parsing based on integration demo code
++ Commented out Music Segment parsing code since it broke parsing
 
 [2021-Nov-11]:
 + Commented broken parsing code for Music Playlist Containers
