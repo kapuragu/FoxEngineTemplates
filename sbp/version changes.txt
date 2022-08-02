@@ -8,6 +8,8 @@ hopefully find bugs more easily)!
 - Removed all the empty indent lines
 + Improved Sound object parsing based on integration demo code
 + Commented out Music Segment parsing code since it broke parsing
++ Fixed Actor-Mixer parsing
++ RTPC unknowns are now properly named
 
 [2021-Nov-11]:
 + Commented broken parsing code for Music Playlist Containers
