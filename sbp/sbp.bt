@@ -4,7 +4,7 @@
 
 // ALWAYS UPDATE THIS VERSION NUMBER WHEN THIS TEMPLATE GETS UPDATED!
 //===============================
-//        Version 2.6
+//        Version 2.6.3
 //===============================
 
 enum <byte> ObjectType{
@@ -51,7 +51,13 @@ enum <byte> ObjectType{
 #define Hierarchy_color 0x1342F3
 #define StreamId_color 0x5B2F3E
 #define DataIndex_color 0x558CEA
-#define STMG_color 0xFFAA00						   
+#define STMG_color 0xFFAA00
+
+// HWL there appears to be some differences between the sound banks TPP has and
+// the ones WWise 2013 generates. when this happens, the template will use this
+// bool to enable that behavior. this should be TEMPORARILY set to false when
+// creating your own sound banks.
+local Boolean is_game_soundbank = true;	   
 
 struct BankHeader
 {
@@ -144,6 +150,10 @@ struct Object
 			{
 				uint state_group_id;
 				uint state_id;
+			}
+			else // HWL as of v2.6.3
+			{
+				Curve_Shape_Byte csb;
 			}
 			break;
 			
@@ -338,18 +348,57 @@ struct Object
 			SoundStructure soundstructure;
 			
 			// HWL adding this as of v2.4
-			FSkip(4);
+			//FSkip(4);
+			uint unknown_count;
+			uint unknown_array[unknown_count];
 			
-			uint children_count;
-			if (children_count < 256) // doing this in case it breaks
-				uint children_IDs[children_count];
+			if (is_game_soundbank == is_true)
+			{
+				uint children_count;
+				if (children_count < 256) // doing this in case it breaks
+					uint children_IDs[children_count];
+			}
+			
 			
 			// HWL NOTE: commented this out because the sound structure has corruption
 			// problems..
 			
 			//if (children_count > 0)
 				//uint children_IDs[children_count];
+			MSC_GeneralSettings msc_gs;
 			
+			uint ID1;
+			FSkip(1);
+			double d1;
+			
+			uint number_of_cues;
+			uint meby_hash;
+			double preentry_slider;
+			
+			struct Stuff
+			{
+				uint unknown_count;
+				enum <uint> Cue_Name_Hash
+				{
+					_Exit_Cue = 1539036744,
+				} cue_name_hash;
+				
+				if (unknown_count > 0)
+				{
+					ubyte ubytes[unknown_count];
+					Printf("cykaaaa");
+				}
+				
+				double timeline_pos <comment="In milliseconds">;
+			} stuff[number_of_cues - 1] <optimize=false>;
+			/*
+			FSkip(4);
+			
+			uint ID3;
+			double exit_slider;
+			*/
+			
+			break;
 			FSkip(5); // HWL god i hope this doesn't break anything..
 			// EDIT: oh it sure does! but i can't find any other
 			// good fix as of now..
@@ -421,7 +470,7 @@ struct Object
 			// HWL this section doesn't exist in normal WWise banks,
 			// so i guess it's a unique section to TPP?
 			// change this to false when parsing normal banks.
-			if (true)
+			if (is_game_soundbank == is_true)
 			{
 				struct Children
 				{
@@ -450,21 +499,20 @@ struct Object
 		case MusicPlaylistContainer: // early implementation
 			SoundStructure soundstructure;
 			
+			uint unknown_count;
+			uint unknown_array[unknown_count];
+			
 			// HWL adding this FSkip as of v2.4
+			// HWL 11-NOV-2021 delete this BS below
+			/*
 			FSkip(4);
+			
 			uint num_of_music_segments <comment="Music Segments that are part of this playlist">;
 			if (num_of_music_segments < 256) // magic number for cases that this would break
 				uint music_segment_IDs[num_of_music_segments];
-			
-			// HWL NOTE: disabling this because of issues with the sound structure destroying
-			// everything
-			
-			//if (num_of_music_segments > 0)
-			//	uint segment_IDs[num_of_music_segments];
-			
-			// Xentax article for the following 2:
-			//FSkip(4);
-			//float unknown;
+			*/
+				
+			MSC_GeneralSettings msc_gs;
 			
 			break;
 			
@@ -792,8 +840,8 @@ struct Section0 {
 
 struct Sections
 {
-	startOfSection = FTell();
-
+	local long startOfSection = FTell();
+    
 	Assert(soundBankHeader.sectionDefinition[currentSection].offsetToSection==FTell(),"Offset to start of Section is incorrect!!!!");
 	
 	if (soundBankHeader.sectionDefinition[currentSection].sign == "bnk")
