@@ -1,13 +1,7 @@
 // SBP - SoundBank Package
 // By RLC and Half Way Lambda, based on: https://wiki.xentax.com/index.php/Wwise_SoundBank_(*.bnk) https://github.com/secaproject/SBP_tool
 
-
-// ALWAYS UPDATE THIS VERSION NUMBER WHEN THIS TEMPLATE GETS UPDATED!
-//===============================
-//        Version 2.6.3
-//===============================
-
-enum <byte> ObjectType{
+enum <byte> ObjectType {
 	Settings=1,
 	Sound=2,
 	EventAction=3,
@@ -26,7 +20,7 @@ enum <byte> ObjectType{
 	MotionBus=16,
 	MotionFX=17,
 	Effect=18,
-	SoundEffect=19,
+	Custom=19,
 	AuxillaryBus=20,
 };
 
@@ -76,14 +70,14 @@ struct Object
 	ObjectType objectType <bgcolor=0xffab00>;
 	int objectSize;
 	uint objectId <comment="FNV132 hash", bgcolor=0xabff00>;
-	
+
 	// HWL for printing useful info at the console
 	printType(objectType);
 	openBracket();
 	Printf( "Obj ID: " );
 	Printf( "%u", objectId );
 	Printf("\n");
-	
+
 	switch (objectType)
 	{
 		case Settings:
@@ -91,16 +85,16 @@ struct Object
 			ObjectSettingsType settingType[settingsCount];
 			float settingValue[settingsCount];
 			break;
-			
+
 		case Sound:
 			uint flagsUnknown;
 			ObjectSoundEmbedOrStream embedOrStream;
 			uint audioFileId <fgcolor=0x00FF00>;
 			uint sourceId <comment="If streamed, same as audioFileId. If embedded, the soundBankId.">;
-			
+
 			if ( (flagsUnknown >> 1) & 1 == 1 )
 				FSkip(4);
-			
+
 			Printf("Audio File ID: %u\n", audioFileId);
 			Printf("Source File ID: %u", sourceId);
 			Printf("\n");
@@ -113,27 +107,27 @@ struct Object
 			{
 				// HWL always zero from what i can tell
 				FSkip(4);
-				
+	
 				// HWL the Prefetch length (ms) setting is ignored in the end, and this
 				// offset is what's actually saved.
 				uint offset_to_wem_data <comment="An offset that goes backwards in the file, to the WEM data, starting just before the HIRC section">;
 				//FSkip(1);
 			}
-			
+
 			ObjectSoundType soundType;
 			SoundStructure soundStructure <optimize=false>;
 			break;
-			
+
 		case EventAction:
 			ScopeEventAction scope_of_event_action;
 			ActionType action_type;
-			
+
 			printActionType(action_type);
 			uint id_of_game_obj_referenced_above <comment="This is zero if there is no game object." , bgcolor=0xD8C5EA>;
 			// Always zero, according to the wiki
 			FSkip(1);
 			ubyte additional_params;
-			
+
 			local int i;
 			for (i = 0; i < additional_params; ++i)
 			{
@@ -145,7 +139,7 @@ struct Object
 			}
 			// Always zero, according to the xentax wiki
 			FSkip(1);
-			
+
 			if (action_type == SET_STATE || action_type == SET_SWITCH)
 			{
 				uint state_group_id;
@@ -156,14 +150,14 @@ struct Object
 				Curve_Shape_Byte csb;
 			}
 			break;
-			
+
 		case Event:
 			uint num_event_actions;
 			local int i;
 			for (i = 0; i < num_event_actions; ++i)
 			{
 				uint event_action_ID <bgcolor=0x66D1FF>;
-				
+	
 				Printf("Event #");
 				Printf("%u", i);
 				Printf(" --> ");
@@ -171,12 +165,12 @@ struct Object
 				Printf("\n");
 			}
 			break;
-			
+
 		// as of v2.5
 		case SequenceContainer:
 			SoundStructure soundstructure;
 			break;
-		
+	
 		// as of v2.5
 		case SwitchContainer:
 			SoundStructure soundstructure;
@@ -184,56 +178,56 @@ struct Object
 
 		case ActorMixer: // HWL According to PS3 files. This is ugly.
 			SoundStructure soundstructure;
-			
+
 			// HWL TODO: CLEANUP LATER!
-			
+
 			uint unknown;
 			uint unknown_array[unknown];
-			
+
 			uint num_of_children;
 			uint children_IDs[num_of_children];
 			/*
 			*/
-			
+
 			/*
 			ubyte u1;
 			ubyte u2;
 			uint unknown0;
-			
+
 			FSkip(3);
-			
+
 			// These two are usually the same?
 			ubyte u3;
 			ubyte u4;
-			
+
 			FSkip(1);
 			ubyte bytes[4];
-			
+
 			ubyte u5;
 			uint unknown1;
 			uint unknown2;
 			ushort u55;
-			
+
 			ubyte u6;
 			ubyte u7;
 			uint unknown3;
 			uint unknown4;
-			
+
 			FSkip(2);
 			ubyte u8;
-			
+
 			FSkip(2);
 			ushort u9;
 			ubyte u10;
-			
+
 			uint parentObjectId <bgcolor=0xDED272>;
 			*/
-			
+
 			// HWL can't remember why i commented this out..i guess it went out of range?
 			/*
 			FSkip(15);
 			uint wems_counter;
-			
+
 			// Just a fail safe.
 			if ( (wems_counter & 0x0000FFFF) > 0)
 			{
@@ -241,20 +235,20 @@ struct Object
 			}
 			*/
 			break;
-			
+
 		case AudioBus:
 			uint parentObjectId <bgcolor=0xDED272>;
-			
+
 			AudioBus_Parameters audiobus_parameters;
-			
+
 			Boolean enable_positioning;
 			Boolean enable_panner;
-			
+
 			Advanced_Settings_AudioBus advancedsettingsaudiobus;
 			Channel_Configuration channelconfiguration;
 			HDR hdr;
 			Auto_Ducking autoducking;
-			
+
 			// HWL this one works differently than the usual
 			// effect struct found in SoundStructure, but it
 			// is cleaner and works better.
@@ -273,37 +267,37 @@ struct Object
 			} effectstruct;
 			*/
 			Effects effects;
-			
+
 			//FSkip(4);
-			
+
 			// HWL i like how these two switch positions compared to
 			// how it is in the SoundStructure you usually have.
 			// what the hell WWise??
 			RTPC rtpc;
 			States states;
-			
+
 			break;
-			
+
 		case BlendContainer:
 			SoundStructure soundstructure;
 			break;
-			
+
 		case DialogueEvent:
 			struct DialogueEventObject{
 				byte unknown0;
 				uint argumentsCount;
-				
+	
 				uint arguments[argumentsCount] <comment="Definitely an object ID, so an FNV132 hash">;
 				//RLC: Real-time radio notes;
 				// 434268486 chara
 				// 3703962904 condition
-				
+	
 				GroupType groupType[argumentsCount] <optimize=false>;
-				
+	
 				uint sizeOfEntryArray;
-				
+	
 				byte unknown7;
-				
+	
 				struct GroupDefinition
 				{
 					uint groupName;
@@ -311,13 +305,13 @@ struct Object
 					ushort childrenCount;
 					ushort weight;
 					ushort probability;
-					
+		
 				};
-				
+	
 				GroupDefinition groupDefiniton <comment="Default state">;
-				
+	
 				GroupDefinition groupDefinitions[groupDefiniton.childrenCount] <optimize=false>; 
-				
+	
 				struct Path
 				{
 					uint stateId;
@@ -325,56 +319,56 @@ struct Object
 					ushort weight;
 					ushort probability;
 				};
-				
+	
 				local int i;
 				local int pathCollections[groupDefiniton.childrenCount] <optimize=false>;
 				for (i = 0; i < groupDefiniton.childrenCount; ++i)
 				{
 					pathCollections[i]=groupDefinitions[i].childrenCount;
 				};
-				
+	
 				local int j = 0;
 				struct Paths
 				{
 					Path path[pathCollections[j]] <optimize=false>;
 					j+=1;
-						
+
 				} paths[groupDefiniton.childrenCount] <optimize=false>;
-				
+	
 			} dialogueEventObject;
 			break;
-			
+
 		case MusicSegment:
 			SoundStructure soundstructure;
-			
+
 			// HWL adding this as of v2.4
 			//FSkip(4);
 			uint unknown_count;
 			uint unknown_array[unknown_count];
-			
+
 			if (is_game_soundbank == is_true)
 			{
 				uint children_count;
 				if (children_count < 256) // doing this in case it breaks
 					uint children_IDs[children_count];
 			}
-			
-			
+
+
 			// HWL NOTE: commented this out because the sound structure has corruption
 			// problems..
-			
+
 			//if (children_count > 0)
 				//uint children_IDs[children_count];
 			MSC_GeneralSettings msc_gs;
-			
+
 			uint ID1;
 			FSkip(1);
 			double d1;
-			
+
 			uint number_of_cues;
 			uint meby_hash;
 			double preentry_slider;
-			
+
 			struct Stuff
 			{
 				uint unknown_count;
@@ -382,73 +376,73 @@ struct Object
 				{
 					_Exit_Cue = 1539036744,
 				} cue_name_hash;
-				
+	
 				if (unknown_count > 0)
 				{
 					ubyte ubytes[unknown_count];
 					Printf("cykaaaa");
 				}
-				
+	
 				double timeline_pos <comment="In milliseconds">;
 			} stuff[number_of_cues - 1] <optimize=false>;
 			/*
 			FSkip(4);
-			
+
 			uint ID3;
 			double exit_slider;
 			*/
-			
+
 			break;
 			FSkip(5); // HWL god i hope this doesn't break anything..
 			// EDIT: oh it sure does! but i can't find any other
 			// good fix as of now..
-			
+
 			//while ( ReadUByte() == 0 )
 			//{
 			//	FSkip(1);
 			//}
-			
+
 			uint num_of_music_tracks;
 			//uint music_track_obj_ids[num_of_music_tracks];
-			
+
 			// HWL break here, the results aren't good.
 			break;
 			double d1;
 			uint64 uint64_1;
-			
+
 			float tempo;
 			byte signature_one;
 			byte signature_two;
-			
+
 			uint u1;
 			byte b1;
-			
+
 			// i think this skip is also needed here
 			//FSkip(4);
 			double time_length;
-			
+
 			uint u2;
 			uint u3;
 			uint64 uint64_2;
 			uint u4;
 			uint u5;
-			
+
 			double time_length_next;
 			uint u6;
-			
+
 			// HWL according to WolvenKit, the rest is ignored if
 			// more stuff exists
-			
+
 			break;
-			
-			
+
+
 		// as v2.2
 		case MusicTrack:
 			uint WEM_counter;
 			ushort unknown_short0;
 			ushort unknown_short1;
 			uint unknown2;
-			
+
 			// this is mentioned twice
 			struct WemIDs
 			{
@@ -456,17 +450,17 @@ struct Object
 				uint WEM_ID_2;
 			};
 			WemIDs wem_ids[WEM_counter] <fgcolor=0x00FF00>;
-			
+
 			FSkip(1);
-			
+
 			break;
-			
+
 		// as v2.2
 		// huge update as of v2.6
 		case MusicSwitchContainer:
 			SoundStructure soundstructure;
 			struct Stingers stingers;
-			
+
 			// HWL this section doesn't exist in normal WWise banks,
 			// so i guess it's a unique section to TPP?
 			// change this to false when parsing normal banks.
@@ -478,56 +472,56 @@ struct Object
 					uint children[num_of_children];
 				} children;
 			}
-			
+
 			struct MSC_GeneralSettings msc_gs; // MSC = MusicSwitchContainer
-			
+
 			Boolean unknown;
 			uint num_of_stinger_triggers;
 			if (num_of_stinger_triggers > 0) 
 				TriggerConnection triggerconnections[num_of_stinger_triggers] <optimize=false>;
-			
+
 			//FSkip(1);
 			uint num_of_transitions;
 			Transitions transitions[num_of_transitions] <optimize=false>;
 			Boolean unknown <comment="Always true?">;
 			StateSwitchGroupList ssgl;
-			
+
 			local long startOfConnectionStruct = FTell() + 4;
-			PathsSection pathssection;	
-			
+			PathsSection pathssection;
+
 			break;
 		case MusicPlaylistContainer: // early implementation
 			SoundStructure soundstructure;
-			
+
 			uint unknown_count;
 			uint unknown_array[unknown_count];
-			
+
 			// HWL adding this FSkip as of v2.4
 			// HWL 11-NOV-2021 delete this BS below
 			/*
 			FSkip(4);
-			
+
 			uint num_of_music_segments <comment="Music Segments that are part of this playlist">;
 			if (num_of_music_segments < 256) // magic number for cases that this would break
 				uint music_segment_IDs[num_of_music_segments];
 			*/
-				
+	
 			MSC_GeneralSettings msc_gs;
-			
+
 			break;
-			
+
 		case AuxillaryBus:
 			uint parentObjectId <bgcolor=0xDED272>;
-		
+	
 			AudioBus_Parameters audiobus_parameters;
-			
+
 			Boolean enable_positioning;
 			Boolean enable_panner;
-			
+
 			// why are they here twice???
 			Boolean override_parent_channel_configuration;
 			Boolean override_parent_channel_configuration;
-			
+
 			if (override_parent_channel_configuration[0] == is_true)
 			{
 				// ushort instead of uint...the hell WWise???
@@ -542,21 +536,21 @@ struct Object
 					_Seven_point_one = 1599 // 7.1
 				} channelconfigurationshort;
 				FSkip(1);
-				
+	
 				Channel_Configuration channelconfiguration;
 			}
 			else 
 				FSkip(4 + 3); // HWL i don't know why there's such a huge gap here.
 				// there's literally no other setting that exists within an
 				// Auxillary Bus..
-			
+
 			HDR hdr_parent <comment="Probably the settings of a parent, given that these don't exist in auxiliary busses">;
 			Auto_Ducking autoducking_parent <comment="Probably the settings of a parent, given that these don't exist in auxiliary busses">;
-			
+
 			Effects effects;
 			RTPC rtpc;
 			States states;
-			
+
 			break;
         case Attenuation:
             /*local int startOfObject = FTell();
@@ -598,27 +592,27 @@ struct Object
             };*/
             break;
 	}
-	
+
 	// HWL for printing to console purposes
 	closeBracket();
-	
+
 };
 
 struct Hierarchy
 {
 	int sectionSize;
 	int objectCount;
-	
+
 	local long startObjectPos = FTell();
 	local int curObj;
-	
+
 	// HWL i renamed this to curObj instead of i, because 010 is
 	// dumb and would reset the number i because the same name is
 	// reused in other structures...
 	for (curObj = 0; curObj < objectCount; ++curObj)
 	{
 		Object object <optimize=false>;
-		
+	
 		// HWL it's +5 since there always appears to be 5 empty
 		// bytes between every object.
 		FSeek(startObjectPos + object.objectSize + 5);
@@ -636,9 +630,9 @@ struct StreamId
 		uint streamId <comment="FNV132 hash of the following string">; 
 		ubyte streamIdStringLength;
 		char streamIdString[streamIdStringLength];
-		
-	} streamIds[streamIdsCount] <optimize=false>;
 	
+	} streamIds[streamIdsCount] <optimize=false>;
+
 };
 
 struct StreamedPackage
@@ -647,19 +641,19 @@ struct StreamedPackage
 	short wemCount;
 	byte hasLipSync;
 	FSkip(1);
-	
+
 	struct StreamedWemDefiniton
 	{
 		uint streamedPackageId <comment="FNV132 hash?">;
 		int offsetToWem;
 		if (hasLipSync==1)
 			int offsetToLip;
-		
-	} streamedWemDefinition[wemCount] <optimize=false>;
 	
+	} streamedWemDefinition[wemCount] <optimize=false>;
+
 	if (FTell() % 16 != 0)
 		FSkip(16 - (FTell() % 16));
-	
+
 	local int index = 0;
 	struct RiffStreamed
 	{
@@ -670,7 +664,7 @@ struct StreamedPackage
 				Laddie lipFile;
 			Assert(FTell()-(streamedWemDefinition[index].offsetToWem-streamedWemDefinition[index].offsetToLip)==preLipIndexCheck,"Laddie didn't parse all!!!");
 		}
-		
+	
 		local int size = 0;
 		if (index + 1 < wemCount)
 			if (hasLipSync == 1)
@@ -679,11 +673,11 @@ struct StreamedPackage
 				size = (streamedWemDefinition[index+1].offsetToWem - streamedWemDefinition[index].offsetToWem);
 		else
 			size = (endOfStp - streamedWemDefinition[index].offsetToWem);
-		
+	
 		char riffData[size];
-		
+	
 		index += 1;
-		
+	
 	} riffStreamed[wemCount] <optimize=false>;
 };
 
@@ -695,12 +689,12 @@ struct DataIndex
 		uint wemName <comment="FNV132 hash?">;
 		int offsetToStart;
 		int size;
-		
+	
 	} embeddedWemDefiniton[offsetsSize / 12];
 	// DATA + garbage4bytes only appears if the definitions don't end up with an aligned stream????
 	if (FTell() % 16 != 0)
 		FSkip(16 - (FTell() % 16));
-	
+
 	local int index = 0;
 	local int startOfArray = FTell();
 	struct RiffEmbed
@@ -708,11 +702,11 @@ struct DataIndex
 		// ok seems to be inconsistent between GZ, TPP and SBP_Tool output as to whether it wants to align te stream
 		// so this might leave the riff files with empty bytes at the start
 		FSkip( (startOfArray+embeddedWemDefiniton[index].offsetToStart) - FTell() );
-		
+	
 		char riffData[embeddedWemDefiniton[index].size];
-		
+	
 		index += 1;
-		
+	
 	} riffEmbed[offsetsSize / 12] <optimize=false>;
 };
 
@@ -722,10 +716,10 @@ struct STMG_struct
 {
 	uint offsetsSize;
 	float volumeThreshold;
-	
+
 	ushort maxVoiceInstances;
 	uint num_of_state_groups;
-	
+
 	local int curStateGroup;
 	local int curCTT;
 	for (curStateGroup = 0; curStateGroup < num_of_state_groups; ++curStateGroup)
@@ -733,14 +727,14 @@ struct STMG_struct
 		struct stateGroup
 		{
 			uint state_group_ID;
-			
+
 			Printf("State Group ID: %u", state_group_ID);
 			//Printf(%u, stateGroup);
 			Printf("\n");
-			
+
 			uint default_transition_time <comment="in milliseconds">;
 			uint num_of_custom_transition_times;
-			
+
 			// HWL yes, this is a bit ugly, but i did it this way because you
 			// click through less menus in 010 when done like this
 			for (curCTT = 0; curCTT < num_of_custom_transition_times; ++curCTT)
@@ -754,9 +748,9 @@ struct STMG_struct
 			}
 		} stategroups;
 	}
-	
+
 	uint num_of_switch_groups <comment="these set the current Switch based on a game parameter">;
-	
+
 	local int curSwitchGroup;
 	local int curPoints;
 	for (curSwitchGroup = 0; curSwitchGroup < num_of_switch_groups; ++curSwitchGroup)
@@ -764,13 +758,13 @@ struct STMG_struct
 		struct switchGroup
 		{
 			uint switchGroup_ID;
-			
+
 			Printf("Switch Group ID: %u", switchGroup_ID);
 			Printf("\n");
-			
+
 			uint game_parameter <comment="this game parameter determines currently set Switch">;
 			uint num_of_points;
-			
+
 			// again the same ugly 'hack' as before
 			for (curPoints = 0; curPoints < num_of_points; ++curPoints)
 			{
@@ -781,10 +775,10 @@ struct STMG_struct
 					uint shape_of_curve <comment="always set to 9">;
 				} switchGroupPoints;
 			}
-			
+
 		} switchGroups;
 	}
-	
+
 	uint num_of_game_params;
 	local int curGameParam;
 	for (curGameParam = 0; curGameParam < num_of_game_params; ++curGameParam)
@@ -792,10 +786,10 @@ struct STMG_struct
 		struct gameParameter
 		{
 			uint game_param_ID;
-			
+
 			Printf("Game Parameter ID: %u", game_param_ID);
 			Printf("\n");
-			
+
 			float default_value_of_game_param;
 		} gameParameters;
 	}
@@ -808,7 +802,7 @@ if ( (ReadUInt() == 1280328275) || (ReadUInt() == 1112556115) ) // == "SBPL" or 
 struct SoundBankHeader
 {
 	char sign[4];
-	
+
 	switch (sign)
 	{
 		case "SBPL":
@@ -818,7 +812,7 @@ struct SoundBankHeader
 			BigEndian();
 			break;
 	}
-	
+
 	if (sign != "BKHD")
 	{
 		ubyte sectionCount;
@@ -829,18 +823,18 @@ struct SoundBankHeader
 			char sign[4]; // "bnk" or "sab" or "stp"
 			int offsetToSection;
 			int sectionSize;
-			
+
 		} sectionDefinition[sectionCount];
-		
+	
 		Assert(bytesToSectionDefinitions==FTell(),"SectionDefinitions size incorrect!!!");
 	}
-	
+
 };
 
 if (has_soundbankheader == 1)
 {
 	SoundBankHeader soundBankHeader <bgcolor=soundBankHeader_color>;
-	
+
 	if (FTell() % 16 != 0)
 	FSkip(16 - (FTell() % 16));
 }
@@ -851,7 +845,7 @@ local int endOfStp = 0;
 
 struct Section0 {
 	char sign[4];
-	
+
 	switch (sign)
 	{
 		case "BKHD":
@@ -873,8 +867,8 @@ struct Section0 {
 			Assert(2+2==5,"Unknown section!!!!!");
 			break;
 	}
-	
-	
+
+
 };
 
 struct Sections
@@ -882,15 +876,15 @@ struct Sections
 	local long startOfSection = FTell();
     
 	Assert(soundBankHeader.sectionDefinition[currentSection].offsetToSection==FTell(),"Offset to start of Section is incorrect!!!!");
-	
+
 	if (soundBankHeader.sectionDefinition[currentSection].sign == "bnk")
 	{
 		while (FTell() < startOfSection + soundBankHeader.sectionDefinition[currentSection].sectionSize)
 			Section0 section0;
-		
+	
 		if (FTell() % 16 != 0)
 			FSkip(16 - (FTell() % 16));
-		
+	
 	}
 	else if (soundBankHeader.sectionDefinition[currentSection].sign == "sab")
 	{
@@ -902,10 +896,10 @@ struct Sections
 		struct Section2
 		{
 			StreamedPackage streamedPackage <bgcolor=StreamId_color, comment="Streamed .wem sounds">;
-			
+
 		} section2;
 	};
-	
+
 	currentSection += 1;
 };
 

@@ -2,6 +2,10 @@ Just a file that details all the changes to the template with every new
 version. This is only for looking back at the progress we've made (and
 hopefully find bugs more easily)!
 
+[2022-Aug-2]:
++ Renamed the "SoundEffect" object to "Custom", which is its true name
++ Removed the version names from the template
+
 [2021-Nov-11]:
 + Commented broken parsing code for Music Playlist Containers
 - Removed some broken parsing code for Music Playlist Containers
