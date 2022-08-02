@@ -179,62 +179,9 @@ struct Object
 
 		case ActorMixer: // HWL According to PS3 files. This is ugly.
 			SoundStructure soundstructure;
+			uint childrenCount;
+			uint children[childrenCount];
 
-			// HWL TODO: CLEANUP LATER!
-
-			uint unknown;
-			uint unknown_array[unknown];
-
-			uint num_of_children;
-			uint children_IDs[num_of_children];
-			/*
-			*/
-
-			/*
-			ubyte u1;
-			ubyte u2;
-			uint unknown0;
-
-			FSkip(3);
-
-			// These two are usually the same?
-			ubyte u3;
-			ubyte u4;
-
-			FSkip(1);
-			ubyte bytes[4];
-
-			ubyte u5;
-			uint unknown1;
-			uint unknown2;
-			ushort u55;
-
-			ubyte u6;
-			ubyte u7;
-			uint unknown3;
-			uint unknown4;
-
-			FSkip(2);
-			ubyte u8;
-
-			FSkip(2);
-			ushort u9;
-			ubyte u10;
-
-			uint parentObjectId <bgcolor=0xDED272>;
-			*/
-
-			// HWL can't remember why i commented this out..i guess it went out of range?
-			/*
-			FSkip(15);
-			uint wems_counter;
-
-			// Just a fail safe.
-			if ( (wems_counter & 0x0000FFFF) > 0)
-			{
-				uint wem_IDs_with_offset[wems_counter] <comment="These wem IDs are +2 of their wem ID from what I can tell.">;
-			}
-			*/
 			break;
 
 		case AudioBus:

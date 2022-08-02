@@ -399,8 +399,14 @@ struct SoundStructure
 					Make_Up_Gain = 0x24
 				} y_axis_effecttype;
 				
-				uint unknown;
-				ubyte unkn_byte;
+				uint curveID;
+				enum <ubyte> AkCurveScaling
+				{
+					AkCurveScaling_None,
+					AkCurveScaling_dB,
+					AkCurveScaling_Log,
+					AkCurveScaling_dBToLin
+				} curve_scaling;
 				
 				ushort num_of_points;
 				local uint curNumPoints;
