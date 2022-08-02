@@ -4,6 +4,50 @@
 // Special thanks to Joey, BobDoleOwndU and OldBanana!
 LittleEndian();
 
+typedef struct
+{
+    uint hash<format=hex>;
+} StrCode32 <read=(hash)>;
+
+typedef struct
+{
+	float x;
+	float y;
+	float z;
+} Float3 <read=Str("(%g, %g, %g)", x, y, z)>;
+
+typedef struct
+{
+	float x;
+	float y;
+	float z;
+	float w;
+} Float4 <read=Str("(%g, %g, %g, %g)", x, y, z, w)>;
+
+struct Matrix3
+{
+	float x1;
+	float y1;
+	float z1;
+	float w1;
+
+	float x2;
+	float y2;
+	float z2;
+	float w2;
+
+	float x3;
+	float y3;
+	float z3;
+	float w3;
+};
+
+enum <byte> TRAP_SHAPE_TYPE
+{
+    TRAP_SHAPE_TYPE_BOX_SHAPE = 19,
+    TRAP_SHAPE_TYPE_PATH_SHAPE = 27,
+};
+
 enum <uint64> Tag
 {
 	Intrude = 0x1,
@@ -42,194 +86,94 @@ enum <uint64> Tag
 	x24330b0e33cb = 0xffffffff80000000,
 };
 
-struct Vector4
+struct
 {
-	float x;
-	float y;
-	float z;
-	float w;
-};
-
-struct Matrix4
-{
-	float x1;
-	float y1;
-	float z1;
-	float w1;
-
-	float x2;
-	float y2;
-	float z2;
-	float w2;
-
-	float x3;
-	float y3;
-	float z3;
-	float w3;
-};
-
-struct Header
-{
-    uint fileVersionDate;      		 // TPP/SSD is 201406020; February 6th, 2014
-	if (fileVersionDate==1144389900) // if big endian, big endian
+    uint VersionDate <hidden = true>; // TPP/SSD is 201406020; February 6th, 2014
+	if (VersionDate != 201406020) // if big endian, big endian
 	{
 		BigEndian();
 	}
-    uint version;               // TPP/SSD is 32.
-    uint fileSize;
-    uint dataSetPathCode32Hash; // PathCode32 hash of the path to the .fox2, same name as the file.
+    uint EntryDefinitionsOffset<hidden = true>; Assert(EntryDefinitionsOffset == 32);
+    uint FileSize;
+    uint DataSetPathCode32Hash; // PathCode32 hash of the path to the .fox2, same name as the file.
+} Header <bgcolor = 0x9EADC8>;
 
-	FSkip(24);
-	uint unknown0;				// always 1
-	uint headerSize;			// always 48, headers always are?
+FSeek(Header.EntryDefinitionsOffset);
 
-    uint extraFileSize;         // fileSize + 16
-    FSkip(12);
-
-    FSkip(4);
-    uint entryCount;
-    FSkip(8);
-	
-} header <bgcolor=0x9EADC8>;    // coolor
-
-struct Offsets
+struct
 {
-	struct Offset
-	{
-		uint offset;
-		
-	} entries[header.entryCount] <optimize=false>;
-	
-	// Special thanks to BobDoleOwndU and OldBanana!
-	if (FTell() % 16 != 0)
-	{
-		FSkip(16 - (FTell() % 16));
-	}
-	
-} offsets <bgcolor=0xB9E28C>;
+    local uint SelfStartPos = FTell();
 
-struct Shapes
+	FSkip(8);
+
+	uint Unknown; Assert(Unknown == 1);
+
+	uint OffsetsOffset; Assert(OffsetsOffset == 48);
+
+    uint FileSizePlus16; Assert(FileSizePlus16 == Header.FileSize + 16);
+    
+    FSkip(16);
+
+    uint EntryCount;
+
+    FSeek(SelfStartPos + OffsetsOffset);
+
+    uint Offsets[EntryCount];
+} EntryDefinitions <hidden = true, bgcolor = 0xB9E28C>;
+
+local int i = 0;
+for (i = 0; i < EntryDefinitions.EntryCount; i++)
 {
-    struct Entry
-	{
-		// Special thanks to Joey and OldBanana!
-		if (header.fileVersionDate!=1144389900)
-		{
-			uint shapeType : 8;
-			uint shapeDefinition1 : 8;
-			uint shapeDefinition2 : 8;
-			uint shapeCount : 8;
-		}
-		else
-		{
-			uint shapeCount : 8;
-			uint shapeDefinition2 : 8 <hidden=true>;
-			uint shapeDefinition1 : 8 <hidden=true>;
-			uint shapeType : 8;
-		}
-		FSkip(12);
-		
-		// According to PS3/PC endianness difference, it's an int64
-		if (header.fileVersionDate!=1144389900)
-		{
-			uint64 Intrude : 1; // tagValues that define the functions of the trigger	
-			uint64 Tower : 1;
-			uint64 InRoom : 1;
-			uint64 FallDeath : 1;
-			
-			uint64 NearCamera1 : 1;
-			uint64 NearCamera2 : 1;
-			uint64 NearCamera3 : 1;
-			uint64 NearCamera4 : 1;
-			
-			uint64 x9978c8d36f7 : 1;
-			uint64 NoRainEffect : 1;
-			uint64 x60e79a58dcc3 : 1;
-			uint64 GimmickNoFulton : 1;
-			
-			uint64 innerZone : 1;
-			uint64 outerZone : 1;
-			uint64 hotZone : 1;
-			uint64 x439898dcbf83 : 1;
-			
-			uint64 xe780e431a068 : 1;
-			uint64 x53827eed3fbc : 1;
-			uint64 x7e1121c5cb93 : 1;
-			uint64 xcadd57b76a83 : 1;
-			
-			uint64 xe689072c4df8 : 1;
-			uint64 x6d14396ebbe5 : 1;
-			uint64 xd1ee7dc34fff : 1;
-			uint64 xb07e254afcae : 1;
-			
-			uint64 : 1;
-			uint64 : 1;
-			uint64 : 1;
-			uint64 : 1;
-			
-			uint64 xd6ee65d20b7a : 1;
-			uint64 xf287ba9cb7e3 : 1;
-			uint64 NoFulton : 1;
-			uint64 x24330b0e33cb : 1;
-		}
-		else
-		{
-			uint64 tagValueB : 8 <hidden=true>;
-			uint64 tagValueA : 8 <hidden=true>;
-			uint64 tagValue9 : 8 <hidden=true>;
-			uint64 tagValue8 : 8 <hidden=true>;
-			uint64 tagValue7 : 4;
-			uint64 tagValue6 : 4; // always 2
-			uint64 tagValue5 : 4;
-			uint64 tagValue4 : 4;
-			uint64 tagValue3 : 4;
-			uint64 tagValue2 : 4;
-			uint64 tagValue1 : 4;
-			uint64 tagValue0 : 4; // tagValues that define the functions of the trigger	
-		}
-		
-		uint entryName;	
-		FSkip(4);
-		
-		
-		
-		if (shapeType == 19)
-		{
-			struct shapeTypeBox
-			{
-				Vector4 scale;	// I seem to remember Intrude triggers needing to be scaled up by two, but I don't remember if it applies to all boxes
-				
-				FSkip(16);
-				
-				Matrix4 rotation;
-				
-				Vector4 translation;
-				
-			} shapes[shapeCount] <optimize=false>;
-			
-			FSkip(16);
-			
-		}
-		else if (shapeType == 27)
-		{
-			struct shapeTypeVector
-			{
-				float yMinimum;	// Can't prove this but that's what the values suggest
-				float yMaximum;
-				uint pointsCount;
-				uint unknown6;
+    FSeek(EntryDefinitions.SelfStartPos + EntryDefinitions.OffsetsOffset + EntryDefinitions.Offsets[i]);
 
-				FSkip(16);
-				
-				Vector4 points[pointsCount] <optimize=false>;
-				
-			} shapes[shapeCount] <optimize=false>;
-		}
-		else
-		{
-			Assert(FTell() == FileSize(), "Unknown Shape!!!");
-		};
-		
-    } entry[header.entryCount] <optimize=false>;
-	
-} shapes <bgcolor=0xD6D84F>;
+    struct
+    {
+        uint ShapeType : 8;
+	    uint ShapeDefinition1 : 8;
+	    uint ShapeDefinition2 : 8;
+	    uint ShapeCount : 8;
+    
+	    FSkip(12);
+    
+        Tag tag<format=binary>;
+	    
+	    StrCode32 EntryNameHash;	
+    
+	    FSkip(4);
+	    
+	    if (ShapeType == TRAP_SHAPE_TYPE_BOX_SHAPE)
+	    {
+		    struct BoxShape
+		    {
+			    Float4 scale;	// I seem to remember Intrude triggers needing to be scaled up by two, but I don't remember if it applies to all boxes
+			    
+			    FSkip(16);
+			    
+			    Matrix3 Rotation;
+			    
+			    Float4 Translation;
+			    
+		    } Shapes[ShapeCount];
+	    }
+	    else if (ShapeType == TRAP_SHAPE_TYPE_PATH_SHAPE)
+	    {
+		    struct PathShape
+		    {
+                local uint SelfStartPos = FTell();
+    
+			    float YMinimum;
+			    float YMaximum;
+			    uint PointCount;
+			    uint PointsDataOffset;
+    
+                FSeek(SelfStartPos + PointsDataOffset);
+			    
+			    Float4 Points[PointCount];
+		    } Shapes[ShapeCount] <optimize = false>;
+	    }
+	    else
+	    {
+		    Assert(false, "Unknown Shape!");
+	    };
+    } Entry <optimize = false, bgcolor = 0xD6D84F>;
+}

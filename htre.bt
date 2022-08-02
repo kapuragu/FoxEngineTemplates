@@ -223,9 +223,10 @@ else if (Header.Type == 4)
             ushort Unknown2; Assert(Unknown2 == 32);
             ushort Unknown3; // Often 4, HTREs are 0
             ushort Unknown4; // Often 5, CYPR is 1
-    
-            ushort padding2 <hidden=true>; Assert(padding0 == 0);
-            uint padding3 <hidden=true>; Assert(padding1 == 0);
+            
+            // Somehow not present in HTRE files
+            //ushort padding2 <hidden=true>; Assert(padding0 == 0);
+            //uint padding3 <hidden=true>; Assert(padding1 == 0);
     
             hfloat Unknown5;
             hfloat Unknown6;

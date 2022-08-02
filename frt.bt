@@ -8,6 +8,7 @@
 LittleEndian();
 
 local byte legacyParam = 0;
+local byte printEvents = 0;
 
 struct Vector3
 {
@@ -240,6 +241,13 @@ struct Event
 		EventType eventType;
 		//"Param0" in TPP
 		IsNodeEvent isNodeEvent;
+        if (printEvents==1)
+        {
+		    if (isNodeEvent==EDGE)
+			    Printf("edge eventType: %u\n", eventType);
+		    else
+			    Printf("node eventType: %u\n", eventType);
+        }
 		RouteAimTargetType aimPointType;
 		FSkip(0x1);
 		IsLoop isLoop; //Assumption that this bool is responsible for soldiers looping on an event node of a route, like searchlights

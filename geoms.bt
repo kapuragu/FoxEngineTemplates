@@ -45,18 +45,16 @@ typedef struct
 
 void EntryCollisionFlag()
 {
-	uint64 CollisionFlags<bgcolor=0xFF00FF, fgcolor=0x00FF00>;
+	uint64 CollisionFlags<format=binary, bgcolor=0xFF00FF, fgcolor=0x00FF00>;
 }
 
 struct SubVerticesChunk
 {
-	uint VertexCount;
-	
-	// HWL dirty (but necessary) hack so that we don't surpass the end of the file and the
-	// template abruptly stops executing
-	if ( ( FTell() + (VertexCount * 16) + 32 - 4 ) > header.FileSize )
+	uint VertexCountPlusOne;
+
+	if ( ( FTell() + (VertexCountPlusOne * 16) + 32 - 4 ) > header.FileSize )
 	{
-		Printf("WARNING: Vertices will surpass end of file, ignoring.\n");
+		Printf("External geometry reference detected.");
 		return;
 	}
 	
@@ -67,7 +65,7 @@ struct SubVerticesChunk
 	uint VertexOffset;
 	FSeek( CurrentPos + VertexOffset );
 	
-	Float4 Vertices[VertexCount - 1];
+	Float4 Vertices[VertexCountPlusOne - 1];
 };
 
 // Slightly incorrect because this does not flip based on endian-ness.
@@ -75,11 +73,19 @@ typedef struct
 {
     enum <ubyte> DATA_CHUNK_TYPE
     {
+        DATA_CHUNK_TYPE_UNKNOWN0 = 0,
+        DATA_CHUNK_TYPE_UNKNOWN1 = 1,
         DATA_CHUNK_TYPE_INDICES = 2,
+        DATA_CHUNK_TYPE_UNKNOWN3 = 3,
         DATA_CHUNK_TYPE_BOUNDING_BOX = 4,
+        DATA_CHUNK_TYPE_UNKNOWN5 = 5,
+        DATA_CHUNK_TYPE_UNKNOWN6 = 6,
+        DATA_CHUNK_TYPE_UNKNOWN7 = 7,
+        DATA_CHUNK_TYPE_UNKNOWN8 = 8,
+        DATA_CHUNK_TYPE_UNKNOWN11 = 11,
     } Type;
     
-    ushort UnknownFlags <format=binary>;
+    ushort UnknownFlags <format=binary>; // The exe checks if 0x200 isn't set. If it isn't, it does something. mgsvtpp.exe!141bdc492
     ubyte QuadCount;
 } DataChunkInfo <read=(EnumToString(Type))>;
 
@@ -97,36 +103,27 @@ struct DataChunk
 	        uint LinesOffsetToNextDataChunk <comment="Number of lines left until next DataChunk (FaceChunk excluded). For the first DataChunk of a Section it's always 0">;
 	        uint Flag;
         
-	        Assert(ReadUInt() == 4);
-	        FSkip(4);
+            uint UnknownAlways4; Assert(UnknownAlways4 == 4);
         
 	        EntryCollisionFlag();
         
-	        Assert(ReadUInt64() == 0);
-	        FSkip(8);
+	        uint64 Padding0 <hidden = true>; Assert(Padding0 == 0);
 	        
 	        Float4 BoundingBoxRadii <bgcolor=0xDBC48F, comment="Width/2, Height/2, Depth/2">;
 	        Float4 BoundingBoxCenter <bgcolor=0xDBC48F>;
         }
         SetBackColor(cNone);
 	}
-	else
+	else if (Info.Type == DATA_CHUNK_TYPE_INDICES)
 	{
-        Assert(Info.Type == DATA_CHUNK_TYPE_INDICES, "Unknown DataChunk Type Detected!");
-		
-	    Assert(ReadUInt64() == 0);
-	    FSkip(8);
-	    Assert(ReadUInt() == 0);
-	    FSkip(4);
+	    uint64 Padding0 <hidden = true>; Assert(Padding0 == 0);
+	    uint Padding1 <hidden = true>; Assert(Padding1 == 0);
 	    
 	    EntryCollisionFlag();
 		
 		// HWL just experimenting. this seems to be correct.
 		// EDIT: no it's not damn it!
-		if (Info.UnknownFlags != 0)
-			float UnknownFloat <comment="Sometimes a uint">;
-		else
-			uint UnknownOffset;
+		uint UnknownValueSometimesFloat;
 		
 	    uint LinesOffsetToVertices <comment="The amount of lines left until we hit the sub vertices chunk">;
     
@@ -165,6 +162,10 @@ struct DataChunk
 			    FSeek(posBeforeVertices);
 	    }
 	}
+    else
+    {
+        Assert(false, "Unknown DataChunk Type Detected!");
+    }
 };
 
 struct ShortPairs
@@ -173,7 +174,7 @@ struct ShortPairs
 	short SS2;
 };
 
-struct EntrySubsection2Entry
+struct EntryDataChunkDefinition
 {
 	byte IsFinalEntry;
 
@@ -193,14 +194,16 @@ struct EntrySubsection2Entry
 	EntryCollisionFlag();
 };
 
-struct EntrySubsection2
+struct EntryDataChunkDefinitions
 {
-	while(!ReadUByte())
-	{
-		EntrySubsection2Entry Entry;
-	}
+    local uint localStartPos = FTell();
 
-	FSkip(32);
+    while(!ReadUByte())
+	{
+		EntryDataChunkDefinition Entry;
+	};
+
+    FSkip(32);
 };
 
 struct EntryMaterialsSection
@@ -254,8 +257,7 @@ struct EntrySecondaryHeaderSection
 {
 	StrCode32 Hash1;
 	
-	Assert(ReadUInt() == 0);
-	FSkip(4);
+	uint Padding0<hidden=true>; Assert(Padding0 == 0);
 	
 	GEOM_SECTION_TYPE Type;
 	Assert((SecondaryHeaderSection.Type == GEOM_SECTION_TYPE_0) || (SecondaryHeaderSection.Type == GEOM_SECTION_TYPE_6), "Unknown Entry section detected!");
@@ -269,17 +271,16 @@ struct EntryHeaderSection
 {
     StrCode32 Hash1;
 	
-	Assert(ReadUInt() == 0);
-	FSkip(4);
-	uint Flag;
-	Assert(ReadUInt64() == 0);
-	FSkip(8);
-	Assert(ReadUInt() == 0);
-	FSkip(4);
+	uint Padding0<hidden=true>; Assert(Padding0 == 0);
+
+	uint UnknownOffset;
+
+	uint64 Padding1<hidden=true>; Assert(Padding1 == 0);
+	uint Padding2<hidden=true>; Assert(Padding2 == 0);
 	
 	uint SecondaryHeaderOffset; // Size of the header + padding
 	
-	int NegativePreviousEntryOffset;
+	int PreviousEntryOffset; // The value stored is positive, but it's for jumping backwards in list.
 	
 	uint NextEntryOffset; // Size of the entry + padding
 };
@@ -313,7 +314,7 @@ struct Entry
 	
 	local long Subsection2_StartPos = FTell();
 	
-	EntrySubsection2 Section2<bgcolor=COLOR_CHUNK11>;
+	EntryDataChunkDefinitions Section2<bgcolor=COLOR_CHUNK11>;
 	EntryMaterialsSection Materials<bgcolor=COLOR_ENTRYMATERIALSECTION>;
 	
 	// HWL fix for the padding between Materials and DataChunks.
@@ -322,10 +323,9 @@ struct Entry
     struct DataChunks
     {
 	    local uint i = 0;
-	    local uint j = 0;
 		
 		local long curDataChunkArrayStartPos = 0;
-	    while(exists(Section2.Entry[i]))
+	    while(!Section2.Entry[i].IsFinalEntry)
 	    {
 			curDataChunkArrayStartPos = FTell();
 			Printf("Current subsection2: %u\n", i);
@@ -356,11 +356,9 @@ struct Header
 	uint Size;
 	uint FileSize;
 
-	uint u1 <hidden=true>;
-	Assert(u1 == 7050094);
+	uint u1 <hidden=true>; Assert(u1 == 7050094);
 
-	Assert(ReadUInt64() == 0);
-	FSkip(8);
+	uint64 Padding0<hidden=true>; Assert(Padding0 == 0);
 
 	StrCode32 Hash1;
 	StrCode32 Hash2;

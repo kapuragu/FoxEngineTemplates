@@ -1,0 +1,57 @@
+//FRDV - FoxRigDriver
+//Based on FrdvParser by BobDoleOwndU, by RLC
+//https://github.com/BobDoleOwndU/FrdvParser/blob/master/FrdvParser/Frdv.cs
+
+//coolors
+#define CyberGrape 0x874756 // yes it's called Cyber Grape
+#define LanguidLavender 0xD8CBDB
+#define AzureX11WebColor 0xFFFDF2 // what the fuck is this one's name
+#define PowderBlue 0xD6D49A
+#define OxfordBlue 0x351910
+
+LittleEndian();
+
+struct Vector4
+{
+	float x;
+	float y;
+	float z;
+	float w;
+};
+
+struct UInt4
+{
+	uint a;
+	uint b;
+	uint c;
+	uint d;
+};
+
+struct Header
+{
+    char sign[4] <hidden=true>;
+    uint version <hidden=true>; if (version==2830171915) {BigEndian();} //For PS3 Big End files
+    uint entryCount;
+} header <bgcolor=CyberGrape>;
+
+if (FTell() % 16 != 0)
+	FSkip(16 - (FTell() % 16));
+
+uint offsets[header.entryCount] <bgcolor=LanguidLavender>;
+
+if (FTell() % 16 != 0)
+	FSkip(16 - (FTell() % 16));
+
+struct None {} none <hidden=true,bgcolor=AzureX11WebColor>; // skipping this bullshit stupid loser name color
+
+struct Entry
+{
+	short index[8] <fgcolor=OxfordBlue>; Assert(index[7]==0,"Eighth index isn't zero!!!"); //Bone indices? -1 must be invalid
+	
+	Vector4 boundingBox; // gets to scales like 99999 and -99999 so just assuming
+	
+	UInt4 vector2; //I have no idea what these 32 bytes are, sometimes ints, sometimes floats
+	UInt4 vector3;
+	
+	Vector4 vector4[4]; //These are floats for sure. Even got a 1 as the w.
+} entry[header.entryCount] <bgcolor=PowderBlue>;

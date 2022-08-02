@@ -187,12 +187,12 @@ struct Object
 			
 			// HWL TODO: CLEANUP LATER!
 			
-			/*
 			uint unknown;
 			uint unknown_array[unknown];
 			
 			uint num_of_children;
 			uint children_IDs[num_of_children];
+			/*
 			*/
 			
 			/*
@@ -558,6 +558,45 @@ struct Object
 			States states;
 			
 			break;
+        case Attenuation:
+            /*local int startOfObject = FTell();
+            while (FTell()<startOfObject+objectSize)
+            {
+                struct AttenPoint
+                {
+                    uint attenType;
+                    float x;
+                    float y;
+                };
+                struct AttenGroup
+                {
+                    byte groupEntryCount;
+                    if (groupEntryCount<0)
+                    {
+                        byte unknown20;
+                        byte unknown21;
+                    }
+                    if (groupEntryCount>0)
+                    {
+                        short something;
+                        float xGr;
+                        float yGr;
+                        AttenPoint attenPoints[something-1] <optimize=false>;
+                        uint unknown15;
+                    }
+                };
+                struct AttenGroupGroup
+                {
+                    byte attencount3;
+                    if (attencount3>0)
+                    {
+                        AttenGroup attenGroups[attencount3] <optimize=false>;
+                        
+                    }
+                };
+                AttenGroupGroup attenGroup1 <optimize=false>;
+            };*/
+            break;
 	}
 	
 	// HWL for printing to console purposes
