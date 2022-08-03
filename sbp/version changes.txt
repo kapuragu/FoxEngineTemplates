@@ -2,6 +2,10 @@ Just a file that details all the changes to the template with every new
 version. This is only for looking back at the progress we've made (and
 hopefully find bugs more easily)!
 
+[2022-Aug-3]:
++ Fully fixed & re-implemented parsing for Music Segments based on the
+integration demo code
+
 [2022-Aug-2]:
 + Renamed the "SoundEffect" object to "Custom", which is its true name
 - Removed the version names from the template

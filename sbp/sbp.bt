@@ -34,6 +34,7 @@ enum <byte> ObjectType {
 #include "obj_eventaction.bt"
 #include "obj_audiobus.bt"
 #include "obj_musicswitchcontainer.bt"
+#include "obj_musicsegment.bt"
 
 #include "info_print.bt"
 
@@ -288,105 +289,18 @@ struct Object
 
 		case MusicSegment:
 			SoundStructure soundstructure;
-
-			// HWL adding this as of v2.4
-			//FSkip(4);
-			uint unknown_count;
-			uint unknown_array[unknown_count];
-
-			if (is_game_soundbank == is_true)
+			MusicNodeParams musicnodeparams;
+			double duration;
+			if (duration != 0)
 			{
-				uint children_count;
-				if (children_count < 256) // doing this in case it breaks
-					uint children_IDs[children_count];
+				Markers markers;
 			}
-
-
-			// HWL NOTE: commented this out because the sound structure has corruption
-			// problems..
-
-			//if (children_count > 0)
-				//uint children_IDs[children_count];
-			MSC_GeneralSettings msc_gs;
-
-			uint ID1;
-			FSkip(1);
-			double d1;
-
-			uint number_of_cues;
-			uint meby_hash;
-			double preentry_slider;
-
-			/*struct Stuff
-			{
-				uint unknown_count;
-				enum <uint> Cue_Name_Hash
-				{
-					_Exit_Cue = 1539036744,
-				} cue_name_hash;
-	
-				if (unknown_count > 0)
-				{
-					ubyte ubytes[unknown_count];
-				}
-	
-				double timeline_pos <comment="In milliseconds">;
-			} stuff[number_of_cues - 1] <optimize=false>;*/
-			/*
-			FSkip(4);
-
-			uint ID3;
-			double exit_slider;
-			*/
-
-			break;
-			FSkip(5); // HWL god i hope this doesn't break anything..
-			// EDIT: oh it sure does! but i can't find any other
-			// good fix as of now..
-
-			//while ( ReadUByte() == 0 )
-			//{
-			//	FSkip(1);
-			//}
-
-			/*
-			uint num_of_music_tracks;
-			//uint music_track_obj_ids[num_of_music_tracks];
-
-			// HWL break here, the results aren't good.
-			break;
-			double d1;
-			uint64 uint64_1;
-
-			float tempo;
-			byte signature_one;
-			byte signature_two;
-
-			uint u1;
-			byte b1;
-
-			// i think this skip is also needed here
-			//FSkip(4);
-			double time_length;
-
-			uint u2;
-			uint u3;
-			uint64 uint64_2;
-			uint u4;
-			uint u5;
-
-			double time_length_next;
-			uint u6;
-
-			// HWL according to WolvenKit, the rest is ignored if
-			// more stuff exists
-			*/
 			break;
 
 
 		// as v2.2
 		case MusicTrack:
-			uint WEM_counter;
+			/*uint WEM_counter;
 			ushort unknown_short0;
 			ushort unknown_short1;
 			uint unknown2;
@@ -399,7 +313,7 @@ struct Object
 			};
 			WemIDs wem_ids[WEM_counter] <fgcolor=0x00FF00>;
 
-			FSkip(1);
+			FSkip(1);*/
 
 			break;
 
