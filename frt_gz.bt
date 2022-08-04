@@ -92,7 +92,7 @@ struct RouteAimStaticPointParams
 
 struct RouteAimCharacterParams
 {
-	uint64 characterId; //Does TPP use a 64-bit has too?
+	uint64 characterId; //Does TPP use a 64-bit hash too?
 	FSkip(sizeof(uint) * 2);
 };
 
@@ -150,10 +150,8 @@ struct EventType_1597064337_Params
 
 struct EventType_3240040728_Params
 {
-	int eventParam0;
-	int eventParam1;
-	int eventParam2;
-	int eventParam3;
+	uint64 eventParam0;
+	uint64 eventParam2;
 };
 
 struct EventTypeRelaxedStandWalkActParams
@@ -214,7 +212,9 @@ struct Event
 		short dir <hidden=true>; local float eulerDir = (float)dir / 180; //Counter-clockwise from 0 to ushort max, in Unity looking at blue/Z. Negative
 		//"Param1.5". This isn't in TPP. Its removal in TPP could have caused the "snippet" memory leak param bytes to appear. 
 		byte isNotNodeEvent <hidden=true>; Assert(isNotNodeEvent==-isNodeEvent); FSkip(sizeof(byte)*3);
-		
+
+        //Printf("\nEventType: IsNode:%u hash: %u\n",isNodeEvent,eventType);	
+
 		//"Param2 to Param5" in TPP. Possibly identical to TPP too.
 		if (aimPointType == ROUTE_AIM_NO_TARGET)
 			FSkip(sizeof(uint) * 4);
@@ -319,6 +319,7 @@ struct Route
 	//Get route id first for Jump to Template Variable
 	FSeek(header.routeIdsOffset + ( routeIndex * sizeof(uint) ) );
 	uint routeId <bgcolor=0x8F9032>;
+    Printf("\RouteId: %u\n",routeId);	
 	//Offset to the start of current route definitions
     local int routeDefinitionsPosition = header.routeDefinitionsOffset + ( routeIndex * sizeof(RouteDefinitions) );
 	FSeek(routeDefinitionsPosition);
