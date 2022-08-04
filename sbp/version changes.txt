@@ -3,8 +3,17 @@ version. This is only for looking back at the progress we've made (and
 hopefully find bugs more easily)!
 
 [2022-Aug-3]:
-+ Fully fixed & re-implemented parsing for Music Segments based on the
++ Fully fixed & reimplemented parsing for Music Segments based on the
 integration demo code
++ Fully fixed & reimplemented parsing for Music Tracks based on the
+integration demo code
++ Moved the Sound object's unique information to common.bt in a struct
+called SourceInfo
+- Removed obj_sound.bt, its contents are now in common.bt since Music
+Tracks now share from it
++ Moved the check (and uint declaration) for the pluginID flags in
+SourceInfo at the end, since that's what the integration demo also
+appears to be doing
 
 [2022-Aug-2]:
 + Renamed the "SoundEffect" object to "Custom", which is its true name

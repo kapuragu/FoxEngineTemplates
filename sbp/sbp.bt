@@ -88,35 +88,7 @@ struct Object
 			break;
 
 		case Sound:
-			uint pluginID <comment="Unknown purpose">; // pluginID according to the integration demo
-			ObjectSoundEmbedOrStream embedOrStream;
-			uint sourceID <fgcolor=0x00FF00>;
-			uint uFileID <comment="If streamed, same as sourceID. If embedded, the soundBankId.">;
-
-			local uint pluginIDFlag15 = pluginID & 0xF;
-			if (pluginIDFlag15 == 5 || pluginIDFlag15 == 2) // from the integration demo
-				uint bankSourceDataSize <fgcolor=0x00BBBB>; // sets the m_uSize to this uint in the AkBankSourceData object
-
-			Printf("Source ID: %u\n", sourceID);
-			Printf("uFile ID: %u", uFileID);
-			Printf("\n");
-			if (embedOrStream==Embedded)
-			{
-				int offsetToSoundFile;
-				int lengthOfSoundFile;
-			}
-			else if (embedOrStream==StreamedZeroLatency)
-			{
-				// HWL always zero from what i can tell
-				FSkip(4);
-	
-				// HWL the Prefetch length (ms) setting is ignored in the end, and this
-				// offset is what's actually saved.
-				uint offset_to_wem_data <comment="An offset that goes backwards in the file, to the WEM data, starting just before the HIRC section">;
-				//FSkip(1);
-			}
-
-			ObjectSoundType soundType;
+			SourceInfo sourceinfo;
 			SoundStructure soundStructure <optimize=false>;
 			break;
 
@@ -296,25 +268,78 @@ struct Object
 				Markers markers;
 			}
 			break;
-
-
-		// as v2.2
+	
 		case MusicTrack:
-			/*uint WEM_counter;
-			ushort unknown_short0;
-			ushort unknown_short1;
-			uint unknown2;
+			uint count;
+			// there's a weird for loop for the count in the integration demo code, apparently there can
+			// be multiple sourceinfo objects??
+			SourceInfo sourceinfo[count];
 
-			// this is mentioned twice
-			struct WemIDs
+			// i would've preferred to put this in another .bt file, but due to it using the soundstructure
+			// i can't
+			struct Tracks
 			{
-				uint WEM_ID_1;
-				uint WEM_ID_2;
-			};
-			WemIDs wem_ids[WEM_counter] <fgcolor=0x00FF00>;
+				uint trackSrcCounter;
+				if (trackSrcCounter > 0)
+				{
+					local int i;
+					for (i = 0; i < trackSrcCounter; i++)
+					{
+						uint trackID, sourceID;
+						double playAt, beginTrimOffset, endTrimOffset, srcDuration;
+					}
+					uint numOfSubTracks;
+					// only goes here if CAkMusicTrack::SetPlaylist() has been executed without errors
+					// ClipAutomationArray::Term(&this->m_arClipAutomation);
+					uint clipAutomationCount;
+					// reserve space for an AkArray based on the size of clipAutomationCount, fail if it's unable to
+					if (clipAutomationCount > 0)
+					{
+						local int j;
+						for (j = 0; j < clipAutomationCount; j++)
+						{
+							struct ClipAutomation
+							{
+								uint clipIndex;
+								enum AutomationType
+								{
+									AutomationType_Volume,
+									AutomationType_LPF,
+									AutomationType_FadeIn,
+									AutomationType_FadeOut
+								} automationtype <optimize=false>;
+								uint arraySize; // used for some kind of seconds to samples calculations
+												// in a for loop after being used for the array graphs
+							} clipauto <optimize=false>;
+							// if clipauto.arraySize > 0, calls CAkClipAutomation::Set()
+							if (clipauto.arraySize > 0)
+							//	FSkip(clipauto.arraySize * 0xc);
+							{
+								struct ArrayGraphs
+								{
+									struct ArrayGraphPoints
+									{
+										float From, To;
+										Curve_Shape Interp;
+									} graphpoints[clipauto.arraySize];
+								} arraygraphs;
+							}
+						}
+					}
+					SoundStructure soundstructure;
 
-			FSkip(1);*/
-
+					// the following two integers are only read when the object has just been created in memory
+					// so it didn't exist before we started reading this object
+					enum <uint> AkMusicTrackRanSeqType
+					{
+						AkMusicTrackRanSeqType_Normal,
+						AkMusicTrackRanSeqType_Random,
+						AkMusicTrackRanSeqType_Sequence
+					} random_seq_type <fgcolor=0xFF0000>;
+					uint musicTrackLookAheadTime <fgcolor=0xFF0000>; // later gets converted to samples, but first it is multiplied
+																	// by CAkMusicRenderer::StreamingLookAheadRatio() 
+				}
+			} tracks;
 			break;
 
 		// as v2.2

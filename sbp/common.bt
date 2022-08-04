@@ -1,5 +1,52 @@
 // HWL commonly used structs in WWise soundbanks
 
+enum <int> ObjectSoundEmbedOrStream
+{
+	Embedded=0,
+	Streamed=1,
+	StreamedZeroLatency=2,
+};
+
+enum <byte> ObjectSoundType
+{
+	SFX=0,
+	Voice=1,
+};
+
+struct SourceInfo
+{
+	uint pluginID <comment="Unknown purpose">; // pluginID according to the integration demo
+	ObjectSoundEmbedOrStream embedOrStream;
+	uint sourceID <fgcolor=0x00FF00>;
+	uint uFileID <comment="If streamed, same as sourceID. If embedded, the soundBankId.">;
+
+	local uint pluginIDFlag15 = pluginID & 0xF;
+
+	Printf("Source ID: %u\n", sourceID);
+	Printf("uFile ID: %u", uFileID);
+	Printf("\n");
+	if (embedOrStream==Embedded)
+	{
+		int offsetToSoundFile;
+		int lengthOfSoundFile;
+	}
+	else if (embedOrStream==StreamedZeroLatency)
+	{
+		// HWL always zero from what i can tell
+		FSkip(4);
+
+		// HWL the Prefetch length (ms) setting is ignored in the end, and this
+		// offset is what's actually saved.
+		uint offset_to_wem_data <comment="An offset that goes backwards in the file, to the WEM data, starting just before the HIRC section">;
+		//FSkip(1);
+	}
+	ObjectSoundType soundType;
+
+	// if i'm not mistaken, this is checked at the end of CAkBankMgr::LoadSource()
+	if (pluginIDFlag15 == 5 || pluginIDFlag15 == 2) // from the integration demo
+		uint bankSourceDataSize <fgcolor=0x00BBBB>; // sets the m_uSize to this uint in the AkBankSourceData object
+};
+
 enum <byte> Boolean
 {
 	is_false = 0,
