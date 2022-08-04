@@ -794,6 +794,6 @@ struct Sections
 if (has_soundbankheader == 1)
 	Sections sections[soundBankHeader.sectionCount] <optimize=false>;
 else
-	while (true) // HWL i don't know how many section0s there are, so just make new
+	while (FTell()<FileSize()) // HWL i don't know how many section0s there are, so just make new
 	// ones until we get to the end of the file.
 	Section0 section0 <optimize=false>;
