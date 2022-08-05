@@ -1,9 +1,3 @@
-// https://github.com/oldbanana12/GeomsParser/blob/master/Geoms.cs
-
-// =================
-// | Version 3.8 |
-// =================
-
 LittleEndian();
 
 #define COLOR_HEADER 0xDFEFAA
@@ -52,13 +46,13 @@ struct SubVerticesChunk
 {
 	uint VertexCountPlusOne;
 
-	if ( ( FTell() + (VertexCountPlusOne * 16) + 32 - 4 ) > header.FileSize )
+	if ( ( FTell() + (VertexCountPlusOne * 16) + 32 - 4 ) > Header.FileSize )
 	{
 		Printf("External geometry reference detected.");
 		return;
 	}
 	
-	uint UnknownUInts[3] <comment="Most often they are 1, 1 and 0.">;
+	uint UnknownUInts[3]; // Most often 1, 1 and 0
 	
 	local long CurrentPos = FTell();
 	
@@ -73,71 +67,62 @@ typedef struct
 {
     enum <ubyte> DATA_CHUNK_TYPE
     {
-        DATA_CHUNK_TYPE_UNKNOWN0 = 0,
-        DATA_CHUNK_TYPE_UNKNOWN1 = 1,
+        DATA_CHUNK_TYPE_UNKNOWN_0 = 0,
+        DATA_CHUNK_TYPE_UNKNOWN_1 = 1,
         DATA_CHUNK_TYPE_INDICES = 2,
-        DATA_CHUNK_TYPE_UNKNOWN3 = 3,
+        DATA_CHUNK_TYPE_UNKNOWN_3 = 3,
         DATA_CHUNK_TYPE_BOUNDING_BOX = 4,
-        DATA_CHUNK_TYPE_UNKNOWN5 = 5,
-        DATA_CHUNK_TYPE_UNKNOWN6 = 6,
-        DATA_CHUNK_TYPE_UNKNOWN7 = 7,
-        DATA_CHUNK_TYPE_UNKNOWN8 = 8,
-        DATA_CHUNK_TYPE_UNKNOWN11 = 11,
+        DATA_CHUNK_TYPE_UNKNOWN_5 = 5,
+        DATA_CHUNK_TYPE_UNKNOWN_6 = 6,
+        DATA_CHUNK_TYPE_UNKNOWN_7 = 7,
+        DATA_CHUNK_TYPE_UNKNOWN_8 = 8,
+        DATA_CHUNK_TYPE_UNKNOWN_11 = 11,
     } Type;
     
     ushort UnknownFlags <format=binary>; // The exe checks if 0x200 isn't set. If it isn't, it does something. mgsvtpp.exe!141bdc492
     ubyte QuadCount;
 } DataChunkInfo <read=(EnumToString(Type))>;
 
-struct DataChunk
+struct DataChunkHeader
 {
-	local long dataChunkRelativeStartPosition = FTell();
+	local uint SelfStartPos = FTell();
 
     DataChunkInfo Info<bgcolor=0x0080ff>;
 
-	if (Info.Type == DATA_CHUNK_TYPE_BOUNDING_BOX) 
+	uint NextBBDataChunkLinesOffset;
+
+	uint Unknown0;
+	uint Unknown1;
+
+	EntryCollisionFlag();
+
+	uint Unknown2;
+	uint Unknown3;
+};
+
+struct DataChunk
+{
+	local long SelfStartPos = FTell();
+
+	DataChunkHeader Header;
+
+	if (Header.Info.Type == DATA_CHUNK_TYPE_BOUNDING_BOX) 
 	{
         SetBackColor(COLOR_BOUNDINGBOXCHUNK);
         {
-            // NEED MORE INVESTIGATION
-	        uint LinesOffsetToNextDataChunk <comment="Number of lines left until next DataChunk (FaceChunk excluded). For the first DataChunk of a Section it's always 0">;
-	        uint Flag;
-        
-            uint UnknownAlways4; Assert(UnknownAlways4 == 4);
-        
-	        EntryCollisionFlag();
-        
-	        uint64 Padding0 <hidden = true>; Assert(Padding0 == 0);
-	        
 	        Float4 BoundingBoxRadii <bgcolor=0xDBC48F, comment="Width/2, Height/2, Depth/2">;
 	        Float4 BoundingBoxCenter <bgcolor=0xDBC48F>;
         }
         SetBackColor(cNone);
 	}
-	else if (Info.Type == DATA_CHUNK_TYPE_INDICES)
+	else if (Header.Info.Type == DATA_CHUNK_TYPE_INDICES)
 	{
-	    uint64 Padding0 <hidden = true>; Assert(Padding0 == 0);
-	    uint Padding1 <hidden = true>; Assert(Padding1 == 0);
-	    
-	    EntryCollisionFlag();
-		
-		// HWL just experimenting. this seems to be correct.
-		// EDIT: no it's not damn it!
-		uint UnknownValueSometimesFloat;
-		
-	    uint LinesOffsetToVertices <comment="The amount of lines left until we hit the sub vertices chunk">;
-    
-	    local uint _i;
-	    for (_i = 0; _i < Info.QuadCount; _i++)
+		local uint _i;
+	    for (_i = 0; _i < Header.Info.QuadCount; _i++)
 	    {
 		    Quad QuadIndices;
 		    short UnknownOffset <comment="Always negative.">;
 	    }
-		
-	    // 16-byte alignment - THIS SKIPS DATA
-        FSeek(((FTell() - 1) | 15) + 1);
-	    
-	    local long posBeforeVertices = FTell();
 	    
 	    // HWL removed a very old if check as of v3.6.5.
     
@@ -148,19 +133,14 @@ struct DataChunk
 	    // to the previous position.
 	    // note: this doesn't happen if the sub vertices chunk is right underneath
 	    // this face chunk.
-	    if (LinesOffsetToVertices > 0)
-	    {
-		    local long subVerticesChunkStartPos = (dataChunkRelativeStartPosition + (LinesOffsetToVertices * 16) );
+		
+	    // if (LinesOffsetToVertices > 0)
+	    // {
+		//     local long subVerticesChunkStartPos = (SelfStartPos + (LinesOffsetToVertices * 16) );
 		    
-		    FSeek(subVerticesChunkStartPos);
-		    SubVerticesChunk Subverticeschunk;
-		    
-		    // HWL very important check so that we don't accidently declare a new data chunk
-		    // inside the sub vertices section.
-		    if (subVerticesChunkStartPos != posBeforeVertices)
-			    // return to the previous position.
-			    FSeek(posBeforeVertices);
-	    }
+		//     FSeek(subVerticesChunkStartPos);
+		//     SubVerticesChunk Subverticeschunk;
+	    // }
 	}
     else
     {
@@ -176,33 +156,58 @@ struct ShortPairs
 
 struct EntryDataChunkDefinition
 {
+	local uint SelfStartPos = FTell();
+
 	byte IsFinalEntry;
 
 	byte DataChunkCount;
 	ushort TotalDataChunksSizeInBytes;
 	
-	ushort OffsetToBoundingBoxOrSubvertices <comment="This offset is from the start of this part">;
-	FSkip(2);
+	ushort BoundingBoxOrSubverticesOffset;
+	ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
 	
-	ushort OffsetToBoundingBoxOrSubvertices <comment="This offset is also from the start of this part">;
-	FSkip(2);
+	ushort BoundingBoxOrSubverticesOffset;
+	ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
 	
-	uint OffsetToSubvertices <comment="NOTE: this offset starts from the beginning of geom properties subsection2, and NOT this specific part">;
-	uint OffsetToBoundingBoxChunk;
+	uint SubverticesOffset;
+	uint FirstDataChunkOffset;
 	uint NextSectionOffset;
 	
 	EntryCollisionFlag();
 };
 
-struct EntryDataChunkDefinitions
+struct DataChunkDefinitions
 {
-    local uint localStartPos = FTell();
+    local uint SelfStartPos;
+    local uint i;
+	local uint nextBBChunkPos;
 
     while(!ReadUByte())
 	{
+        SelfStartPos = FTell();
+
 		EntryDataChunkDefinition Entry;
+
+        FSeek(SelfStartPos + Entry.FirstDataChunkOffset);
+
+        for (i = 0; i < Entry.DataChunkCount; i++)
+        {
+            DataChunk Data;
+			nextBBChunkPos = Data.SelfStartPos + Data.Header.NextBBDataChunkLinesOffset * 16;
+
+			if (Data.Header.NextBBDataChunkLinesOffset != 0)
+			{
+				DataChunk Data;
+				i++;
+
+				FSeek(nextBBChunkPos);
+			}
+        }
+
+        FSeek(SelfStartPos + 32);
 	};
 
+	// Skip last "dummy" data chunk definition
     FSkip(32);
 };
 
@@ -221,10 +226,6 @@ struct EntryMaterialsSection
 		MtrCode32 MaterialNameHash;
 		FSkip(8);
     }
-
-	// Align to nearest 16-byte boundary, then skip 32 more bytes.
-	//FSeek(((FTell() - 1) | 15) + 1);
-	//FSkip(32);
 };
 
 enum GEOM_SECTION_TYPE
@@ -235,11 +236,13 @@ enum GEOM_SECTION_TYPE
 
 struct EntrySubsection1
 {
+	local uint SelfStartPos = FTell();
+
 	Float3 EntryBoundingBoxCorner;
 	ushort ShortPairsTotalSizeInBytes;
 	ushort Section2Count;
 	Float3 EntryBoundingBoxExtents;
-	uint Section2Offset;
+	uint NextSectionOffset;
 
 	Float3 Vector;
 	uint UI1;
@@ -255,6 +258,8 @@ struct EntrySubsection1
 
 struct EntrySecondaryHeaderSection
 {
+	local uint SelfStartPos = FTell();
+
 	StrCode32 Hash1;
 	
 	uint Padding0<hidden=true>; Assert(Padding0 == 0);
@@ -269,109 +274,68 @@ struct EntrySecondaryHeaderSection
 
 struct EntryHeaderSection
 {
-    StrCode32 Hash1;
+	local uint SelfStartPos = FTell();
+
+    StrCode32 UnusedHash0;
 	
 	uint Padding0<hidden=true>; Assert(Padding0 == 0);
 
-	uint UnknownOffset;
+	uint UnknownOffset; // mgsvtpp.exe!141bef7fa
 
 	uint64 Padding1<hidden=true>; Assert(Padding1 == 0);
 	uint Padding2<hidden=true>; Assert(Padding2 == 0);
 	
-	uint SecondaryHeaderOffset; // Size of the header + padding
+	uint NextSectionOffset; // Size of the header + padding
 	
 	int PreviousEntryOffset; // The value stored is positive, but it's for jumping backwards in list.
 	
 	uint NextEntryOffset; // Size of the entry + padding
-};
+}; // mgsvtpp.exe!14cd19a40
 
-struct Entry
-{
-	local long entryRelativeStartPosition = FTell();
-	
-	EntryHeaderSection HeaderSection;
-
-	entryRelativeStartPosition += HeaderSection.SecondaryHeaderOffset;
-	FSeek(entryRelativeStartPosition);
-	EntrySecondaryHeaderSection SecondaryHeaderSection;
-
-	// No more sections in the entry
-	if (SecondaryHeaderSection.NextSectionOffset == 0)
-		break;
-
-	// Next section
-	entryRelativeStartPosition += SecondaryHeaderSection.NextSectionOffset;
-	FSeek(entryRelativeStartPosition);
-	
-	if (SecondaryHeaderSection.Type == GEOM_SECTION_TYPE_0)
-	{
-		EntrySubsection1 Section1<bgcolor=COLOR_ENTRYSUBSECTION1>;
-	
-		// Next section
-		entryRelativeStartPosition += Section1.Section2Offset;
-		FSeek(entryRelativeStartPosition);
-	}
-	
-	local long Subsection2_StartPos = FTell();
-	
-	EntryDataChunkDefinitions Section2<bgcolor=COLOR_CHUNK11>;
-	EntryMaterialsSection Materials<bgcolor=COLOR_ENTRYMATERIALSECTION>;
-	
-	// HWL fix for the padding between Materials and DataChunks.
-	FSeek(Subsection2_StartPos + Section2.Entry[0].OffsetToBoundingBoxChunk);
-	
-    struct DataChunks
-    {
-	    local uint i = 0;
-		
-		local long curDataChunkArrayStartPos = 0;
-	    while(!Section2.Entry[i].IsFinalEntry)
-	    {
-			curDataChunkArrayStartPos = FTell();
-			Printf("Current subsection2: %u\n", i);
-		    for (j = 0; j < Section2.Entry[i].DataChunkCount; j++)
-		    {
-				Printf("Current subsection2 entry: %u\n", j);
-				
-				//Printf("FTell - curDataChunkArrayStartPos = %u\n", FTell() - curDataChunkArrayStartPos);
-				
-				//Printf(">> IF CHECK RESULT: %u < %u\n", FTell() - curDataChunkArrayStartPos, Section2.Entry.TotalDataChunksSizeInBytes);
-				
-				// HWL this is just a temporary if check. it fixes part of the problem of too many
-				// data chunks being declared, but it causes issues elsewhere. in some geom files, such as
-				// afgh_gate002.geom, the opposite issue happens: too few data chunks. and yes, this
-				// specific too few data chunks problem doesn't happen if this if check doesn't exist.
-				if (FTell() - curDataChunkArrayStartPos < Section2.Entry.TotalDataChunksSizeInBytes) 
-					DataChunk Chunk;
-		    }
-		    i++;
-			//Printf("i == %u\n", i);
-	    }
-    } Data;
-};
-
-struct Header
+struct
 {
 	uint Version;
-	uint Size;
+	uint FirstEntryOffset;
 	uint FileSize;
 
 	uint u1 <hidden=true>; Assert(u1 == 7050094);
 
 	uint64 Padding0<hidden=true>; Assert(Padding0 == 0);
 
-	StrCode32 Hash1;
-	StrCode32 Hash2;
-} header <bgcolor=COLOR_HEADER>;
+	StrCode32 UnusedHash0;
+	StrCode32 UnusedHash1;
+} Header <bgcolor=COLOR_HEADER>; // mgsvtpp!141bef7b2
 
-local long startPosition = header.Size;
-local long nextEntry = -1;
-
-while (nextEntry != 0)
+local uint DefinitionStartPos = Header.FirstEntryOffset;
+do
 {
-	startPosition = FTell();
-	Entry entry <bgcolor=COLOR_ENTRY>;
-	nextEntry = entry.HeaderSection.NextEntryOffset;
+	FSeek(DefinitionStartPos);
 
-	FSeek(startPosition + nextEntry);
-}
+	struct
+	{
+		local uint SelfStartPos = FTell();
+		
+		EntryHeaderSection HeaderSection;
+		
+		FSeek(HeaderSection.SelfStartPos + HeaderSection.NextSectionOffset);
+
+		EntrySecondaryHeaderSection SecondaryHeaderSection;
+
+		if (SecondaryHeaderSection.NextSectionOffset == 0)
+			break;
+		FSeek(SecondaryHeaderSection.SelfStartPos + SecondaryHeaderSection.NextSectionOffset);
+		
+		if (SecondaryHeaderSection.Type == GEOM_SECTION_TYPE_0)
+		{
+			EntrySubsection1 Section1<bgcolor=COLOR_ENTRYSUBSECTION1>;
+		
+			FSeek(Section1.SelfStartPos + Section1.NextSectionOffset);
+		}
+		
+		DataChunkDefinitions DataChunks<bgcolor=COLOR_CHUNK11>;
+		
+		EntryMaterialsSection Materials<bgcolor=COLOR_ENTRYMATERIALSECTION>;
+	} CollisionDefinition <bgcolor=COLOR_ENTRY>;
+
+	DefinitionStartPos = Header.FirstEntryOffset + CollisionDefinition.HeaderSection.NextEntryOffset;
+} while (CollisionDefinition.HeaderSection.NextEntryOffset != 0);

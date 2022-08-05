@@ -46,8 +46,8 @@ typedef struct
     int PreviousEntryOffset; // 0 means no previous entries
     int NextEntryOffset; // 0 means no more entries
     uint ScalarSubParamOffset; // 0 means no subparams
-    uint padding2<hidden=true>; Assert(padding2 == 0);
-    uint padding3<hidden=true>; Assert(padding3 == 0);
+    uint Padding0<hidden=true>; Assert(Padding0 == 0);
+    uint Padding1<hidden=true>; Assert(Padding1 == 0);
 } SectionMetadata <read=Str("%s", HashLookup(NameHash))>;
 
 struct
