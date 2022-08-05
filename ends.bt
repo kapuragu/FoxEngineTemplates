@@ -1,0 +1,86 @@
+//ENDS - Ending Credits
+//By RLC, inspired by the work of Modders' Heaven!
+struct Header
+{
+    char header[7]; // ENDSwin, similar header chars to fova, same creator?
+    byte version;
+} header <bgcolor=0x000000>;
+
+local int pos = FTell();
+struct Section0
+{
+    uint offset0;
+    uint count0;
+    pos = FTell();
+    FSeek(offset0);
+    struct Array0
+    {
+        uint64 hash;
+        uint unknown0;
+        uint unknown1;
+    }array0[count0];
+    FSeek(pos);
+} section0 <bgcolor=0xFF0000>;
+
+struct Section1
+{
+    uint offset1;
+    uint count1;
+    pos = FTell();
+    FSeek(offset1);
+    struct Array1
+    {
+        uint unknown0;
+        uint unknown1;
+    }array1[count1];
+    FSeek(pos);
+} section1 <bgcolor=0x00FF00>;
+
+struct Section2
+{
+    uint offset2;
+    uint count2;
+    pos = FTell();
+    FSeek(offset2);
+
+    struct Array2
+    {
+        uint64 hash0;
+        uint64 hash1;
+        int unknown0;
+        int unknown1;
+        int unknown2;
+        int unknown3;
+    }array2[count2];
+    FSeek(pos);
+} section2 <bgcolor=0x0000FF>;
+
+struct Section3
+{
+    uint offset3;
+    uint count3;
+    pos = FTell();
+    FSeek(offset3);
+    struct Array3
+    {
+        uint64 hash;
+        int unknown0;
+        byte u0; byte u1; byte u2; byte u3;
+        int unknown2;
+        int unknown3;
+    }array3[count3];
+    FSeek(pos);
+} section3 <bgcolor=0x00FFFF>;
+
+struct Section4
+{
+    uint offset4;
+    uint count4;
+    pos = FTell();
+    FSeek(offset4);
+    struct Array4
+    {
+        
+    }array4[count4];
+    FSeek(pos);
+} section4 <bgcolor=0xFF00FF>;

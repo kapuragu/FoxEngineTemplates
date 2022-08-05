@@ -67,7 +67,7 @@ if (header.version == 3) // if TPP
 			
 				// Byte 0
 				ubyte flag0 : 4; //?
-				ubyte callType : 4;
+				ubyte noiseType : 4;
 				// if 0, short real time noise. 
 				// if 2, haves espionage radio noise. 
 				// if 4, optional radio noise, 
@@ -94,9 +94,10 @@ if (header.version == 3) // if TPP
 				{
 					uint voiceId;	// Sometimes isn't a voice clip id, but a variationSetName; check section 3
 					//fnv321: very often, if not always, is just tolower of the subtitle/msgId: ie abcd1000_101010
-					ubyte flag0;	// Can be 255/invalid
+					ubyte dialogueEventIndex;	// Can be 255/invalid
 					ubyte voiceTypeIndex; // Can be 255/invalid
-					ubyte flag6;
+					ubyte IsVariationSet : 4;
+					ubyte pauseLength : 4;
 						
 				} voiceClipSubEntries[labelClipCount] <optimize=false>;
 				

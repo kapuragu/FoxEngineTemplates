@@ -1,0 +1,54 @@
+// Used for the Music Segment object
+
+struct MusicNodeParams
+{	
+	uint children_count;
+	uint children[children_count];
+	double gridPeriod, gridOffset;
+	float tempo;
+	ubyte timeSigNumBeatsBar, timeSigBeatValue;
+	ubyte unknown <hidden=true>; // if it's != 0, WWise modifies a meter info object through
+					// CAkMusicNode::MeterInfo() and does some beat, bar & grid duration
+					// calculations, as well as a grid offset
+
+	uint numOfStingers;
+	if (numOfStingers > 0)
+	{
+		struct Stinger
+		{
+			uint triggerID, segmentID;
+			enum <uint> SyncPlayAt
+			{
+				SyncTypeImmediate,
+				SyncTypeNextGrid,
+				SyncTypeNextBar,
+				SyncTypeNextBeat,
+				SyncTypeNextMarker,
+				SyncTypeNextUserMarker,
+				SyncTypeEntryMarker,
+				SyncTypeExitMarker
+			} syncplayat;
+			uint cueFilterHash, dontRepeatTime, numSegmentLookAhead;
+		} stingers[numOfStingers];
+	}
+};
+
+struct Markers
+{
+	uint markerCount;
+	local int i;
+	for (i = 0; i < markerCount; i++)
+	{
+		struct Marker
+		{
+			uint ID;
+			double position;
+
+			uint strSize;
+			if (strSize != 0)
+			{
+				char markerName[strSize];
+			}
+		} marker;
+	}
+};

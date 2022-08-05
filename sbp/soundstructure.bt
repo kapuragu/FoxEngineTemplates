@@ -65,8 +65,8 @@ struct SoundStructure
 	uint parentObjectId <bgcolor=0xDED272>;
 	
 	// for printing to console
-	Printf("Parent ID: %u", parentObjectId);
-	Printf("\n");
+	Printf("Parent ID: %u\n", parentObjectId);
+	Printf("Output Bus ID: %u\n", outputBusId);
 	
 	Boolean overrideSettingsForPlaybackPriority;
 	Boolean activateOffsetPriorityByDistanceSetting;
@@ -399,8 +399,14 @@ struct SoundStructure
 					Make_Up_Gain = 0x24
 				} y_axis_effecttype;
 				
-				uint unknown;
-				ubyte unkn_byte;
+				uint curveID;
+				enum <ubyte> AkCurveScaling
+				{
+					AkCurveScaling_None,
+					AkCurveScaling_dB,
+					AkCurveScaling_Log,
+					AkCurveScaling_dBToLin
+				} curve_scaling;
 				
 				ushort num_of_points;
 				local uint curNumPoints;
@@ -430,4 +436,5 @@ struct SoundStructure
 			} rtpc_effect;
 		}
 	} rtpc;
+	uint bank_feedback_ID <comment="Unknown purpose, it's only used if CAkBankMgr::BankHasFeedback() returns true and this uint is != 0">;
 };

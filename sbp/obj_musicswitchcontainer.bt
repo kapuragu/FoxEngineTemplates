@@ -82,6 +82,7 @@ struct Transitions
 	} destinationsettings;
 	
 	Boolean use_transition_segment;
+	Printf("USE_TRANSITION_SEGMENT: %u\n", use_transition_segment);
 	if (use_transition_segment == is_true)
 	{
 		struct TransitionSegment
