@@ -32,14 +32,59 @@ typedef struct
 	float w;
 } Float4 <read=Str("(%g, %g, %g, %g)", x, y, z, w)>;
 
-typedef struct
-{
-	ushort indices[4];
-} Quad <read=Str("(%d, %d, %d, %d)", indices[0], indices[1], indices[2], indices[3])>;
-
 void EntryCollisionFlag()
 {
 	uint64 CollisionFlags<format=binary, bgcolor=0xFF00FF, fgcolor=0x00FF00>;
+}
+
+enum <byte> DATA_CHUNK_TYPE
+{
+	DATA_CHUNK_TYPE_UNKNOWN_0 = 0,
+	DATA_CHUNK_TYPE_UNKNOWN_1 = 1,
+	DATA_CHUNK_TYPE_INDICES = 2,
+	DATA_CHUNK_TYPE_UNKNOWN_3 = 3,
+	DATA_CHUNK_TYPE_BOUNDING_BOX = 4,
+	DATA_CHUNK_TYPE_UNKNOWN_5 = 5,
+	DATA_CHUNK_TYPE_UNKNOWN_6 = 6,
+	DATA_CHUNK_TYPE_UNKNOWN_7 = 7,
+	DATA_CHUNK_TYPE_UNKNOWN_8 = 8,
+	DATA_CHUNK_TYPE_UNKNOWN_11 = 11,
+};
+
+uint GetDataChunkDataPerEntrySize(DATA_CHUNK_TYPE type)
+{
+	switch (type)
+	{
+		case DATA_CHUNK_TYPE_UNKNOWN_0:
+			return 0x30;
+		case DATA_CHUNK_TYPE_UNKNOWN_1:
+			return 0x30;
+		case DATA_CHUNK_TYPE_INDICES:
+			return 0xA;
+		case DATA_CHUNK_TYPE_UNKNOWN_3:
+			return 0x60;
+		case DATA_CHUNK_TYPE_BOUNDING_BOX:
+			return 0x20;
+		case DATA_CHUNK_TYPE_UNKNOWN_5:
+			return 0x80;
+		case DATA_CHUNK_TYPE_UNKNOWN_6:
+			return 0;
+		case DATA_CHUNK_TYPE_UNKNOWN_7:
+			return 0;
+		case DATA_CHUNK_TYPE_UNKNOWN_8:
+			return 0x8;
+		case 9:
+			break;
+		case 10:
+			break;
+		case DATA_CHUNK_TYPE_UNKNOWN_11:
+			return 0x10;
+		default:
+			break;
+	}
+
+	Assert(false);
+	return -1;
 }
 
 struct SubVerticesChunk
@@ -62,51 +107,53 @@ struct SubVerticesChunk
 	Float4 Vertices[VertexCountPlusOne - 1];
 };
 
-// Slightly incorrect because this does not flip based on endian-ness.
-typedef struct
-{
-    enum <ubyte> DATA_CHUNK_TYPE
-    {
-        DATA_CHUNK_TYPE_UNKNOWN_0 = 0,
-        DATA_CHUNK_TYPE_UNKNOWN_1 = 1,
-        DATA_CHUNK_TYPE_INDICES = 2,
-        DATA_CHUNK_TYPE_UNKNOWN_3 = 3,
-        DATA_CHUNK_TYPE_BOUNDING_BOX = 4,
-        DATA_CHUNK_TYPE_UNKNOWN_5 = 5,
-        DATA_CHUNK_TYPE_UNKNOWN_6 = 6,
-        DATA_CHUNK_TYPE_UNKNOWN_7 = 7,
-        DATA_CHUNK_TYPE_UNKNOWN_8 = 8,
-        DATA_CHUNK_TYPE_UNKNOWN_11 = 11,
-    } Type;
-    
-    ushort UnknownFlags <format=binary>; // The exe checks if 0x200 isn't set. If it isn't, it does something. mgsvtpp.exe!141bdc492
-    ubyte QuadCount;
-} DataChunkInfo <read=(EnumToString(Type))>;
-
 struct DataChunkHeader
 {
 	local uint SelfStartPos = FTell();
 
-    DataChunkInfo Info<bgcolor=0x0080ff>;
+	BitfieldDisablePadding();
+    DATA_CHUNK_TYPE Type : 4 <bgcolor=0x0080ff>;
+
+	ubyte Padding0 : 4 <hidden = true>; Assert(Padding0 == 0);
+
+    enum <ushort> DATA_CHUNK_FLAGS
+    {
+        DATA_CHUNK_FLAGS_PRESUMPTIVE_NO_PAYLOAD = 0x2, // mgsvtpp.exe!141bdc498 // info & 0x200
+        DATA_CHUNK_FLAGS_UNKNOWN1 = 0x20,              // mgsvtpp.exe!141bdc863, 141bd8041 // info >> 0xd, info & 0x2000
+        DATA_CHUNK_FLAGS_UNKNOWN4 = 0x80,              // mgsvtpp.exe!141bd7e30 // info & 0x8000
+        DATA_CHUNK_FLAGS_UNKNOWN3 = 0x200,             // mgsvtpp.exe!141bdc7a7 // info >> 0x11
+        DATA_CHUNK_FLAGS_UNKNOWN2 = 0x800,             // mgsvtpp.exe!141bdc830 // info >> 0x13
+    } UnknownFlags : 16 <bgcolor=0x0080ff>;  // mgsvtpp.exe!141bdc492
+	Assert
+	(
+		((UnknownFlags & DATA_CHUNK_FLAGS_PRESUMPTIVE_NO_PAYLOAD) == 0) && 
+		((UnknownFlags & DATA_CHUNK_FLAGS_UNKNOWN1) == 0) &&
+		((UnknownFlags & DATA_CHUNK_FLAGS_UNKNOWN4) == 0) &&
+		//((UnknownFlags & DATA_CHUNK_FLAGS_UNKNOWN3) == 0) &&
+		((UnknownFlags & DATA_CHUNK_FLAGS_UNKNOWN2) == 0)
+	);
+
+    ubyte EntryCount : 8 <bgcolor=0x0080ff>;
+	BitfieldEnablePadding();
 
 	uint NextBBDataChunkLinesOffset;
 
 	uint Unknown0;
-	uint Unknown1;
+	uint NextIndexDataChunkLinesOffset;
 
 	EntryCollisionFlag();
 
 	uint Unknown2;
-	uint Unknown3;
+	uint VertexDataLinesOffset;
 };
 
-struct DataChunk
+typedef struct
 {
 	local long SelfStartPos = FTell();
 
 	DataChunkHeader Header;
 
-	if (Header.Info.Type == DATA_CHUNK_TYPE_BOUNDING_BOX) 
+	if (Header.Type == DATA_CHUNK_TYPE_BOUNDING_BOX) 
 	{
         SetBackColor(COLOR_BOUNDINGBOXCHUNK);
         {
@@ -115,38 +162,54 @@ struct DataChunk
         }
         SetBackColor(cNone);
 	}
-	else if (Header.Info.Type == DATA_CHUNK_TYPE_INDICES)
+	else if (Header.Type == DATA_CHUNK_TYPE_INDICES)
 	{
-		local uint _i;
-	    for (_i = 0; _i < Header.Info.QuadCount; _i++)
+		local uint i;
+	    for (i = 0; i < Header.EntryCount; i++)
 	    {
-		    Quad QuadIndices;
-		    short UnknownOffset <comment="Always negative.">;
+			struct
+			{
+				short Offset0;
+				short Offset1;
+				short Offset2;
+				short Offset3;
+				short Offset4; // Seemingly always negative.
+			} IndexSet <read=Str("%d, %d, %d, %d, %d", this.Offset0, this.Offset1, this.Offset2, this.Offset3, this.Offset4)>;
 	    }
-	    
-	    // HWL removed a very old if check as of v3.6.5.
-    
-	    // HWL a cleaner implementation of the sub vertices chunk, as of v3.6.3.
-	    // instead of checking if the number of vertices is too ridiculous, we
-	    // instead use the line_offset_to_vertices variable. then, the template
-	    // "snaps" to that sub vertices chunk, and after it's done, it returns
-	    // to the previous position.
-	    // note: this doesn't happen if the sub vertices chunk is right underneath
-	    // this face chunk.
 		
-	    // if (LinesOffsetToVertices > 0)
-	    // {
-		//     local long subVerticesChunkStartPos = (SelfStartPos + (LinesOffsetToVertices * 16) );
-		    
-		//     FSeek(subVerticesChunkStartPos);
-		//     SubVerticesChunk Subverticeschunk;
-	    // }
+		if ((Header.VertexDataLinesOffset & 0xfffffff) != 0)
+		{
+			FSeek(SelfStartPos + Header.VertexDataLinesOffset * 16);
+
+			struct
+			{
+				uint VertexLinesCount;
+				uint QuadVerticesOffset;
+				uint Unknown0;
+				uint QuadOriginPositionOffset;
+				uint PayloadOffset;
+				FSkip(12);
+			} VertexDataHeader;
+
+			if ((Header.UnknownFlags & DATA_CHUNK_FLAGS_UNKNOWN4) == 0)
+			{
+
+			}
+			else if (VertexDataHeader.VertexDataOffset == 0)
+			{
+
+			}
+			else
+			{
+				Assert(false);
+			}
+		}
 	}
     else
     {
         Assert(false, "Unknown DataChunk Type Detected!");
     }
-};
+} DataChunk <read=Str("%s, %d", EnumToString(this.Header.Type), this.Header.UnknownFlags)>;
 
 struct ShortPairs
 {
@@ -176,7 +239,7 @@ struct EntryDataChunkDefinition
 	EntryCollisionFlag();
 };
 
-struct DataChunkDefinitions
+struct EntryDataSection
 {
     local uint SelfStartPos;
     local uint i;
@@ -190,19 +253,52 @@ struct DataChunkDefinitions
 
         FSeek(SelfStartPos + Entry.FirstDataChunkOffset);
 
-        for (i = 0; i < Entry.DataChunkCount; i++)
-        {
-            DataChunk Data;
-			nextBBChunkPos = Data.SelfStartPos + Data.Header.NextBBDataChunkLinesOffset * 16;
+		// I'm going to have to stare at this for longer to understand what the heck is going on here.
+		struct
+		{
+			local uint64 ptrs[6];
+			ptrs[0] = SelfStartPos + Entry.FirstDataChunkOffset;
+			local uint j = 1;
+			local uint j_minusOne;
+			local int iteratorIndex = 0;
+			local int iteratorIndex_minusOne;
+			local uint64 ptr;
 
-			if (Data.Header.NextBBDataChunkLinesOffset != 0)
+			do
 			{
-				DataChunk Data;
-				i++;
+				ptr = ptrs[iteratorIndex];
 
-				FSeek(nextBBChunkPos);
-			}
-        }
+				j_minusOne = j - 1;
+				iteratorIndex_minusOne = iteratorIndex - 1;
+
+				FSeek(ptr + 4);
+				if (ReadUInt() != 0) // if (Data.Header.NextBBDataChunkLinesOffset != 0)
+				{
+					ptrs[j - 1] = ptr + ReadUInt() * 16;
+
+					j_minusOne = j;
+					iteratorIndex_minusOne = iteratorIndex;
+				}
+			
+				j = j_minusOne;
+				iteratorIndex = iteratorIndex_minusOne;
+				FSeek(ptr);
+				if ((ReadUInt() & 0x200) == 0) // if (Data.Header.Info.UnknownFlags & DATA_CHUNK_FLAGS_PRESUMPTIVE_NO_PAYLOAD == 0)
+				{
+					DataChunk Data;
+
+					if (Data.Header.NextIndexDataChunkLinesOffset != 0)
+					{
+						if (true)
+						{
+							j = j_minusOne + 1;
+							iteratorIndex = iteratorIndex_minusOne + 1;
+							ptrs[j_minusOne] = ptr + Data.Header.NextIndexDataChunkLinesOffset * 16;
+						}
+					}
+				}
+			} while (j > 0);
+		} DataChunks;
 
         FSeek(SelfStartPos + 32);
 	};
@@ -280,7 +376,7 @@ struct EntryHeaderSection
 	
 	uint Padding0<hidden=true>; Assert(Padding0 == 0);
 
-	uint UnknownOffset; // mgsvtpp.exe!141bef7fa
+	uint UnknownFlag; // mgsvtpp.exe!141bef7fa
 
 	uint64 Padding1<hidden=true>; Assert(Padding1 == 0);
 	uint Padding2<hidden=true>; Assert(Padding2 == 0);
@@ -332,10 +428,10 @@ do
 			FSeek(Section1.SelfStartPos + Section1.NextSectionOffset);
 		}
 		
-		DataChunkDefinitions DataChunks<bgcolor=COLOR_CHUNK11>;
+		EntryDataSection EntryData<bgcolor=COLOR_CHUNK11>;
 		
 		EntryMaterialsSection Materials<bgcolor=COLOR_ENTRYMATERIALSECTION>;
 	} CollisionDefinition <bgcolor=COLOR_ENTRY>;
 
-	DefinitionStartPos = Header.FirstEntryOffset + CollisionDefinition.HeaderSection.NextEntryOffset;
+	DefinitionStartPos += CollisionDefinition.HeaderSection.NextEntryOffset;
 } while (CollisionDefinition.HeaderSection.NextEntryOffset != 0);
