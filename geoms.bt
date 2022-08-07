@@ -2,7 +2,7 @@ LittleEndian();
 
 #define COLOR_HEADER 0xDFEFAA
 #define COLOR_ENTRY 0x7DE39E
-#define COLOR_ENTRYSUBSECTION1 0x00AAFF
+#define COLOR_ENTRYBVHSECTION 0x00AAFF
 #define COLOR_CHUNK11 0xAED2E8
 #define COLOR_ENTRYMATERIALSECTION 0xB9E8DD
 #define COLOR_BOUNDINGBOXCHUNK 0xF7F205
@@ -209,12 +209,6 @@ typedef struct
     }
 } DataChunk <read=Str("%s, %d", EnumToString(this.Header.Type), this.Header.Flags)>;
 
-struct ShortPairs
-{
-	short SS1;
-	short SS2;
-};
-
 struct EntryDataChunkDefinition
 {
 	local uint SelfStartPos = FTell();
@@ -328,13 +322,13 @@ enum GEOM_ENTRY_TYPE
 	GEOM_ENTRY_TYPE_6 = 6,
 };
 
-struct EntrySubsection1
+struct EntryBVHSection
 {
 	local uint SelfStartPos = FTell();
 
 	Float3 EntryBoundingBoxCorner; // Mysterious. mgsvtpp.exe!141b95c89
 
-	ushort ShortPairsTotalSizeInBytes;
+	ushort GridTotalSizeInBytes;
 	ushort DataChunksDefinitionCount;
 
 	Float3 EntryBoundingBoxExtents;
@@ -342,15 +336,29 @@ struct EntrySubsection1
 	uint NextSectionOffset;
 
 	Float3 Vector;
-	uint UI1;
 	
-	uint UI2;
-	uint UI2;
+	uint BlockCountX;
+	uint BlockCountY;
+	uint BlockCountZ;
 	
 	EntryCollisionFlag();
 	
-	// HWL are they actually pairs?
-	ShortPairs Pairs[ShortPairsTotalSizeInBytes / sizeof(ShortPairs)];
+	struct
+	{
+		ushort NodeOffsets[BlockCountX * BlockCountY * BlockCountZ] <hidden = true>;
+
+		local uint i;
+		local uint j;
+		for (i = 0; i < BlockCountX * BlockCountY * BlockCountZ; i++)
+		{
+			struct
+			{
+				ushort EntryCount <hidden = true>;
+				for (j = 0; j < EntryCount; j++)
+					ushort DataChunkDefinitionIndex;
+			} Node;
+		}
+	} Nodes;
 };
 
 struct EntrySecondaryHeaderSection
@@ -429,9 +437,9 @@ do
 		
 		if (SecondaryHeaderSection.Type == GEOM_ENTRY_TYPE_0)
 		{
-			EntrySubsection1 Section1<bgcolor=COLOR_ENTRYSUBSECTION1>;
+			EntryBVHSection BVHSection<bgcolor=COLOR_ENTRYBVHSECTION>;
 		
-			FSeek(Section1.SelfStartPos + Section1.NextSectionOffset);
+			FSeek(BVHSection.SelfStartPos + BVHSection.NextSectionOffset);
 		}
 		
 		EntryDataSection EntryData<bgcolor=COLOR_CHUNK11>;
