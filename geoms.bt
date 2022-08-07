@@ -87,26 +87,6 @@ uint GetDataChunkDataPerEntrySize(DATA_CHUNK_TYPE type)
 	return -1;
 }
 
-struct SubVerticesChunk
-{
-	uint VertexCountPlusOne;
-
-	if ( ( FTell() + (VertexCountPlusOne * 16) + 32 - 4 ) > Header.FileSize )
-	{
-		Printf("External geometry reference detected.");
-		return;
-	}
-	
-	uint UnknownUInts[3]; // Most often 1, 1 and 0
-	
-	local long CurrentPos = FTell();
-	
-	uint VertexOffset;
-	FSeek( CurrentPos + VertexOffset );
-	
-	Float4 Vertices[VertexCountPlusOne - 1];
-};
-
 struct DataChunkHeader
 {
 	local uint SelfStartPos = FTell();
@@ -118,20 +98,18 @@ struct DataChunkHeader
 
     enum <ushort> DATA_CHUNK_FLAGS
     {
-        DATA_CHUNK_FLAGS_PRESUMPTIVE_NO_PAYLOAD = 0x2, // mgsvtpp.exe!141bdc498 // info & 0x200
-        DATA_CHUNK_FLAGS_UNKNOWN1 = 0x20,              // mgsvtpp.exe!141bdc863, 141bd8041 // info >> 0xd, info & 0x2000
-        DATA_CHUNK_FLAGS_UNKNOWN4 = 0x80,              // mgsvtpp.exe!141bd7e30 // info & 0x8000
-        DATA_CHUNK_FLAGS_UNKNOWN3 = 0x200,             // mgsvtpp.exe!141bdc7a7 // info >> 0x11
-        DATA_CHUNK_FLAGS_UNKNOWN2 = 0x800,             // mgsvtpp.exe!141bdc830 // info >> 0x13
-    } UnknownFlags : 16 <bgcolor=0x0080ff>;  // mgsvtpp.exe!141bdc492
-	Assert
-	(
-		((UnknownFlags & DATA_CHUNK_FLAGS_PRESUMPTIVE_NO_PAYLOAD) == 0) && 
-		((UnknownFlags & DATA_CHUNK_FLAGS_UNKNOWN1) == 0) &&
-		((UnknownFlags & DATA_CHUNK_FLAGS_UNKNOWN4) == 0) &&
-		//((UnknownFlags & DATA_CHUNK_FLAGS_UNKNOWN3) == 0) &&
-		((UnknownFlags & DATA_CHUNK_FLAGS_UNKNOWN2) == 0)
-	);
+        DATA_CHUNK_FLAGS_PRESUMPTIVE_NO_PAYLOAD = 0x2, 						   // mgsvtpp.exe!141bdc498 // info & 0x200
+        DATA_CHUNK_FLAGS_UNKNOWN1 = 0x20,              						   // mgsvtpp.exe!141bdc863, 141bd8041 // info >> 0xd, info & 0x2000
+        DATA_CHUNK_FLAGS_PRESUMPTIVE_USE_FMDL_VERTEX_DATA = 0x80,              // mgsvtpp.exe!141bd7e30 // info & 0x8000
+        DATA_CHUNK_FLAGS_UNKNOWN3 = 0x200,             						   // mgsvtpp.exe!141bdc7a7 // info >> 0x11
+        DATA_CHUNK_FLAGS_UNKNOWN2 = 0x800,             						   // mgsvtpp.exe!141bdc830 // info >> 0x13
+    } Flags : 16 <bgcolor=0x0080ff>;  // mgsvtpp.exe!141bdc492
+	if (Flags & DATA_CHUNK_FLAGS_UNKNOWN1)
+		Printf("A DataChunk %d has flag DATA_CHUNK_FLAGS_UNKNOWN1. Its functionality is unsupported.\n", SelfStartPos);
+	if (Flags & DATA_CHUNK_FLAGS_UNKNOWN3)
+		Printf("A DataChunk %d has flag DATA_CHUNK_FLAGS_UNKNOWN3. Its functionality is unsupported.\n", SelfStartPos);
+	if (Flags & DATA_CHUNK_FLAGS_UNKNOWN2)
+		Printf("A DataChunk %d has flag DATA_CHUNK_FLAGS_UNKNOWN2. Its functionality is unsupported.\n", SelfStartPos);
 
     ubyte EntryCount : 8 <bgcolor=0x0080ff>;
 	BitfieldEnablePadding();
@@ -183,25 +161,45 @@ typedef struct
 
 			struct
 			{
-				uint VertexLinesCount;
-				uint QuadVerticesOffset;
-				uint Unknown0;
-				uint QuadOriginPositionOffset;
-				uint PayloadOffset;
-				FSkip(12);
+				uint VertexCount;
+				uint VerticesIndexOffset;
+
+				uint Unknown0Or1; Assert(Unknown0Or1 == 0 || Unknown0Or1 == 1);
+
+				uint OriginIndex;
+
+				int64 VertexDataOffset; // This gets patched at runtime to use a FMDL pointer.
+				
+				uint FmdlVertexDataOffset;
+
+				uint Padding0 <hidden = true>; Assert(Padding0 == 0);
 			} VertexDataHeader;
 
-			if ((Header.UnknownFlags & DATA_CHUNK_FLAGS_UNKNOWN4) == 0)
+			// mgsvtpp.exe!141bd7e9c
+			if ((Header.Flags & DATA_CHUNK_FLAGS_PRESUMPTIVE_USE_FMDL_VERTEX_DATA) == 0)
 			{
+				Float4 VertexData[VertexDataHeader.VertexCount];
 
+				// origin = VertexData[VertexDataHeader.OriginIndex]
+				// A: VertexData[VertexDataHeader.VerticesIndexOffset + IndexSet.Offset0] + origin
+				// B: VertexData[VertexDataHeader.VerticesIndexOffset + IndexSet.Offset1] + origin
+				// C: VertexData[VertexDataHeader.VerticesIndexOffset + IndexSet.Offset2] + origin
+				// D: VertexData[VertexDataHeader.VerticesIndexOffset + IndexSet.Offset3] + origin
 			}
-			else if (VertexDataHeader.VertexDataOffset == 0)
+			else if (VertexDataHeader.VertexDataOffset == 0 && false /* FMDL vertex pointer is null*/)
 			{
-
+				// A: float4(0, -10000, 0, 0)
+				// B: float4(0, -10000, 1, 0)
+				// C: float4(1, -10000, 1, 0)
+				// D: float4(1, -10000, 0, 0)
 			}
 			else
 			{
-				Assert(false);
+				// VertexData points to the VertexDataHeader.FmdlVertexDataOffset-adjusted fmdl data.
+				// A: VertexData[IndexSet.Offset0]
+				// B: VertexData[IndexSet.Offset1]
+				// C: VertexData[IndexSet.Offset2]
+				// D: VertexData[IndexSet.Offset3]
 			}
 		}
 	}
@@ -209,7 +207,7 @@ typedef struct
     {
         Assert(false, "Unknown DataChunk Type Detected!");
     }
-} DataChunk <read=Str("%s, %d", EnumToString(this.Header.Type), this.Header.UnknownFlags)>;
+} DataChunk <read=Str("%s, %d", EnumToString(this.Header.Type), this.Header.Flags)>;
 
 struct ShortPairs
 {
@@ -226,13 +224,13 @@ struct EntryDataChunkDefinition
 	byte DataChunkCount;
 	ushort TotalDataChunksSizeInBytes;
 	
-	ushort BoundingBoxOrSubverticesOffset;
+	ushort BoundingBoxOrSubverticesOffset0;
 	ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
 	
-	ushort BoundingBoxOrSubverticesOffset;
-	ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
+	ushort BoundingBoxOrSubverticesOffset1;
+	ushort Padding1 <hidden = true>; Assert(Padding1 == 0);
 	
-	uint SubverticesOffset;
+	uint VerticesOffset;
 	uint FirstDataChunkOffset;
 	uint NextSectionOffset;
 	
@@ -283,7 +281,7 @@ struct EntryDataSection
 				j = j_minusOne;
 				iteratorIndex = iteratorIndex_minusOne;
 				FSeek(ptr);
-				if ((ReadUInt() & 0x200) == 0) // if (Data.Header.Info.UnknownFlags & DATA_CHUNK_FLAGS_PRESUMPTIVE_NO_PAYLOAD == 0)
+				if ((ReadUInt() & 0x200) == 0) // if (Data.Header.Info.Flags & DATA_CHUNK_FLAGS_PRESUMPTIVE_NO_PAYLOAD == 0)
 				{
 					DataChunk Data;
 
@@ -324,20 +322,23 @@ struct EntryMaterialsSection
     }
 };
 
-enum GEOM_SECTION_TYPE
+enum GEOM_ENTRY_TYPE
 {
-	GEOM_SECTION_TYPE_0 = 0,
-	GEOM_SECTION_TYPE_6 = 6,
+	GEOM_ENTRY_TYPE_0 = 0,
+	GEOM_ENTRY_TYPE_6 = 6,
 };
 
 struct EntrySubsection1
 {
 	local uint SelfStartPos = FTell();
 
-	Float3 EntryBoundingBoxCorner;
+	Float3 EntryBoundingBoxCorner; // Mysterious. mgsvtpp.exe!141b95c89
+
 	ushort ShortPairsTotalSizeInBytes;
-	ushort Section2Count;
+	ushort DataChunksDefinitionCount;
+
 	Float3 EntryBoundingBoxExtents;
+
 	uint NextSectionOffset;
 
 	Float3 Vector;
@@ -356,16 +357,21 @@ struct EntrySecondaryHeaderSection
 {
 	local uint SelfStartPos = FTell();
 
-	StrCode32 Hash1;
+	StrCode32 UnusedHash0;
 	
 	uint Padding0<hidden=true>; Assert(Padding0 == 0);
 	
-	GEOM_SECTION_TYPE Type;
-	Assert((SecondaryHeaderSection.Type == GEOM_SECTION_TYPE_0) || (SecondaryHeaderSection.Type == GEOM_SECTION_TYPE_6), "Unknown Entry section detected!");
+	GEOM_ENTRY_TYPE Type;
+	Assert((SecondaryHeaderSection.Type == GEOM_ENTRY_TYPE_0) || (SecondaryHeaderSection.Type == GEOM_ENTRY_TYPE_6), "Unknown Entry section detected!");
 	
     uint NextSectionOffset;
 	
-	uint SizeOfRemainingEntryData;
+	uint RemainingEntryDataSize;
+	
+	uint64 Padding1<hidden=true>; Assert(Padding1 == 0);
+	uint Padding2<hidden=true>; Assert(Padding2 == 0);
+
+	uint UnusedOffset<hidden=true>; Assert(UnusedOffset == 0);
 };
 
 struct EntryHeaderSection
@@ -376,7 +382,7 @@ struct EntryHeaderSection
 	
 	uint Padding0<hidden=true>; Assert(Padding0 == 0);
 
-	uint UnknownFlag; // mgsvtpp.exe!141bef7fa
+	uint UnknownFlag0x10Or0x40; Assert(UnknownFlag0x10Or0x40 == 0x10 || UnknownFlag0x10Or0x40 == 0x40); // mgsvtpp.exe!141bef7fa
 
 	uint64 Padding1<hidden=true>; Assert(Padding1 == 0);
 	uint Padding2<hidden=true>; Assert(Padding2 == 0);
@@ -421,7 +427,7 @@ do
 			break;
 		FSeek(SecondaryHeaderSection.SelfStartPos + SecondaryHeaderSection.NextSectionOffset);
 		
-		if (SecondaryHeaderSection.Type == GEOM_SECTION_TYPE_0)
+		if (SecondaryHeaderSection.Type == GEOM_ENTRY_TYPE_0)
 		{
 			EntrySubsection1 Section1<bgcolor=COLOR_ENTRYSUBSECTION1>;
 		
