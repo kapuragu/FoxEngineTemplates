@@ -216,7 +216,7 @@ struct EntryDataChunkDefinition
 	byte IsFinalEntry;
 
 	byte DataChunkCount;
-	ushort TotalDataChunksSizeInBytes;
+	ushort DataChunksTotalDataSize;
 	
 	ushort BoundingBoxOrSubverticesOffset0;
 	ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
@@ -328,8 +328,8 @@ struct EntryBVHSection
 
 	Float3 EntryBoundingBoxCorner; // Mysterious. mgsvtpp.exe!141b95c89
 
-	ushort GridTotalSizeInBytes;
-	ushort DataChunksDefinitionCount;
+	ushort GridTotalDataSize;
+	ushort DataChunkDefinitionsCount;
 
 	Float3 EntryBoundingBoxExtents;
 
@@ -345,18 +345,29 @@ struct EntryBVHSection
 	
 	struct
 	{
-		ushort NodeOffsets[BlockCountX * BlockCountY * BlockCountZ] <hidden = true>;
+		short NodeOffsets[BlockCountX * BlockCountY * BlockCountZ] <hidden = true>;
 
 		local uint i;
 		local uint j;
 		for (i = 0; i < BlockCountX * BlockCountY * BlockCountZ; i++)
 		{
-			struct
+			if (NodeOffsets[i] != -1)
 			{
-				ushort EntryCount <hidden = true>;
-				for (j = 0; j < EntryCount; j++)
-					ushort DataChunkDefinitionIndex;
-			} Node;
+				FSeek(SelfStartPos + NodeOffsets[i]);
+
+				struct
+				{
+					ushort EntryCount <hidden = true>;
+					for (j = 0; j < EntryCount; j++)
+						ushort DataChunkDefinitionIndex;
+				} Node;
+			}
+			else
+			{
+				struct
+				{
+				} Node;
+			}
 		}
 	} Nodes;
 };
