@@ -34,72 +34,79 @@ typedef struct
 
 // Intentionally asymmetric to make quickly reading through the list easier.
 typedef enum <uint64> {
-    ENABLED = 1,
-    OFF = 0,
-} ENUM_FLAG_STATE <read=EnumToString(this)>;
+    SET = 1,
+    _ = 0,
+} BIT <read=EnumToString(this)>;
 
-typedef struct
+void ReadCollisionFlags()
 {
-	ENUM_FLAG_STATE BOSS : 1;
-	ENUM_FLAG_STATE ITEM : 1;
-	ENUM_FLAG_STATE FULTON : 1;
-	ENUM_FLAG_STATE NO_FULTON : 1;
+	BitfieldDisablePadding();
+	struct COLLISION_FLAGS
+	{
+		BIT UNKNOWN1 : 1; Printf("COLLISION_FLAGS::UNKNOWN1 set.\n");
+		BIT RECOIL_FLOOR_MAYBE : 1;
+		BIT UNKNOWN0 : 1; Printf("COLLISION_FLAGS::UNKNOWN0 set.\n");
+		BIT CHARA_MAYBE : 1;
 
-	ENUM_FLAG_STATE NO_CREEP : 1;
-	ENUM_FLAG_STATE THROUGH_ITEM_CHECK : 1;
-	ENUM_FLAG_STATE THROUGH_LINE_OF_FIRE : 1;
-	ENUM_FLAG_STATE RIDE_ON : 1;
+		BIT PLAYER : 1;
+		BIT ENEMY : 1;
+		BIT BULLET : 1;
+		BIT MISSILE : 1;
 
-	ENUM_FLAG_STATE MARKER : 1;
-	ENUM_FLAG_STATE VEHICLE : 1;
-	ENUM_FLAG_STATE HORSE : 1;
-	ENUM_FLAG_STATE CLIMB : 1;
+		BIT BOMB : 1;
+		BIT UNUSED5 : 1;
+		BIT BLOOD : 1;
+		BIT IK : 1;
 
-	ENUM_FLAG_STATE IGNORE_PHYSICS : 1;`
-	ENUM_FLAG_STATE FLAME : 1;
-	ENUM_FLAG_STATE RIDE_ON_OUTER : 1;
-	ENUM_FLAG_STATE MISSILE2 : 1;
+		BIT STAIRWAY : 1;
+		BIT STOP_EYE : 1;
+		BIT CLIFF : 1;
+		BIT UNUSED4 : 1; Assert(UNUSED4 == 0);
 
-	ENUM_FLAG_STATE NO_WALL_MOVE : 1;
-	ENUM_FLAG_STATE EVENT_PHYSICS : 1;
-	ENUM_FLAG_STATE NO_EFFECT : 1;
-	ENUM_FLAG_STATE DOG : 1;
+		BIT UNUSED6 : 1; Assert(UNUSED6 == 0);
+		BIT DONT_FALL : 1;
+		BIT CAMERA : 1;
+		BIT UNUSED2 : 1; Assert(UNUSED2 == 0);
 
-	ENUM_FLAG_STATE TARGET_BLOCK : 1;
-	ENUM_FLAG_STATE WATER_SURFACE : 1;
-	ENUM_FLAG_STATE DOUBLE_SLIDE : 1;
-	ENUM_FLAG_STATE HEIGHT_LIMIT : 1;
+		BIT UNUSED1 : 1; Assert(UNUSED1 == 0);
+		BIT UNUSED0 : 1; Assert(UNUSED0 == 0);
+		BIT CLIFF_FLOOR : 1;
+		BIT BULLET_MARK : 1;
 
-	ENUM_FLAG_STATE BULLET_MARK : 1;
-	ENUM_FLAG_STATE CLIFF_FLOOR : 1;
-	ENUM_FLAG_STATE UNUSED0 : 1;
-	ENUM_FLAG_STATE UNUSED1 : 1;
+		BIT HEIGHT_LIMIT : 1;
+		BIT DOUBLE_SLIDE : 1;
+		BIT WATER_SURFACE : 1;
+		BIT TARGET_BLOCK : 1;
 
-	ENUM_FLAG_STATE UNUSED2 : 1;
-	ENUM_FLAG_STATE CAMERA : 1;
-	ENUM_FLAG_STATE DONT_FALL : 1;
-	ENUM_FLAG_STATE UNKNOWN4 : 1;
+		BIT DOG : 1;
+		BIT NO_EFFECT : 1;
+		BIT EVENT_PHYSICS : 1;
+		BIT NO_WALL_MOVE : 1;
 
-	ENUM_FLAG_STATE UNUSED4 : 1;
-	ENUM_FLAG_STATE CLIFF : 1;
-	ENUM_FLAG_STATE STOP_EYE : 1;
-	ENUM_FLAG_STATE STAIRWAY : 1;
+		ushort Padding0 : 16 <hidden=true>; Assert(Padding0 == 0);
 
-	ENUM_FLAG_STATE IK : 1;
-	ENUM_FLAG_STATE BLOOD : 1;
-	ENUM_FLAG_STATE UNUSED5 : 1;
-	ENUM_FLAG_STATE BOMB : 1;
+		BIT MISSILE2 : 1;
+		BIT RIDE_ON_OUTER : 1;
+		BIT FLAME : 1;
+		BIT IGNORE_PHYSICS : 1;`
 
-	ENUM_FLAG_STATE MISSILE : 1;
-	ENUM_FLAG_STATE BULLET : 1;
-	ENUM_FLAG_STATE ENEMY : 1;
-	ENUM_FLAG_STATE PLAYER : 1;
+		BIT CLIMB : 1;
+		BIT HORSE : 1;
+		BIT VEHICLE : 1;
+		BIT MARKER : 1;
 
-	ENUM_FLAG_STATE CHARA_MAYBE : 1;
-	ENUM_FLAG_STATE UNKNOWN0 : 1;
-	ENUM_FLAG_STATE RECOIL_FLOOR_MAYBE : 1;
-	ENUM_FLAG_STATE UNKNOWN1 : 1;
-} COLLISION_FLAGS <bgcolor=0xFF00FF, fgcolor=0x00FF00>;
+		BIT RIDE_ON : 1;
+		BIT THROUGH_LINE_OF_FIRE : 1;
+		BIT THROUGH_ITEM_CHECK : 1;
+		BIT NO_CREEP : 1;
+
+		BIT NO_FULTON : 1;
+		BIT FULTON : 1;
+		BIT ITEM : 1;
+		BIT BOSS : 1;
+	} CollisionFlags <bgcolor=0xFF00FF, fgcolor=0x00FF00>;
+	BitfieldEnablePadding();
+}
 
 enum <byte> DATA_CHUNK_TYPE
 {
@@ -147,7 +154,7 @@ struct DataChunkHeader
 	uint Unknown0;
 	uint NextIndexDataChunkLinesOffset;
 
-	COLLISION_FLAGS CollisionFlags;
+	ReadCollisionFlags();
 
 	uint Unknown2;
 	uint VertexDataLinesOffset;
@@ -256,7 +263,7 @@ struct EntryDataChunkDefinition
 	uint FirstDataChunkOffset;
 	uint NextSectionOffset;
 	
-	COLLISION_FLAGS CollisionFlags;
+	ReadCollisionFlags();
 };
 
 struct EntryDataSection
@@ -369,7 +376,7 @@ struct EntryBVHSection
 	uint BlockCountY;
 	uint BlockCountZ;
 	
-	COLLISION_FLAGS CollisionFlags;
+	ReadCollisionFlags();
 	
 	struct
 	{

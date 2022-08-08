@@ -21,11 +21,24 @@ typedef struct
 	float x;
 	float y;
 	float z;
+    float padding <hidden = false>; Assert(padding == 0);
+} WideFloat3 <read=Str("(%g, %g, %g)", x, y, z)>;
+
+typedef struct
+{
+	float x;
+	float y;
+	float z;
 	float w;
 } Float4 <read=Str("(%g, %g, %g, %g)", x, y, z, w)>;
 
-struct Matrix3
+struct Matrix4
 {
+	float x0;
+	float y0;
+	float z0;
+	float w0;
+
 	float x1;
 	float y1;
 	float z1;
@@ -149,13 +162,10 @@ for (i = 0; i < EntryDefinitions.EntryCount; i++)
 			    
 			    FSkip(16);
 			    
-			    Matrix3 Rotation;
-			    
-			    Float4 Translation;
-			    
-		    } Shapes[ShapeCount];
+			    Matrix4 Transform;
+		    } Shapes[ShapeCount] <optimize = true>;
 	    }
-	    else if (ShapeType == TRAP_SHAPE_TYPE_PATH_SHAPE)
+	    else if (ShapeType == TRAP_SHAPE_TYPE_PATH)
 	    {
 		    struct PathShape
 		    {
@@ -163,12 +173,12 @@ for (i = 0; i < EntryDefinitions.EntryCount; i++)
     
 			    float YMinimum;
 			    float YMaximum;
-			    uint PointCount;
-			    uint PointsDataOffset;
+			    uint PointCount <hidden = true>;
+			    uint PointsDataOffset <hidden = true>;
     
                 FSeek(SelfStartPos + PointsDataOffset);
 			    
-			    Float4 Points[PointCount];
+			    WideFloat3 Points[PointCount] <optimize = true>;
 		    } Shapes[ShapeCount] <optimize = false>;
 	    }
 	    else
