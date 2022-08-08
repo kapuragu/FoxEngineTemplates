@@ -32,60 +32,88 @@ typedef struct
 	float w;
 } Float4 <read=Str("(%g, %g, %g, %g)", x, y, z, w)>;
 
-void EntryCollisionFlag()
+// Intentionally asymmetric to make quickly reading through the list easier.
+typedef enum <uint64> {
+    ENABLED = 1,
+    OFF = 0,
+} ENUM_FLAG_STATE <read=EnumToString(this)>;
+
+typedef struct
 {
-	uint64 CollisionFlags<format=binary, bgcolor=0xFF00FF, fgcolor=0x00FF00>;
-}
+	ENUM_FLAG_STATE BOSS : 1;
+	ENUM_FLAG_STATE ITEM : 1;
+	ENUM_FLAG_STATE FULTON : 1;
+	ENUM_FLAG_STATE NO_FULTON : 1;
+
+	ENUM_FLAG_STATE NO_CREEP : 1;
+	ENUM_FLAG_STATE THROUGH_ITEM_CHECK : 1;
+	ENUM_FLAG_STATE THROUGH_LINE_OF_FIRE : 1;
+	ENUM_FLAG_STATE RIDE_ON : 1;
+
+	ENUM_FLAG_STATE MARKER : 1;
+	ENUM_FLAG_STATE VEHICLE : 1;
+	ENUM_FLAG_STATE HORSE : 1;
+	ENUM_FLAG_STATE CLIMB : 1;
+
+	ENUM_FLAG_STATE IGNORE_PHYSICS : 1;`
+	ENUM_FLAG_STATE FLAME : 1;
+	ENUM_FLAG_STATE RIDE_ON_OUTER : 1;
+	ENUM_FLAG_STATE MISSILE2 : 1;
+
+	ENUM_FLAG_STATE NO_WALL_MOVE : 1;
+	ENUM_FLAG_STATE EVENT_PHYSICS : 1;
+	ENUM_FLAG_STATE NO_EFFECT : 1;
+	ENUM_FLAG_STATE DOG : 1;
+
+	ENUM_FLAG_STATE TARGET_BLOCK : 1;
+	ENUM_FLAG_STATE WATER_SURFACE : 1;
+	ENUM_FLAG_STATE DOUBLE_SLIDE : 1;
+	ENUM_FLAG_STATE HEIGHT_LIMIT : 1;
+
+	ENUM_FLAG_STATE BULLET_MARK : 1;
+	ENUM_FLAG_STATE CLIFF_FLOOR : 1;
+	ENUM_FLAG_STATE UNUSED0 : 1;
+	ENUM_FLAG_STATE UNUSED1 : 1;
+
+	ENUM_FLAG_STATE UNUSED2 : 1;
+	ENUM_FLAG_STATE CAMERA : 1;
+	ENUM_FLAG_STATE DONT_FALL : 1;
+	ENUM_FLAG_STATE UNKNOWN4 : 1;
+
+	ENUM_FLAG_STATE UNUSED4 : 1;
+	ENUM_FLAG_STATE CLIFF : 1;
+	ENUM_FLAG_STATE STOP_EYE : 1;
+	ENUM_FLAG_STATE STAIRWAY : 1;
+
+	ENUM_FLAG_STATE IK : 1;
+	ENUM_FLAG_STATE BLOOD : 1;
+	ENUM_FLAG_STATE UNUSED5 : 1;
+	ENUM_FLAG_STATE BOMB : 1;
+
+	ENUM_FLAG_STATE MISSILE : 1;
+	ENUM_FLAG_STATE BULLET : 1;
+	ENUM_FLAG_STATE ENEMY : 1;
+	ENUM_FLAG_STATE PLAYER : 1;
+
+	ENUM_FLAG_STATE CHARA_MAYBE : 1;
+	ENUM_FLAG_STATE UNKNOWN0 : 1;
+	ENUM_FLAG_STATE RECOIL_FLOOR_MAYBE : 1;
+	ENUM_FLAG_STATE UNKNOWN1 : 1;
+} COLLISION_FLAGS <bgcolor=0xFF00FF, fgcolor=0x00FF00>;
 
 enum <byte> DATA_CHUNK_TYPE
 {
-	DATA_CHUNK_TYPE_UNKNOWN_0 = 0,
-	DATA_CHUNK_TYPE_UNKNOWN_1 = 1,
-	DATA_CHUNK_TYPE_INDICES = 2,
-	DATA_CHUNK_TYPE_UNKNOWN_3 = 3,
-	DATA_CHUNK_TYPE_BOUNDING_BOX = 4,
-	DATA_CHUNK_TYPE_UNKNOWN_5 = 5,
-	DATA_CHUNK_TYPE_UNKNOWN_6 = 6,
-	DATA_CHUNK_TYPE_UNKNOWN_7 = 7,
-	DATA_CHUNK_TYPE_UNKNOWN_8 = 8,
-	DATA_CHUNK_TYPE_UNKNOWN_11 = 11,
+	DATA_CHUNK_TYPE_UNKNOWN_0 = 0,   	// Entry size: 0x30
+	DATA_CHUNK_TYPE_UNKNOWN_1 = 1,		// Entry size: 0x30
+	DATA_CHUNK_TYPE_INDICES = 2,		// Entry size: 0xA
+	DATA_CHUNK_TYPE_UNKNOWN_3 = 3,		// Entry size: 0x60
+	DATA_CHUNK_TYPE_BOUNDING_BOX = 4,	// Entry size: 0x20
+	DATA_CHUNK_TYPE_UNKNOWN_5 = 5,		// Entry size: 0x80
+	DATA_CHUNK_TYPE_UNKNOWN_6 = 6,		// Entry size: 0
+	DATA_CHUNK_TYPE_UNKNOWN_7 = 7,		// Entry size: 0
+	DATA_CHUNK_TYPE_UNKNOWN_8 = 8,		// Entry size: 0x8
+	DATA_CHUNK_TYPE_UNKNOWN_11 = 11,	// Entry size: 0x10
 };
-
-uint GetDataChunkDataPerEntrySize(DATA_CHUNK_TYPE type)
-{
-	switch (type)
-	{
-		case DATA_CHUNK_TYPE_UNKNOWN_0:
-			return 0x30;
-		case DATA_CHUNK_TYPE_UNKNOWN_1:
-			return 0x30;
-		case DATA_CHUNK_TYPE_INDICES:
-			return 0xA;
-		case DATA_CHUNK_TYPE_UNKNOWN_3:
-			return 0x60;
-		case DATA_CHUNK_TYPE_BOUNDING_BOX:
-			return 0x20;
-		case DATA_CHUNK_TYPE_UNKNOWN_5:
-			return 0x80;
-		case DATA_CHUNK_TYPE_UNKNOWN_6:
-			return 0;
-		case DATA_CHUNK_TYPE_UNKNOWN_7:
-			return 0;
-		case DATA_CHUNK_TYPE_UNKNOWN_8:
-			return 0x8;
-		case 9:
-			break;
-		case 10:
-			break;
-		case DATA_CHUNK_TYPE_UNKNOWN_11:
-			return 0x10;
-		default:
-			break;
-	}
-
-	Assert(false);
-	return -1;
-}
 
 struct DataChunkHeader
 {
@@ -119,7 +147,7 @@ struct DataChunkHeader
 	uint Unknown0;
 	uint NextIndexDataChunkLinesOffset;
 
-	EntryCollisionFlag();
+	COLLISION_FLAGS CollisionFlags;
 
 	uint Unknown2;
 	uint VertexDataLinesOffset;
@@ -228,7 +256,7 @@ struct EntryDataChunkDefinition
 	uint FirstDataChunkOffset;
 	uint NextSectionOffset;
 	
-	EntryCollisionFlag();
+	COLLISION_FLAGS CollisionFlags;
 };
 
 struct EntryDataSection
@@ -341,7 +369,7 @@ struct EntryBVHSection
 	uint BlockCountY;
 	uint BlockCountZ;
 	
-	EntryCollisionFlag();
+	COLLISION_FLAGS CollisionFlags;
 	
 	struct
 	{
