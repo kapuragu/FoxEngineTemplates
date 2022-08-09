@@ -1,0 +1,210 @@
+#ifndef GEO_COMMON_BT
+#define GEO_COMMON_BT
+
+#include "../common/types.bt"
+
+// Intentionally asymmetric to make quickly reading through the list easier.
+typedef enum <uint64> {
+    SET = 1,
+    _ = 0,
+} BIT <read=EnumToString(this)>;
+
+void ReadTrapTags()
+{
+	BitfieldDisablePadding();
+	struct TRAP_TAGS
+	{
+		BIT TRAP_TAGS_Intrude : 1; // 0x1
+		BIT TRAP_TAGS_Tower : 1; // 0x2
+		BIT TRAP_TAGS_InRoom : 1; // 0x4
+		BIT TRAP_TAGS_FallDeath : 1; // 0x8
+
+		BIT TRAP_TAGS_NearCamera1 : 1; // 0x10
+		BIT TRAP_TAGS_NearCamera2 : 1; // 0x20
+		BIT TRAP_TAGS_NearCamera3 : 1; // 0x40
+		BIT TRAP_TAGS_NearCamera4 : 1; // 0x80
+
+		BIT TRAP_TAGS_x9978c8d36f7 : 1; // 0x100
+		BIT TRAP_TAGS_NoRainEffect : 1; // 0x200
+		BIT TRAP_TAGS_x60e79a58dcc3 : 1; // 0x400
+		BIT TRAP_TAGS_GimmickNoFulton : 1; // 0x800
+
+		BIT TRAP_TAGS_innerZone : 1; // 0x1000
+		BIT TRAP_TAGS_outerZone : 1; // 0x2000
+		BIT TRAP_TAGS_hotZone : 1; // 0x4000
+		BIT TRAP_TAGS_x439898dcbf83 : 1; // 0x8000
+
+		BIT TRAP_TAGS_xe780e431a068 : 1; // 0x10000
+		BIT TRAP_TAGS_x53827eed3fbc : 1; // 0x20000
+		BIT TRAP_TAGS_x7e1121c5cb93 : 1; // 0x40000
+		BIT TRAP_TAGS_xcadd57b76a83 : 1; // 0x80000
+
+		BIT TRAP_TAGS_xe689072c4df8 : 1; // 0x100000
+		BIT TRAP_TAGS_x6d14396ebbe5 : 1; // 0x200000
+		BIT TRAP_TAGS_xd1ee7dc34fff : 1; // 0x400000
+		BIT TRAP_TAGS_xb07e254afcae : 1; // 0x800000
+
+		BIT TRAP_TAGS_Unnamed1 : 1; // 0x1000000
+		BIT TRAP_TAGS_Unused1 : 1; // 0x2000000
+		BIT TRAP_TAGS_Unused2 : 1; // 0x4000000
+		BIT TRAP_TAGS_Unused3 : 1; // 0x8000000
+
+		BIT TRAP_TAGS_xd6ee65d20b7a : 1; // 0x10000000
+		BIT TRAP_TAGS_xf287ba9cb7e3 : 1; // 0x20000000
+		BIT TRAP_TAGS_NoFulton : 1; // 0x40000000
+		BIT TRAP_TAGS_Unnamed1 : 1; // 0x80000000
+		uint TRAP_TAGS_x24330b0e33cb : 32 <format = binary>; // 0xffffffff80000000
+	} TrapTags <bgcolor = 0xFF00FF, fgcolor = 0x00FF00>;
+	BitfieldEnablePadding();
+}
+
+void ReadPathTags()
+{
+	BitfieldDisablePadding();
+	uint64 PATH_TAGS <bgcolor = 0xFF00FF, fgcolor = 0x00FF00, format = binary>; // https://github.com/TinManTex/mgsv-deminified-lua/blob/3b8d6a0487ce45f69502d40e684b3d653d3b8965/data1/Tpp/start.lua#L292
+	BitfieldEnablePadding();
+}
+
+void ReadCollisionTags()
+{
+	BitfieldDisablePadding();
+	struct COLLISION_TAGS
+	{
+		BIT COLLISION_TAGS_UNKNOWN1 : 1; if (COLLISION_TAGS_UNKNOWN1) Printf("COLLISION_TAGS_UNKNOWN1 set.\n");
+		BIT COLLISION_TAGS_RECOIL_FLOOR_MAYBE : 1;
+		BIT COLLISION_TAGS_UNKNOWN0 : 1; if (COLLISION_TAGS_UNKNOWN0) Printf("COLLISION_TAGS_UNKNOWN0 set.\n");
+		BIT COLLISION_TAGS_CHARA_MAYBE : 1;
+
+		BIT COLLISION_TAGS_PLAYER : 1;
+		BIT COLLISION_TAGS_ENEMY : 1;
+		BIT COLLISION_TAGS_BULLET : 1;
+		BIT COLLISION_TAGS_MISSILE : 1;
+
+		BIT COLLISION_TAGS_BOMB : 1;
+		BIT COLLISION_TAGS_UNUSED5 : 1;
+		BIT COLLISION_TAGS_BLOOD : 1;
+		BIT COLLISION_TAGS_IK : 1;
+
+		BIT COLLISION_TAGS_STAIRWAY : 1;
+		BIT COLLISION_TAGS_STOP_EYE : 1;
+		BIT COLLISION_TAGS_CLIFF : 1;
+		BIT COLLISION_TAGS_UNUSED4 : 1; Assert(COLLISION_TAGS_UNUSED4 == 0);
+
+		BIT COLLISION_TAGS_UNUSED6 : 1; Assert(COLLISION_TAGS_UNUSED6 == 0);
+		BIT COLLISION_TAGS_DONT_FALL : 1;
+		BIT COLLISION_TAGS_CAMERA : 1;
+		BIT COLLISION_TAGS_UNUSED2 : 1; Assert(COLLISION_TAGS_UNUSED2 == 0);
+
+		BIT COLLISION_TAGS_UNUSED1 : 1; Assert(COLLISION_TAGS_UNUSED1 == 0);
+		BIT COLLISION_TAGS_UNUSED0 : 1; Assert(COLLISION_TAGS_UNUSED0 == 0);
+		BIT COLLISION_TAGS_CLIFF_FLOOR : 1;
+		BIT COLLISION_TAGS_BULLET_MARK : 1;
+
+		BIT COLLISION_TAGS_HEIGHT_LIMIT : 1;
+		BIT COLLISION_TAGS_DOUBLE_SLIDE : 1;
+		BIT COLLISION_TAGS_WATER_SURFACE : 1;
+		BIT COLLISION_TAGS_TARGET_BLOCK : 1;
+
+		BIT COLLISION_TAGS_DOG : 1;
+		BIT COLLISION_TAGS_NO_EFFECT : 1;
+		BIT COLLISION_TAGS_EVENT_PHYSICS : 1;
+		BIT COLLISION_TAGS_NO_WALL_MOVE : 1;
+
+		ushort Padding0 : 16 <hidden=true>; Assert(Padding0 == 0);
+
+		BIT COLLISION_TAGS_MISSILE2 : 1;
+		BIT COLLISION_TAGS_RIDE_ON_OUTER : 1;
+		BIT COLLISION_TAGS_FLAME : 1;
+		BIT COLLISION_TAGS_IGNORE_PHYSICS : 1;`
+
+		BIT COLLISION_TAGS_CLIMB : 1;
+		BIT COLLISION_TAGS_HORSE : 1;
+		BIT COLLISION_TAGS_VEHICLE : 1;
+		BIT COLLISION_TAGS_MARKER : 1;
+
+		BIT COLLISION_TAGS_RIDE_ON : 1;
+		BIT COLLISION_TAGS_THROUGH_LINE_OF_FIRE : 1;
+		BIT COLLISION_TAGS_THROUGH_ITEM_CHECK : 1;
+		BIT COLLISION_TAGS_NO_CREEP : 1;
+
+		BIT COLLISION_TAGS_NO_FULTON : 1;
+		BIT COLLISION_TAGS_FULTON : 1;
+		BIT COLLISION_TAGS_ITEM : 1;
+		BIT COLLISION_TAGS_BOSS : 1;
+	} CollisionTags <bgcolor = 0xFF00FF, fgcolor = 0x00FF00>;
+	BitfieldEnablePadding();
+}
+
+enum <byte> GEO_FILE_TYPE
+{
+	GEO_FILE_TYPE_GPFP = 0,
+	GEO_FILE_TYPE_GEOM_GEOMS_GSKL = 1,
+	GEO_FILE_TYPE_TRAP = 2,
+};
+
+enum <uint> GEO_COLLISION_SHAPE_TYPE
+{
+	GEO_COLLISION_SHAPE_TYPE_UNKNOWN0 = 0,   	// Entry size: 0x30
+	GEO_COLLISION_SHAPE_TYPE_UNKNOWN1 = 1,		// Entry size: 0x30
+	GEO_COLLISION_SHAPE_TYPE_QUAD = 2,		    // Entry size: 0xA
+	GEO_COLLISION_SHAPE_TYPE_BOX_TRAP = 3,		// Entry size: 0x60
+	GEO_COLLISION_SHAPE_TYPE_BOUNDING_BOX = 4,	// Entry size: 0x20
+	GEO_COLLISION_SHAPE_TYPE_UNKNOWN5 = 5,		// Entry size: 0x80
+	GEO_COLLISION_SHAPE_TYPE_UNKNOWN6 = 6,		// Entry size: 0
+	GEO_COLLISION_SHAPE_TYPE_UNKNOWN7 = 7,		// Entry size: 0
+	GEO_COLLISION_SHAPE_TYPE_GEO_PATH = 8,		// Entry size: 0x8
+	GEO_COLLISION_SHAPE_TYPE_PATH_TRAP = 11,	// Entry size: 0x10
+};
+
+local GEO_FILE_TYPE globalGeoFileType;
+void ReadGeoCollisionShapeHeader(GEO_FILE_TYPE fileType)
+{
+	globalGeoFileType = fileType;
+
+	struct 
+	{
+	local uint testVar = 2;
+		BitfieldDisablePadding();
+		GEO_COLLISION_SHAPE_TYPE Type : 4 <bgcolor=0x0080ff>;
+
+		enum <uint> GEO_COLLISION_SHAPE_FLAGS
+		{
+			GEO_COLLISION_SHAPE_FLAGS_PRESUMPTIVE_NO_PAYLOAD = 0x20, 						   // mgsvtpp.exe!141bdc498 // info & 0x200
+			GEO_COLLISION_SHAPE_FLAGS_UNKNOWN1 = 0x200,              						   // mgsvtpp.exe!141bdc863, 141bd8041 // info >> 0xd, info & 0x2000
+			GEO_COLLISION_SHAPE_FLAGS_PRESUMPTIVE_USE_FMDL_VERTEX_DATA = 0x800,                // mgsvtpp.exe!141bd7e30 // info & 0x8000
+			GEO_COLLISION_SHAPE_FLAGS_UNKNOWN3 = 0x2000,             						   // mgsvtpp.exe!141bdc7a7 // info >> 0x11
+			GEO_COLLISION_SHAPE_FLAGS_UNKNOWN2 = 0x8000,             						   // mgsvtpp.exe!141bdc830 // info >> 0x13
+		} Flags : 20 <bgcolor=0x0080ff>;  // mgsvtpp.exe!141bdc492
+
+		uint EntryCount : 8 <bgcolor=0x0080ff>;
+		BitfieldEnablePadding();
+
+		// See geom_geoms_gskl.bt for more information.
+		uint NextBBDataChunkOffset; // In geom, this is multipled by 16; it's a lines offset.
+
+		uint Unknown0;
+		uint NextIndexDataChunkOffset; // In geom, this is multipled by 16; it's a lines offset.
+
+		switch (globalGeoFileType)
+		{
+		case GEO_FILE_TYPE_GPFP:
+			ReadPathTags();
+			break;
+
+		case GEO_FILE_TYPE_GEOM_GEOMS_GSKL:
+			ReadCollisionTags();
+			break;
+
+		case GEO_FILE_TYPE_TRAP:
+			ReadTrapTags();
+			break;
+		}
+
+		StrCode32 Name; // With gimmicks, it has to be the gimmick instance name as StrCode32 hash, ie <_n0000|srt_>. 
+                        // If there's more than one path for one instance, the hash is the same, but with the seventh of the eight bits shifted by 2
+
+		uint VertexDataOffset; // In geom, this is multipled by 16; it's a lines offset.
+	} Header;
+}
+
+#endif
