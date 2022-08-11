@@ -3,8 +3,13 @@ LittleEndian();
 struct Header
 {
     // The signature is FSTB in TPP, FSTBwin in GZ
-    char signature[7] <hidden=true>;
-    byte type;                  // 2 for OMBS; 3 for GNTN; 4 for MBQF; 5 for AFGH/MAFR
+    char signature[4] <hidden=true>;
+
+    ushort isBigEndian;
+    if (isBigEndian)
+        BigEndian();
+
+    ushort type;                  // 2 for OMBS; 3 for GNTN; 4 for MBQF; 5 for AFGH/MAFR
 
     uint sections;
     uint section0Offset;        // Always 24 in TPP format, 0 in GZ format
@@ -54,7 +59,8 @@ struct BlockDefinition
         SmallBlockDefinition additionalBlockIndices;     // This block is (always?) outside the block's range.
         ushort weirdIndex1;
         ushort weirdIndex2;
-        uint weirdVals[(smallBlocksOffset - paddingListOffset)/4 - 6];
+        
+        byte weirdVals[(smallBlocksOffset - paddingListOffset) - 24];
     }
 
     SmallBlockDefinition smallBlocks[smallBlockDefinitionCount] <optimize=false>;
