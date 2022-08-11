@@ -93,27 +93,45 @@ struct Object
 			break;
 
 		case EventAction:
-			ScopeEventAction scope_of_event_action;
+			//ScopeEventAction scope_of_event_action;
 			ActionType action_type;
 
 			printActionType(action_type);
 			uint id_of_game_obj_referenced_above <comment="This is zero if there is no game object." , bgcolor=0xD8C5EA>;
 			// Always zero, according to the wiki
-			FSkip(1);
+			ubyte unknown;
 			ubyte additional_params;
 
-			local int i;
-			for (i = 0; i < additional_params; ++i)
+			// AkPropBundle<AkPropValue>::SetInitialParams() 
+			if (additional_params > 0)
 			{
-				EventParameterType parameter_type;
-				if (parameter_type == DELAY || parameter_type == PLAY)
-					uint milliseconds;
-				else if (parameter_type == PROBABILITY)
-					float probability;
+				EventParameterType parameterTypes[additional_params];
+				uint parameterValues[additional_params];
 			}
-			// Always zero, according to the xentax wiki
-			FSkip(1);
 
+			// AkPropBundle<RANGED_MODIFIERS<AkPropValue>_>::SetInitialParams() 
+			ubyte propsCount;
+			if (propsCount > 0)
+			{
+				ubyte unknowns[propsCount];
+				uint64 unknown64s[propsCount];
+			}
+
+			// NOTE: in the place of this ubyte is actually a uint if we're changing the state or switch
+			// or a state/switch group. but i can't find the code that differentiates those cases...
+			ubyte unknown_count <hidden=true>; // some unknown flags are updated based on this value
+			// things break after this. there's something i'm not doing right..
+			/*
+			ubyte resume_or_pause_unknown;
+			uint exceptionParamsCount; // an AkArray is created with reserved space of this uint
+			local int i;
+			for (i = 0; i < exceptionParamsCount; i++)
+			{
+				uint ID;
+				Boolean is_bus;
+			}
+			*/
+			/*
 			if (action_type == SET_STATE || action_type == SET_SWITCH)
 			{
 				uint state_group_id;
@@ -123,6 +141,7 @@ struct Object
 			{
 				Curve_Shape_Byte csb;
 			}
+			*/
 			break;
 
 		case Event:
@@ -345,6 +364,7 @@ struct Object
 		// as v2.2
 		// huge update as of v2.6
 		case MusicSwitchContainer:
+			/*
 			SoundStructure soundstructure;
 			struct Stingers stingers;
 
@@ -374,7 +394,7 @@ struct Object
 			StateSwitchGroupList ssgl;
 
 			local long startOfConnectionStruct = FTell() + 4;
-			PathsSection pathssection;
+			PathsSection pathssection;*/
 
 			break;
 		case MusicPlaylistContainer: // early implementation
