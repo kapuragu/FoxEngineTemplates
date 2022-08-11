@@ -115,7 +115,7 @@ typedef struct
 
     if (IsGPFP)
     {
-		ReadGeoCollisionShapeHeader(GEO_FILE_TYPE_GPFP);
+		GeoCollisionShapeHeader Header(GEO_FILE_TYPE_GPFP);
 
         struct Edge
         {

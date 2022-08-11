@@ -19,7 +19,7 @@ typedef struct
 {
 	local long SelfStartPos = FTell();
 
-	ReadGeoCollisionShapeHeader(GEO_FILE_TYPE_GEOM_GEOMS_GSKL);
+	GeoCollisionShapeHeader Header(GEO_FILE_TYPE_GEOM_GEOMS_GSKL);
 
 	switch (Header.Type)
 	{
@@ -45,7 +45,7 @@ typedef struct
 				short Offset2;
 				short Offset3;
 				short Unknown0; // Seemingly always negative.
-			} IndexSet <read=Str("%d, %d, %d, %d, %d", this.Offset0, this.Offset1, this.Offset2, this.Offset3, this.Offset4)>;
+			} IndexSet <read=Str("%d, %d, %d, %d, %d", this.Offset0, this.Offset1, this.Offset2, this.Offset3, this.Unknown0)>;
 	    }
 		
 		if ((Header.VertexDataOffset & 0xfffffff) != 0)
@@ -69,7 +69,7 @@ typedef struct
 				} VertexDataHeader;
 
 				// mgsvtpp.exe!141bd7e9c
-				if ((Header.Flags & GEO_COLLISION_SHAPE_FLAGS_PRESUMPTIVE_USE_FMDL_VERTEX_DATA) == 0)
+				if ((Header.Flags & GEO_COLLISION_SHAPE_FLAGS_USE_FMDL_VERTEX_DATA) == 0)
 				{
 					WideVector3 VertexData[VertexDataHeader.VertexCount] <optimize = true>;
 
@@ -121,7 +121,7 @@ struct EntryDataChunkDefinition
 	uint FirstDataChunkOffset;
 	uint NextSectionOffset;
 	
-	ReadCollisionTags();
+	COLLISION_TAGS CollisionTags();
 };
 
 struct EntryDataSection
@@ -168,7 +168,7 @@ struct EntryDataSection
 				j = j_minusOne;
 				iteratorIndex = iteratorIndex_minusOne;
 				FSeek(ptr);
-				if ((ReadUInt() & 0x200) == 0) // if (Data.Header.Info.Flags & GEO_COLLISION_SHAPE_FLAGS_PRESUMPTIVE_NO_PAYLOAD == 0)
+				if ((ReadUInt() & 0x200) == 0) // if (Data.Header.Info.Flags & GEO_COLLISION_SHAPE_FLAGS_NO_PAYLOAD == 0)
 				{
 					DataChunk Data;
 
@@ -234,7 +234,7 @@ struct EntryBVHSection
 	uint BlockCountY;
 	uint BlockCountZ;
 	
-	ReadCollisionTags();
+	COLLISION_TAGS CollisionTags();
 	
 	struct
 	{
@@ -280,7 +280,7 @@ struct EntrySecondaryHeaderSection
 	
 	uint RemainingEntryDataSize;
 	
-	uint64 Padding1<hidden=true>; Assert(Padding1 == 0);
+	uint64 Padding1<hidden=true>; //Assert(Padding1 == 0);
 	uint Padding2<hidden=true>; Assert(Padding2 == 0);
 
 	uint UnusedOffset<hidden=true>; Assert(UnusedOffset == 0);
@@ -294,9 +294,9 @@ struct EntryHeaderSection
 	
 	uint Padding0<hidden=true>; Assert(Padding0 == 0);
 
-	uint UnknownFlag0x10Or0x40; Assert(UnknownFlag0x10Or0x40 == 0x10 || UnknownFlag0x10Or0x40 == 0x40); // mgsvtpp.exe!141bef7fa
+	uint UnknownFlag0x10Or0x40Or0xB; Assert(UnknownFlag0x10Or0x40Or0xB == 0x10 || UnknownFlag0x10Or0x40Or0xB == 0x40 || UnknownFlag0x10Or0x40Or0xB == 0xB); // mgsvtpp.exe!141bef7fa
 
-	uint64 Padding1<hidden=true>; Assert(Padding1 == 0);
+	uint64 Padding1<hidden=true>; //Assert(Padding1 == 0);
 	uint Padding2<hidden=true>; Assert(Padding2 == 0);
 	
 	uint NextSectionOffset; // Size of the header + padding
