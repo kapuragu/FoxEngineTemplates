@@ -1,0 +1,55 @@
+#ifndef TYPES_BT
+#define TYPES_BT
+
+typedef struct
+{
+    uint hash<format=hex>;
+} StrCode32 <read=(hash)>;
+
+typedef struct
+{
+	float x;
+	float y;
+	float z;
+} Vector3 <read = Str("(%g, %g, %g)", x, y, z)>;
+
+typedef struct
+{
+	float x;
+	float y;
+	float z;
+    uint Padding <hidden = true>; Assert(Padding == 0);
+} WideVector3 <read = Str("(%g, %g, %g)", x, y, z)>;
+
+typedef struct
+{
+	float x;
+	float y;
+	float z;
+	float w;
+} Vector4 <read = Str("(%g, %g, %g, %g)", x, y, z, w)>;
+
+typedef struct
+{
+	float x0;
+	float y0;
+	float z0;
+	float w0;
+
+	float x1;
+	float y1;
+	float z1;
+	float w1;
+
+	float x2;
+	float y2;
+	float z2;
+	float w2;
+
+	float x3;
+	float y3;
+	float z3;
+	float w3;
+} Matrix4;
+
+#endif

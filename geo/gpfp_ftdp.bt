@@ -1,5 +1,8 @@
 LittleEndian();
 
+#include "../common/types.bt"
+#include "geo_common.bt"
+
 #define COLOR_HEADER 0xDFEFAA
 #define COLOR_SECONDARYHEADER 0x7DE39E
 #define COLOR_BVH 0xAED2E8
@@ -7,26 +10,6 @@ LittleEndian();
 #define COLOR_NODE 0x8ADEF3
 #define COLOR_DATACHUNK 0x00AAFF
 #define COLOR_DATACHUNKS 0xF7F205
-
-typedef struct
-{
-    uint hash<format=hex>;
-} StrCode32 <read=(hash)>;
-
-typedef struct
-{
-	float x;
-	float y;
-	float z;
-} Float3 <read=Str("(%g, %g, %g)", x, y, z)>;
-
-typedef struct
-{
-	float x;
-	float y;
-	float z;
-	float w;
-} Float4 <read=Str("(%g, %g, %g, %g)", x, y, z, w)>;
 
 local byte IsGPFP;
 
@@ -76,8 +59,8 @@ struct
 {
     local uint SelfStartPos = FTell();
     
-    Float4 EntryBoundingBoxCorner;
-    Float4 EntryBoundingBoxExtents;
+    WideVector3 BoundingBoxCorner;
+    WideVector3 BoundingBoxExtents;
 
     float GridResolution;
 
@@ -132,35 +115,23 @@ typedef struct
 
     if (IsGPFP)
     {
-        uint Type : 8;	// usually 72
-        uint Flags : 16;
-        uint EdgeCount : 8;
-
-        uint Padding0 <hidden = true>; Assert(Padding0 == 0);
-        uint64 Padding1 <hidden = true>; Assert(Padding1 == 0);
-
-        uint64 Flags <format = binary>;
-
-        StrCode32 Name; // With gimmicks, it has to be the gimmick instance name as StrCode32 hash, ie <_n0000|srt_>. 
-                        // If there's more than one path for one instance, the hash is the same, but with the seventh of the eight bits shifted by 2
-        
-        uint NodesOffset;
+		ReadGeoCollisionShapeHeader(GEO_FILE_TYPE_GPFP);
 
         struct Edge
         {
             uint Flags <format = binary>;
             ushort InIndex;
             ushort OutIndex;
-        } Edges [EdgeCount] <bgcolor=COLOR_EDGE>;
+        } Edges [Header.EntryCount] <bgcolor=COLOR_EDGE>;
         
-        FSeek(SelfStartPos + NodesOffset);
+        FSeek(SelfStartPos + Header.VertexDataOffset);
 
         local uint highestNodeIndex = 0;
         local uint i;
-        if (EdgeCount > 0)
+        if (Header.EntryCount > 0)
         {
             // Manually get number of vertices
-            for (i = 0; i < EdgeCount; i++)
+            for (i = 0; i < Header.EntryCount; i++)
             {
                 if (Edges[i].InIndex > highestNodeIndex)
                     highestNodeIndex = Edges[i].InIndex;
@@ -170,7 +141,7 @@ typedef struct
         
             struct Node
             {
-                Float3 Position;
+                Vector3 Position;
                 uint Flags <format = binary>;
             } Nodes [highestNodeIndex + 1] <bgcolor=COLOR_NODE>;
         }
@@ -182,16 +153,16 @@ typedef struct
         uint Unknown0;
         float UnknownFloat0;
 
-        Float4 UnknownFloat40;
+        Vector4 UnknownVector40;
 
         float UnknownFloat1;
         uint Unknown1;
         float UnknownFloat2;
         uint Padding1 <hidden = true>; Assert(Padding1 == 0);
 
-        Float4 UnknownFloat40;
+        Vector4 UnknownVector40;
 
-        Float4 VertexData[VertexDataCount] <bgcolor=COLOR_NODE>;
+        Vector4 VertexData[VertexDataCount] <bgcolor=COLOR_NODE>;
 
         struct
         {
