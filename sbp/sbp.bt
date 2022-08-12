@@ -26,6 +26,7 @@ enum <byte> ObjectType {
 
 // HWL import all the other files we need, just for the sake of decreasing
 // the size of this template
+#include "../common/types.bt"
 #include "common.bt"
 
 #include "soundstructure.bt"
@@ -117,20 +118,67 @@ struct Object
 				uint64 unknown64s[propsCount];
 			}
 
-			// NOTE: in the place of this ubyte is actually a uint if we're changing the state or switch
-			// or a state/switch group. but i can't find the code that differentiates those cases...
-			ubyte unknown_count <hidden=true>; // some unknown flags are updated based on this value
-			// things break after this. there's something i'm not doing right..
-			/*
-			ubyte resume_or_pause_unknown;
-			uint exceptionParamsCount; // an AkArray is created with reserved space of this uint
-			local int i;
-			for (i = 0; i < exceptionParamsCount; i++)
+			if (action_type == AkActionType_Play || action_type == AkActionType_PlayAndContinue)
 			{
-				uint ID;
-				Boolean is_bus;
+				ubyte unknown; // sets up some unknown flags again
+				uint fileID;
 			}
-			*/
+			// Resume or pause action types
+			else if (action_type >= 514 && action_type <= 777)
+			{
+				// NOTE: in the place of this ubyte is actually a uint if we're changing the state or switch
+				// or a state/switch group. but i can't find the code that differentiates those cases...
+				// EDIT: it's the virtual function that does it
+				ubyte unknown_count <hidden=true>; // some unknown flags are updated based on this value
+				ubyte resume_or_pause_unknown;
+				ExceptionParams exceptionparams;
+			}
+			else if (action_type == AkActionType_SetState || action_type == AkActionType_SetSwitch)
+			{
+				uint state_switch_group_ID;
+				uint target_switch_state_ID;
+			}
+			// set pitch and set volume, based on my own observations
+			else if (action_type == AkActionType_SetPitch_M || action_type == AkActionType_SetPitch_O ||
+				action_type == AkActionType_SetVolume_M || action_type == AkActionType_SetVolume_O)
+			{
+				ubyte unknown;
+				// not sure if this is what it actually means
+				enum <ubyte> AbsoluteOrRelative
+				{
+					Relative,
+					Absolute
+				} absoluteorrelative;
+				float valueSetting;
+			}
+			else if (action_type == AkActionType_SetGameParameter || action_type == AkActionType_SetGameParameter_O)
+			{
+				FSkip(1); // appears to be more correct this way? this weird 0x4 appears very frequently after propsCount
+				enum <ubyte> AkValueMeaning
+				{
+					AkValueMeaning_Default,
+					AkValueMeaning_Indepentent,
+					AkValueMeaning_Offset
+				} valueMeaning;
+				Vector3 position;
+			}
+			else if (action_type == AkActionType_BypassFX_M || action_type == AkActionType_BypassFX_O)
+			{
+				Boolean is_bypass;
+				uint targetMask;
+
+				// breaks parsing, commented out for now
+				//ExceptionParams exceptionparams;
+			}
+			// seek action types
+			else if (action_type >= 7682 && action_type <= 7689)
+			{
+				Boolean isSeekRelativeToDuration;
+				Vector3 position;
+				Boolean snapToNearestMarker;
+				ExceptionParams exceptionparams;
+			}
+
 			/*
 			if (action_type == SET_STATE || action_type == SET_SWITCH)
 			{

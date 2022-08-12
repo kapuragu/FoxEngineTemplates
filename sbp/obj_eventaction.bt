@@ -138,3 +138,14 @@ enum <byte> EventParameterType
 	PLAY = 0x0F, // Fade in time, given as uint32 in millisecs.
 	PROBABILITY = 0x10 // Given as float.
 };
+
+struct ExceptionParams
+{
+	uint exceptionParamsCount; // an AkArray is created with reserved space of this uint
+	local int i;
+	for (i = 0; i < exceptionParamsCount; i++)
+	{
+		uint ID;
+		Boolean is_bus;
+	}
+};
