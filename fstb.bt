@@ -23,8 +23,8 @@ struct
 
     byte Type;                  // 2 for OMBS; 3 for GNTN; 4 for MBQF; 5 for AFGH/MAFR
 
-    uint SectionCount <hidden = true>;
-    uint Section0Offset <hidden = true>;
+    uint BlockLevelCount <hidden = true>;
+    uint BlockLevelsOffsetsOffset <hidden = true>;
     
     
     uint PackCommonFpkCount <hidden = true>;
@@ -32,11 +32,11 @@ struct
     uint PackCommonFpkOffset[PackCommonFpkCount] <read = GetOffsetString>;
 } Header <bgcolor=0xFCFCFC>;
 
-struct SmallBlockDefinition
+typedef struct
 {
     ushort x;
     ushort z;
-};
+} SmallBlockDefinition <read = Str("(%d, %d)", x, z)>;
 
 struct LargeLodBlockDefinition
 {
@@ -45,14 +45,17 @@ struct LargeLodBlockDefinition
     ushort SmallBlockBoundRangeZ;
     
     // Row-major; index = (x - SmallBlockBoundCorner.x) + SmallBlockBoundRangeZ * (z - SmallBlockBoundCorner.z)
-    struct
+    if (SmallBlockBoundRangeX != 0 && SmallBlockBoundRangeZ != 0)
     {
-        local uint llod_Z;
-        local uint llod_X;
-        for (llod_Z = 0; llod_Z < SmallBlockBoundRangeZ; llod_Z++)
-            for (llod_X = 0; llod_X < SmallBlockBoundRangeX; llod_X++)
-                byte Mask : 1;
-    } BitMask;
+        struct
+        {
+            local uint llod_Z;
+            local uint llod_X;
+            for (llod_Z = 0; llod_Z < SmallBlockBoundRangeZ; llod_Z++)
+                for (llod_X = 0; llod_X < SmallBlockBoundRangeX; llod_X++)
+                    byte Mask : 1;
+        } BitMask;
+    }
 
     // Align to next 32-bit boundary
     if (FTell() % 4 != 0)
@@ -86,15 +89,19 @@ struct BlockDefinition
 
     uint FpkPathOffsets[FpkCount] <read = GetOffsetString>;
 
-    uint LargeLodFpkPathOffsets[LargeLodFpkCount] <read = GetOffsetString>;
+    if (LargeLodFpkCount != 0)
+        uint LargeLodFpkPathOffsets[LargeLodFpkCount] <read = GetOffsetString>;
 
     FSeek(LargeLodBlockDefinitionOffset);
-    struct
+    if (LargeLodBlockDefinitionsCount != 0)
     {
-        uint Offsets[LargeLodBlockDefinitionsCount] <hidden = true>;
-        
-        LargeLodBlockDefinition LargeLodBlock[LargeLodBlockDefinitionsCount] <optimize = false>;
-    } LargeLodBlocks;
+        struct
+        {
+            uint Offsets[LargeLodBlockDefinitionsCount] <hidden = true>;
+            
+            LargeLodBlockDefinition LargeLodBlock[LargeLodBlockDefinitionsCount] <optimize = false>;
+        } LargeLodBlocks;
+    }
 
     FSeek(SmallBlockDefinitionsOffset);
     struct
@@ -106,20 +113,24 @@ struct BlockDefinition
 typedef struct 
 {
     uint EntryCount <hidden = true, bgcolor = 0x2A2B04, fgcolor=0xFCFCFC>;
-    uint Offsets[EntryCount] <hidden = true, bgcolor = 0x2A2B04, fgcolor=0xFCFCFC>;
 
-    // Technically, we should have every byte accounted for so the loop and offsets aren't necessary.
-    BlockDefinition Definition[EntryCount] <optimize = false, bgcolor = 0xF2F254>;
-    // local uint blkIdx;
-    // for (blkIdx = 0; blkIdx < EntryCount; blkIdx++)
-    // {
-    //     BlockDefinition Definition <bgcolor = 0xF2F254>;
-    // }
+    if (EntryCount != 0)
+    {
+        uint Offsets[EntryCount] <hidden = true, bgcolor = 0x2A2B04, fgcolor=0xFCFCFC>;
+
+        // Technically, we should have every byte accounted for so the loop and offsets aren't necessary.
+        BlockDefinition Definition[EntryCount] <optimize = false, bgcolor = 0xF2F254>;
+        // local uint blkIdx;
+        // for (blkIdx = 0; blkIdx < EntryCount; blkIdx++)
+        // {
+        //     BlockDefinition Definition <bgcolor = 0xF2F254>;
+        // }
+    }
 } BlockDefinitions;
 
-if (Header.Section0Offset != 0)
+if (Header.BlockLevelCount != 0)
 {
-    FSeek(Header.Section0Offset);
+    FSeek(Header.BlockLevelsOffsetsOffset);
 
     uint Offsets[Header.SectionCount] <hidden = true>;
 
