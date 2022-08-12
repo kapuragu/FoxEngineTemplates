@@ -412,6 +412,104 @@ struct Object
 		// as v2.2
 		// huge update as of v2.6
 		case MusicSwitchContainer:
+			SoundStructure soundstructure;
+			MusicNodeParams musicnodeparams;
+			uint transRulesCount;
+			if (transRulesCount > 0)
+			{
+				local int i;
+				for (i = 0; i < transRulesCount; i++)
+				{
+					struct TransitionRule
+					{
+						uint sourceIDCount; // an AkArray is reserved with reserved amount "sourceID"
+						if (sourceIDCount > 0)
+						{
+							uint sourceIDs[sourceIDCount];
+						}
+						uint destIDCount; // destination IDs, an AkArray also created here with
+										// "destIDCount" for reserved space
+						if (destIDCount > 0)
+						{
+							uint destIDs[destIDCount];
+						}
+
+						struct SrcRule
+						{
+							int unknown;
+							uint field_0x4;
+							int field_0x8_millisecs;
+							int field_0x10_flags;
+							int field_0xc;
+							ubyte moreFlags;
+						} srcrule;
+
+						struct DestRule
+						{
+							int unknown;
+							uint field_0x4;
+							int field_0x8_millisecs;
+							int field_0xc;
+							uint jumpToID;
+							ushort flags0;
+							ubyte flags1, flags2;
+							struct TransitionObject
+							{
+								Boolean allocateTransObject;
+								if (allocateTransObject == is_true)
+								{
+									uint segmentID;
+									struct FadeInSettings
+									{
+										int fadeIn_transitionTime;
+										Curve_Shape fadeIn_fadeCurve;
+										int fadeIn_fadeOffset; // time converted from millisecs to samples
+									} fadeinsettings;
+									struct FadeOutSettings
+									{
+										int fadeOut_transitionTime;
+										Curve_Shape fadeOut_fadeCurve;
+										int fadeOut_fadeOffset;
+									} fadeoutsettings;
+									ubyte flags[2];
+								}
+							} transobject;
+						} destrule;
+					} transrule;
+				}
+			}
+			Boolean is_continue_playback;
+			//uint treeUDepth;
+
+			// the integration demo skips this part, which is actually the state/switch groups that
+			// the music switch container uses.
+			//FSkip(treeUDepth * 5);
+			StateSwitchGroupList stateswitchgrouplist;
+
+			int decisionTreeArgument1;
+			ubyte decisionTreeMode;
+
+			if (decisionTreeArgument1 != 0)
+			{
+				struct KeyWeightProbability
+				{
+					uint key;
+					union Node_u_4
+					{
+						struct Children
+						{
+							ushort uldx, uCount;
+						} children;
+						uint audioNodeID <bgcolor=0xDD0000>;
+					} nodeu4;
+					ushort weight, probability;
+				} keyweightprobability[decisionTreeArgument1 / 12];
+			}
+			// i don't know why, but after all the reading's done a lot of
+			// skipping's done to the data pointer. i ignore it here, since
+			// there's no more to this object
+			//FSkip(decisionTreeArgument1);
+
 			/*
 			SoundStructure soundstructure;
 			struct Stingers stingers;
