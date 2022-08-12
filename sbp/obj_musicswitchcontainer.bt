@@ -1,116 +1,114 @@
-// HWL used for the music switch containers structures, as well as
-// the chaining behavior when adding paths
+// HWL used for the music switch containers structure
 
-struct Stingers
+enum <byte> Answer
 {
-	uint num_of_stingers;
-	if (num_of_stingers > 0) 
-		uint stinger_IDs[num_of_stingers];
+	No = -1,
+	Yes = 0
 };
 
-struct MSC_GeneralSettings // MSC = MusicSwitchContainer
+enum <uint16> Sync
 {
-	double frequency_double;
-	double offset_double;
-	
-	//FSkip(8);
-	float tempo;
-	byte time_signature_1;
-	byte time_signature_2;
+	_Entry_Cue = 0,
+	_Same_As_Playing_Segment = 1,
+	_Random_Cue = 2,
+	_Random_Custom_cue = 3 // see custom cue filter
+};
+
+enum <byte> AnswerOpposite
+{
+	_No = 0,
+	_Yes = -1,
+};
+
+enum <byte> CustomCueFilterSetting
+{
+	Match_Hash = 0,
+	Match_Source_Cue_Name = 1,
+};
+
+struct TransitionObject
+{
+	Boolean allocateTransObject;
+	if (allocateTransObject == is_true)
+	{
+		uint segmentID;
+		struct FadeInSettings
+		{
+			int fadeIn_transitionTime;
+			Curve_Shape fadeIn_fadeCurve;
+			int fadeIn_fadeOffset; // time converted from millisecs to samples
+		} fadeinsettings;
+
+		struct FadeOutSettings
+		{
+			int fadeOut_transitionTime;
+			Curve_Shape fadeOut_fadeCurve;
+			int fadeOut_fadeOffset;
+		} fadeoutsettings;
+		AnswerOpposite play_transition_preentry;
+		AnswerOpposite play_transition_postexit;
+	}
+};
+
+struct TransitionRule
+{
+	uint sourceIDCount; // an AkArray is reserved with reserved amount "sourceID"
+	if (sourceIDCount > 0)
+	{
+		uint sourceIDs[sourceIDCount];
+	}
+	uint destIDCount; // destination IDs, an AkArray also created here with
+					// "destIDCount" for reserved space
+	if (destIDCount > 0)
+	{
+		uint destIDs[destIDCount];
+	}
+
+	struct SrcRule
+	{
+		int fadeOutTime;
+		Curve_Shape curveShape;
+		int fadeOutOffset <comment="Milliseconds">;
+		enum <uint> Changes_Occur_At_Uint
+		{
+			_Immediate = 0,
+			_Next_Grid = 1,
+			_Next_Bar = 2,
+			_Next_Beat = 3,
+			_Next_Cue = 4,
+			_Custom_Cue = 5,
+			__Entry_Cue = 6,
+			__Exit_Cue = 7,
+		} exit_source;
+		int field_0xc;
+		ubyte moreFlags;
+	} srcrule;
+
+	struct DestRule
+	{
+		int fadeInTime <comment="Milliseconds">;
+		Curve_Shape curveShapeFadeIn;
+		int fadeInOffset <comment="Milliseconds">;
+		int custom_cue_filter_name_hash;
+		uint jumpToID;
+		Sync sync_to;
+		AnswerOpposite play_preentry;
+		CustomCueFilterSetting customcuefiltersetting;
+		TransitionObject transobject;
+	} destrule;
 };
 
 struct Transitions
 {
-	struct SourceAndDestination
+	uint transRulesCount;
+	if (transRulesCount > 0)
 	{
-		uint num_of_sources;
-		int source_IDs[num_of_sources] <comment="-1 = Any">;
-		
-		uint num_of_destinations;
-		int destination_IDs[num_of_destinations] <comment="-1 = Any">;
-	} sad;
-	
-	struct SourceSettings
-	{
-		uint fadeout_time <comment="Milliseconds">;
-		Curve_Shape curve_shape;
-		uint fadeout_offset <comment="Milliseconds">;
-		Changes_Occur_At exit_source;
-	} sourcesettings;
-	FSkip(3);
-	
-	uint unknown;
-	enum <byte> Answer
-	{
-		No = -1,
-		Yes = 0
-	};
-	Answer play_postexit;
-	
-	struct DestinationSettings
-	{
-		uint fadein_time <comment="Milliseconds">;
-		Curve_Shape curve_shape_fadein;
-		//uint second_fucks[four2];
-		uint fadein_offset <comment="Milliseconds">;
-		
-		uint custom_cue_filter_name_hash <comment="Ignore if CustomCueFilterSetting is Match_Hash">;
-	
-		FSkip(4);
-		
-		enum <uint16> Sync
+		local int i;
+		for (i = 0; i < transRulesCount; i++)
 		{
-			_Entry_Cue = 0,
-			_Same_As_Playing_Segment = 1,
-			_Random_Cue = 2,
-			_Random_Custom_cue = 3 // see custom cue filter
-		} sync_to;
-		
-		enum <byte> AnswerOpposite
-		{
-			_No = 0,
-			_Yes = -1,
-		};
-		AnswerOpposite play_preentry;
-		
-		enum <byte> CustomCueFilterSetting
-		{
-			Match_Hash = 0,
-			Match_Source_Cue_Name = 1,
-		} customcuefiltersetting;
-		
-	} destinationsettings;
-	
-	Boolean use_transition_segment;
-	Printf("USE_TRANSITION_SEGMENT: %u\n", use_transition_segment);
-	if (use_transition_segment == is_true)
-	{
-		struct TransitionSegment
-		{
-			uint segment_ID;
-			uint fadein_time <comment="Milliseconds">;
-			Curve_Shape curve_shape_fadein;
-			uint fadein_offset <comment="Milliseconds">;
-			
-			uint fadeout_time <comment="Milliseconds">;
-			Curve_Shape curve_shape;
-			uint fadeout_offset <comment="Milliseconds">;
-			
-			AnswerOpposite play_transition_preentry;
-			AnswerOpposite play_transition_postexit;
-		} transitionsegment;
+			TransitionRule transrule;
+		}
 	}
-	
-};
-
-struct TriggerConnection
-{
-	uint trigger_ID;
-	uint segment_to_play_ID;
-	uint unknowns[2];
-	
-	uint dont_play_stinger_again_for <comment="Milliseconds">;
-	Boolean32 allow_playing_stinger_in_next_segment <comment="If applicable">;
 };
 
 struct StateSwitchGroupList
@@ -123,85 +121,25 @@ struct StateSwitchGroupList
 	}
 };
 
-struct PathsSection
+struct DecisionTree
 {
-	uint offset_till_end_of_section;
-	FSkip(5);
-	//ubyte unknown0;
-	//ubyte unknown1;
-	ushort unknown <comment="Always 1?">;
-	ushort num_of_connections;
-	
-	struct Connection
+	int decisionTreeArgument1;
+	ubyte decisionTreeMode;
+
+	if (decisionTreeArgument1 != 0)
 	{
-		ConnectionChain();
-		/*
-		int seperator;
-		uint state_switch_ID;
-		//uint music_object_ID;
-		
-		// HWL an ugly check
-		if (ReadUInt() == 65538)
+		struct DecisionTreeNode
 		{
-			uint chain_to_next_state_switch <fgcolor=0xFFCC00>;
-			uint seperator;
-			uint state_switch_ID;
-			uint music_object_ID;
-		}
-		else 
-			uint music_object_ID;
-		*/
-		
-	} connections[num_of_connections] <optimize=false>;
-	
-	// HWL dirty hack because sometimes there are extra connections,
-	// but the num_of_connections variable doesn't increase.
-	local long distanceTravelled = FTell() - startOfConnectionStruct;
-	Printf("distance travelled: %u", distanceTravelled);
-	
-	if ( (offset_till_end_of_section - 16) > distanceTravelled)
-	{
-		while (distanceTravelled < offset_till_end_of_section - 8)
-		{
-			Connection extra_connections;
-			distanceTravelled = FTell() - startOfConnectionStruct;
-		}
+			uint key;
+			union Node_u_4
+			{
+				struct Children
+				{
+					ushort uldx, uCount;
+				} children;
+				uint audioNodeID <bgcolor=0xDD0000>;
+			} nodeu4;
+			ushort weight, probability;
+		} decisiontreenodes[decisionTreeArgument1 / 12];
 	}
 };
-
-int isConnectingChain(uint number)
-{
-	if (number == 0) 
-		return 0;
-	
-	if ( ( ( (number >> 24) & 0xFF) == 0 ) &&
-		( ( (number >> 8) & 0xFF) == 0 ) ) 
-		return 1;
-	else 
-		return 0;
-}
-
-void ConnectionChain()
-{
-	int seperator <fgcolor=0x00CCFF>;
-	uint state_switch_ID <comment="Zero means 'any'">;
-	//uint music_object_ID;
-	
-	// HWL a bit of an ugly chain. this is a recursive
-	// function (aka a function that calls itself)
-	if ( isConnectingChain(ReadUInt()) == 1 )
-	{
-		uint chain_to_next_state_switch <fgcolor=0xFFCC00>;
-		struct Chain
-		{
-			ConnectionChain();
-		} chain;
-		//uint seperator;
-		//uint state_switch_ID;
-		
-		// not needed
-		//uint music_object_ID;
-	}
-	else 
-		uint music_object_ID;
-}
