@@ -8,6 +8,11 @@ typedef struct
 
 typedef struct
 {
+    uint64 hash<format=hex>;
+} PathCode64 <read=(hash)>;
+
+typedef struct
+{
 	float x;
 	float y;
 	float z;

@@ -1,89 +1,148 @@
 LittleEndian();
 
-struct Header
+#include "common/types.bt"
+
+string GetOffsetString(uint offset)
+{
+    return offset == 0 ? "null" : ReadString(offset);
+}
+
+struct
 {
     // The signature is FSTB in TPP, FSTBwin in GZ
-    char signature[7] <hidden=true>;
-    byte type;                  // 2 for OMBS; 3 for GNTN; 4 for MBQF; 5 for AFGH/MAFR
+    char FSTBSignature[4] <hidden = true>;
+    
+    union
+    {
+        ubyte IsBigEndian;
+        char WinSignature[3];
+    } BigEndianAndWinSignature <hidden = true>;
 
-    uint sections;
-    uint section0Offset;        // Always 24 in TPP format, 0 in GZ format
-    uint section1Count;           // 1 in TPP, 0 in GZ
+    if (BigEndianAndWinSignature.WinSignature != "win" && (BigEndianAndWinSignature.IsBigEndian & 1))
+        BigEndian();
 
-    uint packCommonFpkOffset;   // This is 0 in gntn?
-} header <bgcolor=0xFCFCFC>;
+    byte Type;                  // 2 for OMBS; 3 for GNTN; 4 for MBQF; 5 for AFGH/MAFR
+
+    Assert(Type == 4 || Type == 5, "Only FSTB files versions 4 and 5 (TPP, MGO, SSD) supported.");
+
+    uint BlockLevelCount <hidden = true>;
+    uint BlockLevelsOffsetsOffset <hidden = true>;
+    
+    
+    uint PackCommonFpkCount <hidden = true>;
+    
+    uint PackCommonFpkOffset[PackCommonFpkCount] <read = GetOffsetString>;
+} Header <bgcolor=0xFCFCFC>;
+
+typedef struct
+{
+    ushort x;
+    ushort z;
+} SmallBlockDefinition <read = Str("(%d, %d)", x, z)>;
+
+struct LargeLodBlockDefinition
+{
+    SmallBlockDefinition SmallBlockBoundCorner;     // This block is (always?) outside the block's range.
+    ushort SmallBlockBoundRangeX;
+    ushort SmallBlockBoundRangeZ;
+    
+    // Row-major; index = (x - SmallBlockBoundCorner.x) + SmallBlockBoundRangeZ * (z - SmallBlockBoundCorner.z)
+    if (SmallBlockBoundRangeX != 0 && SmallBlockBoundRangeZ != 0)
+    {
+        struct
+        {
+            local uint llod_Z;
+            local uint llod_X;
+            for (llod_Z = 0; llod_Z < SmallBlockBoundRangeZ; llod_Z++)
+                for (llod_X = 0; llod_X < SmallBlockBoundRangeX; llod_X++)
+                    byte Mask : 1;
+        } BitMask;
+    }
+
+    // Align to next 32-bit boundary
+    if (FTell() % 4 != 0)
+    {
+        local uint paddingCount = 4 - (FTell() % 4);
+		byte Padding[paddingCount] <hidden = true>;
+        local uint pdIdx;
+        for (pdIdx = 0; pdIdx < paddingCount; pdIdx++)
+            Assert(Padding[pdIdx] == 0);
+    }
+};
 
 struct BlockDefinition
 {
-    uint nameHash;
+    StrCode32 NameHash; // For example, "afgh_bridge"
 
-    uint magicNumber;
-    Assert(magicNumber == 1);
+    uint FpkCount <hidden = true>; Assert(FpkCount == 1);
 
-    uint n2;                            // 0 in normals, 2 in weird structs (1 in SSD)
-    Assert(n2 < 3);
+    uint LargeLodFpkCount <hidden = true>;
 
-    uint superlowLodFmdlPathOffset;
-    uint additionalFpkCount;
-    Assert (additionalFpkCount == n2);
+    uint SuperLowLodFmdlPathOffset <read = GetOffsetString>;
 
-    uint paddingListOffset;
-    uint smallBlocksOffset;
-    uint smallBlockDefinitionCount;
+    uint LargeLodBlockDefinitionsCount <hidden = true>; Assert (LargeLodBlockDefinitionsCount == LargeLodFpkCount);
+    uint LargeLodBlockDefinitionOffset <hidden = true>;
 
-    struct SmallBlockDefinition
-    {
-        ushort x;
-        ushort y;
-    };
+    uint SmallBlockDefinitionsOffset <hidden = true>;
+    uint SmallBlockDefinitionCount <hidden = true>;
 
     SmallBlockDefinition blockStart;    // Min values in the smallBlocks
     SmallBlockDefinition blockEnd;      // Max values in the smallBlocks
 
-    uint fpkOffset;
+    uint FpkPathOffsets[FpkCount] <read = GetOffsetString>;
 
-    // Weird part
-    if (additionalFpkCount != 0)
+    if (LargeLodFpkCount != 0)
+        uint LargeLodFpkPathOffsets[LargeLodFpkCount] <read = GetOffsetString>;
+
+    FSeek(LargeLodBlockDefinitionOffset);
+    if (LargeLodBlockDefinitionsCount != 0)
     {
-        uint additionalFpkPathOffsets[additionalFpkCount];
-
-        // These offsets appear to be the start and end of the padding.
-        uint paddingOffsets[additionalFpkCount];
-        FSkip(4 * additionalFpkCount);
-
-        SmallBlockDefinition additionalBlockIndices;     // This block is (always?) outside the block's range.
-        ushort weirdIndex1;
-        ushort weirdIndex2;
-        uint weirdVals[(smallBlocksOffset - paddingListOffset)/4 - 6];
+        struct
+        {
+            uint Offsets[LargeLodBlockDefinitionsCount] <hidden = true>;
+            
+            LargeLodBlockDefinition LargeLodBlock[LargeLodBlockDefinitionsCount] <optimize = false>;
+        } LargeLodBlocks;
     }
 
-    SmallBlockDefinition smallBlocks[smallBlockDefinitionCount] <optimize=false>;
+    FSeek(SmallBlockDefinitionsOffset);
+    struct
+    {
+        SmallBlockDefinition SmallBlock[SmallBlockDefinitionCount] <optimize=false>;
+    } SmallBlocks;
 };
 
-// Section 0: Pack large
-if (header.sections > 0)
+typedef struct 
 {
-    struct Section0
-    {
-        uint nextEntryOffset;
-        uint section2offset;
-    } section0 <bgcolor=0xF2F254>;
+    uint EntryCount <hidden = true, bgcolor = 0x2A2B04, fgcolor=0xFCFCFC>;
 
-    struct Section1
+    if (EntryCount != 0)
     {
-        uint blockCount;
-        uint blockDefinitionOffsets[blockCount] <bgcolor=0xBFB15E>;
-        BlockDefinition blockDefinitions[blockCount] <optimize=false>;
-    } LargeBlockDefinitions <comment="Large blocks", bgcolor=0x2A2B04, fgcolor=0xFCFCFC>;
-}
+        uint Offsets[EntryCount] <hidden = true, bgcolor = 0x2A2B04, fgcolor=0xFCFCFC>;
 
-// Section 1: Pack extra large
-if (header.sections > 0 && section0.section2offset != 0)
+        // Technically, we should have every byte accounted for so the loop and offsets aren't necessary.
+        BlockDefinition Definition[EntryCount] <optimize = false, bgcolor = 0xF2F254>;
+        // local uint blkIdx;
+        // for (blkIdx = 0; blkIdx < EntryCount; blkIdx++)
+        // {
+        //     BlockDefinition Definition <bgcolor = 0xF2F254>;
+        // }
+    }
+} BlockDefinitions;
+
+if (Header.BlockLevelCount != 0)
 {
-    struct Section2
-    {
-        uint entryCount;
-        uint offsets[entryCount];
-        BlockDefinition entries[entryCount] <optimize=false>;
-    } ExtraLargeBlockDefinitions <comment="Extra large blocks", bgcolor=0xE1A700, fgcolor=0xFCFCFC>;
+    FSeek(Header.BlockLevelsOffsetsOffset);
+
+    uint Offsets[Header.BlockLevelCount] <hidden = true>;
+
+    // Technically, we should have every byte accounted for so the loop and offsets aren't necessary.
+    BlockDefinitions Definitions[Header.BlockLevelCount] <optimize = false>; // Pack large, Pack extraLarge
+    // local uint defIdx;
+    // for (defIdx = 0; defIdx < Header.SectionCount; defIdx++)
+    // {
+    //     FSeek(Offsets[defIdx]);
+
+    //     BlockDefinitions Definitions; // Pack large, Pack extraLarge
+    // }
 }

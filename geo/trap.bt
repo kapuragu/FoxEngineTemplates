@@ -1,7 +1,3 @@
-// TRAP - GeoTrapFile
-// By RLC - inspired by other FOX templates by the researchers of Modders' Heaven!
-// https://metalgearmodding.fandom.com/wiki/TRAP
-// Special thanks to Joey, BobDoleOwndU and OldBanana!
 LittleEndian();
 
 #include "../common/types.bt"
@@ -49,7 +45,7 @@ for (i = 0; i < EntryDefinitions.EntryCount; i++)
 
     struct
     {
-		ReadGeoCollisionShapeHeader(GEO_FILE_TYPE_TRAP);
+		GeoCollisionShapeHeader Header(GEO_FILE_TYPE_TRAP);
 	    	
 		switch (Header.Type)
 		{
