@@ -23,6 +23,8 @@ struct
 
     byte Type;                  // 2 for OMBS; 3 for GNTN; 4 for MBQF; 5 for AFGH/MAFR
 
+    Assert(Type == 4 || Type == 5, "Only FSTB files versions 4 and 5 (TPP, MGO, SSD) supported.");
+
     uint BlockLevelCount <hidden = true>;
     uint BlockLevelsOffsetsOffset <hidden = true>;
     
@@ -132,10 +134,10 @@ if (Header.BlockLevelCount != 0)
 {
     FSeek(Header.BlockLevelsOffsetsOffset);
 
-    uint Offsets[Header.SectionCount] <hidden = true>;
+    uint Offsets[Header.BlockLevelCount] <hidden = true>;
 
     // Technically, we should have every byte accounted for so the loop and offsets aren't necessary.
-    BlockDefinitions Definitions[Header.SectionCount] <optimize = false>; // Pack large, Pack extraLarge
+    BlockDefinitions Definitions[Header.BlockLevelCount] <optimize = false>; // Pack large, Pack extraLarge
     // local uint defIdx;
     // for (defIdx = 0; defIdx < Header.SectionCount; defIdx++)
     // {

@@ -2,6 +2,15 @@ Just a file that details all the changes to the template with every new
 version. This is only for looking back at the progress we've made (and
 hopefully find bugs more easily)!
 
+[2022-Aug-12]:
++ Fixed & reimplemented parsing for Music Switch Containers, based on
+both the integration demo code and previous notes on names for settings
+
+[2022-Aug-11]:
++ Committed the previous temporary changes for Event Actions
++ Fixed & reimplemented parsing for Event Actions, may not be 100%
+correct in all places though
+
 [2022-Aug-3]:
 + Fully fixed & reimplemented parsing for Music Segments based on the
 integration demo code

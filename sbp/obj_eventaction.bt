@@ -1,5 +1,97 @@
 // Everything related to the "Event Action" object
 
+enum <ushort> ActionType
+{
+	AkActionType_None=0,
+	AkActionType_Stop_E=258,
+	AkActionType_Stop_E_O=259,
+	AkActionType_Stop_ALL=260,
+	AkActionType_Stop_ALL_O=261,
+	AkActionType_Stop_AE=264,
+	AkActionType_Stop_AE_O=265,
+	AkActionType_Pause_E=514,
+	AkActionType_Pause_E_O=515,
+	AkActionType_Pause_ALL=516,
+	AkActionType_Pause_ALL_O=517,
+	AkActionType_Pause_AE=520,
+	AkActionType_Pause_AE_O=521,
+	AkActionType_Resume_E=770,
+	AkActionType_Resume_E_O=771,
+	AkActionType_Resume_ALL=772,
+	AkActionType_Resume_ALL_O=773,
+	AkActionType_Resume_AE=776,
+	AkActionType_Resume_AE_O=777,
+	AkActionType_Play=1027,
+	AkActionType_PlayAndContinue=1283,
+	AkActionType_Mute_M=1538,
+	AkActionType_Mute_O=1539,
+	AkActionType_Unmute_M=1794,
+	AkActionType_Unmute_O=1795,
+	AkActionType_Unmute_ALL=1796,
+	AkActionType_Unmute_ALL_O=1797,
+	AkActionType_Unmute_AE=1800,
+	AkActionType_Unmute_AE_O=1801,
+	AkActionType_SetPitch_M=2050,
+	AkActionType_SetPitch_O=2051,
+	AkActionType_ResetPitch_M=2306,
+	AkActionType_ResetPitch_O=2307,
+	AkActionType_ResetPitch_ALL=2308,
+	AkActionType_ResetPitch_ALL_O=2309,
+	AkActionType_ResetPitch_AE=2312,
+	AkActionType_ResetPitch_AE_O=2313,
+	AkActionType_SetVolume_M=2562,
+	AkActionType_SetVolume_O=2563,
+	AkActionType_ResetVolume_M=2818,
+	AkActionType_ResetVolume_O=2819,
+	AkActionType_ResetVolume_ALL=2820,
+	AkActionType_ResetVolume_ALL_O=2821,
+	AkActionType_ResetVolume_AE=2824,
+	AkActionType_ResetVolume_AE_O=2825,
+	AkActionType_SetBusVolume_M=3074,
+	AkActionType_ResetBusVolume_M=3330,
+	AkActionType_ResetBusVolume_ALL=3332,
+	AkActionType_ResetBusVolume_AE=3336,
+	AkActionType_SetLPF_M=3586,
+	AkActionType_SetLPF_O=3587,
+	AkActionType_ResetLPF_M=3842,
+	AkActionType_ResetLPF_O=3843,
+	AkActionType_ResetLPF_ALL=3844,
+	AkActionType_ResetLPF_ALL_O=3845,
+	AkActionType_ResetLPF_AE=3848,
+	AkActionType_ResetLPF_AE_O=3849,
+	AkActionType_UseState_E=4098,
+	AkActionType_UnuseState_E=4354,
+	AkActionType_SetState=4612,
+	AkActionType_SetGameParameter=4866,
+	AkActionType_SetGameParameter_O=4867,
+	AkActionType_ResetGameParameter=5122,
+	AkActionType_ResetGameParameter_O=5123,
+	AkActionType_StopEvent=5393,
+	AkActionType_PauseEvent=5649,
+	AkActionType_ResumeEvent=5905,
+	AkActionType_Duck=6176,
+	AkActionType_SetSwitch=6401,
+	AkActionType_BypassFX_M=6658,
+	AkActionType_BypassFX_O=6659,
+	AkActionType_ResetBypassFX_M=6914,
+	AkActionType_ResetBypassFX_O=6915,
+	AkActionType_ResetBypassFX_ALL=6916,
+	AkActionType_ResetBypassFX_ALL_O=6917,
+	AkActionType_ResetBypassFX_AE=6920,
+	AkActionType_ResetBypassFX_AE_O=6921,
+	AkActionType_Break_E=7170,
+	AkActionType_Break_E_O=7171,
+	AkActionType_Trigger=7424,
+	AkActionType_Trigger_O=7425,
+	AkActionType_Seek_E=7682,
+	AkActionType_Seek_E_O=7683,
+	AkActionType_Seek_ALL=7684,
+	AkActionType_Seek_ALL_O=7685,
+	AkActionType_Seek_AE=7688,
+	AkActionType_Seek_AE_O=7689	
+};
+
+/*
 enum <byte> ScopeEventAction
 {
 	GAMEOBJECT_SWITCH_OR_TRIGGER = 1,
@@ -39,9 +131,21 @@ enum <byte> ActionType
 	SEEK = 0x1E
 };
 
+*/
 enum <byte> EventParameterType
 {
 	DELAY = 0x0E,
 	PLAY = 0x0F, // Fade in time, given as uint32 in millisecs.
 	PROBABILITY = 0x10 // Given as float.
+};
+
+struct ExceptionParams
+{
+	uint exceptionParamsCount; // an AkArray is created with reserved space of this uint
+	local int i;
+	for (i = 0; i < exceptionParamsCount; i++)
+	{
+		uint ID;
+		Boolean is_bus;
+	}
 };

@@ -436,5 +436,6 @@ struct SoundStructure
 			} rtpc_effect;
 		}
 	} rtpc;
+	// NOTE: we're gonna have a problem here. apparently no read action's performed if CAkBankMgr::BankHasFeedback() returns false...
 	uint bank_feedback_ID <comment="Unknown purpose, it's only used if CAkBankMgr::BankHasFeedback() returns true and this uint is != 0">;
 };

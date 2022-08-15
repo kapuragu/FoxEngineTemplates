@@ -26,6 +26,7 @@ enum <byte> ObjectType {
 
 // HWL import all the other files we need, just for the sake of decreasing
 // the size of this template
+#include "../common/types.bt"
 #include "common.bt"
 
 #include "soundstructure.bt"
@@ -93,27 +94,92 @@ struct Object
 			break;
 
 		case EventAction:
-			ScopeEventAction scope_of_event_action;
+			//ScopeEventAction scope_of_event_action;
 			ActionType action_type;
 
 			printActionType(action_type);
 			uint id_of_game_obj_referenced_above <comment="This is zero if there is no game object." , bgcolor=0xD8C5EA>;
 			// Always zero, according to the wiki
-			FSkip(1);
+			ubyte unknown;
 			ubyte additional_params;
 
-			local int i;
-			for (i = 0; i < additional_params; ++i)
+			// AkPropBundle<AkPropValue>::SetInitialParams() 
+			if (additional_params > 0)
 			{
-				EventParameterType parameter_type;
-				if (parameter_type == DELAY || parameter_type == PLAY)
-					uint milliseconds;
-				else if (parameter_type == PROBABILITY)
-					float probability;
+				EventParameterType parameterTypes[additional_params];
+				uint parameterValues[additional_params];
 			}
-			// Always zero, according to the xentax wiki
-			FSkip(1);
 
+			// AkPropBundle<RANGED_MODIFIERS<AkPropValue>_>::SetInitialParams() 
+			ubyte propsCount;
+			if (propsCount > 0)
+			{
+				ubyte unknowns[propsCount];
+				uint64 unknown64s[propsCount];
+			}
+
+			if (action_type == AkActionType_Play || action_type == AkActionType_PlayAndContinue)
+			{
+				ubyte unknown; // sets up some unknown flags again
+				uint fileID;
+			}
+			// Resume or pause action types
+			else if (action_type >= 514 && action_type <= 777)
+			{
+				// NOTE: in the place of this ubyte is actually a uint if we're changing the state or switch
+				// or a state/switch group. but i can't find the code that differentiates those cases...
+				// EDIT: it's the virtual function that does it
+				ubyte unknown_count <hidden=true>; // some unknown flags are updated based on this value
+				ubyte resume_or_pause_unknown;
+				ExceptionParams exceptionparams;
+			}
+			else if (action_type == AkActionType_SetState || action_type == AkActionType_SetSwitch)
+			{
+				uint state_switch_group_ID;
+				uint target_switch_state_ID;
+			}
+			// set pitch and set volume, based on my own observations
+			else if (action_type == AkActionType_SetPitch_M || action_type == AkActionType_SetPitch_O ||
+				action_type == AkActionType_SetVolume_M || action_type == AkActionType_SetVolume_O)
+			{
+				ubyte unknown;
+				// not sure if this is what it actually means
+				enum <ubyte> AbsoluteOrRelative
+				{
+					Relative,
+					Absolute
+				} absoluteorrelative;
+				float valueSetting;
+			}
+			else if (action_type == AkActionType_SetGameParameter || action_type == AkActionType_SetGameParameter_O)
+			{
+				FSkip(1); // appears to be more correct this way? this weird 0x4 appears very frequently after propsCount
+				enum <ubyte> AkValueMeaning
+				{
+					AkValueMeaning_Default,
+					AkValueMeaning_Indepentent,
+					AkValueMeaning_Offset
+				} valueMeaning;
+				Vector3 position;
+			}
+			else if (action_type == AkActionType_BypassFX_M || action_type == AkActionType_BypassFX_O)
+			{
+				Boolean is_bypass;
+				uint targetMask;
+
+				// breaks parsing, commented out for now
+				//ExceptionParams exceptionparams;
+			}
+			// seek action types
+			else if (action_type >= 7682 && action_type <= 7689)
+			{
+				Boolean isSeekRelativeToDuration;
+				Vector3 position;
+				Boolean snapToNearestMarker;
+				ExceptionParams exceptionparams;
+			}
+
+			/*
 			if (action_type == SET_STATE || action_type == SET_SWITCH)
 			{
 				uint state_group_id;
@@ -123,6 +189,7 @@ struct Object
 			{
 				Curve_Shape_Byte csb;
 			}
+			*/
 			break;
 
 		case Event:
@@ -342,40 +409,22 @@ struct Object
 			} tracks;
 			break;
 
-		// as v2.2
-		// huge update as of v2.6
 		case MusicSwitchContainer:
 			SoundStructure soundstructure;
-			struct Stingers stingers;
+			MusicNodeParams musicnodeparams;
+			Transitions transitions;
+			Boolean is_continue_playback;
+			//uint treeUDepth;
 
-			// HWL this section doesn't exist in normal WWise banks,
-			// so i guess it's a unique section to TPP?
-			// change this to false when parsing normal banks.
-			if (is_game_soundbank == is_true)
-			{
-				struct Children
-				{
-					uint num_of_children;
-					uint children[num_of_children];
-				} children;
-			}
-
-			struct MSC_GeneralSettings msc_gs; // MSC = MusicSwitchContainer
-
-			Boolean unknown;
-			uint num_of_stinger_triggers;
-			if (num_of_stinger_triggers > 0) 
-				TriggerConnection triggerconnections[num_of_stinger_triggers] <optimize=false>;
-
-			//FSkip(1);
-			uint num_of_transitions;
-			Transitions transitions[num_of_transitions] <optimize=false>;
-			Boolean unknown <comment="Always true?">;
-			StateSwitchGroupList ssgl;
-
-			local long startOfConnectionStruct = FTell() + 4;
-			PathsSection pathssection;
-
+			// the integration demo skips this part, which is actually the state/switch groups that
+			// the music switch container uses.
+			//FSkip(treeUDepth * 5);
+			StateSwitchGroupList stateswitchgrouplist;
+			DecisionTree decisiontree;
+			// i don't know why, but after all the reading's done a lot of
+			// skipping's done to the data pointer. i ignore it here, since
+			// there's no more to this object
+			//FSkip(decisionTreeArgument1);
 			break;
 		case MusicPlaylistContainer: // early implementation
 			SoundStructure soundstructure;
@@ -393,7 +442,7 @@ struct Object
 				uint music_segment_IDs[num_of_music_segments];
 			*/
 	
-			MSC_GeneralSettings msc_gs;
+			//MSC_GeneralSettings msc_gs;
 
 			break;
 

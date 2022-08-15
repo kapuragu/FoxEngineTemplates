@@ -42,7 +42,7 @@ void printType(ObjectType objectType)
 
 void printActionType(ActionType actiontype)
 {
-	Printf("Action Type: ");
+	/*Printf("Action Type: ");
 	
 	switch (actiontype)
 	{
@@ -72,5 +72,5 @@ void printActionType(ActionType actiontype)
 		case BREAK: 					Printf("Break"); break;
 		case SEEK: 						Printf("Seek"); break;
 	}
-	Printf("\n");
+	Printf("\n");*/
 }
