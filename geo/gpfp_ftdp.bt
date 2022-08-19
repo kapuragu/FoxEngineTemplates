@@ -18,6 +18,8 @@ struct
     local uint SelfStartPos = FTell();
 
     uint Version;
+    if (Version == 372637195) // 201209110
+        BigEndian();
     
     uint NextEntryOffset;
 
@@ -148,8 +150,8 @@ typedef struct
     }
     else
     {
-        uint SelfIndex;
-        uint VertexDataCount;
+        uint MaterialIndex; // TerrainDecalPack.materialLinks[MaterialIndex]
+        uint VertexCount;
         uint Unknown0;
         float UnknownFloat0;
 
@@ -160,14 +162,15 @@ typedef struct
         float UnknownFloat2;
         uint Padding1 <hidden = true>; Assert(Padding1 == 0);
 
-        Vector4 UnknownVector40;
+        Vector2 BoundingCellMinMax_X;
+        Vector2 BoundingCellMinMax_Z;
 
-        Vector4 VertexData[VertexDataCount] <bgcolor=COLOR_NODE>;
+        Vector4 VertexData[VertexCount] <bgcolor=COLOR_NODE>;
 
         struct
         {
-            float UnknownFloat0;
-            short UnknownShorts[6];
+            float BoundingCellExtremum;
+            int UnknownData[3];
         } UnknownData[4];
     }
 } DataChunk <bgcolor = COLOR_DATACHUNK>;

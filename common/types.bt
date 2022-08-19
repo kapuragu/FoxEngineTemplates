@@ -15,6 +15,12 @@ typedef struct
 {
 	float x;
 	float y;
+} Vector2 <read = Str("(%g, %g)", x, y)>;
+
+typedef struct
+{
+	float x;
+	float y;
 	float z;
 } Vector3 <read = Str("(%g, %g, %g)", x, y, z)>;
 

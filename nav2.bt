@@ -57,11 +57,11 @@ struct Vector4
     float w;
 };
 
-struct Vertex {
+typedef struct {
     ushort x;
     ushort y;
     ushort z;
-};
+} Vertex <read = Str("%f, %f, %f", (float)x / header.xDivisor, (float)y / header.yDivisor, (float)z / header.zDivisor)>;
 
 struct IndexPair8
 {
