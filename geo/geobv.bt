@@ -54,7 +54,7 @@ struct
 
 	uint EntityListOffset;
 
-	uint UnallocatedSpaceOffset;
+	uint PlaceHolderListOffset;
 } SecondaryHeader <bgcolor = COLOR_SECONDARYHEADER>;
 
 typedef struct
@@ -153,7 +153,11 @@ struct
 {
 	uint ArrayIndex; // For StaticModelArrays
 	StrCode32 Hash; // References StaticModels and StaticModelArrays
-} EntityList[SecondaryHeader.EntityListCount] <read = Str("%u", Hash.hash), bgcolor = COLOR_ENTITYLIST>;
+} EntityList[SecondaryHeader.EntityListCount] <read = Str("%u[%d]", Hash.hash, ArrayIndex), bgcolor = COLOR_ENTITYLIST>;
+
+// Game patches this section with pointers to the Entities so it doesn't have to perform the hash resolution every time. Not directly into the DataSet but perhaps their DataBodies or something.
+FSeek(SecondaryHeader.SelfStartPos + SecondaryHeader.PlaceHolderListOffset);
+uint64 PlaceHolderList[SecondaryHeader.EntityListCount];
 
 FSeek(SecondaryHeader.SelfStartPos + SecondaryHeader.HashesOffset);
 struct
