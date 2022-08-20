@@ -26,6 +26,13 @@ typedef struct
 
 typedef struct
 {
+	hfloat x;
+	hfloat y;
+	hfloat z;
+} HVector3 <read = Str("(%g, %g, %g)", x, y, z)>;
+
+typedef struct
+{
 	float x;
 	float y;
 	float z;
@@ -39,6 +46,22 @@ typedef struct
 	float z;
 	float w;
 } Vector4 <read = Str("(%g, %g, %g, %g)", x, y, z, w)>;
+
+typedef struct
+{
+	float x;
+	float y;
+	float z;
+	float w;
+} Quaternion <read = Str("(%g, %g, %g, %g)", x, y, z, w)>;
+
+typedef struct
+{
+    hfloat x;
+    hfloat y;
+    hfloat z;
+    hfloat w;
+} HQuaternion <read=Str("(%g, %g, %g, %g)", x, y, z, w)>;
 
 typedef struct
 {
@@ -62,5 +85,12 @@ typedef struct
 	float z3;
 	float w3;
 } Matrix4;
+
+void AlignRead(int alignment)
+{
+    local long alignmentRequired = FTell() % alignment;
+    if (alignmentRequired > 0)
+        FSeek(FTell() + alignment - alignmentRequired);
+}
 
 #endif

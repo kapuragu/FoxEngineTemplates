@@ -26,7 +26,7 @@ enum <byte> ObjectType {
 
 // HWL import all the other files we need, just for the sake of decreasing
 // the size of this template
-#include "../common/types.bt"
+#include "../common/common.bt"
 #include "common.bt"
 
 #include "soundstructure.bt"

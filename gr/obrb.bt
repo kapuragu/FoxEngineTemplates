@@ -7,10 +7,10 @@ FSeek(Header.MetadataEntriesOffset);
 
 GrMetadataEntries MetadataEntries;
 
-#define ObjectBrushMetadata MetadataEntries.Entry[0]
-#define NumObjects ObjectBrushMetadata.Param[GetGrMetadataEntryParamIndex(ObjectBrushMetadata, "numObjects")].Value
+#define ObjectBrushBlockMetadata MetadataEntries.Entry[0]
+#define NumObjects ObjectBrushBlockMetadata.Param[GetGrMetadataEntryParamIndex(ObjectBrushBlockMetadata, "numObjects")].Value
 
-FSeek(startof(ObjectBrushMetadata) + ObjectBrushMetadata.DataOffset);
+FSeek(startof(ObjectBrushBlockMetadata) + ObjectBrushBlockMetadata.DataOffset);
 
 struct Object
 {

@@ -1,6 +1,6 @@
 LittleEndian();
 
-#include "common/types.bt"
+#include "common/common.bt"
 
 string GetOffsetString(uint offset)
 {

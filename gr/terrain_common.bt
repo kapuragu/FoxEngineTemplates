@@ -1,0 +1,61 @@
+#ifndef TERRAIN_COMMON_BT
+#define TERRAIN_COMMON_BT
+
+typedef struct
+{
+    ubyte r <fgcolor = 0xaaaaff>;
+    ubyte g <fgcolor = 0xaaffaa>;
+    ubyte b <fgcolor = 0xffaaaa>;
+    ubyte a <fgcolor = 0xaaaaaa>;
+} Pixel <read=Str("#%02x%02x%02x%02x", r, g, b, a)>;
+
+typedef struct
+{
+    float near;
+    float offset;
+    float height;
+    float scale;
+} LodParam <read=Str("(%f, %f, %f, %f)", near, offset, height, scale)>;
+
+struct DescriptionSubEntry
+{
+    uint HeightFormat;
+
+    float MaxHeightWS;
+    float MinHeightWS;
+
+    uint HeightMapOffset; // selfpos + HeightMapOffset points to start of heightMap
+    uint HeightMapSize; // guess: heightMap size in bytes
+    uint ComboFormat; // Reader throws an error if Type => 7
+    uint ComboTextureOffset; // selfpos + ComboTextureOffset points to start of comboTexture
+    uint ComboTextureSize; // guess: comboTexture size in bytes
+
+    uint64 Unknown1;
+
+    uint MaterialIdsOffset; // selfpos + MaterialIdsOffset points to start of materialIds
+
+    uint ConfigrationIdsOffset; // selfpos + ConfigrationIdsOffset points to start of configrationIds
+
+    uint MaxHeightOffset; // selfpos + MaxHeightOffset points to start of maxHeight
+    uint MinHeightOffset; // selfpos + MaxHeightOffset points to start of minHeight
+
+    uint ParamOffset; // selfpos + ParamOffset points to start of param
+
+    hfloat Unknown1_MGO;
+    ushort Padding0; Assert(Padding0 == 0);
+    
+    uint Padding1; Assert(Padding1 == 0);
+    
+    uint MapChunkWidthWS;
+    uint MapChunkHeightWS;
+
+    ushort Unknown2; Assert(Unknown2 == 32);
+    ushort Unknown3; 
+    ushort Unknown4; // Often 5, CYPR is 1
+
+    ushort Unknown2_MGO <comment="Not convinced this is a half-float">;
+
+    uint Unknown5; // Non-null in Type == 4 HTREs
+};
+
+#endif
