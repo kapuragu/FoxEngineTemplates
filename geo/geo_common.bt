@@ -3,131 +3,182 @@
 
 #include "../common/types.bt"
 
-// Intentionally asymmetric to make quickly reading through the list easier.
-typedef enum <uint64> {
-    SET = 1,
-    _ = 0,
-} BIT <read=EnumToString(this)>;
+#define COLOR_BG_TAGS 0xFF00FF
+#define COLOR_FG_TAGS 0x00FF00
 
 typedef struct
 {
 	BitfieldDisablePadding();
-	BIT TRAP_TAGS_Intrude : 1; // 0x1
-	BIT TRAP_TAGS_Tower : 1; // 0x2
-	BIT TRAP_TAGS_InRoom : 1; // 0x4
-	BIT TRAP_TAGS_FallDeath : 1; // 0x8
+	uint64 TRAP_TAGS_Intrude : 1; // 0x1
+	uint64 TRAP_TAGS_Tower : 1; // 0x2
+	uint64 TRAP_TAGS_InRoom : 1; // 0x4
+	uint64 TRAP_TAGS_FallDeath : 1; // 0x8
 
-	BIT TRAP_TAGS_NearCamera1 : 1; // 0x10
-	BIT TRAP_TAGS_NearCamera2 : 1; // 0x20
-	BIT TRAP_TAGS_NearCamera3 : 1; // 0x40
-	BIT TRAP_TAGS_NearCamera4 : 1; // 0x80
+	uint64 TRAP_TAGS_NearCamera1 : 1; // 0x10
+	uint64 TRAP_TAGS_NearCamera2 : 1; // 0x20
+	uint64 TRAP_TAGS_NearCamera3 : 1; // 0x40
+	uint64 TRAP_TAGS_NearCamera4 : 1; // 0x80
 
-	BIT TRAP_TAGS_NoCliff : 1; // 0x100
-	BIT TRAP_TAGS_NoRainEffect : 1; // 0x200
-	BIT TRAP_TAGS_x60e79a58dcc3 : 1; // 0x400
-	BIT TRAP_TAGS_GimmickNoFulton : 1; // 0x800
+	uint64 TRAP_TAGS_NoCliff : 1; // 0x100
+	uint64 TRAP_TAGS_NoRainEffect : 1; // 0x200
+	uint64 TRAP_TAGS_x60e79a58dcc3 : 1; // 0x400
+	uint64 TRAP_TAGS_GimmickNoFulton : 1; // 0x800
 
-	BIT TRAP_TAGS_innerZone : 1; // 0x1000
-	BIT TRAP_TAGS_outerZone : 1; // 0x2000
-	BIT TRAP_TAGS_hotZone : 1; // 0x4000
-	BIT TRAP_TAGS_x439898dcbf83 : 1; // 0x8000
+	uint64 TRAP_TAGS_innerZone : 1; // 0x1000
+	uint64 TRAP_TAGS_outerZone : 1; // 0x2000
+	uint64 TRAP_TAGS_hotZone : 1; // 0x4000
+	uint64 TRAP_TAGS_x439898dcbf83 : 1; // 0x8000
 
-	BIT TRAP_TAGS_xe780e431a068 : 1; // 0x10000
-	BIT TRAP_TAGS_x53827eed3fbc : 1; // 0x20000
-	BIT TRAP_TAGS_x7e1121c5cb93 : 1; // 0x40000
-	BIT TRAP_TAGS_xcadd57b76a83 : 1; // 0x80000
+	uint64 TRAP_TAGS_xe780e431a068 : 1; // 0x10000
+	uint64 TRAP_TAGS_x53827eed3fbc : 1; // 0x20000
+	uint64 TRAP_TAGS_x7e1121c5cb93 : 1; // 0x40000
+	uint64 TRAP_TAGS_xcadd57b76a83 : 1; // 0x80000
 
-	BIT TRAP_TAGS_xe689072c4df8 : 1; // 0x100000
-	BIT TRAP_TAGS_x6d14396ebbe5 : 1; // 0x200000
-	BIT TRAP_TAGS_NoStepOn : 1; // 0x400000
-	BIT TRAP_TAGS_HalationEffect : 1; // 0x800000
+	uint64 TRAP_TAGS_xe689072c4df8 : 1; // 0x100000
+	uint64 TRAP_TAGS_x6d14396ebbe5 : 1; // 0x200000
+	uint64 TRAP_TAGS_NoStepOn : 1; // 0x400000
+	uint64 TRAP_TAGS_HalationEffect : 1; // 0x800000
 
-	BIT TRAP_TAGS_Unnamed1 : 1; // 0x1000000
-	BIT TRAP_TAGS_Unused1 : 1; // 0x2000000
-	BIT TRAP_TAGS_Unused2 : 1; // 0x4000000
-	BIT TRAP_TAGS_Unused3 : 1; // 0x8000000
+	uint64 TRAP_TAGS_Unnamed1 : 1; // 0x1000000
+	uint64 TRAP_TAGS_Unused1 : 1 <hidden = true>; Assert(TRAP_TAGS_Unused1 == 0); // 0x2000000
+	uint64 TRAP_TAGS_Unused2 : 1 <hidden = true>; Assert(TRAP_TAGS_Unused2 == 0); // 0x4000000
+	uint64 TRAP_TAGS_Unused3 : 1 <hidden = true>; Assert(TRAP_TAGS_Unused3 == 0); // 0x8000000
 
-	BIT TRAP_TAGS_xd6ee65d20b7a : 1; // 0x10000000
-	BIT TRAP_TAGS_xf287ba9cb7e3 : 1; // 0x20000000
-	BIT TRAP_TAGS_NoFulton : 1; // 0x40000000
-	BIT TRAP_TAGS_Unnamed1 : 1; // 0x80000000
-	uint TRAP_TAGS_Waterfall : 32 <format = binary>; // 0xffffffff80000000
+	uint64 TRAP_TAGS_xd6ee65d20b7a : 1; // 0x10000000
+	uint64 TRAP_TAGS_xf287ba9cb7e3 : 1; // 0x20000000
+	uint64 TRAP_TAGS_NoFulton : 1; // 0x40000000
+	uint64 TRAP_TAGS_Waterfall: 1; // 0x80000000 for convenience in 010 but the tag is actually 0xffffffff80000000, signalling that there are no higher-value tags
 	BitfieldEnablePadding();
-} TRAP_TAGS <bgcolor = 0xFF00FF, fgcolor = 0x00FF00>;
+} TRAP_TAGS <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
+
+typedef struct
+{
+	// https://github.com/TinManTex/mgsv-deminified-lua/blob/3b8d6a0487ce45f69502d40e684b3d653d3b8965/data1/Tpp/start.lua#L292
+	uint64 PATH_TAGS_Elude : 1;
+	uint64 PATH_TAGS_Jump : 1;
+	uint64 PATH_TAGS_Fence : 1;
+	uint64 PATH_TAGS_StepOn : 1;
+	uint64 PATH_TAGS_Behind : 1;
+	uint64 PATH_TAGS_Urgent : 1;
+	uint64 PATH_TAGS_Pipe : 1;
+	uint64 PATH_TAGS_Climb : 1;
+	uint64 PATH_TAGS_Rail : 1;
+	uint64 PATH_TAGS_ForceFallDown : 1;
+	uint64 PATH_TAGS_DontFallWall : 1;
+	uint64 PATH_TAGS_Move : 1;
+} PATH_TAGS <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
+
+typedef struct
+{
+	// https://github.com/TinManTex/mgsv-deminified-lua/blob/3b8d6a0487ce45f69502d40e684b3d653d3b8965/data1/Tpp/start.lua#L292
+	uint EDGE_TAGS_Stand : 1;
+	uint EDGE_TAGS_Squat : 1;
+	uint EDGE_TAGS_BEHIND_LOW : 1;
+	uint EDGE_TAGS_FenceElude : 1;
+	uint EDGE_TAGS_Elude : 1;
+	uint EDGE_TAGS_Jump : 1;
+	uint EDGE_TAGS_Fence : 1;
+	uint EDGE_TAGS_StepOn : 1;
+	uint EDGE_TAGS_Behind : 1;
+	uint EDGE_TAGS_Urgent : 1;
+	uint EDGE_TAGS_NoEnd : 1;
+	uint EDGE_TAGS_NoStart : 1;
+	uint EDGE_TAGS_FenceJump : 1;
+	uint EDGE_TAGS_Wall : 1;
+	uint EDGE_TAGS_NoWall : 1;
+	uint EDGE_TAGS_ToIdle : 1;
+	uint EDGE_TAGS_EnableFall : 1;
+	uint EDGE_TAGS_NoFreeFall : 1;
+	uint EDGE_TAGS_Fulton : 1;
+	uint EDGE_TAGS_BEHIND_SNAP : 1;
+	uint EDGE_TAGS_LineCheck : 1;
+	uint EDGE_TAGS_FallNear : 1;
+	uint EDGE_TAGS_FenceToStepOn : 1;
+	uint EDGE_TAGS_ForceFallCatch : 1;
+	uint EDGE_TAGS_Window : 1;
+	uint EDGE_TAGS_AimIsBack : 1;
+} EDGE_TAGS <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
+
+typedef struct
+{
+	// https://github.com/TinManTex/mgsv-deminified-lua/blob/3b8d6a0487ce45f69502d40e684b3d653d3b8965/data1/Tpp/start.lua#L292
+	uint NODE_TAGS_Edge : 1;
+	uint NODE_TAGS_Cover : 1;
+	uint NODE_TAGS_BEHIND_LOOK_IN : 1;
+	uint NODE_TAGS_CHANGE_TO_60 : 1;
+	uint NODE_TAGS_NoTurn : 1;
+	uint NODE_TAGS_BEHIND_STOP : 1;
+	uint NODE_TAGS_NoOut : 1;
+	uint NODE_TAGS_NoStart : 1;
+	uint NODE_TAGS_EludeToElude : 1;
+} NODE_TAGS <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
 
 typedef struct
 {
 	BitfieldDisablePadding();
-	uint64 Tags <bgcolor = 0xFF00FF, fgcolor = 0x00FF00, format = binary>; // https://github.com/TinManTex/mgsv-deminified-lua/blob/3b8d6a0487ce45f69502d40e684b3d653d3b8965/data1/Tpp/start.lua#L292
-	BitfieldEnablePadding();
-} PATH_TAGS;
+	uint64 COLLISION_TAGS_UNKNOWN1 : 1; if (COLLISION_TAGS_UNKNOWN1) Printf("COLLISION_TAGS_UNKNOWN1 set.\n");
+	uint64 COLLISION_TAGS_RECOIL_FLOOR_MAYBE : 1;
+	uint64 COLLISION_TAGS_UNKNOWN0 : 1; if (COLLISION_TAGS_UNKNOWN0) Printf("COLLISION_TAGS_UNKNOWN0 set.\n");
+	uint64 COLLISION_TAGS_CHARA_MAYBE : 1;
 
-typedef struct
-{
-	BitfieldDisablePadding();
-	BIT COLLISION_TAGS_UNKNOWN1 : 1; if (COLLISION_TAGS_UNKNOWN1) Printf("COLLISION_TAGS_UNKNOWN1 set.\n");
-	BIT COLLISION_TAGS_RECOIL_FLOOR_MAYBE : 1;
-	BIT COLLISION_TAGS_UNKNOWN0 : 1; if (COLLISION_TAGS_UNKNOWN0) Printf("COLLISION_TAGS_UNKNOWN0 set.\n");
-	BIT COLLISION_TAGS_CHARA_MAYBE : 1;
+	uint64 COLLISION_TAGS_PLAYER : 1;
+	uint64 COLLISION_TAGS_ENEMY : 1;
+	uint64 COLLISION_TAGS_BULLET : 1;
+	uint64 COLLISION_TAGS_MISSILE : 1;
 
-	BIT COLLISION_TAGS_PLAYER : 1;
-	BIT COLLISION_TAGS_ENEMY : 1;
-	BIT COLLISION_TAGS_BULLET : 1;
-	BIT COLLISION_TAGS_MISSILE : 1;
+	uint64 COLLISION_TAGS_BOMB : 1;
+	uint64 COLLISION_TAGS_UNUSED5 : 1;
+	uint64 COLLISION_TAGS_BLOOD : 1;
+	uint64 COLLISION_TAGS_IK : 1;
 
-	BIT COLLISION_TAGS_BOMB : 1;
-	BIT COLLISION_TAGS_UNUSED5 : 1;
-	BIT COLLISION_TAGS_BLOOD : 1;
-	BIT COLLISION_TAGS_IK : 1;
+	uint64 COLLISION_TAGS_STAIRWAY : 1;
+	uint64 COLLISION_TAGS_STOP_EYE : 1;
+	uint64 COLLISION_TAGS_CLIFF : 1;
+	uint64 COLLISION_TAGS_UNUSED4 : 1; Assert(COLLISION_TAGS_UNUSED4 == 0);
 
-	BIT COLLISION_TAGS_STAIRWAY : 1;
-	BIT COLLISION_TAGS_STOP_EYE : 1;
-	BIT COLLISION_TAGS_CLIFF : 1;
-	BIT COLLISION_TAGS_UNUSED4 : 1; Assert(COLLISION_TAGS_UNUSED4 == 0);
+	uint64 COLLISION_TAGS_UNUSED6 : 1; Assert(COLLISION_TAGS_UNUSED6 == 0);
+	uint64 COLLISION_TAGS_DONT_FALL : 1;
+	uint64 COLLISION_TAGS_CAMERA : 1;
+	uint64 COLLISION_TAGS_UNUSED2 : 1; Assert(COLLISION_TAGS_UNUSED2 == 0);
 
-	BIT COLLISION_TAGS_UNUSED6 : 1; Assert(COLLISION_TAGS_UNUSED6 == 0);
-	BIT COLLISION_TAGS_DONT_FALL : 1;
-	BIT COLLISION_TAGS_CAMERA : 1;
-	BIT COLLISION_TAGS_UNUSED2 : 1; Assert(COLLISION_TAGS_UNUSED2 == 0);
+	uint64 COLLISION_TAGS_UNUSED1 : 1; Assert(COLLISION_TAGS_UNUSED1 == 0);
+	uint64 COLLISION_TAGS_UNUSED0 : 1; Assert(COLLISION_TAGS_UNUSED0 == 0);
+	uint64 COLLISION_TAGS_CLIFF_FLOOR : 1;
+	uint64 COLLISION_TAGS_BULLET_MARK : 1;
 
-	BIT COLLISION_TAGS_UNUSED1 : 1; Assert(COLLISION_TAGS_UNUSED1 == 0);
-	BIT COLLISION_TAGS_UNUSED0 : 1; Assert(COLLISION_TAGS_UNUSED0 == 0);
-	BIT COLLISION_TAGS_CLIFF_FLOOR : 1;
-	BIT COLLISION_TAGS_BULLET_MARK : 1;
+	uint64 COLLISION_TAGS_HEIGHT_LIMIT : 1;
+	uint64 COLLISION_TAGS_DOUBLE_SLIDE : 1;
+	uint64 COLLISION_TAGS_WATER_SURFACE : 1;
+	uint64 COLLISION_TAGS_TARGET_BLOCK : 1;
 
-	BIT COLLISION_TAGS_HEIGHT_LIMIT : 1;
-	BIT COLLISION_TAGS_DOUBLE_SLIDE : 1;
-	BIT COLLISION_TAGS_WATER_SURFACE : 1;
-	BIT COLLISION_TAGS_TARGET_BLOCK : 1;
-
-	BIT COLLISION_TAGS_DOG : 1;
-	BIT COLLISION_TAGS_NO_EFFECT : 1;
-	BIT COLLISION_TAGS_EVENT_PHYSICS : 1;
-	BIT COLLISION_TAGS_NO_WALL_MOVE : 1;
+	uint64 COLLISION_TAGS_DOG : 1;
+	uint64 COLLISION_TAGS_NO_EFFECT : 1;
+	uint64 COLLISION_TAGS_EVENT_PHYSICS : 1;
+	uint64 COLLISION_TAGS_NO_WALL_MOVE : 1;
 
 	ushort Padding0 : 16 <hidden=true>; Assert(Padding0 == 0);
 
-	BIT COLLISION_TAGS_MISSILE2 : 1;
-	BIT COLLISION_TAGS_RIDE_ON_OUTER : 1;
-	BIT COLLISION_TAGS_FLAME : 1;
-	BIT COLLISION_TAGS_IGNORE_PHYSICS : 1;`
+	uint64 COLLISION_TAGS_MISSILE2 : 1;
+	uint64 COLLISION_TAGS_RIDE_ON_OUTER : 1;
+	uint64 COLLISION_TAGS_FLAME : 1;
+	uint64 COLLISION_TAGS_IGNORE_PHYSICS : 1;`
 
-	BIT COLLISION_TAGS_CLIMB : 1;
-	BIT COLLISION_TAGS_HORSE : 1;
-	BIT COLLISION_TAGS_VEHICLE : 1;
-	BIT COLLISION_TAGS_MARKER : 1;
+	uint64 COLLISION_TAGS_CLIMB : 1;
+	uint64 COLLISION_TAGS_HORSE : 1;
+	uint64 COLLISION_TAGS_VEHICLE : 1;
+	uint64 COLLISION_TAGS_MARKER : 1;
 
-	BIT COLLISION_TAGS_RIDE_ON : 1;
-	BIT COLLISION_TAGS_THROUGH_LINE_OF_FIRE : 1;
-	BIT COLLISION_TAGS_THROUGH_ITEM_CHECK : 1;
-	BIT COLLISION_TAGS_NO_CREEP : 1;
+	uint64 COLLISION_TAGS_RIDE_ON : 1;
+	uint64 COLLISION_TAGS_THROUGH_LINE_OF_FIRE : 1;
+	uint64 COLLISION_TAGS_THROUGH_ITEM_CHECK : 1;
+	uint64 COLLISION_TAGS_NO_CREEP : 1;
 
-	BIT COLLISION_TAGS_NO_FULTON : 1;
-	BIT COLLISION_TAGS_FULTON : 1;
-	BIT COLLISION_TAGS_ITEM : 1;
-	BIT COLLISION_TAGS_BOSS : 1;
+	uint64 COLLISION_TAGS_NO_FULTON : 1;
+	uint64 COLLISION_TAGS_FULTON : 1;
+	uint64 COLLISION_TAGS_ITEM : 1;
+	uint64 COLLISION_TAGS_BOSS : 1;
 	BitfieldEnablePadding();
-} COLLISION_TAGS <bgcolor = 0xFF00FF, fgcolor = 0x00FF00>;
+} COLLISION_TAGS <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
 
 enum <byte> GEO_FILE_TYPE
 {

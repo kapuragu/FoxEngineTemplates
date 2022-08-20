@@ -121,7 +121,7 @@ typedef struct
 
         struct Edge
         {
-            uint Flags <format = binary>;
+            EDGE_TAGS Tags;
             ushort InIndex;
             ushort OutIndex;
         } Edges [Header.EntryCount] <bgcolor=COLOR_EDGE>;
@@ -144,7 +144,7 @@ typedef struct
             struct Node
             {
                 Vector3 Position;
-                uint Flags <format = binary>;
+                NODE_TAGS Tags;
             } Nodes [highestNodeIndex + 1] <bgcolor=COLOR_NODE>;
         }
     }
