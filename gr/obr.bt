@@ -22,4 +22,4 @@ struct Object
     ubyte PluginBrushIndex; // Index of ObjBrush dataset entity's pluginHandle list entry
     ubyte NormalizedScale; // scale = lerp(minScale, maxScale, NormalizedScale) found in DataSet plugin definition
     uint GlobalObjectIndex;
-} Objects[NumObjects] <bgcolor=0x8CAF5A>;
+} Objects[NumObjects] <read = Str("plugin: %d, block: %d, globalIndex: %d", PluginBrushIndex, BlockIndex, GlobalObjectIndex), bgcolor = 0x8CAF5A>;

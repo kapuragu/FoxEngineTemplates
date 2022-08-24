@@ -11,47 +11,68 @@
 
 LittleEndian();
 
-struct Vector4
+#include "common/common.bt"
+
+enum <short> FRDV_ACTION_TYPE
 {
-	float x;
-	float y;
-	float z;
-	float w;
+	FRDV_ACTION_TYPE_INVALID = -1,
+	FRDV_ACTION_TYPE_1 = 1,
+	FRDV_ACTION_TYPE_2 = 2,
+	FRDV_ACTION_TYPE_3 = 3,
+	FRDV_ACTION_TYPE_4 = 4,
+	FRDV_ACTION_TYPE_5 = 5,
+	FRDV_ACTION_TYPE_6 = 6,
+	FRDV_ACTION_TYPE_7 = 7,
+	FRDV_ACTION_TYPE_8 = 8,
+	FRDV_ACTION_TYPE_9 = 9,
+	FRDV_ACTION_TYPE_10 = 10,
+	FRDV_ACTION_TYPE_11 = 11,
+	FRDV_ACTION_TYPE_12 = 12,
+	FRDV_ACTION_TYPE_13 = 13,
+	FRDV_ACTION_TYPE_14 = 14,
+	FRDV_ACTION_TYPE_15 = 15,
+	FRDV_ACTION_TYPE_16 = 16,
+	FRDV_ACTION_TYPE_17 = 17,
+	FRDV_ACTION_TYPE_18 = 18,
+	FRDV_ACTION_TYPE_19 = 19,
+	FRDV_ACTION_TYPE_20 = 20,
+	FRDV_ACTION_TYPE_21 = 21,
+	FRDV_ACTION_TYPE_22 = 22,
+	FRDV_ACTION_TYPE_23 = 23,
 };
 
-struct UInt4
+struct
 {
-	uint a;
-	uint b;
-	uint c;
-	uint d;
-};
+    char Signature[4];
 
-struct Header
+    uint Version; 
+	if (Version == 2830171915) 
+		BigEndian();
+
+    uint EntryCount;
+} Header <hidden = true, bgcolor=CyberGrape>;
+
+AlignRead(16);
+
+uint Offsets[Header.EntryCount] <hidden = true, bgcolor = LanguidLavender>;
+
+local uint eIdx = 0;
+for (eIdx = 0; eIdx < Header.EntryCount; eIdx++)
 {
-    char sign[4] <hidden=true>;
-    uint version <hidden=true>; if (version==2830171915) {BigEndian();} //For PS3 Big End files
-    uint entryCount;
-} header <bgcolor=CyberGrape>;
+	FSeek(Offsets[eIdx]);
 
-if (FTell() % 16 != 0)
-	FSkip(16 - (FTell() % 16));
+	struct
+	{
+		FRDV_ACTION_TYPE Type;
 
-uint offsets[header.entryCount] <bgcolor=LanguidLavender>;
-
-if (FTell() % 16 != 0)
-	FSkip(16 - (FTell() % 16));
-
-struct None {} none <hidden=true,bgcolor=AzureX11WebColor>; // skipping this bullshit stupid loser name color
-
-struct Entry
-{
-	short index[8] <fgcolor=OxfordBlue>; Assert(index[7]==0,"Eighth index isn't zero!!!"); //Bone indices? -1 must be invalid
-	
-	Vector4 boundingBox; // gets to scales like 99999 and -99999 so just assuming
-	
-	UInt4 vector2; //I have no idea what these 32 bytes are, sometimes ints, sometimes floats
-	UInt4 vector3;
-	
-	Vector4 vector4[4]; //These are floats for sure. Even got a 1 as the w.
-} entry[header.entryCount] <bgcolor=PowderBlue>;
+		// Put very little thought into these descriptions. See  mgsvtpp.exe!141ab14f6 for massive switch statement
+		short ShortParams[6];
+		ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
+		
+		float FloatParams[4];
+		
+		uint UIntParams[8];
+		
+		Vector4 UnknownVectors[4];
+	} Entry <optimize = true, bgcolor = PowderBlue>;
+}
