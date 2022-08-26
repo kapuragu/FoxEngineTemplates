@@ -2,6 +2,11 @@
 // By RLC - inspired by other FOX templates by the researchers of Modders' Heaven!
 LittleEndian();
 
+typedef enum <ushort> {
+    SET = 1,
+    _ = 0,
+} BIT <read=EnumToString(this)>;
+
 struct Vector3
 {
 	float x;
@@ -18,39 +23,26 @@ struct Header
 		BigEndian();
 	}
 	ushort entryCount;
-	uint something; Assert(something==12);
+	uint offsetToEntries; Assert(offsetToEntries==12);
 	
 } header <bgcolor=0xCAE7B9>;
 
-struct CoverPoints
+struct CoverPoint
 {
-	struct Point
-	{
-		Vector3 position <bgcolor=0xEB9486>;
-		// uint something0;	// These two must somehow define rotation/cover height flags?
-		// uint something1;
-		// According to PC-PS3 endianness not changing just for these eight bytes, they're all separate?
-		if (header.fileVersion == 0)
-		{
-			byte param0;
-			byte param1;
-			byte param2;
-			byte param3;
-			byte param4;
-			byte param5;
-			byte param6;
-			byte param7;
-		}
-		else if (header.fileVersion == 1 || header.fileVersion == 256)
-		{
-			ushort param0;
-			ushort param1;
-			ushort param2;
-			ushort param3;
-		};
+	Vector3 position <bgcolor=0xEB9486>;
+	short dir1; local float dir1Euler = (float)dir1/182;
+	short dir2; local float dir2Euler = (float)dir2/182;
+	short dir3; local float dir3Euler = (float)dir3/182;
+	BIT isLeftOpen : 1;
+ 	BIT isRightOpen : 1;
+	BIT isUpOpen : 1;
+	BIT isStandable : 1; //gz only in dataset, bit space seems to need to exist
+	BIT isUnVaultable : 1;
+	BIT isUseVip : 1;
+	BIT isUseSniper : 1;
+	BIT isBreakDisable : 1;
+	BIT isBreakEnable : 1;
 		
-	} entry[header.entryCount];
-	
-} entries <bgcolor=0xF3DE8A>;
+} entry[header.entryCount] <optimize=false, bgcolor=0xF3DE8A>;
 
 Assert(FTell() == FileSize(), "Failed to reach EoF.");
