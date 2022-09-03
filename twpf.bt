@@ -2,6 +2,14 @@
 * Note: The tags seem to be referenced in TppRequestWeatherTagTrapExecDataElement entities in fox2
 */
 
+string ReadUInt24HTimeTwpf(uint time)
+{
+	//hhttps://github.com/youarebritish/TwpfTool/blob/master/TwpfTool/SpreadsheetBuilder.cs
+	local byte hours = Floor(time / 60.0f);
+	local byte minutes = time - (hours * 60);
+	return Str("%02d:%02d",hours,minutes);
+};
+
 LittleEndian();
 
 struct Header
@@ -69,7 +77,7 @@ struct TppGlobalVolumetricFog
     
                 struct FogCurveValue
                 {
-                    uint time;
+                    uint time <read=ReadUInt24HTimeTwpf(this)>;
 
                     if (fogColorMode == RGB)
                     {
@@ -218,7 +226,7 @@ struct Section1
  
                     struct CurveValue
                     {
-                        uint time;
+                        uint time <read=ReadUInt24HTimeTwpf(this)>;
     
                         if (colorMode == RGB)
                         {
