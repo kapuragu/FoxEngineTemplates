@@ -26,7 +26,7 @@ FSeek(startof(LightProbeSHCoefficientsMetadata) + LightProbeSHCoefficientsMetada
 
 struct
 {
-    uint Times[NumDiv];
+    uint Times[NumDiv] <read=ReadUInt24HTime(this),optimize=false>;
 
     AlignRead(16);
 

@@ -3,6 +3,19 @@
 
 #include "../common/common.bt"
 
+string ReadUInt24HTime(uint time)
+{
+	//https://github.com/TinManTex/mgsv-deminified-lua/blob/3b8d6a0487ce45f69502d40e684b3d653d3b8965/data1/Assets/tpp/script/lib/TppClock.lua#L15
+	const float t=(1.0/60.0)/60.0;
+	const float c=1.0/60.0;
+	const float hour=60.0*60.0;
+	const float minute=60.0;
+	local byte hours = Floor(time * t);
+	local byte minutes = Floor((time-(hours*hour)) * c);
+	local byte seconds = Floor((time-(hours*hour)) - (minutes*minute));
+	return Str("%02d:%02d:%02d",hours,minutes,seconds);
+};
+
 enum <uint> GR_FILE_TYPE
 {
 	GR_FILE_TYPE_ATSH = 1,
