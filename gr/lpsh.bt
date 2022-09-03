@@ -35,24 +35,37 @@ struct
         int NameStringOffset;
         int DataOffset;
     
-        // Might be related to number of SH sets? An enum? 0 = 1 set, 3 = 28 sets, 4 = 3 sets, 7 = 30 sets. But not true in mgo?
-        uint Unknown;
-    } ProbeMetadata[NumLightProbes];
+        // The following control flow in terms of bit position+value -> outcome is correct. 
+        // However, I do not know that these are the correct names. These are the 4 accessors for the TppLightProbe Entity. 
+        // The first one definitely seems correct; if 24hSH is disabled, it only uses "1" probe group, but I don't know about the others.
+        uint enable24hSH : 1;
+        uint enableWeatherSH : 1;
+        uint enableRelatedLightSH : 1;
+        uint enableOcclusionMode : 1;
 
-    local int i = 0;
+        local uint ProbeCount = 1;
+        if (enable24hSH)
+            ProbeCount = NumDiv;
+
+        if (enableWeatherSH)
+            ProbeCount *= 2;
+
+        if (enableRelatedLightSH)
+            ProbeCount += 2;
+
+        if (enableOcclusionMode)
+            ProbeCount += 1;
+    } ProbeMetadata[NumLightProbes] <optimize = true>;
+
+    local int i;
+    local int j;
     for (i = 0; i < NumLightProbes; i++)
     {
         FSeek(ProbeMetadata[i].DataOffset);
 
         struct LightProbe
         {
-            local uint readBound; // Hack
-            if (i == (NumLightProbes - 1))
-                readBound = FileSize() - 0x8;
-            else
-                readBound = ProbeMetadata[i + 1].DataOffset;
-    
-            while (FTell() < readBound && FTell() < FileSize())
+            for (j = 0; j < ProbeMetadata[i].ProbeCount; j++)
             {
                 // Intentionally disable collapsing via loop instead of array
                 struct
