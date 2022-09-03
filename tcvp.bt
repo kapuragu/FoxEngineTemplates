@@ -17,30 +17,34 @@ struct
 	uint EntryOffset; Assert(EntryOffset==12);
 } Header <hidden = true, bgcolor=0xCAE7B9>;
 
-struct
+local uint i;
+for (i = 0; i < Header.EntryCount; i++)
 {
-	Vector3 Position <bgcolor=0xEB9486>;
-
     struct
     {
-        short x;
-        short y;
-        short z;
-    } Direction <read = Str("(%f, %f, %f)", (float)x / 32767, (float)y / 32767, (float)z / 32767)>;
-
-	ushort isLeftOpen : 1;
- 	ushort isRightOpen : 1;
-	ushort isUpOpen : 1;
-	ushort isStandable : 1; //gz only in dataset, bit space seems to need to exist
-	ushort isUnVaultable : 1;
-	ushort isUseVip : 1;
-	ushort isUseSniper : 1;
-	ushort isBreakDisable : 1;
-	ushort isBreakEnable : 1;
-    ushort Padding0 : 3 <hidden = true>; Assert(Padding0 == 0);
-    ushort Unknown0 : 1 <hidden = true>; Assert(Unknown0 == 0); // 0x1000; mgsvtpp.exe!145256e37
-    ushort Padding1 : 3 <hidden = true>; Assert(Padding1 == 0);
-		
-} CoverPoint[Header.EntryCount] <optimize = true, bgcolor=0xF3DE8A>;
+	    Vector3 Position <bgcolor=0xEB9486>;
+    
+        struct
+        {
+            short x;
+            short y;
+            short z;
+        } Direction <read = Str("(%f, %f, %f)", (float)x / 32767, (float)y / 32767, (float)z / 32767)>;
+    
+	    ushort isLeftOpen : 1;
+ 	    ushort isRightOpen : 1;
+	    ushort isUpOpen : 1;
+	    ushort isStandable : 1; //gz only in dataset, bit space seems to need to exist
+	    ushort isUnVaultable : 1;
+	    ushort isUseVip : 1;
+	    ushort isUseSniper : 1;
+	    ushort isBreakDisable : 1;
+	    ushort isBreakEnable : 1;
+        ushort Padding0 : 2 <hidden = true>; Assert(Padding0 == 0);
+        ushort Unknown0 : 1;
+        ushort Unknown1 : 1 <hidden = true>; Assert(Unknown1 == 0); // 0x1000; mgsvtpp.exe!145256e37
+        ushort Padding1 : 3 <hidden = true>; Assert(Padding1 == 0);
+    } CoverPoint <bgcolor=0xF3DE8A>;
+}
 
 Assert(FTell() == FileSize(), "Failed to reach EoF.");
