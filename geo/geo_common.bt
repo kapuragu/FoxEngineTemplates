@@ -35,12 +35,12 @@ typedef struct
 	uint64 TRAP_TAGS_xcadd57b76a83 : 1; // 0x80000
 
 	uint64 TRAP_TAGS_xe689072c4df8 : 1; // 0x100000
-	uint64 TRAP_TAGS_x6d14396ebbe5 : 1; // 0x200000
+	uint64 TRAP_TAGS_x6d14396ebbe5 : 1; // 0x200000 - from 2020 caplag: "mgo/cuba underground, and also watchtower south of helipad" + "Doors? Something with doors? 2 x 2 x 25"
 	uint64 TRAP_TAGS_NoStepOn : 1; // 0x400000
 	uint64 TRAP_TAGS_HalationEffect : 1; // 0x800000
 
 	uint64 TRAP_TAGS_Unnamed1 : 1; // 0x1000000
-	uint64 TRAP_TAGS_Unused1 : 1 <hidden = true>; Assert(TRAP_TAGS_Unused1 == 0); // 0x2000000
+	uint64 TRAP_TAGS_Unnamed2 : 1; // 0x2000000
 	uint64 TRAP_TAGS_Unused2 : 1 <hidden = true>; Assert(TRAP_TAGS_Unused2 == 0); // 0x4000000
 	uint64 TRAP_TAGS_Unused3 : 1 <hidden = true>; Assert(TRAP_TAGS_Unused3 == 0); // 0x8000000
 

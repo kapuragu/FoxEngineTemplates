@@ -2,47 +2,45 @@
 // By RLC - inspired by other FOX templates by the researchers of Modders' Heaven!
 LittleEndian();
 
-typedef enum <ushort> {
-    SET = 1,
-    _ = 0,
-} BIT <read=EnumToString(this)>;
+#include "common/common.bt"
 
-struct Vector3
+struct
 {
-	float x;
-	float y;
-	float z;
-};
+	char Signature[4] <hidden = true>; Assert(Signature == "TCVP");
 
-struct Header
-{
-	char tcvp[4] <comment="TCVP">; Assert(tcvp=="TCVP"); // TCVP
-	ushort fileVersion; // GZ is 0, TPP is 1. TPP crashes if it's 0 so I don't know
-	if (fileVersion==256)
-	{
+	ushort Version; // GZ is 0, TPP is 1. TPP crashes if it's 0
+	if (Version==256)
 		BigEndian();
-	}
-	ushort entryCount;
-	uint offsetToEntries; Assert(offsetToEntries==12);
-	
-} header <bgcolor=0xCAE7B9>;
 
-struct CoverPoint
+	ushort EntryCount;
+
+	uint EntryOffset; Assert(EntryOffset==12);
+} Header <hidden = true, bgcolor=0xCAE7B9>;
+
+struct
 {
-	Vector3 position <bgcolor=0xEB9486>;
-	short dir1; local float dir1Euler = (float)dir1/182;
-	short dir2; local float dir2Euler = (float)dir2/182;
-	short dir3; local float dir3Euler = (float)dir3/182;
-	BIT isLeftOpen : 1;
- 	BIT isRightOpen : 1;
-	BIT isUpOpen : 1;
-	BIT isStandable : 1; //gz only in dataset, bit space seems to need to exist
-	BIT isUnVaultable : 1;
-	BIT isUseVip : 1;
-	BIT isUseSniper : 1;
-	BIT isBreakDisable : 1;
-	BIT isBreakEnable : 1;
+	Vector3 Position <bgcolor=0xEB9486>;
+
+    struct
+    {
+        short x;
+        short y;
+        short z;
+    } Direction <read = Str("(%f, %f, %f)", (float)x / 32767, (float)y / 32767, (float)z / 32767)>;
+
+	ushort isLeftOpen : 1;
+ 	ushort isRightOpen : 1;
+	ushort isUpOpen : 1;
+	ushort isStandable : 1; //gz only in dataset, bit space seems to need to exist
+	ushort isUnVaultable : 1;
+	ushort isUseVip : 1;
+	ushort isUseSniper : 1;
+	ushort isBreakDisable : 1;
+	ushort isBreakEnable : 1;
+    ushort Padding0 : 3 <hidden = true>; Assert(Padding0 == 0);
+    ushort Unknown0 : 1 <hidden = true>; Assert(Unknown0 == 0); // 0x1000; mgsvtpp.exe!145256e37
+    ushort Padding1 : 3 <hidden = true>; Assert(Padding1 == 0);
 		
-} entry[header.entryCount] <optimize=false, bgcolor=0xF3DE8A>;
+} CoverPoint[Header.EntryCount] <optimize = true, bgcolor=0xF3DE8A>;
 
 Assert(FTell() == FileSize(), "Failed to reach EoF.");

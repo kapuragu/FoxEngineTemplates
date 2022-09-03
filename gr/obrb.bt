@@ -20,6 +20,6 @@ struct Object
     HQuaternion Rotation;
     ushort BlockIndex;
     ubyte PluginBrushIndex; // Index of ObjBrush dataset entity's pluginHandle list entry
-    ubyte NormalizedScale; // scale = lerp(minScale, maxScale, NormalizedScale) found in DataSet plugin definition
+    ubyte NormalizedScale; // scale = lerp(minScale, maxScale, (float)NormalizedScale / 0xFF) found in DataSet plugin definition
     uint GlobalObjectIndex;
 } Objects[NumObjects] <read = Str("plugin: %d, block: %d, globalIndex: %d", PluginBrushIndex, BlockIndex, GlobalObjectIndex), bgcolor = 0x8CAF5A>;
