@@ -41,7 +41,7 @@ for (i = 0; i < Header.EntryCount; i++)
 	    ushort isBreakDisable : 1;
 	    ushort isBreakEnable : 1;
         ushort Padding0 : 2 <hidden = true>; Assert(Padding0 == 0);
-        ushort Unknown0 : 1;
+        ushort PresumptiveisCheckFulton : 1; // The first spot I checked was the corner of a cargo crate. It's likely for CoverPoints that can literally disappear.
         ushort Unknown1 : 1 <hidden = true>; Assert(Unknown1 == 0); // 0x1000; mgsvtpp.exe!145256e37
         ushort Padding1 : 3 <hidden = true>; Assert(Padding1 == 0);
     } CoverPoint <bgcolor=0xF3DE8A>;
