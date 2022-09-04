@@ -16,7 +16,14 @@ typedef struct(int selfIndex)
     local int cIdx = 0;
     for (cIdx = 0; cIdx < 9; cIdx++)
         ShCoefficients coefficients;
-} CoefficientSet <read = ReadCoefficientSetString(parentof(parentof(this)).Times[SelfIndex], SelfIndex), bgcolor = 0x00ff00, optimize = true>;
+
+    local string readString <hidden=true>;
+    if (SelfIndex>-1)
+        readString=ReadCoefficientSetString(parentof(parentof(this)).Times[SelfIndex], SelfIndex);
+    else
+        readString="";
+
+} CoefficientSet <read = readString, bgcolor = 0x00ff00, optimize = true>;
 string ReadCoefficientSetString(uint time, int index)
 {
     return index < 0 ? "" : ReadUInt24HTime(time);
