@@ -9,6 +9,19 @@ typedef struct
     hfloat skyVisibility;
 } ShCoefficients <read=Str("(%f, %f, %f, %f)", r, g, b, skyVisibility)>;
 
+typedef struct(int selfIndex)
+{
+    local int SelfIndex = selfIndex;
+
+    local int cIdx = 0;
+    for (cIdx = 0; cIdx < 9; cIdx++)
+        ShCoefficients coefficients;
+} CoefficientSet <read = ReadCoefficientSetString(parentof(parentof(this)).Times[SelfIndex], SelfIndex), bgcolor = 0x00ff00, optimize = true>;
+string ReadCoefficientSetString(uint time, int index)
+{
+    return index < 0 ? "" : ReadUInt24HTime(time);
+}
+
 GrHeader Header;
 
 FSeek(Header.MetadataEntriesOffset);
@@ -26,55 +39,69 @@ FSeek(startof(LightProbeSHCoefficientsMetadata) + LightProbeSHCoefficientsMetada
 
 struct
 {
-    uint Times[NumDiv] <read=ReadUInt24HTime(this),optimize=false>;
+    uint Times[NumDiv] <hidden = true, optimize = false>;
 
     AlignRead(16);
 
     struct
     {
-        int NameStringOffset;
-        int DataOffset;
-    
-        // The following control flow in terms of bit position+value -> outcome is correct. 
-        // However, I do not know that these are the correct names. These are the 4 accessors for the TppLightProbe Entity. 
-        // The first one definitely seems correct; if 24hSH is disabled, it only uses "1" probe group, but I don't know about the others.
-        uint enable24hSH : 1;
-        uint enableWeatherSH : 1;
-        uint enableRelatedLightSH : 1;
-        uint enableOcclusionMode : 1;
+        int NameStringOffset <hidden = true>;
+        int DataOffset <hidden = true>;
+        
+        uint enable24hSH : 1 <hidden = true>;
+        uint enableWeatherSH : 1 <hidden = true>;
+        uint enableRelatedLightSH : 1 <hidden = true>;
+        uint enableOcclusionMode : 1 <hidden = true>;
+        
+        local uint NextStartPos = FTell();
+            
+        FSeek(DataOffset);
+        
+        local int k;
 
-        local uint ProbeCount = 1;
         if (enable24hSH)
-            ProbeCount = NumDiv;
+        {
+            for (k = 0; k < NumDiv; k++)
+                CoefficientSet Weather0(k);
+        }
+        else
+        {
+            CoefficientSet Weather0(-1);
+        }
 
         if (enableWeatherSH)
-            ProbeCount *= 2;
+        {
+            if (enable24hSH)
+            {
+                for (k = 0; k < NumDiv; k++)
+                    CoefficientSet Weather1(k);
+            }
+            else
+            {
+                CoefficientSet Weather1(-1);
+            }
+        }
 
         if (enableRelatedLightSH)
-            ProbeCount += 2;
-
-        if (enableOcclusionMode)
-            ProbeCount += 1;
-    } ProbeMetadata[NumLightProbes] <optimize = true>;
-
-    local int i;
-    local int j;
-    for (i = 0; i < NumLightProbes; i++)
-    {
-        FSeek(ProbeMetadata[i].DataOffset);
-
-        struct LightProbe
         {
-            for (j = 0; j < ProbeMetadata[i].ProbeCount; j++)
-            {
-                // Intentionally disable collapsing via loop instead of array
-                struct
-                {
-                    local int cIdx = 0;
-                    for (cIdx = 0; cIdx < 9; cIdx++)
-                        ShCoefficients coefficients;
-                } CoefficientSet <optimize = true>;
-            }
-        } Probes <optimize=false>;
-    }
-} LightProbeSHCoefficients <bgcolor=0x00aaff>;
+            CoefficientSet RelatedLight(-1)[2];
+        }
+
+        FSeek(NextStartPos);
+    } Probes[NumLightProbes] <read = ReadProbeMetadata(NameStringOffset, enable24hSH, enableWeatherSH, enableRelatedLightSH, enableOcclusionMode), bgcolor = 0xff00ff, optimize = false>;
+} LightProbeSHCoefficients <bgcolor = 0x00aaff>;
+string ReadProbeMetadata(uint nameStringOffset, uint enable24hSH, uint enableWeatherSH, uint enableRelatedLightSH, uint enableOcclusionMode)
+{
+    string result = ReadString(nameStringOffset);
+    
+    if (enable24hSH)
+        result += ", enable24hSH";
+    if (enableWeatherSH)
+        result += ", enableWeatherSH";
+    if (enableRelatedLightSH)
+        result += ", enableRelatedLightSH";
+    if (enableOcclusionMode)
+        result += ", enableOcclusionMode";
+
+    return result;
+}
