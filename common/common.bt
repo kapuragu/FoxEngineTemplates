@@ -49,6 +49,14 @@ typedef struct
 
 typedef struct
 {
+	hfloat x;
+	hfloat y;
+	hfloat z;
+    hfloat w;
+} HVector4 <read = Str("(%g, %g, %g, %g)", x, y, z, w)>;
+
+typedef struct
+{
 	float x;
 	float y;
 	float z;

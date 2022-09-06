@@ -12,18 +12,31 @@ typedef struct
 typedef struct(int selfIndex)
 {
     local int SelfIndex = selfIndex;
+    
+                        // Band   Basis
+    ShCoefficients c00; //  0       0
 
-    local int cIdx = 0;
-    for (cIdx = 0; cIdx < 9; cIdx++)
-        ShCoefficients coefficients;
+    ShCoefficients c10; //  1      -1
+    ShCoefficients c11; //  1       0 
+    ShCoefficients c12; //  1       1
 
-    local string readString <hidden=true>;
-    if (SelfIndex>-1)
-        readString=ReadCoefficientSetString(parentof(parentof(this)).Times[SelfIndex], SelfIndex);
-    else
-        readString="";
+    ShCoefficients c20; //  2      -2
+    ShCoefficients c21; //  2      -1
+    ShCoefficients c22; //  2       0
+    ShCoefficients c23; //  2       1
+    ShCoefficients c24; //  2       2
 
-} CoefficientSet <read = readString, bgcolor = 0x00ff00, optimize = true>;
+    // a0 = sqrt(1/(4pi))   = 0.282095
+    // a1 = sqrt(3/(4pi))   = 0.488603
+    // a2 = sqrt(15/(4pi))  = 1.092548
+    // a3 = sqrt(5/(16pi))  = 0.315392
+    // a4 = sqrt(15/(16pi)) = 0.546274
+    // Stored in SH matrix used in SH_SphereMap.hlsl:
+    // [ +a4*c24  , a2*c20/2 , a2*c23/2 , a1*c12/2      ]
+    // [ a2*c20/2 , -a4*c24  , a2*c21/2 , a1*c10/2      ]
+    // [ a2*c23/2 , a2*c21/2 , 3*a3*c22 , a1*c11/2      ]
+    // [ a1*c12/2 , a1*c10/2 , a1*c11/2 , a0*c00-a3*c22 ]
+} CoefficientSet <read = ReadCoefficientSetString(SelfIndex < 0 ? 0 : parentof(parentof(this)).Times[SelfIndex], SelfIndex), bgcolor = 0x00ff00, optimize = true>;
 string ReadCoefficientSetString(uint time, int index)
 {
     return index < 0 ? "" : ReadUInt24HTime(time);
@@ -46,7 +59,7 @@ FSeek(startof(LightProbeSHCoefficientsMetadata) + LightProbeSHCoefficientsMetada
 
 struct
 {
-    uint Times[NumDiv] <hidden = true, optimize = false>;
+    uint Times[NumDiv] <hidden = true, optimize = true>;
 
     AlignRead(16);
 
@@ -58,7 +71,7 @@ struct
         uint enable24hSH : 1 <hidden = true>;
         uint enableWeatherSH : 1 <hidden = true>;
         uint enableRelatedLightSH : 1 <hidden = true>;
-        uint enableOcclusionMode : 1 <hidden = true>;
+        uint enableOcclusionMode : 1 <hidden = true>; Assert(enableOcclusionMode == 0);
         
         local uint NextStartPos = FTell();
             
@@ -92,6 +105,11 @@ struct
         if (enableRelatedLightSH)
         {
             CoefficientSet RelatedLight(-1)[2];
+        }
+
+        if (enableOcclusionMode)
+        {
+            CoefficientSet Occlusion(-1)[1];
         }
 
         FSeek(NextStartPos);
