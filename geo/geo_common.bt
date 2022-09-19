@@ -200,7 +200,7 @@ enum <uint> GEO_COLLISION_SHAPE_TYPE
 	GEO_COLLISION_SHAPE_TYPE_PATH = 8,		// Entry size: 0x8
 	GEO_COLLISION_SHAPE_TYPE_UNKNOWN9 = 6,		// Entry size: 0
 	GEO_COLLISION_SHAPE_TYPE_UNKNOWN10 = 7,		// Entry size: 0
-	GEO_COLLISION_SHAPE_TYPE_PATH_WALL = 11,	// Entry size: 0x10
+	GEO_COLLISION_SHAPE_TYPE_AREA_PATH = 11,	// Entry size: 0x10
 };
 
 typedef enum <uint>
