@@ -23,7 +23,7 @@ typedef struct
 
 	switch (Header.Type)
 	{
-	case GEO_COLLISION_SHAPE_TYPE_BOUNDING_BOX:
+	case GEO_COLLISION_SHAPE_TYPE_AABB:
 		{
 			SetBackColor(COLOR_BOUNDINGBOXCHUNK);
 			{
