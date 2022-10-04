@@ -156,7 +156,7 @@ typedef struct
 	uint64 COLLISION_TAGS_EVENT_PHYSICS : 1;
 	uint64 COLLISION_TAGS_NO_WALL_MOVE : 1;
 
-	ushort Padding0 : 16 <hidden=true>; //Assert(Padding0 == 0); //ssdm_brdg001_brdg001.geom
+	ushort Padding0 : 16 <hidden=true>; Assert(Padding0 == 0); //ssdm_brdg001_brdg001.geom
 
 	uint64 COLLISION_TAGS_MISSILE2 : 1;
 	uint64 COLLISION_TAGS_RIDE_ON_OUTER : 1;
