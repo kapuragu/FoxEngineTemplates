@@ -1,6 +1,21 @@
 #include "../common/common.bt"
 #include "gr_common.bt"
 
+/*
+float halfToFloat(ushort half)
+{
+    uint32_t tempA = half << 0x10;
+    uint32_t tempB = 0;
+    if ((tempA & 0x7fffffff) == 0)
+        tempB = 0;
+    else
+        tempB = tempA & 0xb8000000 | 0x38000000;
+        
+    uint32_t temp = ((tempA & 0x7fffffff) >> 3) + tempB;
+    
+    return *(float*)&temp;
+}*/
+
 typedef struct(int selfIndex)
 {
     local int SelfIndex = selfIndex;

@@ -1,4 +1,185 @@
-//------------------------------------------------
+#ifdef NOTE
+I will explain what i know about the animation system
+mtar - motion archive
+gani - game animation
+frig - fox rig
+ask - Pes skeleton ( I dont know where MGS skeleton is stored)
+mogs - motion graph??
+ 
+most of these are straight forward so i will focus on how the frig skeleton and gani are connected.
+Note the mgs gani is not full known to me. It contains extra data I have not been able to decipher
+ 
+The structure of the gani file is pretty simple
+There is a general header with a hash for the animation name. This header has proved to be largely ignorable containing no real data of interest
+ 
+typedef struct
+{
+    int sig;
+    int a; 
+    int fileSize;
+    int b[5];
+    uint hash2;
+    int c[11];
+}MainHdr;
+ 
+ 
+then there is a motion header with another hash whose purpose i forgot to investigate.
+The second header contains the list of track offsets number of animation curves and number of chains.
+ 
+typedef struct
+{
+    char sig[16];
+    int64 hash_;
+    int a,b; 
+    int size;
+    int unkn;
+    int __[6];
+ 
+}MotionHdr;
+ 
+ 
+The motion header was already getting too big so i put this in a seperate struct call Motion
+ 
+struct Motion
+{
+    int entryCount; //number of chains
+    int subEntryCount; //number of curves
+    int _fpsInterval; //time between frames. It is actually represented as an int
+    int _frameCount; //frame count?
+    int c;  
+    int entryOffsets[entryCount]; //I misnamed this as an address
+}
+ 
+ 
+This section is the daddy of the gani files but before we can go any further I need to explain the concept of tracks and curves.
+I first named these as entry as sub entry, so forgive me if i relapse.
+Simply put a track is a list of curves. curves can contain positional or rotation data. For the most part we will be dealing with a lot of rotation data.
+We only use position data on the root, hip and sometimes shoulder bones.(edited)
+The bones in the ask files come with integer ids. This ids are used in the frig to identify what bones belong to a chain
+Chains are simple bone links (Think of your arm: shoulder, elbow, wrist).
+ 
+Due to the need of things like partial animations aka the need to play different animations on different body parts ( running + weapon carry)
+it is a time saving scheme for devs so we need to let the engine know what body parts we want to keep and which to ignore/mask out.
+The frig files defines which bones are are part of a chains. 
+Chains are pretty much analogous to tracks but i did not want to use the same name so you can understand what file i am talking about.
+Basically the animation has the same number of tracks as the rig has the same number of chains so the match easily without search
+chain[0] = players(track[0])
+ 
+It seemed a bit convoluted at first but the frgi files also has a way of using these chains to define how animations are mirrored
+But you wont need to know this for your modding purposes as it is pretty well defined. So you can swap what hand you use to carry weapons if you want (thorugh the code)
+the rig chains also makes it easy to set up ik chains. So I would suggest any file reader to read the skeleton then the rig before tryign to apply animation
+ 
+Back to Motion
+When we read an entry(track), it tells us how many sub-entries(curves) we have, and they also have hashes (Track name? maybe running-legs). 
+The sub entry tells us if it is a position or rotation as well as the size of bits for each frame and the offset for our data, root position and animations have special flags
+ 
+ 
+typedef struct
+{
+    uint _hash; //constant across all animations (bone group? aka chain?)
+    byte subCount; //cure count
+    short unkn; // 1 or 5 (5 means there is a position curve in there i think)
+    byte pad; // 0
+    SubEntry sEntry[subCount];
+}Entryx;
+typedef struct
+{
+    int addr; //OFFSET
+    short index; //aka this is the nth subEntry in the whole file
+ 
+    ubyte typeFlag; //this is an enum flag bit use FlagReader(typeFlag)
+    ubyte bitSz; // 12 - for quats konami custom, 16 - for position konami custom, 32 - ieee float
+}
+ 
+ 
+Simple function for identifying flags
+string FlagReader(int flag)
+{
+    /*
+    0x80 bit indicating that its not last entry in the set
+    other bits are track type, 
+    0 - rotation
+    3 - position
+    5 - root rotation
+    6 - root position
+    */
+    local string s0;
+    local int f = flag & ~0x80; //remove 0x80
+    switch(f)
+    {
+    case 0x0:
+        s0 = "rotation";
+        boneRot+= 1;
+        break;
+    case 0x3:
+        s0 = "position";
+        bonePos+= 1;
+        break;
+    case 0x5:
+        s0 = "Root_rot";
+        rootRot = rootRot + 1;
+        break;
+    case 0x6:
+        s0 = "Root_pos";
+        rootPos = rootPos + 1;
+        break;
+    }
+    local string s2; 
+    SPrintf(s2, " (0x%02x)",flag);
+    return s0 +s2;  
+}
+ 
+ 
+Reading the frame
+This is a royal pain in the ass. We have to thank Id-Daemon for figuring this part out
+Cos I got everything else except this on my own and I was pretty dejected when I got here.
+I  am suddenly tired
+Before I forget the BoneInfo section in the frig is uber important
+It contains a paring of the  chain ID referenced earlier and the hash for member names
+It ignores the  chain/track [0] - which is the root (Get Fucked)(edited)
+ 
+ 
+ 
+//in Frig
+struct TrackInfo
+{
+    // 0 - 
+    // 1 - always 0
+    // 2 - number of curves in the track Max 4
+    // 3 - number of bones in chain
+    //--------- Parent section
+    // 4 - parent ID  of first bone
+    // 5 - parent id of second bone
+    // 6 -
+    // 7 -
+    //---------- Bone Section (max 8 curves?) if there is only one bone it doesnt bother with this section just 0s
+    // 8 - boneID for curve/subEntry 0
+    // 9 - boneID for curve/subEntry 1
+    // 10 -
+    // 11 -
+    // 12 -
+    // 13 -
+    // 14 -
+    //---------------
+    // 15 -
+    short a[16];
+ 
+ 
+    //a[3] tells us number of bones in chain and fills out the bottom gaps
+    if(a[3] > 1)
+    {
+        float f[4]; // No idea what it does
+        ChannelInfo channelInfo[a[2]/a[3]]; //dont remember why/how this works
+    }
+}
+ 
+struct ChannelInfo
+{
+    //bones[2-3 seq in id] + tracks[2-3 seq in id] + padding
+    short a[8]<hidden=true>;
+}
+I dont remember much of this as it has been 6 months since I made this. but basically it is a mapping from curve to bone between both files(edited)
+#endif
 
 typedef struct
 {
@@ -42,7 +223,7 @@ typedef struct
 {
     uint hash;
     char name[12]<hidden=true>;
-    float trackWeight[15];
+    float trackWeight[18];
 }RigMaskGroup<read=ReadRigMaskGroup, bgcolor=cLtGreen>;
 string ReadRigMaskGroup(RigMaskGroup& b)
 {

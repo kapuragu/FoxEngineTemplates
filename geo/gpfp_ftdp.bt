@@ -15,70 +15,70 @@ local byte IsGPFP;
 
 struct
 {
-    local uint SelfStartPos = FTell();
+	local uint SelfStartPos = FTell();
 
-    uint Version;
-    if (Version == 372637195) // 201209110
-        BigEndian();
-    
-    uint NextEntryOffset;
+	uint Version;
+	if (Version == 372637195) // 201209110
+		BigEndian();
+	
+	uint NextEntryOffset;
 
-    uint FileSize;
+	uint FileSize;
 
-    uint Identifier;
-    if (Identifier == 3205930904)
-        IsGPFP = true;
-    else
-        IsGPFP = false;
+	uint Identifier;
+	if (Identifier == 3205930904)
+		IsGPFP = true;
+	else
+		IsGPFP = false;
 
-    uint64 Padding0 <hidden = true>; Assert(Padding0 == 0);
-    uint64 Padding1 <hidden = true>; Assert(Padding1 == 0);
+	uint64 Padding0 <hidden = true>; Assert(Padding0 == 0);
+	uint64 Padding1 <hidden = true>; Assert(Padding1 == 0);
 } Header <bgcolor = COLOR_HEADER>;
 
 FSeek(Header.SelfStartPos + Header.NextEntryOffset);
 
 struct
 {
-    local uint SelfStartPos = FTell();
+	local uint SelfStartPos = FTell();
 
-    uint64 Padding0 <hidden = true>; Assert(Padding0 == 0);
+	uint64 Padding0 <hidden = true>; Assert(Padding0 == 0);
 
-    uint UnknownAlways12; Assert(UnknownAlways12 == 12);
-    
-    uint NextEntryOffset;
+	uint UnknownAlways12; Assert(UnknownAlways12 == 12);
+	
+	uint NextEntryOffset;
 
-    uint FileSizePlus16; Assert(FileSizePlus16 == (Header.FileSize + 16));
+	uint FileSizePlus16; Assert(FileSizePlus16 == (Header.FileSize + 16));
 
-    uint64 Padding1 <hidden = true>; Assert(Padding1 == 0);
-    uint64 Padding2 <hidden = true>; Assert(Padding2 == 0);
-    uint64 Padding3 <hidden = true>; Assert(Padding3 == 0);
-    uint Padding4 <hidden = true>; Assert(Padding4 == 0);
+	uint64 Padding1 <hidden = true>; Assert(Padding1 == 0);
+	uint64 Padding2 <hidden = true>; Assert(Padding2 == 0);
+	uint64 Padding3 <hidden = true>; Assert(Padding3 == 0);
+	uint Padding4 <hidden = true>; Assert(Padding4 == 0);
 } SecondaryHeader <bgcolor = COLOR_SECONDARYHEADER>;
 
 FSeek(SecondaryHeader.SelfStartPos + SecondaryHeader.NextEntryOffset);
 
 struct
 {
-    local uint SelfStartPos = FTell();
-    
-    WideVector3 BoundingBoxCorner;
-    WideVector3 BoundingBoxExtents;
+	local uint SelfStartPos = FTell();
+	
+	WideVector3 BoundingBoxCorner;
+	WideVector3 BoundingBoxExtents;
 
-    float GridResolution;
+	float GridResolution;
 
-    uint BlockCountX;
+	uint BlockCountX;
 	uint Unknown;
 	uint BlockCountZ;
 
 	uint GridTotalDataSize;
-    
-    uint GridDataOffset;
+	
+	uint GridDataOffset;
 
-    uint RemainingEntryDataSize;
+	uint RemainingEntryDataSize;
 
-    uint DataChunksOffset;
+	uint DataChunksOffset;
 
-    FSeek(SelfStartPos + GridDataOffset);
+	FSeek(SelfStartPos + GridDataOffset);
 
 	struct
 	{
@@ -113,82 +113,82 @@ FSeek(BVH.SelfStartPos + BVH.DataChunksOffset);
 
 typedef struct
 {
-    local uint SelfStartPos = FTell();
+	local uint SelfStartPos = FTell();
 
-    if (IsGPFP)
-    {
-		GeoCollisionShapeHeader Header(GEO_FILE_TYPE_GPFP);
+	if (IsGPFP)
+	{
+		GeoShapeHeader Header(GEO_FILE_TYPE_GPFP);
+		Assert(Header.Flags == (GEO_SHAPE_FLAGS_UNKNOWN4 | GEO_SHAPE_FLAGS_UNKNOWN5));
 
-        struct Edge
-        {
-            EDGE_TAGS Tags;
-            ushort InIndex;
-            ushort OutIndex;
-        } Edges [Header.EntryCount] <bgcolor=COLOR_EDGE>;
-        
-        FSeek(SelfStartPos + Header.VertexDataOffset);
+		struct Edge
+		{
+			EDGE_TAGS Tags;
+			ushort InIndex;
+			ushort OutIndex;
+		} Edges [Header.EntryCount] <bgcolor=COLOR_EDGE>;
+		
+		FSeek(SelfStartPos + Header.VertexDataOffset);
 
-        local uint highestNodeIndex = 0;
-        local uint i;
-        if (Header.EntryCount > 0)
-        {
-            // Manually get number of vertices
-            for (i = 0; i < Header.EntryCount; i++)
-            {
-                if (Edges[i].InIndex > highestNodeIndex)
-                    highestNodeIndex = Edges[i].InIndex;
-                else if (Edges[i].OutIndex > highestNodeIndex)
-                    highestNodeIndex = Edges[i].OutIndex;
-            }
-        
-            struct Node
-            {
-                Vector3 Position;
-                NODE_TAGS Tags;
-            } Nodes [highestNodeIndex + 1] <bgcolor=COLOR_NODE>;
-        }
-    }
-    else
-    {
-        uint MaterialIndex; // TerrainDecalPack.materialLinks[MaterialIndex]
-        uint VertexCount;
-        uint Unknown0;
-        float UnknownFloat0;
+		local uint highestNodeIndex = 0;
+		local uint i;
+		if (Header.EntryCount > 0)
+		{
+			// Manually get number of vertices
+			for (i = 0; i < Header.EntryCount; i++)
+			{
+				if (Edges[i].InIndex > highestNodeIndex)
+					highestNodeIndex = Edges[i].InIndex;
+				else if (Edges[i].OutIndex > highestNodeIndex)
+					highestNodeIndex = Edges[i].OutIndex;
+			}
+		
+			struct Node
+			{
+				Vector3 Position;
+				NODE_TAGS Tags;
+			} Nodes [highestNodeIndex + 1] <bgcolor=COLOR_NODE>;
+		}
+	}
+	else
+	{
+		uint MaterialIndex; // TerrainDecalPack.materialLinks[MaterialIndex]
+		uint VertexCount;
+		uint Unknown0;
+		float UnknownFloat0;
 
-        Vector4 UnknownVector40;
+		Vector4 UnknownVector40;
 
-        float UnknownFloat1;
-        uint Unknown1;
-        float UnknownFloat2;
-        uint Padding1 <hidden = true>; Assert(Padding1 == 0);
+		float UnknownFloat1;
+		uint Unknown1;
+		float UnknownFloat2;
+		uint Padding1 <hidden = true>; Assert(Padding1 == 0);
 
-        Vector2 BoundingCellMinMax_X;
-        Vector2 BoundingCellMinMax_Z;
+		Vector2 BoundingCellMinMax_X;
+		Vector2 BoundingCellMinMax_Z;
 
-        Vector4 VertexData[VertexCount] <bgcolor=COLOR_NODE>;
+		Vector4 VertexData[VertexCount] <bgcolor=COLOR_NODE>;
 
-        struct
-        {
-            float BoundingCellExtremum;
-            int UnknownData[3];
-        } UnknownData[4];
-    }
+		struct
+		{
+			float BoundingCellExtremum;
+			int UnknownData[3]; // Confirmed by PS3 LE files.
+		} UnknownData[4];
+	}
 } DataChunk <bgcolor = COLOR_DATACHUNK>;
 
 struct
 {
-    local uint i;
-    uint EntryCount <hidden = true>;
+	uint EntryCount <hidden = true>;
 
-    uint FirstDataChunkSize <hidden = true>;
+	uint FirstDataChunkSize <hidden = true>;
 
-    uint Offsets[EntryCount] <hidden = true>;
+	uint Offsets[EntryCount] <hidden = true>;
 
-    for (i = 0; i < EntryCount; i++)
-    {
-        FSeek(BVH.SelfStartPos + Offsets[i]);
-        
-        DataChunk DataChunkEntry;
-    }
-
+	local uint i;
+	for (i = 0; i < EntryCount; i++)
+	{
+		FSeek(BVH.SelfStartPos + Offsets[i]);
+		
+		DataChunk DataChunkEntry;
+	}
 } DataChunks <bgcolor = COLOR_DATACHUNKS>;

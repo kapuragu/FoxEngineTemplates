@@ -49,7 +49,7 @@ for (i = 0; i < EntryDefinitions.EntryCount; i++)
 	    	
 		switch (Header.Type)
 		{
-		case GEO_COLLISION_SHAPE_TYPE_BOX_TRAP:
+		case GEO_SHAPE_TYPE_BOX_TRAP:
 			{
 				struct BoxShape
 				{
@@ -61,7 +61,7 @@ for (i = 0; i < EntryDefinitions.EntryCount; i++)
 				} Shapes[Header.EntryCount] <optimize = true>;
 			}
 			break;
-		case GEO_COLLISION_SHAPE_TYPE_PATH_TRAP:
+		case GEO_SHAPE_TYPE_PATH_TRAP:
 			{
 				struct PathShape
 				{
