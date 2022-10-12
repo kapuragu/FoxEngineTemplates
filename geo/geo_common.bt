@@ -200,15 +200,15 @@ enum <byte> GEO_FILE_TYPE
 enum <uint> GEO_PRIM_TYPE
 {
 	GEO_PRIM_TYPE_SPHERE = 0,		// Entry size: 0x30 // Sphere not actually confirmed in any way except that it lines up with the others in the exe enum GeoShapeType
-	GEO_PRIM_TYPE_UNKNOWN1 = 1,	// Entry size: 0x30
-	GEO_PRIM_TYPE_QUAD = 2,		// Entry size: 0xA
+	GEO_PRIM_TYPE_UNKNOWN1 = 1,		// Entry size: 0x30
+	GEO_PRIM_TYPE_QUAD = 2,			// Entry size: 0xA
 	GEO_PRIM_TYPE_BOX = 3,			// Entry size: 0x60
-	GEO_PRIM_TYPE_AABB = 4,		// Entry size: 0x20
-	GEO_PRIM_TYPE_UNKNOWN5 = 5,	// Entry size: 0x80
-	GEO_PRIM_TYPE_UNKNOWN6 = 6,	// Entry size: 0
-	GEO_PRIM_TYPE_UNKNOWN7 = 7,	// Entry size: 0
-	GEO_PRIM_TYPE_PATH = 8,		// Entry size: 0x8
-	GEO_PRIM_TYPE_UNKNOWN9 = 6,	// Entry size: 0
+	GEO_PRIM_TYPE_AABB = 4,			// Entry size: 0x20
+	GEO_PRIM_TYPE_UNKNOWN5 = 5,		// Entry size: 0x80
+	GEO_PRIM_TYPE_UNKNOWN6 = 6,		// Entry size: 0
+	GEO_PRIM_TYPE_UNKNOWN7 = 7,		// Entry size: 0
+	GEO_PRIM_TYPE_PATH = 8,			// Entry size: 0x8
+	GEO_PRIM_TYPE_UNKNOWN9 = 6,		// Entry size: 0
 	GEO_PRIM_TYPE_UNKNOWN10 = 7,	// Entry size: 0
 	GEO_PRIM_TYPE_AREA_PATH = 11,	// Entry size: 0x10
 };
@@ -217,19 +217,18 @@ typedef enum <uint>
 {
 	GEO_SHAPE_FLAGS_UNKNOWN6 = 0x1,				// Found in TRAP.
 	GEO_SHAPE_FLAGS_UNKNOWN4 = 0x4,				// Found in GPFP.
-	GEO_SHAPE_FLAGS_NO_PAYLOAD = 0x20,			// mgsvtpp.exe!141bdc498 // info & 0x200
+	GEO_SHAPE_FLAGS_NO_CHILD = 0x20,			// mgsvtpp.exe!141bdc498 // info & 0x200
 	GEO_SHAPE_FLAGS_UNKNOWN1 = 0x200,			// mgsvtpp.exe!141bdc863, 141bd8041 // info >> 0xd, info & 0x2000
 	GEO_SHAPE_FLAGS_USE_FMDL_VERTICES = 0x800,	// mgsvtpp.exe!141bd7e30 // info & 0x8000
-	GEO_SHAPE_FLAGS_UNKNOWN3 = 0x2000,			// mgsvtpp.exe!141bdc7a7 // info >> 0x11
+	GEO_SHAPE_FLAGS_HAS_CHILD = 0x2000,			// mgsvtpp.exe!141bdc7a7 // info >> 0x11
+	GEO_SHAPE_FLAGS_UNKNOWN7 = 0x4000,			// ????????????????????? // info >> 0x12
 	GEO_SHAPE_FLAGS_UNKNOWN2 = 0x8000,			// mgsvtpp.exe!141bdc830 // info >> 0x13
 	GEO_SHAPE_FLAGS_UNKNOWN5 = 0x80000,			// Found in GPFP and TRAP. // mgsvtpp.exe!141bdc830
 } GEO_SHAPE_FLAGS <read = ReadGEO_SHAPE_FLAGS>;
 string ReadGEO_SHAPE_FLAGS(GEO_SHAPE_FLAGS flags)
 {
-	local string result;
+	local string result = flags == 0 ? "" : "| ";
 	local uint i;
-	local uint j;
-	local byte hasRemaining = 0;
 	local string enumName;
 	local GEO_SHAPE_FLAGS temp;
 	for (i = 1; i < 0x100000; i = i << 1)
@@ -237,37 +236,22 @@ string ReadGEO_SHAPE_FLAGS(GEO_SHAPE_FLAGS flags)
 		temp = flags & i;
 		enumName = EnumToString(temp);
 		if (enumName != "")
-		{
-			for (j = i << 4; j < 0x100000; j = j << 1)
-			{
-				if ((flags & j) != 0)
-				{
-					hasRemaining = 1;
-					break;
-				}
-			}
-
-			if (hasRemaining)
-			{
-				result += Str("%s | ", enumName);
-				hasRemaining = 0;
-			}
-			else
-			{
-				result += enumName;
-				break;
-			}
-		}
+			result += " " + enumName + " |";
 	}
 
 	return result;
 }
 
-struct GeomHeader(GEO_FILE_TYPE fileType)
+struct GeoGeomHeader
 {
 	GEO_PRIM_TYPE Type : 4 <bgcolor=0x0080ff>;
 
-	GEO_SHAPE_FLAGS Flags : 20 <bgcolor=0x0080ff>;	// mgsvtpp.exe!141bdc492
+	GEO_SHAPE_FLAGS Flags : 20 <bgcolor=0x0080ff>; Assert((Flags & ~(GEO_SHAPE_FLAGS_UNKNOWN1 | GEO_SHAPE_FLAGS_UNKNOWN7 | GEO_SHAPE_FLAGS_HAS_CHILD | GEO_SHAPE_FLAGS_USE_FMDL_VERTICES)) == 0); // mgsvtpp.exe!141bdc492
+	Assert(((Flags & GEO_SHAPE_FLAGS_UNKNOWN1) != 0) == ((Flags & GEO_SHAPE_FLAGS_UNKNOWN7) != 0));
+	if ((Flags & GEO_SHAPE_FLAGS_UNKNOWN1) != 0)
+		Printf("GeoGeomHeader with GEO_SHAPE_FLAGS_UNKNOWN1 & 7 at %Lx.\n", FTell());
+	// if ((Flags | GEO_SHAPE_FLAGS_UNKNOWN7) != 0)
+	// 	Printf("GeoGeomHeader with GEO_SHAPE_FLAGS_UNKNOWN7 at %Lx.\n", FTell());
 
 	uint PrimCount : 8 <bgcolor=0x0080ff>;
 
@@ -281,29 +265,67 @@ struct GeomHeader(GEO_FILE_TYPE fileType)
 	int PreviousHeaderOffset : 28 <read = (this << 4)>;
 	int PreviousHeaderOffsetPadding : 4 <hidden = true>; Assert(PreviousHeaderOffsetPadding == 0);
 
-	int ChildHeaderOffset : 28 <read = (this << 4)>;
+	int ChildHeaderOffset : 28 <read = (this << 4)>; Assert(((Flags & GEO_SHAPE_FLAGS_HAS_CHILD) != 0) == (ChildHeaderOffset != 0)); //Assert(((Flags & GEO_SHAPE_FLAGS_NO_CHILD) != 0) == (ChildHeaderOffset == 0));
 	int ChildHeaderOffsetPadding : 4 <hidden = true>; Assert(ChildHeaderOffsetPadding == 0);
+	
+	GEO_COL_A Tags;
 
-	switch (fileType)
-	{
-	case GEO_FILE_TYPE_GPFP:
-		GEO_PATH_TAGS Tags;
-		break;
+	StrCode32 Name;
 
-	case GEO_FILE_TYPE_GEOM_GEOMS_GSKL:
-		GEO_COL_A Tags;
-		break;
+	int VertexBufferOffset : 28 <read = (this << 4)>;
+	int VertexBufferOffsetPadding : 4 <hidden = true>; Assert(VertexBufferOffsetPadding == 0);
+};
 
-	case GEO_FILE_TYPE_TRAP:
-		GEO_TRAP_TAGS Tags;
-		break;
-	}
+struct GeoPathGeomHeader
+{
+	GEO_PRIM_TYPE Type : 4 <bgcolor=0x0080ff>;
+
+	GEO_SHAPE_FLAGS Flags : 20 <bgcolor=0x0080ff>; Assert(Flags == (GEO_SHAPE_FLAGS_UNKNOWN4 | GEO_SHAPE_FLAGS_UNKNOWN5));
+
+	uint PrimCount : 8 <bgcolor=0x0080ff>;
+
+	// Each of these offsets are in terms of the number of lines, so scale them by 16, aka shift by 4 bits.
+	// To check if the VertexBufferOffset goes anywhere, it checks if (VertexBufferOffset & 0x0fffffff) == 0.
+	// Those "mystery" "4 bits are probably from the shift, especially since PES, which doesn't do any shifting by 4, just treats the whole uint as the offset
+	// Nonetheless, ensure the top 4 bits aren't used.
+	int NextHeaderOffset; Assert(NextHeaderOffset == 0);
+
+	int PreviousHeaderOffset; Assert(PreviousHeaderOffset == 0);
+
+	int ChildHeaderOffset; Assert(ChildHeaderOffset == 0);
+	
+	GEO_PATH_TAGS Tags;
 
 	StrCode32 Name;	// With gimmicks, it has to be the gimmick instance name as StrCode32 hash, ie <_n0000|srt_>. 
 					// If there's more than one path for one instance, the hash is the same, but with the seventh of the eight bits shifted by 2
 
-	int VertexBufferOffset : 28 <read = (this << 4)>;
-	int VertexBufferOffsetPadding : 4 <hidden = true>; Assert(VertexBufferOffsetPadding == 0);
+	int VertexBufferOffset;
+};
+
+struct GeoTrapGeomHeader
+{
+	GEO_PRIM_TYPE Type : 4 <bgcolor=0x0080ff>;
+
+	GEO_SHAPE_FLAGS Flags : 20 <bgcolor=0x0080ff>; Assert(Flags == (GEO_SHAPE_FLAGS_UNKNOWN5 | GEO_SHAPE_FLAGS_UNKNOWN6));
+
+	uint PrimCount : 8 <bgcolor=0x0080ff>;
+
+	// Each of these offsets are in terms of the number of lines, so scale them by 16, aka shift by 4 bits.
+	// To check if the VertexBufferOffset goes anywhere, it checks if (VertexBufferOffset & 0x0fffffff) == 0.
+	// Those "mystery" "4 bits are probably from the shift, especially since PES, which doesn't do any shifting by 4, just treats the whole uint as the offset
+	// Nonetheless, ensure the top 4 bits aren't used.
+	int NextHeaderOffset; Assert(NextHeaderOffset == 0);
+
+	int PreviousHeaderOffset; Assert(PreviousHeaderOffset == 0);
+
+	int ChildHeaderOffset; Assert(ChildHeaderOffset == 0);
+	
+	GEO_TRAP_TAGS Tags;
+
+	StrCode32 Name;	// With gimmicks, it has to be the gimmick instance name as StrCode32 hash, ie <_n0000|srt_>. 
+					// If there's more than one path for one instance, the hash is the same, but with the seventh of the eight bits shifted by 2
+
+	int VertexBufferOffset; Assert(VertexBufferOffset == 0);
 };
 
 typedef struct 
@@ -350,16 +372,14 @@ typedef struct
 
 typedef struct
 {
-	//local uint SelfStartPos = FTell();
-
 	float YMinimum;
 	float YMaximum;
-	uint PointCount/* <hidden = true>*/;
-	uint PointsDataOffset/* <hidden = true>*/;
+	uint VertexCount/* <hidden = true>*/;
+	int VertexDataOffset/* <hidden = true>*/;
 
-	// FSeek(SelfStartPos + PointsDataOffset);
+	// FSeek(startof(this) + VertexDataOffset);
 	
-	// WideVector3 Points[PointCount] <optimize = true>;
+	// WideVector3 Vertices[VertexCount] <optimize = true>;
 } GeoPrimAreaPath;
 
 struct GeoVertexHeader // Name taken from PES RTTI

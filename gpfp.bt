@@ -88,7 +88,7 @@ struct
 
         struct GeoShape
         {
-            GeomHeader Header(GEO_FILE_TYPE_GPFP);
+            GeoPathGeomHeader Header;
             Assert(Header.NextHeaderOffset == 0 && Header.PreviousHeaderOffset == 0 && Header.ChildHeaderOffset == 0);
 				
 			switch (Header.Type)

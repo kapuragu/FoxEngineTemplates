@@ -7,24 +7,25 @@ FoxDataHeader Header;
 
 FSeek(Header.NodesOffset);
 
-FoxDataNodes Nodes;
+// Hack because it breaks the standard parameter regime.
+FoxDataNode Node(false) <bgcolor = 0x7E846B>;
 
-Assert(Nodes.Node[0].Flags == 1); Assert(Nodes.Node[0].ParentNodeOffset == 0); Assert(Nodes.Node[0].ChildNodeOffset == 0);
+Assert(Node.Flags == 1); Assert(Node.ParentNodeOffset == 0); Assert(Node.ChildNodeOffset == 0);
 
-FSeek(startof(Nodes.Node[0]) + Nodes.Node[0].DataOffset);
+FSeek(startof(Node) + Node.DataOffset);
 
 struct
 {
-	uint ShapeOffsets[Nodes.Node[0].ParametersOffset] <hidden = true>;
+	uint ShapeOffsets[Node.ParametersOffset] <hidden = true>;
 
 	local uint i = 0;
-	for (i = 0; i < Nodes.Node[0].ParametersOffset; i++)
+	for (i = 0; i < Node.ParametersOffset; i++)
 	{
-		FSeek(startof(Nodes.Node[0]) + Nodes.Node[0].DataOffset + ShapeOffsets[i]);
+		FSeek(startof(Node) + Node.DataOffset + ShapeOffsets[i]);
 
 		struct GeoShape
 		{
-			GeomHeader Header(GEO_FILE_TYPE_TRAP);
+			GeoTrapGeomHeader Header;
 				
 			switch (Header.Type)
 			{

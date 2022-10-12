@@ -14,7 +14,7 @@ typedef struct
 {
 	//local long SelfStartPos = FTell();
 
-	GeomHeader Header(GEO_FILE_TYPE_GEOM_GEOMS_GSKL);
+	GeoGeomHeader Header;
 
 	switch (Header.Type)
 	{
@@ -75,7 +75,7 @@ typedef struct
 	// 			// D: VertexData[IndexSet.Offset3]
 	// 		}
 	// 	}
-} GeoShape <read=Str("%s, %d", EnumToString(this.Header.Type), this.Header.Flags)>;
+} GeoShape <read=Str("%s, %s", EnumToString(this.Header.Type), ReadGEO_SHAPE_FLAGS(this.Header.Flags))>;
 
 struct GeoBlock  // Name taken from PES RTTI
 {
@@ -119,9 +119,9 @@ struct GeoBlock  // Name taken from PES RTTI
 			iteratorIndex_minusOne = iteratorIndex - 1;
 
 			FSeek(ptr + 4);
-			if (ReadUInt() != 0) // if (Data.Header.NextBBDataChunkOffset != 0)
+			if (ReadUInt() != 0) // if (Shape.Header.NextHeaderOffset != 0)
 			{
-				ptrs[j - 1] = ptr + ReadUInt() * 16;
+				ptrs[j - 1] = ptr + ReadUInt() * 16; // Shape.Header.NextHeaderOffset
 
 				j_minusOne = j;
 				iteratorIndex_minusOne = iteratorIndex;
@@ -130,7 +130,7 @@ struct GeoBlock  // Name taken from PES RTTI
 			j = j_minusOne;
 			iteratorIndex = iteratorIndex_minusOne;
 			FSeek(ptr);
-			if ((ReadUInt() & 0x200) == 0) // if (Data.Header.Info.Flags & GEO_SHAPE_FLAGS_NO_PAYLOAD == 0)
+			if ((ReadUInt() & 0x200) == 0) // if (Shape.Header.Info.Flags & GEO_SHAPE_FLAGS_NO_CHILD == 0)
 			{
 				GeoShape Shape;
 
