@@ -164,7 +164,7 @@ typedef struct
 	uint64 GEO_COL_A_EVENT_PHYSICS : 1;
 	uint64 GEO_COL_A_NO_WALL_MOVE : 1;
 
-	ushort Padding0 : 16 <hidden=true>; //Assert(Padding0 == 0); //ssdm_brdg001_brdg001.geom
+	ushort Padding0 : 16 <hidden=true>; Assert(Padding0 == 0); //ssdm_brdg001_brdg001.geom
 
 	uint64 GEO_COL_A_MISSILE2 : 1;
 	uint64 GEO_COL_A_RIDE_ON_OUTER : 1;
@@ -199,16 +199,16 @@ enum <uint> GEO_COLLISION_SHAPE_TYPE
 {
 	GEO_COLLISION_SHAPE_TYPE_UNKNOWN0 = 0,   	// Entry size: 0x30
 	GEO_COLLISION_SHAPE_TYPE_UNKNOWN1 = 1,		// Entry size: 0x30
-	GEO_COLLISION_SHAPE_TYPE_QUAD = 2,		    // Entry size: 0xA
+	GEO_COLLISION_SHAPE_TYPE_QUAD = 2,		// Entry size: 0xA
 	GEO_COLLISION_SHAPE_TYPE_BOX = 3,		// Entry size: 0x60
-	GEO_COLLISION_SHAPE_TYPE_AABB = 4,	// Entry size: 0x20
+	GEO_COLLISION_SHAPE_TYPE_AABB = 4,		// Entry size: 0x20
 	GEO_COLLISION_SHAPE_TYPE_UNKNOWN5 = 5,		// Entry size: 0x80
 	GEO_COLLISION_SHAPE_TYPE_UNKNOWN6 = 6,		// Entry size: 0
 	GEO_COLLISION_SHAPE_TYPE_UNKNOWN7 = 7,		// Entry size: 0
-	GEO_COLLISION_SHAPE_TYPE_GEO_PATH = 8,		// Entry size: 0x8
+	GEO_COLLISION_SHAPE_TYPE_PATH = 8,		// Entry size: 0x8
 	GEO_COLLISION_SHAPE_TYPE_UNKNOWN9 = 6,		// Entry size: 0
 	GEO_COLLISION_SHAPE_TYPE_UNKNOWN10 = 7,		// Entry size: 0
-	GEO_COLLISION_SHAPE_TYPE_PATH_TRAP = 11,	// Entry size: 0x10
+	GEO_COLLISION_SHAPE_TYPE_AREA_PATH = 11,	// Entry size: 0x10
 };
 
 typedef enum <uint>
