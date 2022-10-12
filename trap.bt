@@ -1,7 +1,7 @@
 LittleEndian();
 
-#include "../common/common.bt"
-#include "geo_common.bt"
+#include "common/common.bt"
+#include "geo/geo_common.bt"
 
 struct
 {

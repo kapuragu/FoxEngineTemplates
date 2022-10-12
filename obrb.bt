@@ -1,5 +1,5 @@
-#include "../common/common.bt"
-#include "../common/FoxDataCommon.bt"
+#include "common/common.bt"
+#include "common/FoxDataCommon.bt"
 
 FoxDataHeader Header;
 Assert(Header.Version == 2);

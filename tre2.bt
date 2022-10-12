@@ -1,9 +1,9 @@
-#include "../common/common.bt"
-#include "../common/FoxDataCommon.bt"
-#include "terrain_common.bt"
+#include "common/common.bt"
+#include "common/FoxDataCommon.bt"
+#include "gr/terrain_common.bt"
 
 FoxDataHeader Header;
-Assert(Header.Version == 3)
+Assert(Header.Version == 4);
 
 FSeek(Header.NodesOffset);
 

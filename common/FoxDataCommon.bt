@@ -1,7 +1,7 @@
 #ifndef FOXDATACOMMON_BT
 #define FOXDATACOMMON_BT
 
-#include "common.bt"
+#include "common/common.bt"
 
 #ifndef FOX_DATA_HASH_TYPE
 	#define FOX_DATA_HASH_TYPE StrCode32

@@ -1,7 +1,7 @@
 #ifndef GEO_COMMON_BT
 #define GEO_COMMON_BT
 
-#include "../common/common.bt"
+#include "common/common.bt"
 
 typedef struct
 {
@@ -9,7 +9,7 @@ typedef struct
 } GeoNameHash <read = (hash)>;
 
 #define FOX_DATA_HASH_TYPE GeoNameHash
-#include "../common/FoxDataCommon.bt"
+#include "common/FoxDataCommon.bt"
 
 #define COLOR_BG_TAGS 0xFF00FF
 #define COLOR_FG_TAGS 0x00FF00

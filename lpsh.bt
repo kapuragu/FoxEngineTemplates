@@ -1,6 +1,6 @@
-#include "../common/common.bt"
-#include "../common/FoxDataCommon.bt"
-#include "sh_common.bt"
+#include "common/common.bt"
+#include "common/FoxDataCommon.bt"
+#include "gr/sh_common.bt"
 
 typedef struct
 {
