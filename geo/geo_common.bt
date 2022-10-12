@@ -249,9 +249,9 @@ struct GeoGeomHeader
 	GEO_SHAPE_FLAGS Flags : 20 <bgcolor=0x0080ff>; Assert((Flags & ~(GEO_SHAPE_FLAGS_UNKNOWN1 | GEO_SHAPE_FLAGS_UNKNOWN7 | GEO_SHAPE_FLAGS_HAS_CHILD | GEO_SHAPE_FLAGS_USE_FMDL_VERTICES)) == 0); // mgsvtpp.exe!141bdc492
 	Assert(((Flags & GEO_SHAPE_FLAGS_UNKNOWN1) != 0) == ((Flags & GEO_SHAPE_FLAGS_UNKNOWN7) != 0));
 	if ((Flags & GEO_SHAPE_FLAGS_UNKNOWN1) != 0)
-		Printf("GeoGeomHeader with GEO_SHAPE_FLAGS_UNKNOWN1 & 7 at %Lx.\n", FTell());
+		Printf("GeoGeomHeader with GEO_SHAPE_FLAGS_UNKNOWN1 & 7 at %Lu.\n", startof(this));
 	// if ((Flags | GEO_SHAPE_FLAGS_UNKNOWN7) != 0)
-	// 	Printf("GeoGeomHeader with GEO_SHAPE_FLAGS_UNKNOWN7 at %Lx.\n", FTell());
+	// 	Printf("GeoGeomHeader with GEO_SHAPE_FLAGS_UNKNOWN7 at %Lu.\n", startof(this));
 
 	uint PrimCount : 8 <bgcolor=0x0080ff>;
 
