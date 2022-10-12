@@ -1,7 +1,15 @@
 #ifndef GEO_COMMON_BT
 #define GEO_COMMON_BT
 
-#include "../common/common.bt"
+#include "common/common.bt"
+
+typedef struct
+{
+    uint hash <format = hex>;
+} GeoNameHash <read = (hash)>;
+
+#define FOX_DATA_HASH_TYPE GeoNameHash
+#include "common/FoxDataCommon.bt"
 
 #define COLOR_BG_TAGS 0xFF00FF
 #define COLOR_FG_TAGS 0x00FF00
@@ -9,179 +17,178 @@
 typedef struct
 {
 	BitfieldDisablePadding();
-	uint64 TRAP_TAGS_Intrude : 1; // 0x1
-	uint64 TRAP_TAGS_Tower : 1; // 0x2
-	uint64 TRAP_TAGS_InRoom : 1; // 0x4
-	uint64 TRAP_TAGS_FallDeath : 1; // 0x8
+	uint64 GEO_TRAP_TAGS_Intrude : 1; // 0x1
+	uint64 GEO_TRAP_TAGS_Tower : 1; // 0x2
+	uint64 GEO_TRAP_TAGS_InRoom : 1; // 0x4
+	uint64 GEO_TRAP_TAGS_FallDeath : 1; // 0x8
 
-	uint64 TRAP_TAGS_NearCamera1 : 1; // 0x10
-	uint64 TRAP_TAGS_NearCamera2 : 1; // 0x20
-	uint64 TRAP_TAGS_NearCamera3 : 1; // 0x40
-	uint64 TRAP_TAGS_NearCamera4 : 1; // 0x80
+	uint64 GEO_TRAP_TAGS_NearCamera1 : 1; // 0x10
+	uint64 GEO_TRAP_TAGS_NearCamera2 : 1; // 0x20
+	uint64 GEO_TRAP_TAGS_NearCamera3 : 1; // 0x40
+	uint64 GEO_TRAP_TAGS_NearCamera4 : 1; // 0x80
 
-	uint64 TRAP_TAGS_NoCliff : 1; // 0x100
-	uint64 TRAP_TAGS_NoRainEffect : 1; // 0x200
-	uint64 TRAP_TAGS_x60e79a58dcc3 : 1; // 0x400
-	uint64 TRAP_TAGS_GimmickNoFulton : 1; // 0x800
+	uint64 GEO_TRAP_TAGS_NoCliff : 1; // 0x100
+	uint64 GEO_TRAP_TAGS_NoRainEffect : 1; // 0x200
+	uint64 GEO_TRAP_TAGS_x60e79a58dcc3 : 1; // 0x400
+	uint64 GEO_TRAP_TAGS_GimmickNoFulton : 1; // 0x800
 
-	uint64 TRAP_TAGS_innerZone : 1; // 0x1000
-	uint64 TRAP_TAGS_outerZone : 1; // 0x2000
-	uint64 TRAP_TAGS_hotZone : 1; // 0x4000
-	uint64 TRAP_TAGS_x439898dcbf83 : 1; // 0x8000
+	uint64 GEO_TRAP_TAGS_innerZone : 1; // 0x1000
+	uint64 GEO_TRAP_TAGS_outerZone : 1; // 0x2000
+	uint64 GEO_TRAP_TAGS_hotZone : 1; // 0x4000
+	uint64 GEO_TRAP_TAGS_x439898dcbf83 : 1; // 0x8000
 
-	uint64 TRAP_TAGS_xe780e431a068 : 1; // 0x10000
-	uint64 TRAP_TAGS_x53827eed3fbc : 1; // 0x20000
-	uint64 TRAP_TAGS_x7e1121c5cb93 : 1; // 0x40000
-	uint64 TRAP_TAGS_xcadd57b76a83 : 1; // 0x80000
+	uint64 GEO_TRAP_TAGS_xe780e431a068 : 1; // 0x10000
+	uint64 GEO_TRAP_TAGS_x53827eed3fbc : 1; // 0x20000
+	uint64 GEO_TRAP_TAGS_x7e1121c5cb93 : 1; // 0x40000
+	uint64 GEO_TRAP_TAGS_xcadd57b76a83 : 1; // 0x80000
 
-	uint64 TRAP_TAGS_xe689072c4df8 : 1; // 0x100000
-	uint64 TRAP_TAGS_x6d14396ebbe5 : 1; // 0x200000 - from 2020 caplag: "mgo/cuba underground, and also watchtower south of helipad" + "Doors? Something with doors? 2 x 2 x 25"
-	uint64 TRAP_TAGS_NoStepOn : 1; // 0x400000
-	uint64 TRAP_TAGS_HalationEffect : 1; // 0x800000
+	uint64 GEO_TRAP_TAGS_xe689072c4df8 : 1; // 0x100000
+	uint64 GEO_TRAP_TAGS_x6d14396ebbe5 : 1; // 0x200000 - from 2020 caplag: "mgo/cuba underground, and also watchtower south of helipad" + "Doors? Something with doors? 2 x 2 x 25"
+	uint64 GEO_TRAP_TAGS_NoStepOn : 1; // 0x400000
+	uint64 GEO_TRAP_TAGS_HalationEffect : 1; // 0x800000
 
-	uint64 TRAP_TAGS_Unnamed1 : 1; // 0x1000000
-	uint64 TRAP_TAGS_Unnamed2 : 1; // 0x2000000
-	uint64 TRAP_TAGS_Unused2 : 1 <hidden = true>; Assert(TRAP_TAGS_Unused2 == 0); // 0x4000000
-	uint64 TRAP_TAGS_Unused3 : 1 <hidden = true>; Assert(TRAP_TAGS_Unused3 == 0); // 0x8000000
+	uint64 GEO_TRAP_TAGS_Unnamed1 : 1; // 0x1000000
+	uint64 GEO_TRAP_TAGS_Unnamed2 : 1; // 0x2000000
+	uint64 GEO_TRAP_TAGS_Unused2 : 1 <hidden = true>; Assert(GEO_TRAP_TAGS_Unused2 == 0); // 0x4000000
+	uint64 GEO_TRAP_TAGS_Unused3 : 1 <hidden = true>; Assert(GEO_TRAP_TAGS_Unused3 == 0); // 0x8000000
 
-	uint64 TRAP_TAGS_xd6ee65d20b7a : 1; // 0x10000000
-	uint64 TRAP_TAGS_xf287ba9cb7e3 : 1; // 0x20000000
-	uint64 TRAP_TAGS_NoFulton : 1; // 0x40000000
-	uint64 TRAP_TAGS_Waterfall: 1; // 0x80000000 for convenience in 010 but the tag is actually 0xffffffff80000000, signalling that there are no higher-value tags
+	uint64 GEO_TRAP_TAGS_xd6ee65d20b7a : 1; // 0x10000000
+	uint64 GEO_TRAP_TAGS_xf287ba9cb7e3 : 1; // 0x20000000
+	uint64 GEO_TRAP_TAGS_NoFulton : 1; // 0x40000000
+	uint64 GEO_TRAP_TAGS_Waterfall: 1; // 0x80000000 for convenience in 010 but the tag is actually 0xffffffff80000000, signalling that there are no higher-value tags
 	BitfieldEnablePadding();
-} TRAP_TAGS <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
+} GEO_TRAP_TAGS <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
 
 typedef struct
 {
 	// https://github.com/TinManTex/mgsv-deminified-lua/blob/3b8d6a0487ce45f69502d40e684b3d653d3b8965/data1/Tpp/start.lua#L292
-	uint64 PATH_TAGS_Elude : 1;
-	uint64 PATH_TAGS_Jump : 1;
-	uint64 PATH_TAGS_Fence : 1;
-	uint64 PATH_TAGS_StepOn : 1;
-	uint64 PATH_TAGS_Behind : 1;
-	uint64 PATH_TAGS_Urgent : 1;
-	uint64 PATH_TAGS_Pipe : 1;
-	uint64 PATH_TAGS_Climb : 1;
-	uint64 PATH_TAGS_Rail : 1;
-	uint64 PATH_TAGS_ForceFallDown : 1;
-	uint64 PATH_TAGS_DontFallWall : 1;
-	uint64 PATH_TAGS_Move : 1;
-} PATH_TAGS <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
+	uint64 GEO_PATH_TAGS_Elude : 1;
+	uint64 GEO_PATH_TAGS_Jump : 1;
+	uint64 GEO_PATH_TAGS_Fence : 1;
+	uint64 GEO_PATH_TAGS_StepOn : 1;
+	uint64 GEO_PATH_TAGS_Behind : 1;
+	uint64 GEO_PATH_TAGS_Urgent : 1;
+	uint64 GEO_PATH_TAGS_Pipe : 1;
+	uint64 GEO_PATH_TAGS_Climb : 1;
+	uint64 GEO_PATH_TAGS_Rail : 1;
+	uint64 GEO_PATH_TAGS_ForceFallDown : 1;
+	uint64 GEO_PATH_TAGS_DontFallWall : 1;
+	uint64 GEO_PATH_TAGS_Move : 1;
+} GEO_PATH_TAGS <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
 
 typedef struct
 {
 	// https://github.com/TinManTex/mgsv-deminified-lua/blob/3b8d6a0487ce45f69502d40e684b3d653d3b8965/data1/Tpp/start.lua#L292
-	uint EDGE_TAGS_Stand : 1;
-	uint EDGE_TAGS_Squat : 1;
-	uint EDGE_TAGS_BEHIND_LOW : 1;
-	uint EDGE_TAGS_FenceElude : 1;
-	uint EDGE_TAGS_Elude : 1;
-	uint EDGE_TAGS_Jump : 1;
-	uint EDGE_TAGS_Fence : 1;
-	uint EDGE_TAGS_StepOn : 1;
-	uint EDGE_TAGS_Behind : 1;
-	uint EDGE_TAGS_Urgent : 1;
-	uint EDGE_TAGS_NoEnd : 1;
-	uint EDGE_TAGS_NoStart : 1;
-	uint EDGE_TAGS_FenceJump : 1;
-	uint EDGE_TAGS_Wall : 1;
-	uint EDGE_TAGS_NoWall : 1;
-	uint EDGE_TAGS_ToIdle : 1;
-	uint EDGE_TAGS_EnableFall : 1;
-	uint EDGE_TAGS_NoFreeFall : 1;
-	uint EDGE_TAGS_Fulton : 1;
-	uint EDGE_TAGS_BEHIND_SNAP : 1;
-	uint EDGE_TAGS_LineCheck : 1;
-	uint EDGE_TAGS_FallNear : 1;
-	uint EDGE_TAGS_FenceToStepOn : 1;
-	uint EDGE_TAGS_ForceFallCatch : 1;
-	uint EDGE_TAGS_Window : 1;
-	uint EDGE_TAGS_AimIsBack : 1;
-} EDGE_TAGS <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
+	uint GEO_EDGE_TAGS_Stand : 1;
+	uint GEO_EDGE_TAGS_Squat : 1;
+	uint GEO_EDGE_TAGS_BEHIND_LOW : 1;
+	uint GEO_EDGE_TAGS_FenceElude : 1;
+	uint GEO_EDGE_TAGS_Elude : 1;
+	uint GEO_EDGE_TAGS_Jump : 1;
+	uint GEO_EDGE_TAGS_Fence : 1;
+	uint GEO_EDGE_TAGS_StepOn : 1;
+	uint GEO_EDGE_TAGS_Behind : 1;
+	uint GEO_EDGE_TAGS_Urgent : 1;
+	uint GEO_EDGE_TAGS_NoEnd : 1;
+	uint GEO_EDGE_TAGS_NoStart : 1;
+	uint GEO_EDGE_TAGS_FenceJump : 1;
+	uint GEO_EDGE_TAGS_Wall : 1;
+	uint GEO_EDGE_TAGS_NoWall : 1;
+	uint GEO_EDGE_TAGS_ToIdle : 1;
+	uint GEO_EDGE_TAGS_EnableFall : 1;
+	uint GEO_EDGE_TAGS_NoFreeFall : 1;
+	uint GEO_EDGE_TAGS_Fulton : 1;
+	uint GEO_EDGE_TAGS_BEHIND_SNAP : 1;
+	uint GEO_EDGE_TAGS_LineCheck : 1;
+	uint GEO_EDGE_TAGS_FallNear : 1;
+	uint GEO_EDGE_TAGS_FenceToStepOn : 1;
+	uint GEO_EDGE_TAGS_ForceFallCatch : 1;
+	uint GEO_EDGE_TAGS_Window : 1;
+	uint GEO_EDGE_TAGS_AimIsBack : 1;
+} GEO_EDGE_TAGS <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
 
 typedef struct
 {
 	// https://github.com/TinManTex/mgsv-deminified-lua/blob/3b8d6a0487ce45f69502d40e684b3d653d3b8965/data1/Tpp/start.lua#L292
-	uint NODE_TAGS_Edge : 1;
-	uint NODE_TAGS_Cover : 1;
-	uint NODE_TAGS_BEHIND_LOOK_IN : 1;
-	uint NODE_TAGS_CHANGE_TO_60 : 1;
-	uint NODE_TAGS_NoTurn : 1;
-	uint NODE_TAGS_BEHIND_STOP : 1;
-	uint NODE_TAGS_NoOut : 1;
-	uint NODE_TAGS_NoStart : 1;
-	uint NODE_TAGS_EludeToElude : 1;
-} NODE_TAGS <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
+	uint GEO_NODE_TAGS_Edge : 1;
+	uint GEO_NODE_TAGS_Cover : 1;
+	uint GEO_NODE_TAGS_BEHIND_LOOK_IN : 1;
+	uint GEO_NODE_TAGS_CHANGE_TO_60 : 1;
+	uint GEO_NODE_TAGS_NoTurn : 1;
+	uint GEO_NODE_TAGS_BEHIND_STOP : 1;
+	uint GEO_NODE_TAGS_NoOut : 1;
+	uint GEO_NODE_TAGS_NoStart : 1;
+	uint GEO_NODE_TAGS_EludeToElude : 1;
+} GEO_NODE_TAGS <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
 
+// From the exe we have to place: CHARA and RECOIL. The first could be CHARA. From JinMar's testing, it seems like MGS4_TYPRECOIL could be RECOIL?
 typedef struct
 {
-	BitfieldDisablePadding();
-	uint64 COLLISION_ATTRIBUTE_TAGS_NONE : 1; if (COLLISION_ATTRIBUTE_TAGS_NONE) Printf("COLLISION_ATTRIBUTE_TAGS_NONE set.\n");
-	uint64 COLLISION_ATTRIBUTE_TAGS_TYPRECOIL : 1; if (COLLISION_ATTRIBUTE_TAGS_TYPRECOIL) Printf("COLLISION_ATTRIBUTE_TAGS_TYPRECOIL set.\n");
-	uint64 COLLISION_ATTRIBUTE_TAGS_TYPFLOOR : 1; if (COLLISION_ATTRIBUTE_TAGS_TYPFLOOR) Printf("COLLISION_ATTRIBUTE_TAGS_TYPFLOOR set.\n");
-	uint64 COLLISION_ATTRIBUTE_TAGS_SOUND : 1; if (COLLISION_ATTRIBUTE_TAGS_SOUND) Printf("COLLISION_ATTRIBUTE_TAGS_SOUND set.\n");
+	uint64 GEO_COL_A_MAYBE_NONE : 1; if (GEO_COL_A_MAYBE_NONE) Printf("GEO_COL_A_MAYBE_NONE set.\n");
+	uint64 GEO_COL_A_MGS4_TYPRECOIL : 1; if (GEO_COL_A_MGS4_TYPRECOIL) Printf("GEO_COL_A_MGS4_TYPRECOIL set.\n");
+	uint64 GEO_COL_A_MGS4_TYPFLOOR : 1; if (GEO_COL_A_MGS4_TYPFLOOR) Printf("GEO_COL_A_MGS4_TYPFLOOR set.\n");
+	uint64 GEO_COL_A_MGS4_SOUND : 1; if (GEO_COL_A_MGS4_SOUND) Printf("GEO_COL_A_MGS4_SOUND set.\n");
 
-	uint64 COLLISION_ATTRIBUTE_TAGS_PLAYER : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_ENEMY : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_BULLET : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_MISSILE : 1;
+	uint64 GEO_COL_A_PLAYER : 1;
+	uint64 GEO_COL_A_ENEMY : 1;
+	uint64 GEO_COL_A_BULLET : 1;
+	uint64 GEO_COL_A_MISSILE : 1;
 
-	uint64 COLLISION_ATTRIBUTE_TAGS_BOMB : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_RADOR : 1; Assert(COLLISION_ATTRIBUTE_TAGS_RADOR == 0);
-	uint64 COLLISION_ATTRIBUTE_TAGS_BLOOD : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_IK : 1;
+	uint64 GEO_COL_A_BOMB : 1;
+	uint64 GEO_COL_A_MGS4_RADOR : 1; Assert(GEO_COL_A_MGS4_RADOR == 0);
+	uint64 GEO_COL_A_BLOOD : 1;
+	uint64 GEO_COL_A_IK : 1;
 
-	uint64 COLLISION_ATTRIBUTE_TAGS_STAIRWAY : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_STOP_EYE : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_CLIFF : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_TYPTHROUGH : 1; Assert(COLLISION_ATTRIBUTE_TAGS_TYPTHROUGH == 0);
+	uint64 GEO_COL_A_STAIRWAY : 1;
+	uint64 GEO_COL_A_STOP_EYE : 1;
+	uint64 GEO_COL_A_CLIFF : 1;
+	uint64 GEO_COL_A_MGS4_TYPTHROUGH : 1; Assert(GEO_COL_A_MGS4_TYPTHROUGH == 0);
 
-	uint64 COLLISION_ATTRIBUTE_TAGS_LEAN : 1; Assert(COLLISION_ATTRIBUTE_TAGS_LEAN == 0);
-	uint64 COLLISION_ATTRIBUTE_TAGS_DONT_FALL : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_CAMERA : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_SHADOW : 1; Assert(COLLISION_ATTRIBUTE_TAGS_SHADOW == 0);
+	uint64 GEO_COL_A_MGS4_LEAN : 1; Assert(GEO_COL_A_MGS4_LEAN == 0);
+	uint64 GEO_COL_A_DONT_FALL : 1;
+	uint64 GEO_COL_A_CAMERA : 1;
+	uint64 GEO_COL_A_MGS4_SHADOW : 1; Assert(GEO_COL_A_MGS4_SHADOW == 0);
 
-	uint64 COLLISION_ATTRIBUTE_TAGS_INTRUDE : 1; Assert(COLLISION_ATTRIBUTE_TAGS_INTRUDE == 0);
-	uint64 COLLISION_ATTRIBUTE_TAGS_ATTACK_GUARD : 1; Assert(COLLISION_ATTRIBUTE_TAGS_ATTACK_GUARD == 0);
-	uint64 COLLISION_ATTRIBUTE_TAGS_CLIFF_FLOOR : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_BULLET_MARK : 1;
+	uint64 GEO_COL_A_MGS4_INTRUDE : 1; Assert(GEO_COL_A_MGS4_INTRUDE == 0);
+	uint64 GEO_COL_A_MGS4_ATTACK_GUARD : 1; Assert(GEO_COL_A_MGS4_ATTACK_GUARD == 0);
+	uint64 GEO_COL_A_CLIFF_FLOOR : 1;
+	uint64 GEO_COL_A_BULLET_MARK : 1;
 
-	uint64 COLLISION_ATTRIBUTE_TAGS_HEIGHT_LIMIT : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_DOUBLE_SLIDE : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_WATER_SURFACE : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_TARGET_BLOCK : 1;
+	uint64 GEO_COL_A_HEIGHT_LIMIT : 1;
+	uint64 GEO_COL_A_DOUBLE_SLIDE : 1;
+	uint64 GEO_COL_A_WATER_SURFACE : 1;
+	uint64 GEO_COL_A_TARGET_BLOCK : 1;
 
-	uint64 COLLISION_ATTRIBUTE_TAGS_DOG : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_NO_EFFECT : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_EVENT_PHYSICS : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_NO_WALL_MOVE : 1;
+	uint64 GEO_COL_A_DOG : 1;
+	uint64 GEO_COL_A_NO_EFFECT : 1;
+	uint64 GEO_COL_A_EVENT_PHYSICS : 1;
+	uint64 GEO_COL_A_NO_WALL_MOVE : 1;
 
-    ushort COLLISION_ATTRIBUTE_TAGS_NO_BEHIND : 1;
-    ushort COLLISION_ATTRIBUTE_TAGS_BEHIND_THROUGH : 1;
+    uint64 GEO_COL_A_UNKNOWN0 : 1; // NO_BEHIND proceeds HEIGHT_LIMIT in MGS4; possibly that?
+    uint64 GEO_COL_A_UNKNOWN1 : 1; // BEHIND_THROUGH proceeds NO_BEHIND in MGS4; possibly that?
 
-	ushort Padding0 : 14 <hidden=true>; Assert(Padding0 == 0, "Extra COLLISION_ATTRIBUTE_TAGS set. Is this SSD?"); //ssdm_brdg001_brdg001.geom
+	uint64 Padding0 : 14 <hidden=true>; Assert(Padding0 == 0, "Extra GEO_COL_A set. Is this SSD?"); //ssdm_brdg001_brdg001.geom
 
-	uint64 COLLISION_ATTRIBUTE_TAGS_MISSILE2 : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_RIDE_ON_OUTER : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_FLAME : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_IGNORE_PHYSICS : 1;`
+	uint64 GEO_COL_A_MISSILE2 : 1;
+	uint64 GEO_COL_A_RIDE_ON_OUTER : 1;
+	uint64 GEO_COL_A_FLAME : 1;
+	uint64 GEO_COL_A_IGNORE_PHYSICS : 1;`
 
-	uint64 COLLISION_ATTRIBUTE_TAGS_CLIMB : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_HORSE : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_VEHICLE : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_MARKER : 1;
+	uint64 GEO_COL_A_CLIMB : 1;
+	uint64 GEO_COL_A_HORSE : 1;
+	uint64 GEO_COL_A_VEHICLE : 1;
+	uint64 GEO_COL_A_MARKER : 1;
 
-	uint64 COLLISION_ATTRIBUTE_TAGS_RIDE_ON : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_THROUGH_LINE_OF_FIRE : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_THROUGH_ITEM_CHECK : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_NO_CREEP : 1;
+	uint64 GEO_COL_A_RIDE_ON : 1;
+	uint64 GEO_COL_A_THROUGH_LINE_OF_FIRE : 1;
+	uint64 GEO_COL_A_THROUGH_ITEM_CHECK : 1;
+	uint64 GEO_COL_A_NO_CREEP : 1;
 
-	uint64 COLLISION_ATTRIBUTE_TAGS_NO_FULTON : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_FULTON : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_ITEM : 1;
-	uint64 COLLISION_ATTRIBUTE_TAGS_BOSS : 1;
-	BitfieldEnablePadding();
-} COLLISION_ATTRIBUTE_TAGS <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
+	uint64 GEO_COL_A_NO_FULTON : 1;
+	uint64 GEO_COL_A_FULTON : 1;
+	uint64 GEO_COL_A_ITEM : 1;
+	uint64 GEO_COL_A_BOSS : 1;
+} GEO_COL_A <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
 
 enum <byte> GEO_FILE_TYPE
 {
@@ -190,20 +197,20 @@ enum <byte> GEO_FILE_TYPE
 	GEO_FILE_TYPE_TRAP = 2,
 };
 
-enum <uint> GEO_SHAPE_TYPE
+enum <uint> GEO_PRIM_TYPE
 {
-	GEO_SHAPE_TYPE_SPHERE = 0,		// Entry size: 0x30 // Sphere not actually confirmed in any way except that it lines up with the others in the exe enum GeoShapeType
-	GEO_SHAPE_TYPE_UNKNOWN1 = 1,	// Entry size: 0x30
-	GEO_SHAPE_TYPE_QUAD = 2,		// Entry size: 0xA
-	GEO_SHAPE_TYPE_BOX = 3,			// Entry size: 0x60
-	GEO_SHAPE_TYPE_AABB = 4,		// Entry size: 0x20
-	GEO_SHAPE_TYPE_UNKNOWN5 = 5,	// Entry size: 0x80
-	GEO_SHAPE_TYPE_UNKNOWN6 = 6,	// Entry size: 0
-	GEO_SHAPE_TYPE_UNKNOWN7 = 7,	// Entry size: 0
-	GEO_SHAPE_TYPE_PATH = 8,		// Entry size: 0x8
-	GEO_SHAPE_TYPE_UNKNOWN9 = 6,	// Entry size: 0
-	GEO_SHAPE_TYPE_UNKNOWN10 = 7,	// Entry size: 0
-	GEO_SHAPE_TYPE_AREA_PATH = 11,	// Entry size: 0x10
+	GEO_PRIM_TYPE_SPHERE = 0,		// Entry size: 0x30 // Sphere not actually confirmed in any way except that it lines up with the others in the exe enum GeoShapeType
+	GEO_PRIM_TYPE_UNKNOWN1 = 1,	// Entry size: 0x30
+	GEO_PRIM_TYPE_QUAD = 2,		// Entry size: 0xA
+	GEO_PRIM_TYPE_BOX = 3,			// Entry size: 0x60
+	GEO_PRIM_TYPE_AABB = 4,		// Entry size: 0x20
+	GEO_PRIM_TYPE_UNKNOWN5 = 5,	// Entry size: 0x80
+	GEO_PRIM_TYPE_UNKNOWN6 = 6,	// Entry size: 0
+	GEO_PRIM_TYPE_UNKNOWN7 = 7,	// Entry size: 0
+	GEO_PRIM_TYPE_PATH = 8,		// Entry size: 0x8
+	GEO_PRIM_TYPE_UNKNOWN9 = 6,	// Entry size: 0
+	GEO_PRIM_TYPE_UNKNOWN10 = 7,	// Entry size: 0
+	GEO_PRIM_TYPE_AREA_PATH = 11,	// Entry size: 0x10
 };
 
 typedef enum <uint>
@@ -215,7 +222,7 @@ typedef enum <uint>
 	GEO_SHAPE_FLAGS_USE_FMDL_VERTICES = 0x800,	// mgsvtpp.exe!141bd7e30 // info & 0x8000
 	GEO_SHAPE_FLAGS_UNKNOWN3 = 0x2000,			// mgsvtpp.exe!141bdc7a7 // info >> 0x11
 	GEO_SHAPE_FLAGS_UNKNOWN2 = 0x8000,			// mgsvtpp.exe!141bdc830 // info >> 0x13
-	GEO_SHAPE_FLAGS_UNKNOWN5 = 0x80000,			// Found in GPFP and TRAP.
+	GEO_SHAPE_FLAGS_UNKNOWN5 = 0x80000,			// Found in GPFP and TRAP. // mgsvtpp.exe!141bdc830
 } GEO_SHAPE_FLAGS <read = ReadGEO_SHAPE_FLAGS>;
 string ReadGEO_SHAPE_FLAGS(GEO_SHAPE_FLAGS flags)
 {
@@ -256,41 +263,83 @@ string ReadGEO_SHAPE_FLAGS(GEO_SHAPE_FLAGS flags)
 	return result;
 }
 
-struct GeoShapeHeader (GEO_FILE_TYPE fileType)
+struct GeomHeader(GEO_FILE_TYPE fileType)
 {
 	BitfieldDisablePadding();
-	GEO_SHAPE_TYPE Type : 4 <bgcolor=0x0080ff>;
+	GEO_PRIM_TYPE Type : 4 <bgcolor=0x0080ff>;
 
 	GEO_SHAPE_FLAGS Flags : 20 <bgcolor=0x0080ff>;	// mgsvtpp.exe!141bdc492
 
-	uint EntryCount : 8 <bgcolor=0x0080ff>;
+	uint PrimCount : 8 <bgcolor=0x0080ff>;
 	BitfieldEnablePadding();
 
 	// See geom_geoms_gskl.bt for more information.
-	int NextBBDataChunkOffset;	// In geom, this is multipled by 16; it's a lines offset.
+	int NextHeaderOffset; // In geom, this is multipled by 16; it's a lines offset.
 
-	uint PreviousOffset;
-	uint NextOffset;	// In geom, this is multipled by 16; it's a lines offset.
+	int PreviousHeaderOffset;
+
+	int ChildHeaderOffset; // In geom, this is multipled by 16; it's a lines offset.
 
 	switch (fileType)
 	{
 	case GEO_FILE_TYPE_GPFP:
-		PATH_TAGS Tags;
+		GEO_PATH_TAGS Tags;
 		break;
 
 	case GEO_FILE_TYPE_GEOM_GEOMS_GSKL:
-		COLLISION_ATTRIBUTE_TAGS Tags;
+		GEO_COL_A Tags;
 		break;
 
 	case GEO_FILE_TYPE_TRAP:
-		TRAP_TAGS Tags;
+		GEO_TRAP_TAGS Tags;
 		break;
 	}
 
 	StrCode32 Name;	// With gimmicks, it has to be the gimmick instance name as StrCode32 hash, ie <_n0000|srt_>. 
 					// If there's more than one path for one instance, the hash is the same, but with the seventh of the eight bits shifted by 2
 
-	uint VertexDataOffset; // In geom, this is multipled by 16; it's a lines offset.
+	uint VertexBufferOffset; // In geom, this is multipled by 16; it's a lines offset.
+};
+
+typedef struct
+{
+	WideVector3 BoundingBoxRadii <bgcolor=0xDBC48F, comment="Width/2, Height/2, Depth/2">;
+	WideVector3 BoundingBoxCenter <bgcolor=0xDBC48F>;
+} GeoPrimAabb; // Name taken from PES RTTI
+
+typedef struct 
+{
+	short IndexA;
+	short IndexB;
+	short IndexC;
+	short IndexD;
+
+	struct GeoQuadMaterialInfo
+	{
+		BitfieldDisablePadding();
+		byte NoUseMaterial : 1;
+		byte NoUseAuxMaterial : 1; // Presumptive, but *super* likely given the parallelism in the materials section and the fact that the normal materials do the exact same thing in this section (they have NoUseMaterial = 1 and then a 7-bit -1)
+		
+		byte MaterialIndex : 7 <read = ( (byte)((0x80 & ((byte)this << 1)) | this) )>; // Sign-extend to a type that'll actually display negative numbers
+		byte AuxMaterialIndex : 7 <read = ( (byte)((0x80 & ((byte)this << 1)) | this) )>;
+		BitfieldEnablePadding();
+	} Info;
+} GeoPrimQuad <read = Str("%d, %d, %d, %d", this.IndexA, this.IndexB, this.IndexC, this.IndexD)>; // Name taken from PES RTTI
+
+struct GeoVertexHeader // Name taken from PES RTTI
+{
+	uint VertexCount;
+	uint VerticesIndexOffset;
+
+	uint Unknown0Or1; Assert(Unknown0Or1 == 0 || Unknown0Or1 == 1);
+
+	uint OriginIndex;
+
+	int64 VertexDataOffset; // This gets patched at runtime to use a FMDL pointer.
+	
+	uint FmdlVertexBufferOffset;
+
+	uint Padding0 <hidden = true>; Assert(Padding0 == 0);
 };
 
 #endif

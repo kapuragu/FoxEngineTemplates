@@ -52,7 +52,7 @@ struct
     uint EntryCount;
 } Header <hidden = true, bgcolor=CyberGrape>;
 
-AlignRead(16);
+FAlign(16);
 
 uint Offsets[Header.EntryCount] <hidden = true, bgcolor = LanguidLavender>;
 

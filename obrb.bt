@@ -1,0 +1,28 @@
+#include "common/common.bt"
+#include "common/FoxDataCommon.bt"
+
+FoxDataHeader Header;
+Assert(Header.Version == 2);
+
+FSeek(Header.NodesOffset);
+
+FoxDataNodes Nodes;
+
+#define ObjectBrushBlockNode Nodes.Node[0]
+Assert(ObjectBrushBlockNode.Flags == 0); Assert(ObjectBrushBlockNode.ParentNodeOffset == 0); Assert(ObjectBrushBlockNode.ChildNodeOffset == 0);
+
+#define NumObjects ObjectBrushBlockNode.Parameter[GetFoxDataNodeParamIndex(ObjectBrushBlockNode, "numObjects")].Value
+
+FSeek(startof(ObjectBrushBlockNode) + ObjectBrushBlockNode.DataOffset);
+
+struct Object
+{
+    float YPositionFWS;
+	short XPositionEFOS;
+	short ZPositionEFOS;
+    HQuaternion Rotation;
+    ushort BlockIndex;
+    ubyte PluginBrushIndex; // Index of ObjBrush dataset entity's pluginHandle list entry
+    ubyte NormalizedScale; // scale = lerp(minScale, maxScale, (float)NormalizedScale / 0xFF) found in DataSet plugin definition
+    uint GlobalObjectIndex;
+} Objects[NumObjects] <read = Str("plugin: %d, block: %d, globalIndex: %d", PluginBrushIndex, BlockIndex, GlobalObjectIndex), bgcolor = 0x8CAF5A>;

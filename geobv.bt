@@ -1,7 +1,7 @@
 LittleEndian();
 
-#include "../common/common.bt"
-#include "geo_common.bt"
+#include "common/common.bt"
+#include "geo/geo_common.bt"
 
 #define COLOR_HEADER 0x9EADC8
 #define COLOR_SECONDARYHEADER 0xDFEFAA
@@ -25,14 +25,14 @@ struct
 		Assert(false, "Invalid version.");
 	}
 
-	uint SecondaryHeadeOffset;
+	uint SecondaryHeaderOffset;
 
 	uint FileSize;
 
 	FSkip(20);
 } Header <bgcolor = COLOR_HEADER>;
 
-FSeek(Header.SecondaryHeadeOffset);
+FSeek(Header.SecondaryHeaderOffset);
 
 struct
 {

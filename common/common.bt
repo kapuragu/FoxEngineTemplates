@@ -1,10 +1,15 @@
-#ifndef TYPES_BT
-#define TYPES_BT
+#ifndef COMMON_BT
+#define COMMON_BT
 
 typedef struct
 {
     uint hash<format=hex>;
 } StrCode32 <read=(hash)>;
+
+typedef struct
+{
+    uint64 hash<format=hex>;
+} StrCode <read=(hash)>;
 
 typedef struct
 {
@@ -29,7 +34,7 @@ typedef struct
 	hfloat x;
 	hfloat y;
 	hfloat z;
-} HVector3 <read = Str("(%g, %g, %g)", x, y, z)>;
+} VectorH3 <read = Str("(%g, %g, %g)", x, y, z)>;
 
 typedef struct
 {
@@ -94,7 +99,7 @@ typedef struct
 	float w3;
 } Matrix4;
 
-void AlignRead(int alignment)
+void FAlign(int alignment)
 {
     local long alignmentRequired = FTell() % alignment;
     if (alignmentRequired > 0)

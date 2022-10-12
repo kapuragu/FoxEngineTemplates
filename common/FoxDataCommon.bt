@@ -1,0 +1,161 @@
+#ifndef FOXDATACOMMON_BT
+#define FOXDATACOMMON_BT
+
+#include "common/common.bt"
+
+#ifndef FOX_DATA_HASH_TYPE
+	#define FOX_DATA_HASH_TYPE StrCode32
+#endif
+
+enum <ushort> FOX_DATA_NODE_ENTRY_PARAM_TYPE
+{
+	FOX_DATA_NODE_ENTRY_PARAM_TYPE_UINT = 0,
+	FOX_DATA_NODE_ENTRY_PARAM_TYPE_FLOAT = 2,
+};
+
+typedef struct
+{
+	FOX_DATA_HASH_TYPE Hash;
+    uint StringOffset;
+} FoxDataString <read = ReadFoxDataString>;
+string ReadFoxDataString(FoxDataString& str)
+{
+	if (str.StringOffset == 0 || str.Hash.hash == 3205930904) // Empty string hash
+		return "null";
+	else if (str.Hash.hash == 2283831924 || str.Hash.hash == 4127755893 || str.Hash.hash == 981817376) // Hack for ObjectBrush (.obr, not .obrb), AtmosphereSHCoefficients (.atsh), and LightProbeSHCoefficients (.lpsh) which use an absolute string offset for this particular string for some reason
+		return ReadString(str.StringOffset);
+	else
+		return ReadString(startof(str) + str.StringOffset);
+}
+
+typedef struct
+{
+    FOX_DATA_NODE_ENTRY_PARAM_TYPE Type;
+    short NextParameterOffset;
+	FoxDataString Name;
+	switch (Type)
+	{
+	case FOX_DATA_NODE_ENTRY_PARAM_TYPE_UINT:
+		uint Value;
+		break;
+	case FOX_DATA_NODE_ENTRY_PARAM_TYPE_FLOAT:
+    	float Value;
+		break;
+	default:
+		Assert(false, "Unknown parameter type.");
+		break;
+	}
+} FoxDataNodeParameter <read = ReadFoxDataNodeParameter>;
+string ReadFoxDataNodeParameter(FoxDataNodeParameter& param)
+{
+	switch (param.Type)
+	{
+	case FOX_DATA_NODE_ENTRY_PARAM_TYPE_UINT:
+		return Str("%s %s = %d", "uint", ReadFoxDataString(param.Name), param.Value);
+	case FOX_DATA_NODE_ENTRY_PARAM_TYPE_FLOAT:
+		return Str("%s %s = %f", "float", ReadFoxDataString(param.Name), param.Value);
+	default:
+		return "null";
+	}
+
+	return result;
+}
+
+typedef struct
+{
+	FoxDataString Name;
+    uint Flags; // Unknown. Greatest diversity is in GEOM and HTRE nodes. Most other formats have 0 or 1 (see their asserts for details).
+    int DataOffset; // 0 means no data
+    uint DataSize; // 0 means no data
+    int ParentNodeOffset; // Surmised based on confirmation of ChildNodeOffset and behavior (if slightly wonky; see htre.bt for details) in HTRE V3 format.
+    int ChildNodeOffset; // Confirmed thanks to PES SO
+    int PreviousNodeOffset; // 0 means no previous nodes
+    int NextNodeOffset; // 0 means no more nodes
+    int ParametersOffset; // 0 means no params
+    uint Padding0<hidden = true>; Assert(Padding0 == 0);
+    uint Padding1<hidden = true>; Assert(Padding1 == 0);
+
+	if (ParametersOffset != 0)
+	{
+		FSeek(startof(this) + ParametersOffset);
+		local long paramStartPos = FTell();
+
+		FoxDataNodeParameter Parameter;
+		while (Parameter.NextParameterOffset != 0)
+		{
+			paramStartPos += Parameter.NextParameterOffset;
+			FSeek(paramStartPos);
+
+			FoxDataNodeParameter Parameter;
+		}
+	}
+} FoxDataNode <read = ReadFoxDataString(Name)>;
+
+int GetFoxDataNodeParamIndex(FoxDataNode& node, string name)
+{
+	local uint pIdx;
+	for (pIdx = 0; exists(node.Parameter[pIdx]); pIdx++)
+	{
+		if (Strcmp(ReadFoxDataString(node.Parameter[pIdx].Name), name) == 0)
+			return pIdx;
+	}
+
+    return -1;
+}
+
+typedef struct 
+{
+	FoxDataNode Node;
+
+	if (Node.ChildNodeOffset != 0)
+	{
+		FSeek(startof(Node) + Node.ChildNodeOffset);
+
+		FoxDataNode Child <comment = "Unfortunately 010 can't recurse. Flat, single children only">;
+	}
+	
+	while (Node.NextNodeOffset != 0)
+	{
+		FSeek(startof(Node) + Node.NextNodeOffset);
+		
+		FoxDataNode Node;
+
+		if (Node.ChildNodeOffset != 0)
+		{
+			FSeek(startof(Node) + Node.ChildNodeOffset);
+
+			FoxDataNode Child <comment = "Unfortunately 010 can't recurse. Flat, single children only">;
+		}
+	}
+} FoxDataNodes <bgcolor = 0x7E846B>;
+
+int GetFoxDataNodeIndex(FoxDataNodes& nodes, string name)
+{
+	local uint nIdx;
+	for (nIdx = 0; exists(nodes.Node[nIdx]); nIdx++)
+	{
+		if (Strcmp(ReadFoxDataString(nodes.Node[nIdx].Name), name) == 0)
+			return nIdx;
+	}
+
+    return -1;
+}
+
+typedef struct
+{
+	if (ReadUShort() == 0 || ReadUInt() == 372637195 || ReadUInt() == 1144389900) // 201209110, 201406020
+		BigEndian();
+	else
+		LittleEndian();
+
+    uint Version;
+    uint NodesOffset;
+    uint FileSize;
+	FoxDataString Name;
+
+	uint Padding <hidden = true>; Assert(Padding == 0);
+
+	uint64 Unknown;
+} FoxDataHeader <read = Str("Version: %d, Name: %s", Version, ReadFoxDataString(Name)), bgcolor = 0xaaaaaa>;
+
+#endif
