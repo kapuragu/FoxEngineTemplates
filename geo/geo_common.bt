@@ -265,20 +265,24 @@ string ReadGEO_SHAPE_FLAGS(GEO_SHAPE_FLAGS flags)
 
 struct GeomHeader(GEO_FILE_TYPE fileType)
 {
-	BitfieldDisablePadding();
 	GEO_PRIM_TYPE Type : 4 <bgcolor=0x0080ff>;
 
 	GEO_SHAPE_FLAGS Flags : 20 <bgcolor=0x0080ff>;	// mgsvtpp.exe!141bdc492
 
 	uint PrimCount : 8 <bgcolor=0x0080ff>;
-	BitfieldEnablePadding();
 
-	// See geom_geoms_gskl.bt for more information.
-	int NextHeaderOffset; // In geom, this is multipled by 16; it's a lines offset.
+	// Each of these offsets are in terms of the number of lines, so scale them by 16, aka shift by 4 bits.
+	// To check if the VertexBufferOffset goes anywhere, it checks if (VertexBufferOffset & 0x0fffffff) == 0.
+	// Those "mystery" "4 bits are probably from the shift, especially since PES, which doesn't do any shifting by 4, just treats the whole uint as the offset
+	// Nonetheless, ensure the top 4 bits aren't used.
+	int NextHeaderOffset : 28 <read = (this << 4)>;
+	int NextHeaderOffsetPadding : 4 <hidden = true>; Assert(NextHeaderOffsetPadding == 0);
 
-	int PreviousHeaderOffset;
+	int PreviousHeaderOffset : 28 <read = (this << 4)>;
+	int PreviousHeaderOffsetPadding : 4 <hidden = true>; Assert(PreviousHeaderOffsetPadding == 0);
 
-	int ChildHeaderOffset; // In geom, this is multipled by 16; it's a lines offset.
+	int ChildHeaderOffset : 28 <read = (this << 4)>;
+	int ChildHeaderOffsetPadding : 4 <hidden = true>; Assert(ChildHeaderOffsetPadding == 0);
 
 	switch (fileType)
 	{
@@ -298,7 +302,8 @@ struct GeomHeader(GEO_FILE_TYPE fileType)
 	StrCode32 Name;	// With gimmicks, it has to be the gimmick instance name as StrCode32 hash, ie <_n0000|srt_>. 
 					// If there's more than one path for one instance, the hash is the same, but with the seventh of the eight bits shifted by 2
 
-	uint VertexBufferOffset; // In geom, this is multipled by 16; it's a lines offset.
+	int VertexBufferOffset : 28 <read = (this << 4)>;
+	int VertexBufferOffsetPadding : 4 <hidden = true>; Assert(VertexBufferOffsetPadding == 0);
 };
 
 typedef struct 

@@ -12,23 +12,23 @@ LittleEndian();
 
 typedef struct
 {
-	local long SelfStartPos = FTell();
+	//local long SelfStartPos = FTell();
 
 	GeomHeader Header(GEO_FILE_TYPE_GEOM_GEOMS_GSKL);
 
 	switch (Header.Type)
 	{
-	case GEO_COLLISION_SHAPE_TYPE_AABB:
+	case GEO_PRIM_TYPE_AABB:
 		GeoPrimAabb Prim[Header.PrimCount] <optimize = true>;
 		break;
-	case GEO_COLLISION_SHAPE_TYPE_QUAD:
+	case GEO_PRIM_TYPE_QUAD:
 		GeoPrimQuad Prim[Header.PrimCount] <optimize = true>;
 		break;
 	default:
         Assert(false, "Unknown GEO_PRIM_TYPE type detected!");
 	}
 
-	// if ((Header.VertexBufferOffset & 0xfffffff) != 0)
+	// if ((Header.VertexBufferOffset) != 0)
 	// 	{
 	// 		FSeek(SelfStartPos + Header.VertexBufferOffset * 16);
 
@@ -49,7 +49,7 @@ typedef struct
 	// 		} VertexHeader; // Name taken from PES RTTI
 
 	// 		// mgsvtpp.exe!141bd7e9c
-	// 		if ((Header.Flags & GEO_COLLISION_SHAPE_FLAGS_USE_FMDL_VERTEX_DATA) == 0)
+	// 		if ((Header.Flags & GEO_SHAPE_FLAGS_USE_FMDL_VERTEX_DATA) == 0)
 	// 		{
 	// 			WideVector3 VertexData[VertexHeader.VertexCount] <optimize = true>;
 
@@ -98,13 +98,13 @@ struct GeoBlock  // Name taken from PES RTTI
 	
 	GEO_COL_A Tags;
 	
-	FSeek(SelfStartPos + RootAABBHeaderOffset);
+	FSeek(startof(this) + RootAABBHeaderOffset);
 
 	// I'm going to have to stare at this for longer to understand what the heck is going on here.
 	struct
 	{
 		local uint64 ptrs[6];
-		ptrs[0] = SelfStartPos + RootAABBHeaderOffset;
+		ptrs[0] = startof(parentof(this)) + RootAABBHeaderOffset;
 		local uint j = 1;
 		local uint j_minusOne;
 		local int iteratorIndex = 0;
@@ -130,7 +130,7 @@ struct GeoBlock  // Name taken from PES RTTI
 			j = j_minusOne;
 			iteratorIndex = iteratorIndex_minusOne;
 			FSeek(ptr);
-			if ((ReadUInt() & 0x200) == 0) // if (Data.Header.Info.Flags & GEO_COLLISION_SHAPE_FLAGS_NO_PAYLOAD == 0)
+			if ((ReadUInt() & 0x200) == 0) // if (Data.Header.Info.Flags & GEO_SHAPE_FLAGS_NO_PAYLOAD == 0)
 			{
 				GeoShape Shape;
 
@@ -147,7 +147,7 @@ struct GeoBlock  // Name taken from PES RTTI
 		} while (j > 0);
 	} Shapes;
 	
-	FSeek(SelfStartPos + VertexBufferOffset);
+	FSeek(startof(this) + VertexBufferOffset);
 
 	GeoVertexHeader VertexHeader;
 };
