@@ -19,7 +19,6 @@ FoxDataNodes Nodes;
 
 FSeek(startof(Nodes.Node[0]) + Nodes.Node[0].DataOffset);
 
-
 struct GeoBoundingVolume2
 {
     local uint SelfStartPos = FTell();
@@ -72,57 +71,56 @@ struct GeoBoundingVolume2
 	} Nodes;
 } BoundingVolume <bgcolor = COLOR_GEOBOUNDINGVOLUME2>;
 
-FSeek(BoundingVolume.SelfStartPos + BoundingVolume.DataOffset);
-
-typedef struct
-{
-    local uint SelfStartPos = FTell();
-
-    GeomHeader Header(GEO_FILE_TYPE_GPFP);
-
-    struct Edge
-    {
-        GEO_EDGE_TAGS Tags;
-        ushort InIndex;
-        ushort OutIndex;
-    } Edges [Header.PrimCount] <bgcolor=COLOR_EDGE>;
-    
-    FSeek(SelfStartPos + Header.VertexBufferOffset);
-
-    local uint highestNodeIndex = 0;
-    local uint i;
-    if (Header.PrimCount > 0)
-    {
-        // Manually get number of vertices
-        for (i = 0; i < Header.PrimCount; i++)
-        {
-            if (Edges[i].InIndex > highestNodeIndex)
-                highestNodeIndex = Edges[i].InIndex;
-            else if (Edges[i].OutIndex > highestNodeIndex)
-                highestNodeIndex = Edges[i].OutIndex;
-        }
-    
-        struct Node
-        {
-            Vector3 Position;
-            GEO_NODE_TAGS Tags;
-        } Nodes [highestNodeIndex + 1] <bgcolor=COLOR_NODE>;
-    }
-} GeoShape <bgcolor = COLOR_GEOSHAPE>;
+FSeek(startof(BoundingVolume) + BoundingVolume.DataOffset);
 
 struct
 {
-    local uint i;
-    uint EntryCount <hidden = true>;
+    uint ShapeCount <hidden = true>;
 
-    uint FirstEntrySize <hidden = true>;
+    uint FirstShapeSize <hidden = true>;
 
-    uint Offsets[EntryCount] <hidden = true>;
+    uint ShapeOffsets[ShapeCount] <hidden = true>;
 
-    for (i = 0; i < EntryCount; i++)
-    {
-        FSeek(BoundingVolume.SelfStartPos + Offsets[i]);
-        
-        GeoShape Shape;
-    }
-} Shapes <bgcolor = COLOR_GEOSHAPES>;
+	local uint i = 0;
+	for (i = 0; i < ShapeCount; i++)
+	{
+        FSeek(startof(BoundingVolume) + ShapeOffsets[i]);
+
+        struct GeoShape
+        {
+            GeomHeader Header(GEO_FILE_TYPE_GPFP);
+            Assert(Header.NextHeaderOffset == 0 && Header.PreviousHeaderOffset == 0 && Header.ChildHeaderOffset == 0);
+				
+			switch (Header.Type)
+			{
+			case GEO_PRIM_TYPE_PATH:
+				GeoPrimPath Prim[Header.PrimCount] <optimize = true, bgcolor = COLOR_EDGE>;
+				break;
+			default:
+				Assert(false, "Unknown GEO_PRIM_TYPE type detected!");
+            }
+            
+            // FSeek(SelfStartPos + Header.VertexBufferOffset);
+
+            // local uint highestNodeIndex = 0;
+            // local uint i;
+            // if (Header.PrimCount > 0)
+            // {
+            //     // Manually get number of vertices
+            //     for (i = 0; i < Header.PrimCount; i++)
+            //     {
+            //         if (Edges[i].InIndex > highestNodeIndex)
+            //             highestNodeIndex = Edges[i].InIndex;
+            //         else if (Edges[i].OutIndex > highestNodeIndex)
+            //             highestNodeIndex = Edges[i].OutIndex;
+            //     }
+            
+            //     struct Node
+            //     {
+            //         Vector3 Position;
+            //         GEO_NODE_TAGS Tags;
+            //     } Nodes [highestNodeIndex + 1] <bgcolor=COLOR_NODE>;
+            // }
+        } Shape <bgcolor = COLOR_GEOSHAPE>;
+	}
+} Shapes;

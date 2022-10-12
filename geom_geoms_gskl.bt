@@ -25,7 +25,7 @@ typedef struct
 		GeoPrimQuad Prim[Header.PrimCount] <optimize = true>;
 		break;
 	default:
-        Assert(false, "Unknown CollisonShape type detected!");
+        Assert(false, "Unknown GEO_PRIM_TYPE type detected!");
 	}
 
 	// if ((Header.VertexBufferOffset & 0xfffffff) != 0)
@@ -145,30 +145,11 @@ struct GeoBlock  // Name taken from PES RTTI
 				}
 			}
 		} while (j > 0);
-	} GeoShapes;
+	} Shapes;
 	
 	FSeek(SelfStartPos + VertexBufferOffset);
 
 	GeoVertexHeader VertexHeader;
-};
-
-struct GeoBlocks
-{
-    local uint SelfStartPos;
-    local uint i;
-	local uint nextBBChunkPos;
-
-    while(!ReadUByte())
-	{
-        SelfStartPos = FTell();
-
-		GeoBlock Block;
-
-        FSeek(SelfStartPos + 32);
-	};
-
-	// Skip last "dummy" data chunk definition
-    FSkip(32);
 };
 
 struct GeoMaterialHeader // Name taken from PES RTTI
@@ -185,33 +166,6 @@ struct GeoMaterial
 
 	uint64 LikelyPtrPlaceholder; Assert(LikelyPtrPlaceholder == 0); // The PES .so has a concept of a MaterialDatabase. 
 																	// The hash likely gets resolved at runtime into a permanent pointer to the material and stored here
-};
-
-struct GeoMaterials
-{
-	GeoMaterialHeader Header; 
-
-	local int64 MaterialsStartPos = FTell();
-
-	FSeek(MaterialsStartPos + Header.MaterialsOffsetInEntries * 12 /*sizeof(GeoMaterial)*/);
-	
-	while (ReadUInt() != 0)
-    {
-		GeoMaterial Material;
-    }
-
-	FSkip(12 /*sizeof(GeoMaterial)*/);
-
-	FSeek(MaterialsStartPos + Header.AuxMaterialsOffsetInEntries * 12 /*sizeof(GeoMaterial)*/);
-	
-	while (ReadUInt() != 0)
-    {
-		GeoMaterial Material;
-    }
-
-	FSkip(12 /*sizeof(GeoMaterial)*/);
-
-	FAlign(16);
 };
 
 struct GeoBoundingVolume
@@ -283,7 +237,7 @@ do
 	
 	FSeek(startof(Nodes.Child[childIndex]) + Nodes.Child[childIndex].DataOffset);
 	
-	struct
+	struct GeoGroup
 	{
 		if (Nodes.Child[childIndex].Flags == 0)
 		{
@@ -292,10 +246,50 @@ do
 			FSeek(startof(BoundingVolume) + BoundingVolume.NextSectionOffset);
 		}
 
-		GeoBlocks Blocks <bgcolor = COLOR_CHUNK11>;
+		struct
+		{
+			local int64 BlocksStartPos = FTell();
+
+			while(!ReadUByte())
+			{
+				BlocksStartPos = FTell();
+
+				GeoBlock Block;
+
+				FSeek(BlocksStartPos + 32);
+			};
+
+			// Skip last "dummy" data chunk definition
+			FSkip(32);
+		} Blocks <bgcolor = COLOR_CHUNK11>;
 		
-		GeoMaterials Materials <bgcolor = COLOR_ENTRYMATERIALSECTION>;
-	} GeoGroup; // The PES .so deals with a GeoGroup structure that has a grid and owns a list of GeoBlocks, but the layout is sort of different. It seems like it's a sort of proto-BVH section 
+		struct
+		{
+			GeoMaterialHeader Header; 
+
+			local int64 MaterialsStartPos = FTell();
+
+			FSeek(MaterialsStartPos + Header.MaterialsOffsetInEntries * 12 /*sizeof(GeoMaterial)*/);
+			
+			while (ReadUInt() != 0)
+			{
+				GeoMaterial Material;
+			}
+
+			FSkip(12 /*sizeof(GeoMaterial)*/);
+
+			FSeek(MaterialsStartPos + Header.AuxMaterialsOffsetInEntries * 12 /*sizeof(GeoMaterial)*/);
+			
+			while (ReadUInt() != 0)
+			{
+				GeoMaterial Material;
+			}
+
+			FSkip(12 /*sizeof(GeoMaterial)*/);
+
+			FAlign(16);
+		} Materials <bgcolor = COLOR_ENTRYMATERIALSECTION>;
+	} Groups; // The PES .so deals with a GeoGroup structure that has a grid and owns a list of GeoBlocks, but the layout is sort of different. It seems like it's a sort of proto-BVH section 
 	
 	nodeIndex++;
 	childIndex++;

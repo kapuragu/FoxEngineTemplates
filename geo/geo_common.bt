@@ -16,7 +16,7 @@ typedef struct
 
 typedef struct
 {
-	BitfieldDisablePadding();
+	//BitfieldDisablePadding();
 	uint64 GEO_TRAP_TAGS_Intrude : 1; // 0x1
 	uint64 GEO_TRAP_TAGS_Tower : 1; // 0x2
 	uint64 GEO_TRAP_TAGS_InRoom : 1; // 0x4
@@ -56,7 +56,7 @@ typedef struct
 	uint64 GEO_TRAP_TAGS_xf287ba9cb7e3 : 1; // 0x20000000
 	uint64 GEO_TRAP_TAGS_NoFulton : 1; // 0x40000000
 	uint64 GEO_TRAP_TAGS_Waterfall: 1; // 0x80000000 for convenience in 010 but the tag is actually 0xffffffff80000000, signalling that there are no higher-value tags
-	BitfieldEnablePadding();
+	//BitfieldEnablePadding();
 } GEO_TRAP_TAGS <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
 
 typedef struct
@@ -301,12 +301,6 @@ struct GeomHeader(GEO_FILE_TYPE fileType)
 	uint VertexBufferOffset; // In geom, this is multipled by 16; it's a lines offset.
 };
 
-typedef struct
-{
-	WideVector3 BoundingBoxRadii <bgcolor=0xDBC48F, comment="Width/2, Height/2, Depth/2">;
-	WideVector3 BoundingBoxCenter <bgcolor=0xDBC48F>;
-} GeoPrimAabb; // Name taken from PES RTTI
-
 typedef struct 
 {
 	short IndexA;
@@ -325,6 +319,43 @@ typedef struct
 		BitfieldEnablePadding();
 	} Info;
 } GeoPrimQuad <read = Str("%d, %d, %d, %d", this.IndexA, this.IndexB, this.IndexC, this.IndexD)>; // Name taken from PES RTTI
+
+typedef struct
+{
+	Vector4 Scale;	// cap - I seem to remember Intrude triggers needing to be scaled up by two, but I don't remember if it applies to all boxes
+	
+	uint64 Padding0 <hidden = true>; Assert(Padding0 == 0);
+	uint64 Padding1 <hidden = true>; Assert(Padding0 == 0);
+	
+	Matrix4 Transform;
+} GeoPrimBox; // Name taken from PES RTTI
+
+typedef struct
+{
+	WideVector3 BoundingBoxRadii <bgcolor=0xDBC48F, comment="Width/2, Height/2, Depth/2">;
+	WideVector3 BoundingBoxCenter <bgcolor=0xDBC48F>;
+} GeoPrimAabb; // Name taken from PES RTTI
+
+typedef struct
+{
+	GEO_EDGE_TAGS Tags;
+	ushort InIndex;
+	ushort OutIndex;
+} GeoPrimPath;
+
+typedef struct
+{
+	//local uint SelfStartPos = FTell();
+
+	float YMinimum;
+	float YMaximum;
+	uint PointCount/* <hidden = true>*/;
+	uint PointsDataOffset/* <hidden = true>*/;
+
+	// FSeek(SelfStartPos + PointsDataOffset);
+	
+	// WideVector3 Points[PointCount] <optimize = true>;
+} GeoPrimAreaPath;
 
 struct GeoVertexHeader // Name taken from PES RTTI
 {

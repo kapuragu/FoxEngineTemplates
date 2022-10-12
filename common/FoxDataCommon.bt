@@ -3,6 +3,7 @@
 
 #include "common/common.bt"
 
+// For TRAP, the FoxDataHeader string hash is known to be a StrCode32. So globally overriding for stuff like GeoNameHashes, which may literally not exist at all outside of material names, may not be right.
 #ifndef FOX_DATA_HASH_TYPE
 	#define FOX_DATA_HASH_TYPE StrCode32
 #endif
@@ -75,7 +76,7 @@ typedef struct
     uint Padding0<hidden = true>; Assert(Padding0 == 0);
     uint Padding1<hidden = true>; Assert(Padding1 == 0);
 
-	if (ParametersOffset != 0)
+	if (ParametersOffset != 0 && ParametersOffset != 2) // For some reason, TRAP files hack this to use as the entry count
 	{
 		FSeek(startof(this) + ParametersOffset);
 		local long paramStartPos = FTell();

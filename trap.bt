@@ -3,83 +3,40 @@ LittleEndian();
 #include "common/common.bt"
 #include "geo/geo_common.bt"
 
+FoxDataHeader Header;
+
+FSeek(Header.NodesOffset);
+
+FoxDataNodes Nodes;
+
+Assert(Nodes.Node[0].Flags == 1); Assert(Nodes.Node[0].ParentNodeOffset == 0); Assert(Nodes.Node[0].ChildNodeOffset == 0);
+
+FSeek(startof(Nodes.Node[0]) + Nodes.Node[0].DataOffset);
+
 struct
 {
-    uint VersionDate <hidden = true>; // TPP/SSD is 201406020; February 6th, 2014
-	if (VersionDate != 201406020) // if big endian, big endian
+	uint ShapeOffsets[Nodes.Node[0].ParametersOffset] <hidden = true>;
+
+	local uint i = 0;
+	for (i = 0; i < Nodes.Node[0].ParametersOffset; i++)
 	{
-		BigEndian();
-	}
-    uint EntryDefinitionsOffset<hidden = true>; Assert(EntryDefinitionsOffset == 32);
-    uint FileSize;
-    uint DataSetPathCode32Hash; // PathCode32 hash of the path to the .fox2, same name as the file.
-} Header <bgcolor = 0x9EADC8>;
+		FSeek(startof(Nodes.Node[0]) + Nodes.Node[0].DataOffset + ShapeOffsets[i]);
 
-FSeek(Header.EntryDefinitionsOffset);
-
-struct
-{
-    local uint SelfStartPos = FTell();
-
-	FSkip(8);
-
-	uint Unknown; Assert(Unknown == 1);
-
-	uint OffsetsOffset; Assert(OffsetsOffset == 48);
-
-    uint FileSizePlus16; Assert(FileSizePlus16 == Header.FileSize + 16);
-    
-    FSkip(16);
-
-    uint EntryCount;
-
-    FSeek(SelfStartPos + OffsetsOffset);
-
-    uint Offsets[EntryCount];
-} EntryDefinitions <hidden = true, bgcolor = 0xB9E28C>;
-
-local int i = 0;
-for (i = 0; i < EntryDefinitions.EntryCount; i++)
-{
-    FSeek(EntryDefinitions.SelfStartPos + EntryDefinitions.OffsetsOffset + EntryDefinitions.Offsets[i]);
-
-    struct
-    {
-		GeoCollisionShapeHeader Header(GEO_FILE_TYPE_TRAP);
-	    	
-		switch (Header.Type)
+		struct GeoShape
 		{
-		case GEO_SHAPE_TYPE_BOX_TRAP:
+			GeomHeader Header(GEO_FILE_TYPE_TRAP);
+				
+			switch (Header.Type)
 			{
-				struct BoxShape
-				{
-					Vector4 scale;	// I seem to remember Intrude triggers needing to be scaled up by two, but I don't remember if it applies to all boxes
-					
-					FSkip(16);
-					
-					Matrix4 Transform;
-				} Shapes[Header.EntryCount] <optimize = true>;
+			case GEO_PRIM_TYPE_BOX:
+				GeoPrimBox Prim[Header.PrimCount] <optimize = true>;
+				break;
+			case GEO_PRIM_TYPE_AREA_PATH:
+				GeoPrimAreaPath Prim[Header.PrimCount] <optimize = true>;
+				break;
+			default:
+				Assert(false, "Unknown GEO_PRIM_TYPE type detected!");
 			}
-			break;
-		case GEO_SHAPE_TYPE_PATH_TRAP:
-			{
-				struct PathShape
-				{
-					local uint SelfStartPos = FTell();
-		
-					float YMinimum;
-					float YMaximum;
-					uint PointCount <hidden = true>;
-					uint PointsDataOffset <hidden = true>;
-		
-					FSeek(SelfStartPos + PointsDataOffset);
-					
-					WideVector3 Points[PointCount] <optimize = true>;
-				} Shapes[Header.EntryCount] <optimize = false>;
-			}
-			break;
-		default:
-			Assert(false, "Unknown CollisonShape type detected!");
-		}
-    } Entry <optimize = false, bgcolor = 0xD6D84F>;
-}
+		} Shape <optimize = false, bgcolor = 0xD6D84F>;
+	}
+} Shapes;
