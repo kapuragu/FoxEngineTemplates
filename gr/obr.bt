@@ -1,16 +1,19 @@
 #include "../common/common.bt"
-#include "gr_common.bt"
+#include "../common/FoxDataCommon.bt"
 
-GrHeader Header;
+FoxDataHeader Header;
+Assert(Header.Version == 3);
 
-FSeek(Header.MetadataEntriesOffset);
+FSeek(Header.NodesOffset);
 
-GrMetadataEntries MetadataEntries;
+FoxDataNodes Nodes;
 
-#define ObjectBrushMetadata MetadataEntries.Entry[0]
-#define NumObjects ObjectBrushMetadata.Param[GetGrMetadataEntryParamIndex(ObjectBrushMetadata, "numObjects")].Value
+#define ObjectBrushNode Nodes.Node[0]
+Assert(ObjectBrushNode.Flags == 1); Assert(ObjectBrushNode.ParentNodeOffset == 0); Assert(ObjectBrushNode.ChildNodeOffset == 0);
 
-FSeek(startof(ObjectBrushMetadata) + ObjectBrushMetadata.DataOffset);
+#define NumObjects ObjectBrushNode.Parameter[GetFoxDataNodeParamIndex(ObjectBrushNode, "numObjects")].Value
+
+FSeek(startof(ObjectBrushNode) + ObjectBrushNode.DataOffset);
 
 struct Object
 {

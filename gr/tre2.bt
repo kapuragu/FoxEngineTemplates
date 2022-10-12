@@ -1,30 +1,39 @@
 #include "../common/common.bt"
-#include "gr_common.bt"
+#include "../common/FoxDataCommon.bt"
 #include "terrain_common.bt"
 
-GrHeader Header;
+FoxDataHeader Header;
+Assert(Header.Version == 3)
 
-FSeek(Header.MetadataEntriesOffset);
+FSeek(Header.NodesOffset);
 
-GrMetadataEntries MetadataEntries;
+FoxDataNodes Nodes;
 
-#define ParamMetadata MetadataEntries.Entry[GetGrMetadataEntryIndex(MetadataEntries, "param")]
+#define ParamNode Nodes.Node[GetFoxDataNodeIndex(Nodes, "param")]
+Assert(ParamNode.Flags == 0); Assert(ParamNode.ParentNodeOffset == 0); Assert(ParamNode.ChildNodeOffset == 0);
 
-#define HeightMapMetadata MetadataEntries.Entry[GetGrMetadataEntryIndex(MetadataEntries, "heightMap")]
+#define HeightMapNode Nodes.Node[GetFoxDataNodeIndex(Nodes, "heightMap")]
+Assert(HeightMapNode.Flags == 0); Assert(HeightMapNode.ParentNodeOffset == 0); Assert(HeightMapNode.ChildNodeOffset == 0);
 
-#define ComboTextureMetadata MetadataEntries.Entry[GetGrMetadataEntryIndex(MetadataEntries, "comboTexture")]
+#define ComboTextureNode Nodes.Node[GetFoxDataNodeIndex(Nodes, "comboTexture")]
+Assert(ComboTextureNode.Flags == 0); Assert(ComboTextureNode.ParentNodeOffset == 0); Assert(ComboTextureNode.ChildNodeOffset == 0);
 
-#define MaxHeightMetadata MetadataEntries.Entry[GetGrMetadataEntryIndex(MetadataEntries, "maxHeight")]
+#define MaxHeightNode Nodes.Node[GetFoxDataNodeIndex(Nodes, "maxHeight")]
+Assert(MaxHeightNode.Flags == 0); Assert(MaxHeightNode.ParentNodeOffset == 0); Assert(MaxHeightNode.ChildNodeOffset == 0);
 
-#define MinHeightMetadata MetadataEntries.Entry[GetGrMetadataEntryIndex(MetadataEntries, "minHeight")]
+#define MinHeightNode Nodes.Node[GetFoxDataNodeIndex(Nodes, "minHeight")]
+Assert(MinHeightNode.Flags == 0); Assert(MinHeightNode.ParentNodeOffset == 0); Assert(MinHeightNode.ChildNodeOffset == 0);
 
-#define MaterialIdsMetadata MetadataEntries.Entry[GetGrMetadataEntryIndex(MetadataEntries, "materialIds")]
+#define MaterialIdsNode Nodes.Node[GetFoxDataNodeIndex(Nodes, "materialIds")]
+Assert(MaterialIdsNode.Flags == 0); Assert(MaterialIdsNode.ParentNodeOffset == 0); Assert(MaterialIdsNode.ChildNodeOffset == 0);
 
-#define ConfigrationIdsMetadata MetadataEntries.Entry[GetGrMetadataEntryIndex(MetadataEntries, "configrationIds")]
+#define ConfigrationIdsNode Nodes.Node[GetFoxDataNodeIndex(Nodes, "configrationIds")]
+Assert(ConfigrationIdsNode.Flags == 0); Assert(ConfigrationIdsNode.ParentNodeOffset == 0); Assert(ConfigrationIdsNode.ChildNodeOffset == 0);
 
-#define LayoutDescriptionMetadata MetadataEntries.Entry[GetGrMetadataEntryIndex(MetadataEntries, "layoutDescription")]
+#define LayoutDescriptionNode Nodes.Node[GetFoxDataNodeIndex(Nodes, "layoutDescription")]
+Assert(LayoutDescriptionNode.Flags == 0); Assert(LayoutDescriptionNode.ParentNodeOffset == 0); Assert(LayoutDescriptionNode.ChildNodeOffset == 0);
 
-FSeek(startof(LayoutDescriptionMetadata) + LayoutDescriptionMetadata.DataOffset);
+FSeek(startof(LayoutDescriptionNode) + LayoutDescriptionNode.DataOffset);
 struct
 {
     uint64 Unknown0;
@@ -49,44 +58,44 @@ struct
     uint Unknown6;
 } LayoutDescription <bgcolor=0x999900>;
 
-FSeek(startof(ParamMetadata) + ParamMetadata.DataOffset);
+FSeek(startof(ParamNode) + ParamNode.DataOffset);
 struct
 {
-    LodParam data[ParamMetadata.DataSize / sizeof(LodParam)];
+    LodParam data[ParamNode.DataSize / sizeof(LodParam)];
 } Param <bgcolor=0x00aaff>;
 
-FSeek(startof(MaxHeightMetadata) + MaxHeightMetadata.DataOffset);
+FSeek(startof(MaxHeightNode) + MaxHeightNode.DataOffset);
 struct
 {
-    float data[MaxHeightMetadata.DataSize / sizeof(float)];
+    float data[MaxHeightNode.DataSize / sizeof(float)];
 } MaxHeight <bgcolor=0xff00aa>;
 
-FSeek(startof(MinHeightMetadata) + MinHeightMetadata.DataOffset);
+FSeek(startof(MinHeightNode) + MinHeightNode.DataOffset);
 struct
 {
-    float data[MinHeightMetadata.DataSize / sizeof(float)];
+    float data[MinHeightNode.DataSize / sizeof(float)];
 } MinHeight <bgcolor=0xaaff00>;
 
-FSeek(startof(HeightMapMetadata) + HeightMapMetadata.DataOffset);
+FSeek(startof(HeightMapNode) + HeightMapNode.DataOffset);
 struct
 {
-    float data[HeightMapMetadata.DataSize / sizeof(float)];
+    float data[HeightMapNode.DataSize / sizeof(float)];
 } HeightMap <bgcolor=0x99aacc>;
 
-FSeek(startof(ComboTextureMetadata) + ComboTextureMetadata.DataOffset);
+FSeek(startof(ComboTextureNode) + ComboTextureNode.DataOffset);
 struct
 {
-    Pixel data[ComboTextureMetadata.DataSize / sizeof(Pixel)];
+    Pixel data[ComboTextureNode.DataSize / sizeof(Pixel)];
 } ComboTexture <bgcolor=0x111199>;
 
-FSeek(startof(MaterialIdsMetadata) + MaterialIdsMetadata.DataOffset);
+FSeek(startof(MaterialIdsNode) + MaterialIdsNode.DataOffset);
 struct
 {
-    Pixel data[MaterialIdsMetadata.DataSize / sizeof(Pixel)];
+    Pixel data[MaterialIdsNode.DataSize / sizeof(Pixel)];
 } MaterialIds <bgcolor=0x991111>;
 
-FSeek(startof(ConfigrationIdsMetadata) + ConfigrationIdsMetadata.DataOffset);
+FSeek(startof(ConfigrationIdsNode) + ConfigrationIdsNode.DataOffset);
 struct
 {
-    uint data[ConfigrationIdsMetadata.DataSize / sizeof(uint)];
+    uint data[ConfigrationIdsNode.DataSize / sizeof(uint)];
 } ConfigrationIds <bgcolor=0x119911>;

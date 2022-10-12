@@ -6,250 +6,59 @@ LittleEndian();
 #define COLOR_SECTION_1 0x9C8E65
 #define COLOR_STRCODE32 0x634651
 
-struct Vector4
-{
-    float x;
-    float y;
-    float z;
-    float w;
-};
+#include "common/common.bt"
 
-local uint offsets[190] =
+local uint MaterialParamOffsetArray[4] = 
 {
-  8u,
-  12u,
-  16u,
-  20u,
-  1133894051u,
-  1120403456u,
-  1065353216u,
-  1124073472u,
-  0u,
-  2147483648u,
-  0u,
-  2147483648u,
-  2147483648u,
-  0u,
-  2147483648u,
-  0u,
-  1065353216u,
-  0u,
-  0u,
-  1065353216u,
-  1116733440u,
-  0u,
-  0u,
-  0u,
-  429065506u,
-  7u,
-  43726164u,
-  0u,
-  0u,
-  7u,
-  43726220u,
-  32u,
-  0u,
-  0u,
-  0u,
-  0u,
-  429065506u,
-  7u,
-  43726296u,
-  0u,
-  0u,
-  6u,
-  43726352u,
-  32u,
-  0u,
-  0u,
-  0u,
-  0u,
-  429065506u,
-  1u,
-  43728312u,
-  0u,
-  0u,
-  3u,
-  43726424u,
-  32u,
-  0u,
-  0u,
-  0u,
-  0u,
-  429065506u,
-  2u,
-  43726476u,
-  0u,
-  0u,
-  1u,
-  43726492u,
-  32u,
-  0u,
-  0u,
-  0u,
-  0u,
-  429065506u,
-  4u,
-  43726532u,
-  0u,
-  0u,
-  3u,
-  43726564u,
-  56u,
-  0u,
-  0u,
-  0u,
-  0u,
-  429065506u,
-  4u,
-  43726620u,
-  0u,
-  0u,
-  5u,
-  43726652u,
-  56u,
-  0u,
-  0u,
-  0u,
-  0u,
-  429065506u,
-  2u,
-  39682256u,
-  0u,
-  0u,
-  3u,
-  43726740u,
-  96u,
-  0u,
-  0u,
-  0u,
-  0u,
-  429065506u,
-  3u,
-  43726984u,
-  0u,
-  0u,
-  6u,
-  43727008u,
-  40u,
-  0u,
-  0u,
-  0u,
-  0u,
-  429065506u,
-  3u,
-  43795624u,
-  0u,
-  0u,
-  5u,
-  43727100u,
-  80u,
-  0u,
-  0u,
-  0u,
-  0u,
-  429065506u,
-  6u,
-  43727224u,
-  0u,
-  0u,
-  7u,
-  43727272u,
-  184u,
-  0u,
-  0u,
-  0u,
-  0u,
-  429065506u,
-  5u,
-  43727460u,
-  0u,
-  0u,
-  3u,
-  43727500u,
-  40u,
-  0u,
-  0u,
-  0u,
-  0u,
-  429065506u,
-  2u,
-  43727548u,
-  0u,
-  0u,
-  1u,
-  43727564u,
-  32u,
-  0u,
-  0u,
-  0u,
-  0u,
-  429065506u,
-  5u,
-  43727612u,
-  0u,
-  0u,
-  3u,
-  43727652u,
-  112u,
-  0u,
-  0u,
-  0u,
-  0u,
-  429065506u,
-  2u,
-  43727708u,
-  0u,
-  0u,
-  1u,
-  43727724u,
-  64u,
-  0u,
-  0u
+	8u,
+	12u,
+	16u,
+	20u
 };
 
 struct Header
 {
-    char format[3] <hidden=true>;
-    ubyte magicNumber1 <hidden=true>;
-    Assert(magicNumber1 == 32);
-    
-    ubyte version <hidden=true>;
-    Assert(version == 2);
+	char format[3] <hidden=true>;
+	ubyte magicNumber1 <hidden=true>;
+	Assert(magicNumber1 == 32);
+	
+	ubyte version <hidden=true>;
+	Assert(version == 2);
 
-    ubyte magicNumber2 <hidden=true>;
-    Assert(magicNumber2 == 2);
+	ubyte magicNumber2 <hidden=true>;
+	Assert(magicNumber2 == 2);
 
-    ushort n3 <hidden=true>;
-    Assert(n3 == 0);
+	ushort n3 <hidden=true>;
+	Assert(n3 == 0);
 
-    ushort version2;
+	ushort version2;
 
-    ushort modelNodeCount;
-    ushort hashCount;
-    ushort textureCount;
+	ushort ModelNodeCount;
+	ushort StrCode32Count;
+	ushort PathCode64Count;
 
-    int section1Offset;
+	int section1Offset;
 
-    uint footerBytesBeforeHashes;
-    int textureHashesRelativeOffset; // Related to textureCount; relative offset from footer
-    uint footerOffset;
-          
-    int verticesRelativeOffset;    // Relative offset from footer
-    uint vertexBytes;               // Relative offset from footer
-    uint o6;
-    int materialHashesRelativeOffset;   // From footer; StrCode hashes used for meshes (examples: fox_2d_Basic_LyBL)
+	int StrCode32sRelativeOffset;
+	int PathCode64sRelativeOffset;
+
+	int BuffersSectionOffset;
+		  
+	int VerticesRelativeOffset;    // Relative offset from footer
+	int VertexAttributesRelativeOffset;               // Relative offset from footer
+	int IndicesRelativeOffset;
+	int StrCodesRelativeOffset;   // From footer; StrCode hashes used for meshes (examples: fox_2d_Basic_LyBL)
 } header <bgcolor=COLOR_HEADER>;
 
 struct UiModelData
 {
-    // The filename without extension.
-    ushort sceneNameHashIndex;
-    ushort u1 <hidden=true>;
-    Assert(u1 == 0);
-    ushort rootNodeOffset;
-    ushort u2 <hidden=true>;
-    Assert(u1 == 0);
+	// The filename without extension.
+	ushort sceneNameHashIndex;
+	ushort u1 <hidden=true>;
+	Assert(u1 == 0);
+	ushort rootNodeOffset;
+	ushort u2 <hidden=true>;
+	Assert(u1 == 0);
 } modelData <bgcolor=COLOR_UIMODELDATA>;
 
 struct UiModelDummy
@@ -258,254 +67,281 @@ struct UiModelDummy
 
 enum <ushort> NodeType
 {
-    Dummy = 0,
-    Null = 1,
-    Mesh = 2,
-    Text = 3,
-    Stencil = 4,
-    Unknown = 5,
-    Invalid = 6
+	Dummy = 0,
+	Null = 1,
+	Mesh = 2,
+	Text = 3,
+	Stencil = 4,
+	Unknown = 5,
+	Invalid = 6
 };
 
 struct UiModelNodeElement
 {
-    // Not fully unique; some files share them
-    short hashIndex;
-    NodeType type;
-    uint payloadOffset;
+	// Not fully unique; some files share them
+	short hashIndex;
+	NodeType type;
+	uint payloadOffset;
 
-    struct GenericPayload
-    {
-        short modelNodeNameHashIndex;
-        hfloat priority;
-        uint flags;
-        Vector4 scale;
-        Vector4 rotQuat;
-        Vector4 translate;
-        Vector4 color;
+	struct GenericPayload
+	{
+		short modelNodeNameHashIndex;
+		hfloat priority;
+		uint flags;
+		Vector4 scale;
+		Vector4 rotQuat;
+		Vector4 translate;
+		Vector4 color;
 
-        if (flags & 1)
-        {
-            short hashIndex1;              // Probably a name; no exe hits. Examples: "mb" (UI_mb_cmn_pop_cmn_body)
-            short colorHashIndex;          // Examples: "cmn-mb-txt-base"
-        }
+		if (flags & 1)
+		{
+			short hashIndex1;              // Probably a name; no exe hits. Examples: "mb" (UI_mb_cmn_pop_cmn_body)
+			short colorHashIndex;          // Examples: "cmn-mb-txt-base"
+		}
 
-        /*if (flags != 0)
-        {
-            Vector4 v1;
-            Vector4 v2;
-            Vector4 scale2;
-            ushort hashIndex2;          // Examples: "sys", "cmn", "mb"
-            ushort fontNameHashIndex;   // Examples: "cmn-mb-sys-M"
+		/*if (flags != 0)
+		{
+			Vector4 v1;
+			Vector4 v2;
+			Vector4 scale2;
+			ushort hashIndex2;          // Examples: "sys", "cmn", "mb"
+			ushort fontNameHashIndex;   // Examples: "cmn-mb-sys-M"
 
-            ubyte f3;
-            ubyte f3a;
-            short n4;
-            short o5;
-            short n6;
-        }*/
-    };
+			ubyte f3;
+			ubyte f3a;
+			short n4;
+			short o5;
+			short n6;
+		}*/
+	};
 
-    struct UiModelNull
-    {
-        GenericPayload base;
+	struct UiModelNull
+	{
+		GenericPayload base;
 
-        if (base.flags != 0)
-        {
-            Vector4 v1;
-            Vector4 v2;
-            Vector4 scale2;
-            ushort colorHashIndex2;         // Examples: "cmn-sys-txt-base", "hud", "cmn"
-            ushort fontNameHashIndex;       // Examples: "cmn-mb-sys-L", "cmn-hud-art-M"
-            
-            ubyte n3;
-            ubyte n4;
-        }
+		if (base.flags != 0)
+		{
+			Vector4 v1;
+			Vector4 v2;
+			Vector4 scale2;
+			ushort colorHashIndex2;         // Examples: "cmn-sys-txt-base", "hud", "cmn"
+			ushort fontNameHashIndex;       // Examples: "cmn-mb-sys-L", "cmn-hud-art-M"
+			
+			ubyte n3;
+			ubyte n4;
+		}
 
-        if (base.flags != 0)
-        {
-            ushort n5;
-            ushort n6;
-            ushort n7;
-        }
-    };
+		if (base.flags != 0)
+		{
+			ushort n5;
+			ushort n6;
+			ushort n7;
+		}
+	};
 
-    struct UiModelMesh
-    {
-        GenericPayload base;
-        short n01;
-        short n02;
-        short n03;              // Number of subEntries for relative offset sections
-        short n04;
-        int relativeOffset1;    // Offset from footer
-        int relativeOffset2;    // Offset from footer
-        int relativeOffset3;    // Offset from footer
+	struct UiModelMesh
+	{
+		GenericPayload base;
 
-        int relativeOffset4;
-        int relativeOffset5;
+		short n01;
+		short n02;
+		short n03;              // Number of subEntries for relative offset sections
+		short n04;
+		int IndicesRelativeOffset0;
+		int IndicesRelativeOffset1;
+		int IndicesRelativeOffset2;
+		int IndicesRelativeOffset3;
+		int IndicesRelativeOffset4;
 
-        short numSubEntries1;
-        short numSubEntries2;
-        int subEntry1Offset;
-        int subEntry2Offset;
+		short SubEntry0Count;
+		short SubEntry1Count;
+		int SubEntry0Offset;
+		int SubEntry1Offset;
 
-        short unknownHashIndex;
-        short materialNameHashIndex;
-        short numTextureParams;
-        short numMaterialParams;
-        int textureParamsOffset;
-        int materialParamsOffset;
-        int o1;
-        Assert(o1 == -1);   // See uif_UiModelMesh_sub_141DB94E0 if we need to actually handle this
-        
-        local long position = FTell();
+		short UnknownStrCode32Index;
+		short MaterialNameStrCodeIndex;
+		short TextureParamCount;
+		short MaterialParamCount;
+		int TextureParamsOffset;
+		int MaterialParamsOffset;
+		// J - Not sure if this is conected to the other index buffer offsets
+		int o1; // sai - See uif_UiModelMesh_sub_141DB94E0 if we need to actually handle this
+		
+		local long position = FTell();
 
-        FSeek(subEntry1Offset);
-        struct SubEntry1
-        {
-            short hashIndex;
-            ubyte uu1;
-            ubyte uu2;
-            int unknownRelativeOffset;    // From footer
-        } subEntries1[numSubEntries1];
+		if (SubEntry0Count != -1)
+		{
+			FSeek(SubEntry0Offset);
+			struct SubEntry0
+			{
+				short UnknownStrCode32Index;
+				ubyte uu1;
+				ubyte uu2;
+				int IndicesRelativeOffset;
+			} SubEntry0s[SubEntry0Count];
+		}
 
-        FSeek(subEntry2Offset);
-        struct SubEntry2
-        {
-            short hashIndex;
-            ubyte uu1;
-            ubyte uu2;
-            int unknownRelativeOffset;    // From footer
-            Vector4 v1;
-        } subEntries2[numSubEntries2];
+		if (SubEntry1Count != -1)
+		{
+			FSeek(SubEntry1Offset);
+			struct SubEntry1
+			{
+				short UnknownStrCode32Index;
+				ubyte uu1;
+				ubyte uu2;
+				int IndicesRelativeOffset;
+				Vector4 v1;
+			} SubEntry1s [SubEntry1Count];
+		}
 
-        FSeek(textureParamsOffset);
-        struct TextureParam
-        {
-            // Examples: Base_Texture, Mask_Texture, Screen_Texture
-            short textureTypeHashIndex;
-            // Index into the textures list
-            short textureHashIndex;
-        } textureParams[numTextureParams];
+		// if (TextureParamsOffset != -1)
+		// {
+		// 	FSeek(TextureParamsOffset);
+		// 	struct TextureParam
+		// 	{
+		// 		// Examples: Base_Texture, Mask_Texture, Screen_Texture
+		// 		short textureTypeHashIndex;
+		// 		// Index into the textures list
+		// 		short textureHashIndex;
+		// 	} textureParams[TextureParamCount];
+		// }
 
-        if (materialParamsOffset != -1)
-        {
-            FSeek(materialParamsOffset);
-            struct MaterialParam
-            {
-                short relativeOffsetArrayIndex;
-                // Examples: UCenter_BaseTex, VCenter_BaseTex, UShift_BaseTex
-                short materialParamNameHashIndex;
-                float x;
-                float y;
-                float z;
-                float w;
+		// if (MaterialParamsOffset != -1)
+		// {
+		// 	FSeek(MaterialParamsOffset);
+		// 	struct MaterialParam
+		// 	{
+		// 		ushort MaterialParamOffsetArrayIndex; Assert(MaterialParamOffsetArrayIndex >= 0 && MaterialParamOffsetArrayIndex < 4);
 
-                FSeek(materialParamsOffset + offsets[relativeOffsetArrayIndex]);
-            } materialParams[numMaterialParams];
-        }
-        FSeek(position);
-    };
+		// 		// Examples: UCenter_BaseTex, VCenter_BaseTex, UShift_BaseTex
+		// 		short MaterialParamNameStrCode32HashIndex;
 
-    struct UiModelText
-    {
-        GenericPayload base;
-    };
-    
-    struct UiModelStencil
-    {
-        short modelNodeNameHashIndex;
-        hfloat priority;
-        uint flags;
-        Vector4 scale;
-        Vector4 rotQuat;
-        Vector4 translate;
-        Vector4 color;
+		// 		float Values[MaterialParamOffsetArrayIndex + 1];
+		// 	} MaterialParams[MaterialParamCount];
+		// }
 
-        ushort hashIndex1;              // Probably a name; no exe hits
-        ushort colorHashIndex;          // Examples: "cmn-mb-txt-base"
+		FSeek(position);
+	};
 
-        ushort n3;
-        ushort n4;
-        uint o5;
-        uint o6;
-        uint o7;
-        uint o8;
-        uint o9;
+	struct UiModelText
+	{
+		GenericPayload base;
+	};
+	
+	struct UiModelStencil
+	{
+		short modelNodeNameHashIndex;
+		hfloat priority;
+		uint flags;
+		Vector4 scale;
+		Vector4 rotQuat;
+		Vector4 translate;
+		Vector4 color;
 
-        ushort n10;
-        ushort n11;
+		ushort hashIndex1;              // Probably a name; no exe hits
+		ushort colorHashIndex;          // Examples: "cmn-mb-txt-base"
 
-        uint u12;
-        uint o13;
-        ushort n14;
-        ushort n15;
-        uint o16;
-        uint textureTypeHashIndex;  // Examples: "Base_Texture"
-        ushort n18;
-        ubyte n19;
-        ubyte n20;
-        uint n21;
-        uint n22;
+		ushort n3;
+		ushort n4;
+		uint o5;
+		uint o6;
+		uint o7;
+		uint o8;
+		uint o9;
 
-        Vector4 v1;
-        Vector4 v2;
-        Vector4 v3;
-        Vector4 v4;
-        Vector4 v5;
-        Vector4 v6;
-        Vector4 v7;
-        Vector4 v8;
-    };
+		ushort n10;
+		ushort n11;
 
-    Assert(type != 5);
-    local long position = FTell();
+		uint u12;
+		uint o13;
+		ushort n14;
+		ushort n15;
+		uint o16;
+		uint textureTypeHashIndex;  // Examples: "Base_Texture"
+		ushort n18;
+		ubyte n19;
+		ubyte n20;
+		uint n21;
+		uint n22;
 
-    FSeek(payloadOffset);
-    if (type == 0)
-    {
-        UiModelDummy payload;
-    }
-    else if (type == 1)
-    {
-        UiModelNull payload;
-    }
-    else if (type == 2)
-    {
-        UiModelMesh payload;
-    }
-    else if (type == 3)
-    {
-        UiModelText payload;
-    }
-    else if (type == 4)
-    {
-        UiModelStencil payload;
-    }
-    FSeek(position);
-} modelNodes[header.modelNodeCount] <bgcolor=COLOR_SECTION_1, optimize=false>;
+		Vector4 v1;
+		Vector4 v2;
+		Vector4 v3;
+		Vector4 v4;
+		Vector4 v5;
+		Vector4 v6;
+		Vector4 v7;
+		Vector4 v8;
+	};
 
-FSeek(header.footerOffset + header.verticesRelativeOffset);
-Vector4 vertices[header.vertexBytes / 16] <bgcolor = 0xAB862E>;
+	Assert(type != 5);
+	local long position = FTell();
 
-FSeek(header.footerOffset + header.footerBytesBeforeHashes);
+	FSeek(payloadOffset);
+	if (type == 0)
+	{
+		UiModelDummy payload;
+	}
+	else if (type == 1)
+	{
+		UiModelNull payload;
+	}
+	else if (type == 2)
+	{
+		UiModelMesh payload;
+	}
+	else if (type == 3)
+	{
+		UiModelText payload;
+	}
+	else if (type == 4)
+	{
+		UiModelStencil payload;
+	}
+	FSeek(position);
+} modelNodes[header.ModelNodeCount] <read = EnumToString(this.type), bgcolor = COLOR_SECTION_1, optimize = false>;
+
+FSeek(header.BuffersSectionOffset);
+
+if (header.VerticesRelativeOffset != -1)
+{
+	Assert(FTell() == header.BuffersSectionOffset + header.VerticesRelativeOffset);
+	Vector4 Vertices[(header.VertexAttributesRelativeOffset - header.VerticesRelativeOffset) / sizeof(Vector4)] <bgcolor = 0xAB862E>;
+}
+
+if (header.VertexAttributesRelativeOffset != -1)
+{
+	Assert(FTell() == header.BuffersSectionOffset + header.VertexAttributesRelativeOffset);
+	Vector4 VertexAttributes[(header.IndicesRelativeOffset - header.VertexAttributesRelativeOffset) / sizeof(Vector4)] <bgcolor = COLOR_STRCODE32>;
+}
+
+if (header.IndicesRelativeOffset != -1)
+{
+	Assert(FTell() == header.BuffersSectionOffset + header.IndicesRelativeOffset);
+	ushort Indices[(header.StrCode32sRelativeOffset - header.IndicesRelativeOffset) / sizeof(ushort)] <bgcolor = 0xAB862E>;
+}
 
 /* The first hash is the filename without extension (e.g., for UI_sys_end_layout.uif,
 the first hash is UI_sys_end_layout. */
-uint strCode32Hashes [header.hashCount] <bgcolor=COLOR_STRCODE32, fgcolor=0xFFFFFF>;
 
-if (header.textureHashesRelativeOffset != -1)
+if (header.StrCode32sRelativeOffset != -1)
 {
-    FSeek(header.footerOffset + header.textureHashesRelativeOffset);
-    uint64 textureHashes[header.textureCount] <bgcolor=0x866A66, fgcolor=0xFFFFFF>;
+	//Assert(FTell() == header.BuffersSectionOffset + header.StrCode32sRelativeOffset);
+	FSeek(header.BuffersSectionOffset + header.StrCode32sRelativeOffset);
+	StrCode32 StrCode32s[header.StrCode32Count] <bgcolor=COLOR_STRCODE32, fgcolor=0xFFFFFF>;
 }
 
-/* Aligns the reader. */
-void FAlign(uint alignment)
+FAlign(8);
+
+if (header.StrCodesRelativeOffset != -1)
 {
-    local int64 alignmentRequired = FTell() % alignment;
-    if (alignmentRequired > 0)
-    {
-        FSkip(alignment - alignmentRequired);
-    }
+	Assert(FTell() == header.BuffersSectionOffset + header.StrCodesRelativeOffset);
+	while (FTell() < (header.BuffersSectionOffset + header.PathCode64sRelativeOffset) && ReadUInt64() != 0)
+		StrCode StrCodes <bgcolor=0x866A66, fgcolor=0xFFFFFF>;
+}
+
+if (header.PathCode64sRelativeOffset != -1)
+{
+	Assert(FTell() == header.BuffersSectionOffset + header.PathCode64sRelativeOffset);
+	PathCode64 PathCode64s[header.PathCode64Count] <bgcolor=COLOR_STRCODE32, fgcolor=0xFFFFFF>;
 }

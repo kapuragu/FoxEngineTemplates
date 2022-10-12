@@ -10,121 +10,149 @@ LittleEndian();
 #define COLOR_ENTRYMATERIALSECTION 0xB9E8DD
 #define COLOR_BOUNDINGBOXCHUNK 0xF7F205
 
-typedef struct 
-{
-    uint hash<format=hex>;
-} MtrCode32 <read=(hash)>;
-
 typedef struct
 {
 	local long SelfStartPos = FTell();
 
-	GeoCollisionShapeHeader Header(GEO_FILE_TYPE_GEOM_GEOMS_GSKL);
+	GeomHeader Header(GEO_FILE_TYPE_GEOM_GEOMS_GSKL);
 
 	switch (Header.Type)
 	{
-	case GEO_COLLISION_SHAPE_TYPE_BOUNDING_BOX:
-		{
-			SetBackColor(COLOR_BOUNDINGBOXCHUNK);
-			{
-				WideVector3 BoundingBoxRadii <bgcolor=0xDBC48F, comment="Width/2, Height/2, Depth/2">;
-				WideVector3 BoundingBoxCenter <bgcolor=0xDBC48F>;
-			}
-			SetBackColor(cNone);
-		}
+	case GEO_COLLISION_SHAPE_TYPE_AABB:
+		GeoPrimAabb Prim[Header.PrimCount] <optimize = true>;
 		break;
 	case GEO_COLLISION_SHAPE_TYPE_QUAD:
-	{
-		local uint i;
-	    for (i = 0; i < Header.EntryCount; i++)
-	    {
-			struct
-			{
-				short Offset0;
-				short Offset1;
-				short Offset2;
-				short Offset3;
-				short Unknown0; // Seemingly always negative.
-			} IndexSet <read=Str("%d, %d, %d, %d, %d", this.Offset0, this.Offset1, this.Offset2, this.Offset3, this.Unknown0)>;
-	    }
-		
-		if ((Header.VertexDataOffset & 0xfffffff) != 0)
-			{
-				FSeek(SelfStartPos + Header.VertexDataOffset * 16);
-
-				struct
-				{
-					uint VertexCount;
-					uint VerticesIndexOffset;
-
-					uint Unknown0Or1; Assert(Unknown0Or1 == 0 || Unknown0Or1 == 1);
-
-					uint OriginIndex;
-
-					int64 VertexDataOffset; // This gets patched at runtime to use a FMDL pointer.
-					
-					uint FmdlVertexDataOffset;
-
-					uint Padding0 <hidden = true>; Assert(Padding0 == 0);
-				} VertexDataHeader;
-
-				// mgsvtpp.exe!141bd7e9c
-				if ((Header.Flags & GEO_COLLISION_SHAPE_FLAGS_USE_FMDL_VERTEX_DATA) == 0)
-				{
-					WideVector3 VertexData[VertexDataHeader.VertexCount] <optimize = true>;
-
-					// origin = VertexData[VertexDataHeader.OriginIndex]
-					// A: VertexData[VertexDataHeader.VerticesIndexOffset + IndexSet.Offset0] + origin
-					// B: VertexData[VertexDataHeader.VerticesIndexOffset + IndexSet.Offset1] + origin
-					// C: VertexData[VertexDataHeader.VerticesIndexOffset + IndexSet.Offset2] + origin
-					// D: VertexData[VertexDataHeader.VerticesIndexOffset + IndexSet.Offset3] + origin
-				}
-				else if (VertexDataHeader.VertexDataOffset == 0 && false /* FMDL vertex pointer is null*/)
-				{
-					// A: WideVector3(0, -10000, 0, 0)
-					// B: WideVector3(0, -10000, 1, 0)
-					// C: WideVector3(1, -10000, 1, 0)
-					// D: WideVector3(1, -10000, 0, 0)
-				}
-				else
-				{
-					// VertexData points to the VertexDataHeader.FmdlVertexDataOffset-adjusted fmdl data.
-					// A: VertexData[IndexSet.Offset0]
-					// B: VertexData[IndexSet.Offset1]
-					// C: VertexData[IndexSet.Offset2]
-					// D: VertexData[IndexSet.Offset3]
-				}
-			}
-		}
+		GeoPrimQuad Prim[Header.PrimCount] <optimize = true>;
 		break;
 	default:
         Assert(false, "Unknown CollisonShape type detected!");
 	}
-} DataChunk <read=Str("%s, %d", EnumToString(this.Header.Type), this.Header.Flags)>;
 
-struct EntryDataChunkDefinition
+	// if ((Header.VertexBufferOffset & 0xfffffff) != 0)
+	// 	{
+	// 		FSeek(SelfStartPos + Header.VertexBufferOffset * 16);
+
+	// 		struct GeoVertexHeader
+	// 		{
+	// 			uint VertexCount;
+	// 			uint VerticesIndexOffset;
+
+	// 			uint Unknown0Or1; Assert(Unknown0Or1 == 0 || Unknown0Or1 == 1);
+
+	// 			uint OriginIndex;
+
+	// 			int64 VertexDataOffset; // This gets patched at runtime to use a FMDL pointer.
+				
+	// 			uint FmdlVertexBufferOffset;
+
+	// 			uint Padding0 <hidden = true>; Assert(Padding0 == 0);
+	// 		} VertexHeader; // Name taken from PES RTTI
+
+	// 		// mgsvtpp.exe!141bd7e9c
+	// 		if ((Header.Flags & GEO_COLLISION_SHAPE_FLAGS_USE_FMDL_VERTEX_DATA) == 0)
+	// 		{
+	// 			WideVector3 VertexData[VertexHeader.VertexCount] <optimize = true>;
+
+	// 			// origin = VertexData[VertexHeader.OriginIndex]
+	// 			// A: VertexData[VertexHeader.VerticesIndexOffset + IndexSet.Offset0] + origin
+	// 			// B: VertexData[VertexHeader.VerticesIndexOffset + IndexSet.Offset1] + origin
+	// 			// C: VertexData[VertexHeader.VerticesIndexOffset + IndexSet.Offset2] + origin
+	// 			// D: VertexData[VertexHeader.VerticesIndexOffset + IndexSet.Offset3] + origin
+	// 		}
+	// 		else if (VertexHeader.VertexDataOffset == 0 && false /* FMDL vertex pointer is null*/)
+	// 		{
+	// 			// A: WideVector3(0, -10000, 0, 0)
+	// 			// B: WideVector3(0, -10000, 1, 0)
+	// 			// C: WideVector3(1, -10000, 1, 0)
+	// 			// D: WideVector3(1, -10000, 0, 0)
+	// 		}
+	// 		else
+	// 		{
+	// 			// VertexData points to the VertexHeader.FmdlVertexBufferOffset-adjusted fmdl data.
+	// 			// A: VertexData[IndexSet.Offset0]
+	// 			// B: VertexData[IndexSet.Offset1]
+	// 			// C: VertexData[IndexSet.Offset2]
+	// 			// D: VertexData[IndexSet.Offset3]
+	// 		}
+	// 	}
+} GeoShape <read=Str("%s, %d", EnumToString(this.Header.Type), this.Header.Flags)>;
+
+struct GeoBlock  // Name taken from PES RTTI
 {
-	local uint SelfStartPos = FTell();
-
 	byte IsFinalEntry;
 
-	byte DataChunkCount;
-	ushort DataChunksTotalDataSize;
+	byte ShapesTotalSizeInEntries; // Includes the "null terminator" entry
+	ushort ShapeDataSize;
 	
-	ushort BoundingBoxOrSubverticesOffset0;
-	ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
+	short LastHeaderOffsetMaybe;
+	short Padding0; Assert(Padding0 == 0);
 	
-	ushort BoundingBoxOrSubverticesOffset1;
-	ushort Padding1 <hidden = true>; Assert(Padding1 == 0);
+	short FirstHeaderOffsetMaybe;
+	short Padding1; Assert(Padding1 == 0);
 	
-	uint VerticesOffset;
-	uint FirstDataChunkOffset;
+	uint VertexBufferOffset;
+
+	uint RootAABBHeaderOffset; // Confirmed via PES executable; always points to AABB GeoShape
+
 	uint NextSectionOffset;
 	
-	COLLISION_TAGS CollisionTags();
+	GEO_COL_A Tags;
+	
+	FSeek(SelfStartPos + RootAABBHeaderOffset);
+
+	// I'm going to have to stare at this for longer to understand what the heck is going on here.
+	struct
+	{
+		local uint64 ptrs[6];
+		ptrs[0] = SelfStartPos + RootAABBHeaderOffset;
+		local uint j = 1;
+		local uint j_minusOne;
+		local int iteratorIndex = 0;
+		local int iteratorIndex_minusOne;
+		local uint64 ptr;
+
+		do
+		{
+			ptr = ptrs[iteratorIndex];
+
+			j_minusOne = j - 1;
+			iteratorIndex_minusOne = iteratorIndex - 1;
+
+			FSeek(ptr + 4);
+			if (ReadUInt() != 0) // if (Data.Header.NextBBDataChunkOffset != 0)
+			{
+				ptrs[j - 1] = ptr + ReadUInt() * 16;
+
+				j_minusOne = j;
+				iteratorIndex_minusOne = iteratorIndex;
+			}
+		
+			j = j_minusOne;
+			iteratorIndex = iteratorIndex_minusOne;
+			FSeek(ptr);
+			if ((ReadUInt() & 0x200) == 0) // if (Data.Header.Info.Flags & GEO_COLLISION_SHAPE_FLAGS_NO_PAYLOAD == 0)
+			{
+				GeoShape Shape;
+
+				if (Shape.Header.ChildHeaderOffset != 0)
+				{
+					if (true)
+					{
+						j = j_minusOne + 1;
+						iteratorIndex = iteratorIndex_minusOne + 1;
+						ptrs[j_minusOne] = ptr + Shape.Header.ChildHeaderOffset * 16;
+					}
+				}
+			}
+		} while (j > 0);
+	} GeoShapes;
+	
+	FSeek(SelfStartPos + VertexBufferOffset);
+
+	GeoVertexHeader VertexHeader;
 };
 
-struct EntryDataSection
+struct GeoBlocks
 {
     local uint SelfStartPos;
     local uint i;
@@ -134,56 +162,7 @@ struct EntryDataSection
 	{
         SelfStartPos = FTell();
 
-		EntryDataChunkDefinition Entry;
-
-        FSeek(SelfStartPos + Entry.FirstDataChunkOffset);
-
-		// I'm going to have to stare at this for longer to understand what the heck is going on here.
-		struct
-		{
-			local uint64 ptrs[6];
-			ptrs[0] = SelfStartPos + Entry.FirstDataChunkOffset;
-			local uint j = 1;
-			local uint j_minusOne;
-			local int iteratorIndex = 0;
-			local int iteratorIndex_minusOne;
-			local uint64 ptr;
-
-			do
-			{
-				ptr = ptrs[iteratorIndex];
-
-				j_minusOne = j - 1;
-				iteratorIndex_minusOne = iteratorIndex - 1;
-
-				FSeek(ptr + 4);
-				if (ReadUInt() != 0) // if (Data.Header.NextBBDataChunkOffset != 0)
-				{
-					ptrs[j - 1] = ptr + ReadUInt() * 16;
-
-					j_minusOne = j;
-					iteratorIndex_minusOne = iteratorIndex;
-				}
-			
-				j = j_minusOne;
-				iteratorIndex = iteratorIndex_minusOne;
-				FSeek(ptr);
-				if ((ReadUInt() & 0x200) == 0) // if (Data.Header.Info.Flags & GEO_COLLISION_SHAPE_FLAGS_NO_PAYLOAD == 0)
-				{
-					DataChunk Data;
-
-					if (Data.Header.NextIndexDataChunkOffset != 0)
-					{
-						if (true)
-						{
-							j = j_minusOne + 1;
-							iteratorIndex = iteratorIndex_minusOne + 1;
-							ptrs[j_minusOne] = ptr + Data.Header.NextIndexDataChunkOffset * 16;
-						}
-					}
-				}
-			} while (j > 0);
-		} DataChunks;
+		GeoBlock Block;
 
         FSeek(SelfStartPos + 32);
 	};
@@ -192,164 +171,132 @@ struct EntryDataSection
     FSkip(32);
 };
 
-struct EntryMaterialsSection
+struct GeoMaterialHeader // Name taken from PES RTTI
 {
-	byte MagicByte <hidden=true>;
-    Assert(MagicByte == 0);
+	byte MaterialsOffsetInEntries; // Confirmed via PES
+	byte MaterialsTotalSizeInEntries; // Presumptive; includes "null terminator entry"
+	byte AuxMaterialsOffsetInEntries; // Confirmed via PES
+	byte AuxMaterialsTotalSizeInEntries; // Presumptive; includes "null terminator entry"
+};
+
+struct GeoMaterial
+{
+	GeoNameHash Name;
+
+	uint64 LikelyPtrPlaceholder; Assert(LikelyPtrPlaceholder == 0); // The PES .so has a concept of a MaterialDatabase. 
+																	// The hash likely gets resolved at runtime into a permanent pointer to the material and stored here
+};
+
+struct GeoMaterials
+{
+	GeoMaterialHeader Header; 
+
+	local int64 MaterialsStartPos = FTell();
+
+	FSeek(MaterialsStartPos + Header.MaterialsOffsetInEntries * 12 /*sizeof(GeoMaterial)*/);
 	
-	byte InfoTriplet[3] <comment="(Material Count+1, Material Count+1, 1).">;
-    Assert(InfoTriplet[0] == InfoTriplet[1]);
-    Assert(InfoTriplet[2] == 1);
-	
-    local uint i = 0;
-    for (i = 0; i < (InfoTriplet[0] - 1); i++)
+	while (ReadUInt() != 0)
     {
-		MtrCode32 MaterialNameHash;
-		FSkip(8);
+		GeoMaterial Material;
     }
+
+	FSkip(12 /*sizeof(GeoMaterial)*/);
+
+	FSeek(MaterialsStartPos + Header.AuxMaterialsOffsetInEntries * 12 /*sizeof(GeoMaterial)*/);
+	
+	while (ReadUInt() != 0)
+    {
+		GeoMaterial Material;
+    }
+
+	FSkip(12 /*sizeof(GeoMaterial)*/);
+
+	FAlign(16);
 };
 
-enum GEOM_ENTRY_TYPE
+struct GeoBoundingVolume
 {
-	GEOM_ENTRY_TYPE_0 = 0,
-	GEOM_ENTRY_TYPE_6 = 6,
-};
-
-struct EntryBVHSection
-{
-	local uint SelfStartPos = FTell();
-
-	Vector3 EntryBoundingBoxCorner; // Mysterious. mgsvtpp.exe!141b95c89
+	Vector3 BoundingBoxCorner; // Mysterious. mgsvtpp.exe!141b95c89
 
 	ushort GridTotalDataSize;
-	ushort DataChunkDefinitionsCount;
+	ushort GeoBlockCount;
 
-	Vector3 EntryBoundingBoxExtents;
+	Vector3 BoundingBoxExtents;
 
 	uint NextSectionOffset;
 
-	Vector3 Vector;
+	Vector3 GridSize;
 	
-	uint BlockCountX;
-	uint BlockCountY;
-	uint BlockCountZ;
+	uint CellCountX;
+	uint CellCountY;
+	uint CellCountZ;
 	
-	COLLISION_TAGS CollisionTags();
+	GEO_COL_A Tags;
 	
 	struct
 	{
-		short NodeOffsets[BlockCountX * BlockCountY * BlockCountZ] <hidden = true>;
+		short NodeOffsets[CellCountX * CellCountY * CellCountZ] <hidden = true>;
 
 		local uint i;
 		local uint j;
-		for (i = 0; i < BlockCountX * BlockCountY * BlockCountZ; i++)
+		for (i = 0; i < CellCountX * CellCountY * CellCountZ; i++)
 		{
 			if (NodeOffsets[i] != -1)
 			{
-				FSeek(SelfStartPos + NodeOffsets[i]);
+				FSeek(startof(parentof(this)) + NodeOffsets[i]);
 
 				struct
 				{
-					ushort EntryCount <hidden = true>;
-					for (j = 0; j < EntryCount; j++)
-						ushort DataChunkDefinitionIndex;
-				} Node;
+					ushort BlockCount <hidden = true>;
+					for (j = 0; j < BlockCount; j++)
+						ushort BlockIndex;
+				} Cell;
 			}
 			else
 			{
 				struct
 				{
-				} Node;
+				} Cell;
 			}
 		}
-	} Nodes;
+	} Cells;
 };
 
-struct EntrySecondaryHeaderSection
-{
-	local uint SelfStartPos = FTell();
+// mgsvtpp.exe!14cd19a40
 
-	StrCode32 UnusedHash0;
-	
-	uint Padding0<hidden=true>; Assert(Padding0 == 0);
-	
-	GEOM_ENTRY_TYPE Type;
-	Assert((SecondaryHeaderSection.Type == GEOM_ENTRY_TYPE_0) || (SecondaryHeaderSection.Type == GEOM_ENTRY_TYPE_6), "Unknown Entry section detected!");
-	
-    uint NextSectionOffset;
-	
-	uint RemainingEntryDataSize;
-	
-	uint64 Padding1<hidden=true>; //Assert(Padding1 == 0);
-	uint Padding2<hidden=true>; Assert(Padding2 == 0);
+FoxDataHeader Header; // mgsvtpp.exe!141bef7b2
 
-	uint UnusedOffset<hidden=true>; Assert(UnusedOffset == 0);
-};
+FSeek(Header.NodesOffset);
 
-struct EntryHeaderSection
-{
-	local uint SelfStartPos = FTell();
+FoxDataNodes Nodes;
 
-    StrCode32 UnusedHash0;
-	
-	uint Padding0<hidden=true>; Assert(Padding0 == 0);
-
-	uint UnknownFlag0x10Or0x40Or0xB; Assert(UnknownFlag0x10Or0x40Or0xB == 0x10 || UnknownFlag0x10Or0x40Or0xB == 0x40 || UnknownFlag0x10Or0x40Or0xB == 0xB); // mgsvtpp.exe!141bef7fa
-
-	uint64 Padding1<hidden=true>; //Assert(Padding1 == 0);
-	uint Padding2<hidden=true>; Assert(Padding2 == 0);
-	
-	uint NextSectionOffset; // Size of the header + padding
-	
-	int PreviousEntryOffset; // The value stored is positive, but it's for jumping backwards in list.
-	
-	uint NextEntryOffset; // Size of the entry + padding
-}; // mgsvtpp.exe!14cd19a40
-
-struct
-{
-	uint Version;
-	uint FirstEntryOffset;
-	uint FileSize;
-
-	uint u1 <hidden=true>; Assert(u1 == 7050094);
-
-	uint64 Padding0<hidden=true>; Assert(Padding0 == 0);
-
-	StrCode32 UnusedHash0;
-	StrCode32 UnusedHash1;
-} Header <bgcolor=COLOR_HEADER>; // mgsvtpp!141bef7b2
-
-local uint DefinitionStartPos = Header.FirstEntryOffset;
+local uint nodeIndex = 0; // As far as I can tell, 010 doesn't let us recursively define structs so the array is Node, Child, Node, Child instead of Node     , Node     etc.
+			      		  // 																														  - Child    - Child
+local uint childIndex = 0;
 do
 {
-	FSeek(DefinitionStartPos);
-
+	if (Nodes.Node[nodeIndex].ChildNodeOffset == 0)
+	{
+		nodeIndex++;
+		break;
+	}
+	
+	FSeek(startof(Nodes.Child[childIndex]) + Nodes.Child[childIndex].DataOffset);
+	
 	struct
 	{
-		local uint SelfStartPos = FTell();
-		
-		EntryHeaderSection HeaderSection;
-		
-		FSeek(HeaderSection.SelfStartPos + HeaderSection.NextSectionOffset);
-
-		EntrySecondaryHeaderSection SecondaryHeaderSection;
-
-		if (SecondaryHeaderSection.NextSectionOffset == 0)
-			break;
-		FSeek(SecondaryHeaderSection.SelfStartPos + SecondaryHeaderSection.NextSectionOffset);
-		
-		if (SecondaryHeaderSection.Type == GEOM_ENTRY_TYPE_0)
+		if (Nodes.Child[childIndex].Flags == 0)
 		{
-			EntryBVHSection BVHSection<bgcolor=COLOR_ENTRYBVHSECTION>;
+			GeoBoundingVolume BoundingVolume <bgcolor = COLOR_ENTRYBVHSECTION>;
 		
-			FSeek(BVHSection.SelfStartPos + BVHSection.NextSectionOffset);
+			FSeek(startof(BoundingVolume) + BoundingVolume.NextSectionOffset);
 		}
-		
-		EntryDataSection EntryData<bgcolor=COLOR_CHUNK11>;
-		
-		EntryMaterialsSection Materials<bgcolor=COLOR_ENTRYMATERIALSECTION>;
-	} CollisionDefinition <bgcolor=COLOR_ENTRY>;
 
-	DefinitionStartPos += CollisionDefinition.HeaderSection.NextEntryOffset;
-} while (CollisionDefinition.HeaderSection.NextEntryOffset != 0);
+		GeoBlocks Blocks <bgcolor = COLOR_CHUNK11>;
+		
+		GeoMaterials Materials <bgcolor = COLOR_ENTRYMATERIALSECTION>;
+	} GeoGroup; // The PES .so deals with a GeoGroup structure that has a grid and owns a list of GeoBlocks, but the layout is sort of different. It seems like it's a sort of proto-BVH section 
+	
+	nodeIndex++;
+	childIndex++;
+} while(exists(Nodes.Node[nodeIndex]));

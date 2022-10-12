@@ -1,5 +1,6 @@
 #include "../common/common.bt"
-#include "gr_common.bt"
+#include "../common/FoxDataCommon.bt"
+#include "sh_common.bt"
 
 typedef struct
 {
@@ -42,26 +43,29 @@ string ReadCoefficientSetString(uint time, int index)
     return index < 0 ? "" : ReadUInt24HTime(time);
 }
 
-GrHeader Header;
+FoxDataHeader Header;
+Assert(Header.Version == 3 || Header.Version == 4);
 
-FSeek(Header.MetadataEntriesOffset);
+FSeek(Header.NodesOffset);
 
-GrMetadataEntries MetadataEntries;
+FoxDataNodes Nodes;
 
-#define LightProbeSHCoefficientsMetadata MetadataEntries.Entry[0]
-#define NumDiv LightProbeSHCoefficientsMetadata.Param[GetGrMetadataEntryParamIndex(LightProbeSHCoefficientsMetadata, "numDiv")].Value
-#define NumLightProbes LightProbeSHCoefficientsMetadata.Param[GetGrMetadataEntryParamIndex(LightProbeSHCoefficientsMetadata, "numLightProbes")].Value
+#define LightProbeSHCoefficientsNode Nodes.Node[0]
+Assert(LightProbeSHCoefficientsNode.Flags == 1); Assert(LightProbeSHCoefficientsNode.ParentNodeOffset == 0); Assert(LightProbeSHCoefficientsNode.ChildNodeOffset == 0);
 
-// Only in GR_FILE_TYPE_LPSH_TRE2_HTRE
-#define FormatType LightProbeSHCoefficientsMetadata.Param[GetGrMetadataEntryParamIndex(LightProbeSHCoefficientsMetadata, "formatType")].Value
+#define NumDiv LightProbeSHCoefficientsNode.Parameter[GetFoxDataNodeParamIndex(LightProbeSHCoefficientsNode, "numDiv")].Value
+#define NumLightProbes LightProbeSHCoefficientsNode.Parameter[GetFoxDataNodeParamIndex(LightProbeSHCoefficientsNode, "numLightProbes")].Value
 
-FSeek(startof(LightProbeSHCoefficientsMetadata) + LightProbeSHCoefficientsMetadata.DataOffset);
+// Only in Version 4 files
+#define FormatType LightProbeSHCoefficientsNode.Parameter[GetFoxDataNodeParamIndex(LightProbeSHCoefficientsNode, "formatType")].Value
+
+FSeek(startof(LightProbeSHCoefficientsNode) + LightProbeSHCoefficientsNode.DataOffset);
 
 struct
 {
     uint Times[NumDiv] <hidden = true, optimize = true>;
 
-    AlignRead(16);
+    FAlign(16);
 
     struct
     {
@@ -72,6 +76,8 @@ struct
         uint enableWeatherSH : 1 <hidden = true>;
         uint enableRelatedLightSH : 1 <hidden = true>;
         uint enableOcclusionMode : 1 <hidden = true>; Assert(enableOcclusionMode == 0);
+
+        uint Padding : 28 <hidden = true>; Assert(Padding == 0);
         
         local uint NextStartPos = FTell();
             
