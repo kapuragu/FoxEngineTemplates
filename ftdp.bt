@@ -1,0 +1,117 @@
+LittleEndian();
+
+#include "common/common.bt"
+#include "geo/geo_common.bt"
+
+#define COLOR_HEADER 0xDFEFAA
+#define COLOR_SECONDARYHEADER 0x7DE39E
+#define COLOR_GEOBOUNDINGVOLUME2 0xAED2E8
+#define COLOR_EDGE 0xB9E8DD
+#define COLOR_NODE 0x8ADEF3
+#define COLOR_TERRAINDECAL 0x00AAFF
+#define COLOR_TERRAINDECALS 0xF7F205
+
+FoxDataHeader Header;
+
+FSeek(Header.NodesOffset);
+
+FoxDataNodes Nodes;
+
+FSeek(startof(Nodes.Node[0]) + Nodes.Node[0].DataOffset);
+
+struct GeoBoundingVolume2
+{
+    local uint SelfStartPos = FTell();
+    
+    WideVector3 BoundingBoxCorner;
+    WideVector3 BoundingBoxExtents;
+
+    float GridResolution;
+
+    uint BlockCountX;
+	uint Unknown;
+	uint BlockCountZ;
+
+	uint GridTotalDataSize;
+    
+    uint GridDataOffset;
+
+    uint RemainingEntryDataSize;
+
+    uint DataOffset;
+
+    FSeek(SelfStartPos + GridDataOffset);
+
+	struct
+	{
+		short NodeOffsets[BlockCountX * BlockCountZ] <hidden = true>;
+
+		local uint i;
+		local uint j;
+		for (i = 0; i < BlockCountX * BlockCountZ; i++)
+		{
+			if (NodeOffsets[i] != -1)
+			{
+				FSeek(SelfStartPos + NodeOffsets[i]);
+
+				struct
+				{
+					uint EntryCount <hidden = true>;
+					for (j = 0; j < EntryCount; j++)
+						uint DataOffset;
+				} Node;
+			}
+			else
+			{
+				struct
+				{
+				} Node;
+			}
+		}
+	} Nodes;
+} BoundingVolume <bgcolor = COLOR_GEOBOUNDINGVOLUME2>;
+
+FSeek(BoundingVolume.SelfStartPos + BoundingVolume.DataOffset);
+
+typedef struct
+{
+    uint MaterialIndex; // TerrainDecalPack.materialLinks[MaterialIndex]
+    uint VertexCount;
+    uint Unknown0;
+    float UnknownFloat0;
+
+    Vector4 UnknownVector40;
+
+    float UnknownFloat1;
+    uint Unknown1;
+    float UnknownFloat2;
+    uint Padding1 <hidden = true>; Assert(Padding1 == 0);
+
+    Vector2 BoundingCellMinMax_X;
+    Vector2 BoundingCellMinMax_Z;
+
+    Vector4 VertexData[VertexCount] <bgcolor=COLOR_NODE>;
+
+    struct
+    {
+        float BoundingCellExtremum;
+        int UnknownData[3];
+    } UnknownData[4];
+} TerrainDecal <bgcolor = COLOR_TERRAINDECAL>;
+
+struct
+{
+    local uint i;
+    uint EntryCount <hidden = true>;
+
+    uint FirstEntrySize <hidden = true>;
+
+    uint Offsets[EntryCount] <hidden = true>;
+
+    for (i = 0; i < EntryCount; i++)
+    {
+        FSeek(BoundingVolume.SelfStartPos + Offsets[i]);
+        
+        TerrainDecal Decal;
+    }
+} Decals <bgcolor = COLOR_TERRAINDECALS>;

@@ -1,0 +1,128 @@
+LittleEndian();
+
+#include "common/common.bt"
+#include "geo/geo_common.bt"
+
+#define COLOR_HEADER 0xDFEFAA
+#define COLOR_SECONDARYHEADER 0x7DE39E
+#define COLOR_GEOBOUNDINGVOLUME2 0xAED2E8
+#define COLOR_EDGE 0xB9E8DD
+#define COLOR_NODE 0x8ADEF3
+#define COLOR_GEOSHAPE 0x00AAFF
+#define COLOR_GEOSHAPES 0xF7F205
+
+FoxDataHeader Header;
+
+FSeek(Header.NodesOffset);
+
+FoxDataNodes Nodes;
+
+FSeek(startof(Nodes.Node[0]) + Nodes.Node[0].DataOffset);
+
+
+struct GeoBoundingVolume2
+{
+    local uint SelfStartPos = FTell();
+    
+    WideVector3 BoundingBoxCorner;
+    WideVector3 BoundingBoxExtents;
+
+    float GridResolution;
+
+    uint BlockCountX;
+	uint Unknown;
+	uint BlockCountZ;
+
+	uint GridTotalDataSize;
+    
+    uint GridDataOffset;
+
+    uint RemainingEntryDataSize;
+
+    uint DataOffset;
+
+    FSeek(SelfStartPos + GridDataOffset);
+
+	struct
+	{
+		short NodeOffsets[BlockCountX * BlockCountZ] <hidden = true>;
+
+		local uint i;
+		local uint j;
+		for (i = 0; i < BlockCountX * BlockCountZ; i++)
+		{
+			if (NodeOffsets[i] != -1)
+			{
+				FSeek(SelfStartPos + NodeOffsets[i]);
+
+				struct
+				{
+					uint EntryCount <hidden = true>;
+					for (j = 0; j < EntryCount; j++)
+						uint DataOffset;
+				} Node;
+			}
+			else
+			{
+				struct
+				{
+				} Node;
+			}
+		}
+	} Nodes;
+} BoundingVolume <bgcolor = COLOR_GEOBOUNDINGVOLUME2>;
+
+FSeek(BoundingVolume.SelfStartPos + BoundingVolume.DataOffset);
+
+typedef struct
+{
+    local uint SelfStartPos = FTell();
+
+    GeomHeader Header(GEO_FILE_TYPE_GPFP);
+
+    struct Edge
+    {
+        GEO_EDGE_TAGS Tags;
+        ushort InIndex;
+        ushort OutIndex;
+    } Edges [Header.PrimCount] <bgcolor=COLOR_EDGE>;
+    
+    FSeek(SelfStartPos + Header.VertexBufferOffset);
+
+    local uint highestNodeIndex = 0;
+    local uint i;
+    if (Header.PrimCount > 0)
+    {
+        // Manually get number of vertices
+        for (i = 0; i < Header.PrimCount; i++)
+        {
+            if (Edges[i].InIndex > highestNodeIndex)
+                highestNodeIndex = Edges[i].InIndex;
+            else if (Edges[i].OutIndex > highestNodeIndex)
+                highestNodeIndex = Edges[i].OutIndex;
+        }
+    
+        struct Node
+        {
+            Vector3 Position;
+            GEO_NODE_TAGS Tags;
+        } Nodes [highestNodeIndex + 1] <bgcolor=COLOR_NODE>;
+    }
+} GeoShape <bgcolor = COLOR_GEOSHAPE>;
+
+struct
+{
+    local uint i;
+    uint EntryCount <hidden = true>;
+
+    uint FirstEntrySize <hidden = true>;
+
+    uint Offsets[EntryCount] <hidden = true>;
+
+    for (i = 0; i < EntryCount; i++)
+    {
+        FSeek(BoundingVolume.SelfStartPos + Offsets[i]);
+        
+        GeoShape Shape;
+    }
+} Shapes <bgcolor = COLOR_GEOSHAPES>;
