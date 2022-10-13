@@ -173,7 +173,7 @@ struct GeoBoundingVolume
 	Vector3 BoundingBoxCorner; // Mysterious. mgsvtpp.exe!141b95c89
 
 	ushort GridTotalDataSize;
-	ushort GeoBlockCount;
+	ushort BlockCount;
 
 	Vector3 BoundingBoxExtents;
 
