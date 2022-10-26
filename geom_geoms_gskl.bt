@@ -168,6 +168,15 @@ struct GeoMaterial
 																	// The hash likely gets resolved at runtime into a permanent pointer to the material and stored here
 };
 
+typedef struct
+{
+	GeoNameHash NameHash <hidden = true>;
+
+	uint NameStringLength <hidden = true>;
+
+	char Name[NameStringLength];
+} GeoBone <read = (this.Name)>;
+
 struct GeoBoundingVolume
 {
 	Vector3 BoundingBoxCorner; // Mysterious. mgsvtpp.exe!141b95c89
@@ -229,68 +238,111 @@ local uint nodeIndex = 0; // As far as I can tell, 010 doesn't let us recursivel
 local uint childIndex = 0;
 do
 {
-	if (Nodes.Node[nodeIndex].ChildNodeOffset == 0)
-	{
-		nodeIndex++;
-		break;
-	}
-	
-	FSeek(startof(Nodes.Child[childIndex]) + Nodes.Child[childIndex].DataOffset);
-	
+	FSeek(startof(Nodes.Node[nodeIndex]) + Nodes.Node[nodeIndex].DataOffset);
+
 	struct GeoGroup
 	{
-		if (Nodes.Child[childIndex].Flags == 0)
+		if (Nodes.Node[nodeIndex].DataOffset != 0)
 		{
-			GeoBoundingVolume BoundingVolume <bgcolor = COLOR_ENTRYBVHSECTION>;
-		
-			FSeek(startof(BoundingVolume) + BoundingVolume.NextSectionOffset);
+			switch (Nodes.Node[nodeIndex].Flags)
+			{
+			case 0x10:
+				{
+					
+				}
+				break;
+			case 0x40:
+				{
+					
+				}
+				break;
+			case 0xB:
+				{
+					FSeek(startof(Nodes.Node[nodeIndex]) + Nodes.Node[nodeIndex].DataOffset);
+
+					GeoBone Bone;
+
+					FAlign(16);
+				}
+				break;
+			default:
+				Assert(false, "Invalid top-level FoxDataNode.");
+				break;
+			}
 		}
 
-		struct
+		if (Nodes.Node[nodeIndex].ChildNodeOffset == 0)
 		{
-			local int64 BlocksStartPos = FTell();
+			nodeIndex++;
+			break;
+		}
 
-			while(!ReadUByte())
-			{
-				BlocksStartPos = FTell();
-
-				GeoBlock Block;
-
-				FSeek(BlocksStartPos + 32);
-			};
-
-			// Skip last "dummy" data chunk definition
-			FSkip(32);
-		} Blocks <bgcolor = COLOR_CHUNK11>;
-		
-		struct
+		if (Nodes.Child[childIndex].DataOffset != 0)
 		{
-			GeoMaterialHeader Header; 
+			FSeek(startof(Nodes.Child[childIndex]) + Nodes.Child[childIndex].DataOffset);
 
-			local int64 MaterialsStartPos = FTell();
-
-			FSeek(MaterialsStartPos + Header.MaterialsOffsetInEntries * 12 /*sizeof(GeoMaterial)*/);
-			
-			while (ReadUInt() != 0)
+			switch (Nodes.Child[childIndex].Flags)
 			{
-				GeoMaterial Material;
+			case 0:
+				{
+                    GeoBoundingVolume BoundingVolume <bgcolor = COLOR_ENTRYBVHSECTION>;
+				
+					FSeek(startof(BoundingVolume) + BoundingVolume.NextSectionOffset);
+				}
+				break;
+			case 6:
+				break;
+			default:
+				Assert(false, "Invalid child FoxDataNode.");
+				break;
 			}
-
-			FSkip(12 /*sizeof(GeoMaterial)*/);
-
-			FSeek(MaterialsStartPos + Header.AuxMaterialsOffsetInEntries * 12 /*sizeof(GeoMaterial)*/);
-			
-			while (ReadUInt() != 0)
+				
+			struct 
 			{
-				GeoMaterial Material;
-			}
+				local int64 BlocksStartPos = FTell();
 
-			FSkip(12 /*sizeof(GeoMaterial)*/);
+				while(!ReadUByte())
+				{
+					BlocksStartPos = FTell();
 
-			FAlign(16);
-		} Materials <bgcolor = COLOR_ENTRYMATERIALSECTION>;
+					GeoBlock Block;
+
+					FSeek(BlocksStartPos + 32);
+				};
+
+				// Skip last "dummy" data chunk definition
+				FSkip(32);
+			} Blocks <bgcolor = COLOR_CHUNK11>;
+
+			struct
+			{
+				GeoMaterialHeader Header; 
+
+				local int64 MaterialsStartPos = FTell();
+
+				FSeek(MaterialsStartPos + Header.MaterialsOffsetInEntries * 12 /*sizeof(GeoMaterial)*/);
+				
+				while (ReadUInt() != 0)
+				{
+					GeoMaterial Material;
+				}
+
+				FSkip(12 /*sizeof(GeoMaterial)*/);
+
+				FSeek(MaterialsStartPos + Header.AuxMaterialsOffsetInEntries * 12 /*sizeof(GeoMaterial)*/);
+				
+				while (ReadUInt() != 0)
+				{
+					GeoMaterial Material;
+				}
+
+				FSkip(12 /*sizeof(GeoMaterial)*/);
+
+				FAlign(16);
+			} Materials <bgcolor = COLOR_ENTRYMATERIALSECTION>;
+		}
 	} Groups; // The PES .so deals with a GeoGroup structure that has a grid and owns a list of GeoBlocks, but the layout is sort of different. It seems like it's a sort of proto-BVH section 
-	
+
 	nodeIndex++;
 	childIndex++;
 } while(exists(Nodes.Node[nodeIndex]));
