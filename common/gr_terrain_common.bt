@@ -1,5 +1,5 @@
-#ifndef TERRAIN_COMMON_BT
-#define TERRAIN_COMMON_BT
+#ifndef GR_TERRAIN_COMMON_BT
+#define GR_TERRAIN_COMMON_BT
 
 typedef struct
 {

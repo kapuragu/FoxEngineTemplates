@@ -1,5 +1,5 @@
-#ifndef SH_COMMON_BT
-#define SH_COMMON_BT
+#ifndef GR_SH_COMMON_BT
+#define GR_SH_COMMON_BT
 
 string ReadUInt24HTime(uint time)
 {

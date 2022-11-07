@@ -1,7 +1,7 @@
 LittleEndian();
 
 #include "common/common.bt"
-#include "geo/geo_common.bt"
+#include "common/geo_common.bt"
 
 #define COLOR_HEADER 0xDFEFAA
 #define COLOR_ENTRY 0x7DE39E
@@ -307,7 +307,7 @@ typedef struct
 #define FOX_DATA_HASH_TYPE GeoNameHash
 #define FOX_DATA_PAYLOAD GeoPayload
 
-#include "common/FoxDataCommon.bt"
+#include "common/FoxData_common.bt"
 
 FoxDataHeader Header; // mgsvtpp.exe!141bef7b2
 

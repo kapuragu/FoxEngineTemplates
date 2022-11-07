@@ -1,7 +1,7 @@
 LittleEndian();
 
 #include "common/common.bt"
-#include "geo/geo_common.bt"
+#include "common/geo_common.bt"
 
 typedef struct
 {
@@ -38,7 +38,7 @@ typedef struct
 #define FOX_DATA_NO_USE_PARAMS
 #define FOX_DATA_PAYLOAD TRAP
 
-#include "common/FoxDataCommon.bt"
+#include "common/FoxData_common.bt"
 
 FoxDataHeader Header;
 

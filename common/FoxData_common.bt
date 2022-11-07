@@ -1,5 +1,5 @@
-#ifndef FOXDATACOMMON_BT
-#define FOXDATACOMMON_BT
+#ifndef FOXDATA_COMMON_BT
+#define FOXDATA_COMMON_BT
 
 #include "common/common.bt"
 
@@ -22,9 +22,11 @@ typedef struct
 } FoxDataString <read = ReadFoxDataString>;
 string ReadFoxDataString(FoxDataString& str)
 {
-#ifdef FOX_DATA_HASH_ENUM
-	return (EnumToString(str.Hash) == "" ? Str("%u", (uint)str.Hash) : EnumToString(str.Hash));
-#else
+#ifdef FOX_DATA_RESOLVE_HASH_FUNC
+	local string resolvedName = FOX_DATA_RESOLVE_HASH_FUNC(str.Hash);
+	if (resolvedName != "")
+		return resolvedName;
+#endif
 	if (str.StringOffset == 0)
 		if (str.Hash.hash == 3205930904 || str.Hash.hash == 0) // Empty string hash
 			return "null";
@@ -34,7 +36,6 @@ string ReadFoxDataString(FoxDataString& str)
 		return ReadString(str.StringOffset);
 	else
 		return ReadString(startof(str) + str.StringOffset);
-#endif
 }
 
 typedef struct

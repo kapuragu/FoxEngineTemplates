@@ -1,5 +1,5 @@
 #include "common/common.bt"
-#include "gr/sh_common.bt"
+#include "common/gr_sh_common.bt"
 
 typedef struct
 {
@@ -128,7 +128,7 @@ string ReadProbeMetadata(uint nameStringOffset, uint enable24hSH, uint enableWea
 
 #define FOX_DATA_PAYLOAD LightProbeSHCoefficients
 
-#include "common/FoxDataCommon.bt"
+#include "common/FoxData_common.bt"
 
 FoxDataHeader Header;
 Assert(Header.Version == 3 || Header.Version == 4);

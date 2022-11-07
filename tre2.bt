@@ -1,5 +1,5 @@
 #include "common/common.bt"
-#include "gr/terrain_common.bt"
+#include "common/gr_terrain_common.bt"
 
 typedef struct
 {
@@ -85,7 +85,7 @@ typedef struct
 
 #define FOX_DATA_PAYLOAD TRE2
 
-#include "common/FoxDataCommon.bt"
+#include "common/FoxData_common.bt"
 
 FoxDataHeader Header;
 Assert(Header.Version == 4);

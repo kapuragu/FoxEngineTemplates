@@ -1,5 +1,5 @@
 #include "common/common.bt"
-#include "gr/sh_common.bt"
+#include "common/gr_sh_common.bt"
 
 typedef struct(int selfIndex)
 {
@@ -60,7 +60,7 @@ typedef struct
 
 #define FOX_DATA_PAYLOAD AtmosphereSHCoefficients
 
-#include "common/FoxDataCommon.bt"
+#include "common/FoxData_common.bt"
 
 FoxDataHeader Header;
 Assert(Header.Version == 1);

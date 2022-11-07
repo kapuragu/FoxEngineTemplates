@@ -1,7 +1,7 @@
 LittleEndian();
 
 #include "common/common.bt"
-#include "anim/anim_common.bt"
+#include "common/anim_common.bt"
 
 // Found hashes: UI 3105039150 (UI_sys_end_lyric_setout)
 // UShift_ScreenTex 801765990 (UI_trp_end_lyt_p1_lp_s)
@@ -18,12 +18,23 @@ enum <uint> NodeNameHash
 	SHADER          = 2250865118,
 };
 
-#define FOX_DATA_HASH_ENUM
-#define FOX_DATA_HASH_TYPE NodeNameHash
+string ResolveHashFunc(StrCode32& hash)
+{
+	switch (hash.hash)
+	{
+	case 3933341002: return "ROOT";
+	case 3105039150: return "UI";
+	case 2250865118: return "SHADER";
+
+	default: return "";
+	}
+}
+
+#define FOX_DATA_HASH_RESOLVE_FUNC ResolveHashFunc
 
 #define FOX_DATA_PAYLOAD AnimTracks
 
-#include "common/FoxDataCommon.bt"
+#include "common/FoxData_common.bt"
 
 FoxDataHeader Header;
 

@@ -8,52 +8,57 @@
 LittleEndian();
 //Joey's FoxDataNodes and etc:
 #include "common/common.bt"
-#include "anim/anim_common.bt"
+#include "common/anim_common.bt"
 
-typedef enum <uint>
+string ResolveHashFunc(StrCode32& hash)
 {
-	ROOT            = 3933341002,
-	DEMO            = 3254096966,
-	CAMERA          = 2620425302,
-	MOVE            = 3150281601,
-	CameraParam     = 2862912361,
-	SI_Frame        = 1885607306, // Technically, the hash is "SI Frame" with a space instead of an underscore. 
-	SKEL	        = 1889896775,
-	MESH_EVENT      = 2454300086,
-	MOTION	        = 143688520,
-	MODEL           = 2215748180,
-	SKELINFO        = 3736262940,
-	MTPINFO         = 917055795,
-	MTEV            = 2846912397,
-	MTP             = 494270195,
-	SHADER          = 2250865118,
-	MTP_LIST        = 3937479969,
-	MTP_PARENT_LIST = 4042487769,
-	LOCATOR         = 3187573380,
-	GLOBALSRT       = 2036377104,
-	Unknown         = 2053459263,
+	switch (hash.hash)
+	{
+	case 3933341002: return "ROOT";
+	case 3254096966: return "DEMO";
+	case 2620425302: return "CAMERA";
+	case 3150281601: return "MOVE";
+	case 2862912361: return "CameraParam";
+	case 1885607306: return "SI Frame";
+	case 1889896775: return "SKEL";
+	case 2454300086: return "MESH_EVENT";
+	case 143688520: return "MOTION";
+	case 2215748180: return "MODEL";
+	case 3736262940: return "SKELINFO";
+	case 917055795: return "MTPINFO";
+	case 2846912397: return "MTEV";
+	case 494270195: return "MTP";
+	case 2250865118: return "SHADER";
+	case 3937479969: return "MTP_LIST";
+	case 4042487769: return "MTP_PARENT_LIST";
+	case 3187573380: return "LOCATOR";
+	case 2036377104: return "GLOBALSRT";
+	case 2053459263: return "Unknown";
 
 	// Parameter names
-	TARGET_NAME     = 2570203771,
-	SLOPE_DIR       = 3426329078,
-	SLOPE_ANGLE     = 35201703,
-} NodeNameHash <read = (EnumToString(this) == "" ? (uint)this : EnumToString(this))>;
+	case 2570203771: return "TARGET_NAME";
+	case 3426329078: return "SLOPE_DIR";
+	case 35201703: return "SLOPE_ANGLE";
+
+	default: return "";
+	}
+}
 
 struct FoxDataString;
-struct SandPayload
+struct SAND
 {
-	switch (parentof(this).Name.Hash)
+	switch (ResolveHashFunc(parentof(this).Name.Hash))
 	{
-	case MOVE:
-	case CameraParam:
-	case SI_Frame:
-	case SKEL:
-	case Unknown:
-	case MTP:
+	case "MOVE":
+	case "CameraParam":
+	case "SI Frame":
+	case "SKEL":
+	case "Unknown":
+	case "MTP":
 		AnimTracks Tracks;
 		break;
-	case MTP_LIST:
-	case MTP_PARENT_LIST:
+	case "MTP_LIST":
+	case "MTP_PARENT_LIST":
 		struct ObjectMTPList
 		{
 			uint EntryCount <hidden = true>;
@@ -64,14 +69,14 @@ struct SandPayload
 			}
 		} List <bgcolor = 0xF38ADE>;
 		break;
-    case MOTION:
+    case "MOTION":
         AnimTracks Tracks;
         break;
 	default:
 		{
 			if (parentof(this).ParentNodeOffset != 0)
 			{
-				if (ReadUInt(startof(parentof(this)) + parentof(this).ParentNodeOffset) == SHADER)
+				if (ReadUInt(startof(parentof(this)) + parentof(this).ParentNodeOffset) == 2250865118 /*SHADER*/)
 				{
 					AnimTracks Tracks;
 				}
@@ -81,12 +86,11 @@ struct SandPayload
 };
 
 #define FOX_DATA_FLAG_IS_HAS_PAYLOAD
-#define FOX_DATA_HASH_ENUM
-#define FOX_DATA_HASH_TYPE NodeNameHash
+#define FOX_DATA_RESOLVE_HASH_FUNC ResolveHashFunc
 
-#define FOX_DATA_PAYLOAD SandPayload
+#define FOX_DATA_PAYLOAD SAND
 
-#include "common/FoxDataCommon.bt"
+#include "common/FoxData_common.bt"
 
 local int passedSoundChunk = 0; // Probably a better way to tell that it's the first SND chunk
 

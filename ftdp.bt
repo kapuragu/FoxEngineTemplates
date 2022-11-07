@@ -112,7 +112,7 @@ typedef struct
 
 #define FOX_DATA_PAYLOAD FTDP
 
-#include "common/FoxDataCommon.bt"
+#include "common/FoxData_common.bt"
 
 FoxDataHeader Header;
 
