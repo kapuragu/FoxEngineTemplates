@@ -181,12 +181,7 @@ while (FTell()!=FileSize())
 						
 						float paramFloat[paramFloatCount] <optimize=false>;
 							
-						struct ParamString
-						{
-							uint paramHash <comment="Sometimes uses fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s">;
-							int unknown;
-							
-						} paramString[paramStringCount] <optimize=false>;
+						uint64 paramString[paramStringCount] <comment="Sometimes uses fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s", optimize=false>;
 						
 					} event[eventOffsets.eventCount] <optimize=false, bgcolor=0xF0F080>;
 					
