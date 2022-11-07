@@ -1,7 +1,6 @@
 LittleEndian();
 
 #include "common/common.bt"
-#include "geo/geo_common.bt"
 
 #define COLOR_HEADER 0xDFEFAA
 #define COLOR_SECONDARYHEADER 0x7DE39E
@@ -11,105 +10,112 @@ LittleEndian();
 #define COLOR_TERRAINDECAL 0x00AAFF
 #define COLOR_TERRAINDECALS 0xF7F205
 
+typedef struct
+{
+	Assert(parentof(this).Flags == 0xC);
+
+	struct GeoBoundingVolume2
+	{
+		local uint SelfStartPos = FTell();
+		
+		WideVector3 BoundingBoxCorner;
+		WideVector3 BoundingBoxExtents;
+
+		float GridResolution;
+
+		uint BlockCountX;
+		uint Unknown;
+		uint BlockCountZ;
+
+		uint GridTotalDataSize;
+		
+		uint GridDataOffset;
+
+		uint RemainingEntryDataSize;
+
+		uint DataOffset;
+
+		FSeek(SelfStartPos + GridDataOffset);
+
+		struct
+		{
+			short NodeOffsets[BlockCountX * BlockCountZ] <hidden = true>;
+
+			local uint i;
+			local uint j;
+			for (i = 0; i < BlockCountX * BlockCountZ; i++)
+			{
+				if (NodeOffsets[i] != -1)
+				{
+					FSeek(SelfStartPos + NodeOffsets[i]);
+
+					struct
+					{
+						uint EntryCount <hidden = true>;
+						for (j = 0; j < EntryCount; j++)
+							uint DataOffset;
+					} Node;
+				}
+				else
+				{
+					struct
+					{
+					} Node;
+				}
+			}
+		} Nodes;
+	} BoundingVolume <bgcolor = COLOR_GEOBOUNDINGVOLUME2>;
+
+	FSeek(startof(BoundingVolume) + BoundingVolume.DataOffset);
+
+	struct
+	{
+		uint DecalCount <hidden = true>;
+
+		uint FirstDecalSize <hidden = true>;
+
+		uint DecalOffsets[DecalCount] <hidden = true>;
+
+		local uint i;
+		for (i = 0; i < DecalCount; i++)
+		{
+			FSeek(startof(BoundingVolume) + DecalOffsets[i]);
+			
+			struct TerrainDecal
+			{
+				uint MaterialIndex; // TerrainDecalPack.materialLinks[MaterialIndex]
+				uint VertexCount;
+				uint Unknown0;
+				float UnknownFloat0;
+
+				Vector4 UnknownVector40;
+
+				float UnknownFloat1;
+				uint Unknown1;
+				float UnknownFloat2;
+				uint Padding1 <hidden = true>; Assert(Padding1 == 0);
+
+				Vector2 BoundingCellMinMax_X;
+				Vector2 BoundingCellMinMax_Z;
+
+				Vector4 VertexData[VertexCount] <bgcolor=COLOR_NODE>;
+
+				struct
+				{
+					float BoundingCellExtremum;
+					int UnknownData[3];
+				} UnknownData[4];
+			} Decal <bgcolor = COLOR_TERRAINDECAL>;
+		}
+	} Decals <bgcolor = COLOR_TERRAINDECALS>;
+} FTDP;
+
+#define FOX_DATA_PAYLOAD FTDP
+
+#include "common/FoxDataCommon.bt"
+
 FoxDataHeader Header;
 
 FSeek(Header.NodesOffset);
 
 FoxDataNodes Nodes;
-
-FSeek(startof(Nodes.Node[0]) + Nodes.Node[0].DataOffset);
-
-struct GeoBoundingVolume2
-{
-	local uint SelfStartPos = FTell();
-	
-	WideVector3 BoundingBoxCorner;
-	WideVector3 BoundingBoxExtents;
-
-	float GridResolution;
-
-	uint BlockCountX;
-	uint Unknown;
-	uint BlockCountZ;
-
-	uint GridTotalDataSize;
-	
-	uint GridDataOffset;
-
-	uint RemainingEntryDataSize;
-
-	uint DataOffset;
-
-	FSeek(SelfStartPos + GridDataOffset);
-
-	struct
-	{
-		short NodeOffsets[BlockCountX * BlockCountZ] <hidden = true>;
-
-		local uint i;
-		local uint j;
-		for (i = 0; i < BlockCountX * BlockCountZ; i++)
-		{
-			if (NodeOffsets[i] != -1)
-			{
-				FSeek(SelfStartPos + NodeOffsets[i]);
-
-				struct
-				{
-					uint EntryCount <hidden = true>;
-					for (j = 0; j < EntryCount; j++)
-						uint DataOffset;
-				} Node;
-			}
-			else
-			{
-				struct
-				{
-				} Node;
-			}
-		}
-	} Nodes;
-} BoundingVolume <bgcolor = COLOR_GEOBOUNDINGVOLUME2>;
-
-FSeek(startof(BoundingVolume) + BoundingVolume.DataOffset);
-
-struct
-{
-	uint DecalCount <hidden = true>;
-
-	uint FirstDecalSize <hidden = true>;
-
-	uint DecalOffsets[DecalCount] <hidden = true>;
-
-	local uint i;
-	for (i = 0; i < DecalCount; i++)
-	{
-		FSeek(startof(BoundingVolume) + DecalOffsets[i]);
-		
-		struct TerrainDecal
-		{
-			uint MaterialIndex; // TerrainDecalPack.materialLinks[MaterialIndex]
-			uint VertexCount;
-			uint Unknown0;
-			float UnknownFloat0;
-
-			Vector4 UnknownVector40;
-
-			float UnknownFloat1;
-			uint Unknown1;
-			float UnknownFloat2;
-			uint Padding1 <hidden = true>; Assert(Padding1 == 0);
-
-			Vector2 BoundingCellMinMax_X;
-			Vector2 BoundingCellMinMax_Z;
-
-			Vector4 VertexData[VertexCount] <bgcolor=COLOR_NODE>;
-
-			struct
-			{
-				float BoundingCellExtremum;
-				int UnknownData[3];
-			} UnknownData[4];
-		} Decal <bgcolor = COLOR_TERRAINDECAL>;
-	}
-} Decals <bgcolor = COLOR_TERRAINDECALS>;

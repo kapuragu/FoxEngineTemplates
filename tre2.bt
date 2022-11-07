@@ -1,6 +1,91 @@
 #include "common/common.bt"
-#include "common/FoxDataCommon.bt"
 #include "gr/terrain_common.bt"
+
+typedef struct
+{
+	Assert(parentof(this).Flags == 0); Assert(parentof(this).ParentNodeOffset == 0); Assert(parentof(this).ChildNodeOffset == 0);
+
+	local string name = ReadFoxDataString(parentof(this).Name);
+	local uint dataSize = parentof(this).DataSize;
+
+	// The size/sizeof(type)s are hacks. The actual file uses the LayoutDescription struct.
+	switch (name)
+	{
+	case "param":
+		struct
+		{
+			LodParam data[dataSize / sizeof(LodParam)];
+		} Param <bgcolor=0x00aaff>;
+		break;
+	case "maxHeight":
+		struct
+		{
+			float data[dataSize / sizeof(float)];
+		} MaxHeight <bgcolor=0xff00aa>;
+		break;
+	case "minHeight":
+		struct
+		{
+			float data[dataSize / sizeof(float)];
+		} MinHeight <bgcolor=0xaaff00>;
+		break;
+	case "heightMap":
+		struct
+		{
+			float data[dataSize / sizeof(float)];
+		} HeightMap <bgcolor=0x99aacc>;
+		break;
+	case "comboTexture":
+		struct
+		{
+			Pixel data[dataSize / sizeof(Pixel)];
+		} ComboTexture <bgcolor=0x111199>;
+		break;
+	case "materialIds":
+		struct
+		{
+			Pixel data[dataSize / sizeof(Pixel)];
+		} MaterialIds <bgcolor=0x991111>;
+		break;
+	case "configrationIds":
+		struct
+		{
+			uint data[dataSize / sizeof(uint)];
+		} ConfigrationIds <bgcolor=0x119911>;
+		break;
+	case "layoutDescription":
+		struct
+		{
+			uint64 Unknown0;
+			uint64 Unknown1;
+
+			uint WidthWS;
+			uint HeightWS;
+			uint SubEntryOffset;
+			float MaxHeightWS;
+			float MinHeightWS;
+
+			float GridDistance;
+			ushort Unknown2;
+			ushort Unknown3;
+			uint Unknown4;
+
+			FSeek(startof(this) + 0x18 + SubEntryOffset);
+
+			DescriptionSubEntry SubEntry;
+
+			uint Unknown5;
+			uint Unknown6;
+		} LayoutDescription <bgcolor=0x999900>;
+		break;
+	default:
+		Assert(false, "Unknown node");
+	}
+} TRE2;
+
+#define FOX_DATA_PAYLOAD TRE2
+
+#include "common/FoxDataCommon.bt"
 
 FoxDataHeader Header;
 Assert(Header.Version == 4);
@@ -8,94 +93,3 @@ Assert(Header.Version == 4);
 FSeek(Header.NodesOffset);
 
 FoxDataNodes Nodes;
-
-#define ParamNode Nodes.Node[GetFoxDataNodeIndex(Nodes, "param")]
-Assert(ParamNode.Flags == 0); Assert(ParamNode.ParentNodeOffset == 0); Assert(ParamNode.ChildNodeOffset == 0);
-
-#define HeightMapNode Nodes.Node[GetFoxDataNodeIndex(Nodes, "heightMap")]
-Assert(HeightMapNode.Flags == 0); Assert(HeightMapNode.ParentNodeOffset == 0); Assert(HeightMapNode.ChildNodeOffset == 0);
-
-#define ComboTextureNode Nodes.Node[GetFoxDataNodeIndex(Nodes, "comboTexture")]
-Assert(ComboTextureNode.Flags == 0); Assert(ComboTextureNode.ParentNodeOffset == 0); Assert(ComboTextureNode.ChildNodeOffset == 0);
-
-#define MaxHeightNode Nodes.Node[GetFoxDataNodeIndex(Nodes, "maxHeight")]
-Assert(MaxHeightNode.Flags == 0); Assert(MaxHeightNode.ParentNodeOffset == 0); Assert(MaxHeightNode.ChildNodeOffset == 0);
-
-#define MinHeightNode Nodes.Node[GetFoxDataNodeIndex(Nodes, "minHeight")]
-Assert(MinHeightNode.Flags == 0); Assert(MinHeightNode.ParentNodeOffset == 0); Assert(MinHeightNode.ChildNodeOffset == 0);
-
-#define MaterialIdsNode Nodes.Node[GetFoxDataNodeIndex(Nodes, "materialIds")]
-Assert(MaterialIdsNode.Flags == 0); Assert(MaterialIdsNode.ParentNodeOffset == 0); Assert(MaterialIdsNode.ChildNodeOffset == 0);
-
-#define ConfigrationIdsNode Nodes.Node[GetFoxDataNodeIndex(Nodes, "configrationIds")]
-Assert(ConfigrationIdsNode.Flags == 0); Assert(ConfigrationIdsNode.ParentNodeOffset == 0); Assert(ConfigrationIdsNode.ChildNodeOffset == 0);
-
-#define LayoutDescriptionNode Nodes.Node[GetFoxDataNodeIndex(Nodes, "layoutDescription")]
-Assert(LayoutDescriptionNode.Flags == 0); Assert(LayoutDescriptionNode.ParentNodeOffset == 0); Assert(LayoutDescriptionNode.ChildNodeOffset == 0);
-
-FSeek(startof(LayoutDescriptionNode) + LayoutDescriptionNode.DataOffset);
-struct
-{
-    uint64 Unknown0;
-    uint64 Unknown1;
-
-    uint WidthWS;
-    uint HeightWS;
-    uint SubEntryOffset;
-    float MaxHeightWS;
-    float MinHeightWS;
-
-    float GridDistance;
-    ushort Unknown2;
-    ushort Unknown3;
-    uint Unknown4;
-
-    FSeek(startof(this) + 0x18 + SubEntryOffset);
-
-    DescriptionSubEntry SubEntry;
-
-    uint Unknown5;
-    uint Unknown6;
-} LayoutDescription <bgcolor=0x999900>;
-
-FSeek(startof(ParamNode) + ParamNode.DataOffset);
-struct
-{
-    LodParam data[ParamNode.DataSize / sizeof(LodParam)];
-} Param <bgcolor=0x00aaff>;
-
-FSeek(startof(MaxHeightNode) + MaxHeightNode.DataOffset);
-struct
-{
-    float data[MaxHeightNode.DataSize / sizeof(float)];
-} MaxHeight <bgcolor=0xff00aa>;
-
-FSeek(startof(MinHeightNode) + MinHeightNode.DataOffset);
-struct
-{
-    float data[MinHeightNode.DataSize / sizeof(float)];
-} MinHeight <bgcolor=0xaaff00>;
-
-FSeek(startof(HeightMapNode) + HeightMapNode.DataOffset);
-struct
-{
-    float data[HeightMapNode.DataSize / sizeof(float)];
-} HeightMap <bgcolor=0x99aacc>;
-
-FSeek(startof(ComboTextureNode) + ComboTextureNode.DataOffset);
-struct
-{
-    Pixel data[ComboTextureNode.DataSize / sizeof(Pixel)];
-} ComboTexture <bgcolor=0x111199>;
-
-FSeek(startof(MaterialIdsNode) + MaterialIdsNode.DataOffset);
-struct
-{
-    Pixel data[MaterialIdsNode.DataSize / sizeof(Pixel)];
-} MaterialIds <bgcolor=0x991111>;
-
-FSeek(startof(ConfigrationIdsNode) + ConfigrationIdsNode.DataOffset);
-struct
-{
-    uint data[ConfigrationIdsNode.DataSize / sizeof(uint)];
-} ConfigrationIds <bgcolor=0x119911>;

@@ -1,5 +1,4 @@
 #include "common/common.bt"
-#include "common/FoxDataCommon.bt"
 #include "gr/sh_common.bt"
 
 typedef struct(int selfIndex)
@@ -7,19 +6,19 @@ typedef struct(int selfIndex)
     local int SelfIndex = selfIndex;
     
                         // Band   Basis
-    VectorH3 c00; //  0       0
+    VectorShH3 c00; //  0       0
 
-    VectorH3 c10; //  1      -1
-    VectorH3 c11; //  1       0 
-    VectorH3 c12; //  1       1
+    VectorShH3 c10; //  1      -1
+    VectorShH3 c11; //  1       0 
+    VectorShH3 c12; //  1       1
 
-    VectorH3 c20; //  2      -2
-    VectorH3 c21; //  2      -1
-    VectorH3 c22; //  2       0
-    VectorH3 c23; //  2       1
-    VectorH3 c24; //  2       2
+    VectorShH3 c20; //  2      -2
+    VectorShH3 c21; //  2      -1
+    VectorShH3 c22; //  2       0
+    VectorShH3 c23; //  2       1
+    VectorShH3 c24; //  2       2
 
-    VectorH3 SunColor;
+    VectorShH3 SunColor;
 
     // a0 = sqrt(1/(4pi))   = 0.282095
     // a1 = sqrt(3/(4pi))   = 0.488603
@@ -37,39 +36,38 @@ string ReadCoefficientSetString(uint time, int index)
     return index < 0 ? "" : ReadUInt24HTime(time);
 }
 
+typedef struct
+{
+    local uint numDiv = parentof(this).Parameter[GetFoxDataNodeParamIndex(parentof(this), "numDiv")].Value;
+    local uint numWeathers = parentof(this).Parameter[GetFoxDataNodeParamIndex(parentof(this), "numWeathers")].Value;
+
+    uint Times[numDiv] <hidden = true, optimize = true>;
+
+    FAlign(16);
+
+    local int i = 0;
+    for (i = 0; i < numWeathers; i++)
+    {
+        struct
+        {
+            local uint k;
+
+            for (k = 0; k < numDiv; k++)
+                CoefficientSet Times(k);
+        } Weathers;
+    }
+} AtmosphereSHCoefficients <bgcolor = 0x00aaff>;
+
+#define FOX_DATA_PAYLOAD AtmosphereSHCoefficients
+
+#include "common/FoxDataCommon.bt"
+
 FoxDataHeader Header;
 Assert(Header.Version == 1);
 
 FSeek(Header.NodesOffset);
 
 FoxDataNodes Nodes;
-
-#define AtmosphereSHCoefficientsNode Nodes.Node[0]
-Assert(AtmosphereSHCoefficientsNode.Flags == 1); Assert(AtmosphereSHCoefficientsNode.ParentNodeOffset == 0); Assert(AtmosphereSHCoefficientsNode.ChildNodeOffset == 0);
-
-#define NumDiv AtmosphereSHCoefficientsNode.Parameter[GetFoxDataNodeParamIndex(AtmosphereSHCoefficientsNode, "numDiv")].Value
-#define NumWeathers AtmosphereSHCoefficientsNode.Parameter[GetFoxDataNodeParamIndex(AtmosphereSHCoefficientsNode, "numWeathers")].Value
-
-FSeek(startof(AtmosphereSHCoefficientsNode) + AtmosphereSHCoefficientsNode.DataOffset);
-
-struct
-{
-    uint Times[NumDiv] <hidden = true, optimize = true>;
-
-    FAlign(16);
-
-    local int i = 0;
-    for (i = 0; i < NumWeathers; i++)
-    {
-        struct
-        {
-            local uint k;
-
-            for (k = 0; k < NumDiv; k++)
-                CoefficientSet Times(k);
-        } Weathers;
-    }
-} AtmosphereSHCoefficients <bgcolor = 0x00aaff>;
 
 FAlign(16);
 

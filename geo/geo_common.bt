@@ -8,9 +8,6 @@ typedef struct
     uint hash <format = hex>;
 } GeoNameHash <read = (hash)>;
 
-#define FOX_DATA_HASH_TYPE GeoNameHash
-#include "common/FoxDataCommon.bt"
-
 #define COLOR_BG_TAGS 0xFF00FF
 #define COLOR_FG_TAGS 0x00FF00
 
@@ -167,7 +164,11 @@ typedef struct
     uint64 GEO_COL_A_UNKNOWN0 : 1; // NO_BEHIND proceeds HEIGHT_LIMIT in MGS4; possibly that?
     uint64 GEO_COL_A_UNKNOWN1 : 1; // BEHIND_THROUGH proceeds NO_BEHIND in MGS4; possibly that?
 
-	uint64 Padding0 : 14 <hidden=true>; Assert(Padding0 == 0, "Extra GEO_COL_A set. Is this SSD?"); //ssdm_brdg001_brdg001.geom
+	uint64 Padding0 : 6 <hidden = true>; Assert(Padding0 == 0, "Extra GEO_COL_A set. Is this SSD?"); //ssdm_brdg001_brdg001.geom
+
+    uint64 GEO_COL_A_UNKNOWN2 : 1; //
+
+	uint64 Padding1 : 7 <hidden = true>; Assert(Padding1 == 0, "Extra GEO_COL_A set. Is this SSD?"); //ssdm_brdg001_brdg001.geom
 
 	uint64 GEO_COL_A_MISSILE2 : 1;
 	uint64 GEO_COL_A_RIDE_ON_OUTER : 1;

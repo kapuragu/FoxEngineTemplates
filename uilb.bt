@@ -1,163 +1,229 @@
 LittleEndian();
 
-// At the bottom are a list of .uifs, .uias,
-// and .uilbs after a list of hashes.
+#include "common/common.bt"
 
-struct Header
+struct UiLayoutBinaryHeader
 {
-    char signature[4] <hidden=true>;
-    ushort magicNumber <hidden=true>;
-    Assert(magicNumber == 257);
+    char Signature[4] <hidden=true>;
+    uint Version <hidden=true>; Assert(Version == 0x101);
 
-    ushort u3 <hidden=true>;
-    Assert(u3 == 0);
+    ushort ModelDataCount;
+    ushort AnimDataCount; // sai - (Max: 32)
+    ushort CameraDataCount;
+    ushort LayoutDataCount;
 
-    ushort modelDataEntryCount;
-    ushort animDataEntryCount;    // (Max: 32)
-    ushort section3EntryCount;
-    Assert(section3EntryCount < 2);
+    ushort StrCode32Count;
+    ushort PathCode64Count;
 
-    ushort layoutDataEntryCount;
+    int ModelDataOffset;
+    int AnimDataOffset;
+    int CameraDataOffset;
+    int LayoutDataOffset;
 
-    ushort strCode32HashCount;
-    ushort fileHashCount;
+    int StrCode32sRelativeOffset;
+    int PathCode64sRelativeOffset;
+    int BuffersSectionOffset;
+} Header <bgcolor=0xECE0F3>;
 
-    int uiModelDataOffset;
-    int uiAnimDataOffset;
-    int section3Offset;
-    int uiLayoutDataOffset;
-    int strCode32HashesRelativeOffset;  // Relative to hashesOffset
-    int fileHashesRelativeOffset;       // Relative to hashesOffset
-    int hashesOffset;
-} header <bgcolor=0xECE0F3>;
-
-struct Vector4
+enum <byte> UiCameraDataFov
 {
-    float x;
-    float y;
-    float z;
-    float w;
+    UI_CAMERA_DATA_FOV_DIAGONAL = 0,
+    UI_CAMERA_DATA_FOV_HORIZONTAL = 1,
+    UI_CAMERA_DATA_FOV_VERTICAL = 2,
 };
 
-if (header.section3Offset > 0)
+typedef enum <uint>
 {
-    FSeek(header.section3Offset);
-    struct Section3
-    {
-        short nameHashIndex;
-        byte b1;
-        byte b2;
+    UI_INHERITANCE_SETTING_SCALE = 1,
+    UI_INHERITANCE_SETTING_ROTATION = 2,
+    UI_INHERITANCE_SETTING_TRANSLATION = 4,
+    UI_INHERITANCE_SETTING_COLOR_RGB = 8,
+    UI_INHERITANCE_SETTING_COLOR_ALPHA = 16,
+} UiInheritanceSetting <read = ReadUiInheritanceSetting>;
+string ReadUiInheritanceSetting(UiInheritanceSetting flags)
+{
+	local string result = flags == 0 ? "" : "| ";
+	local uint i;
+	local string enumName;
+	local UiInheritanceSetting temp;
+	for (i = 1; i < 32; i = i << 1)
+	{
+		temp = flags & i;
+		enumName = EnumToString(temp);
+		if (enumName != "")
+			result += " " + enumName + " |";
+	}
 
-        Assert(b1 == 0 && b2 == 0);
-        
-        float f1;
-        float f2;
-        float f3;
-        float angleDeg;
-        Vector4 v1;
-        Vector4 rotQuat;
-    } section3Entries[header.section3EntryCount] <bgcolor=0xE19CCA>;
+	return result;
 }
 
-if (header.uiAnimDataOffset > 0)
+typedef enum <uint>
 {
-    FSeek(header.uiAnimDataOffset);
-    struct UiAnimDataSection
-    {
-        // The name is the StrCode32 hash of the first filename.
-        short nameHashIndex;
-        short fileHashIndex;
-        short fileHashIndex2;
+    UI_MODEL_DATA_FLAG_DISP_ON = 1,
+    UI_MODEL_DATA_FLAG_ZTEST = 2,
+    UI_MODEL_DATA_FLAG_GAME_CAMERA = 4,
+    UI_MODEL_DATA_FLAG_BILLBOARD = 8,
+    UI_MODEL_DATA_FLAG_STENCIL_MODEL = 16,
+    UI_MODEL_DATA_FLAG_STENCIL_OUT = 32,
+    UI_MODEL_DATA_FLAG_DRAW_STENCIL_OFF = 64,
+    UI_MODEL_DATA_FLAG_TEXTURE_NOWAIT = 128,
+} UiModelDataFlag <read = ReadUiModelDataFlag>;
+string ReadUiModelDataFlag(UiModelDataFlag flags)
+{
+	local string result = flags == 0 ? "" : "| ";
+	local uint i;
+	local string enumName;
+	local UiModelDataFlag temp;
+	for (i = 1; i < 32; i = i << 1)
+	{
+		temp = flags & i;
+		enumName = EnumToString(temp);
+		if (enumName != "")
+			result += " " + enumName + " |";
+	}
 
-        short u1;
-        short u2;
-        short u3;
-        short u4;
-        short u5;
-
-        Assert(u2 == -1 && u3 == -1 && u4 == -1 && u5 == -1);
-
-        float speed;
-    } animDataEntries[header.animDataEntryCount] <bgcolor=0xFCBEF2>;
+	return result;
 }
 
-if (header.uiModelDataOffset > 0)
+if (Header.ModelDataCount > 0)
 {
-    FSeek(header.uiModelDataOffset);
-    struct UiModelDataSection
+    FSeek(Header.ModelDataOffset);
+
+    struct UiModelData
     {
         // The name is just the StrCode32 hash of the filename.
-        short nameHashIndex;
-        short fileHashIndex;
-        short flags;
-        short u3;
-        short u4;
-        short u5;
+        short NameStrCode32Index;
+        short ModelFilePathCode64Index;
 
-        Vector4 v1;
-        Vector4 v2;
-        Vector4 v3;
-        Vector4 v4;
+        UiModelDataFlag Flags;
 
-        short u6a;
-        short u6b;
-        short u6c;
-        short u6d;
-        short unknownHashIndex;             // Examples: UI_mb_base_mgt_layout
-        short unknownHashIndex2;
+        int Priority;
 
-        int flags2;
-        short subEntryRelativeOffset;       // Offset from hashesOffset
-        short u8;
-        short numSubEntryHashIndices;
-        short u9;
+        WideVector3 Scale;
+        Quaternion RotationQuaternion;
+        Vector4 Translate;
+        Vector4 Color;
+        
+        float BillboardMin;
+        float BillboardMax;
 
-        if (subEntryRelativeOffset > -1)
+        short ConnectModelDataStrCode32Index;
+        short ConnectModelNodeStrCode32Index;
+
+        UiInheritanceSetting InheritanceSetting;
+        int AnimDataNameStrCode32IndicesRelativeOffset <hidden = true>;       // Offset from BuffersSectionOffset
+        short AnimDataNameCount <hidden = true>;
+        
+        byte UseLayoutCamera;
+        byte Padding <hidden = true>; Assert(Padding == 0);
+
+        if (AnimDataNameCount > 0)
         {
             local long position = FTell();
-            FSeek(header.hashesOffset + subEntryRelativeOffset);
-            short subEntryHashIndices[numSubEntryHashIndices];
+
+            FSeek(Header.BuffersSectionOffset + AnimDataNameStrCode32IndicesRelativeOffset);
+
+            short AnimDataNameStrCode32Indices[AnimDataNameCount] <bgcolor = 0xCEB7ED>;
+
             FSeek(position);
         }
-    } modelDataEntries[header.modelDataEntryCount] <bgcolor=0xE6D5EA>;
+    } ModelData[Header.ModelDataCount] <optimize = false, bgcolor = 0xE6D5EA>;
 }
 
-if (header.uiLayoutDataOffset > 0)
+if (Header.AnimDataCount > 0)
 {
-    FSeek(header.uiLayoutDataOffset);
-    struct LayoutDataSection
+    FSeek(Header.AnimDataOffset);
+
+    struct UiAnimData
     {
-        short nameHashIndex;
-        short fileHashIndex;
-        ubyte u1;
-        ubyte u2;
-        ubyte u3;
-        ubyte u4;
+        // The name is just the StrCode32 hash of the filename.
+        short NameStrCode32Index;
 
-        Vector4 v1;
-        Vector4 v2;
-        Vector4 v3;
-        Vector4 v4;
+        short AnimFile_UI_PathCode64Index;
+        short AnimFile_SHADER_PathCode64Index;
 
-        short unknownHashIndex;
-        short unknownHashIndex2;
-        ubyte b1;
-        ubyte b2;
-        short u9;
-    } layoutDataEntries[header.layoutDataEntryCount] <bgcolor=0x745F68>;
+        ushort NodeCount <hidden = true>;
+        int SrcNodeNameStrCode32IndicesRelativeOffset <hidden = true>;
+        int DestNodeNameStrCode32IndicesRelativeOffset <hidden = true>;
+
+        if (NodeCount > 0)
+        {
+            local long position = FTell();
+
+            FSeek(Header.BuffersSectionOffset + SrcNodeNameStrCode32IndicesRelativeOffset);
+
+            short SrcNodeNameStrCode32Indices[NodeCount];
+
+            FSeek(Header.BuffersSectionOffset + DestNodeNameStrCode32IndicesRelativeOffset);
+
+            short DestNodeNameStrCode32Indices[NodeCount];
+
+            FSeek(position);
+        }
+
+        float Speed;
+    } AnimData[Header.AnimDataCount] <optimize = false, bgcolor = 0xFCBEF2>;
 }
 
-FSeek(header.hashesOffset + header.strCode32HashesRelativeOffset);
-uint strCode32Hashes[header.strCode32HashCount] <bgcolor=0x75A2FA>;
+if (Header.CameraDataCount > 0)
+{
+    FSeek(Header.CameraDataOffset);
+
+    struct UiCameraData
+    {
+        short NameStrCode32Index;
+
+        byte UseOrtho;
+
+        UiCameraDataFov FoVType;
+        
+        float OrthoHeight;
+        float NearClip;
+        float FarClip;
+        float FoV;
+
+        Vector4 Translate;
+        Quaternion RotationQuaternion;
+    } CameraData[Header.CameraDataCount] <bgcolor = 0xE19CCA>;
+}
+
+if (Header.LayoutDataCount > 0)
+{
+    FSeek(Header.LayoutDataOffset);
+
+    struct UiLayoutData
+    {
+        // The name is just the StrCode32 hash of the filename.
+        short NameStrCode32Index;
+        short LayoutFilePathCode64Index;
+
+        int Priority;
+
+        WideVector3 Scale;
+        Quaternion RotationQuaterion;
+        Vector4 Translate;
+        Vector4 Color;
+
+        short ConnectModelDataStrCode32Index;
+        short ConnectModelNodeStrCode32Index;
+
+        ubyte Visible;
+        ubyte UseParentCamera;
+
+        short FontTableIndex;
+    } LayoutData[Header.LayoutDataCount] <optimize = true, bgcolor = 0x745F68>;
+}
+
+if (Header.StrCode32sRelativeOffset != -1)
+{
+	FSeek(Header.BuffersSectionOffset + Header.StrCode32sRelativeOffset);
+	StrCode32 StrCode32s[Header.StrCode32Count] <bgcolor=0x75A2FA, fgcolor=0xFFFFFF>;
+}
 
 FAlign(8);
-uint64 fileHashes[header.fileHashCount] <bgcolor=0x856ACE>;
 
-void FAlign(uint alignment)
+if (Header.PathCode64sRelativeOffset != -1)
 {
-    local int64 alignmentRequired = FTell() % alignment;
-    if (alignmentRequired > 0)
-    {
-        FSkip(alignment - alignmentRequired);
-    }
+	Assert(FTell() == Header.BuffersSectionOffset + Header.PathCode64sRelativeOffset);
+	PathCode64 PathCode64s[Header.PathCode64Count] <bgcolor=0x856ACE, fgcolor=0xFFFFFF>;
 }

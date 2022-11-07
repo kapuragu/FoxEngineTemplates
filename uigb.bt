@@ -1,5 +1,7 @@
 LittleEndian();
 
+#include "common/common.bt"
+
 /* Color defines. */
 #define COLOR1 0xA7D6E4
 #define COLOR2 0x4CB4E9
@@ -89,22 +91,22 @@ struct Header
 
     ubyte section6EntryCount;
 
-    ushort fileReferenceCount;
-    uint strCode32HashCount;
+    ushort PathCode64Count;
+    uint StrCode32Count;
 
     int nodeTableOffset;
     int layoutTableOffset;
     int section4Offset;
-    uint o2;                    // Relates to fileReferenceCount and section6Offset
+    int o2;                    // Relates to fileReferenceCount and section6Offset
     int section6Offset;         // Only used in GZ? (Nope, it's used in SubtitlesSideshow.uigb)
 //    Assert(section6Offset == -1);
 
-    int uilbHashesOffset;       // Offset from section5Offset
-    uint hashTableOffset;       // Offset from section5Offset 
-    int o4;                     // Offset from section5Offset; more hashes (uifs?)
+    int PathCode64sRelativeOffset;       // Offset from BuffersSectionOffset
+    uint StrCode32sRelativeOffset;       // Offset from BuffersSectionOffset 
+    int o4;                     // Offset from BuffersSectionOffset; more hashes (uifs?)
     Assert(o4 == -1);
 
-    uint section5Offset;
+    int BuffersSectionOffset;
 } header <bgcolor=COLOR1>;
 
 enum <ubyte> UiActionNodeKind
@@ -155,26 +157,26 @@ struct UiPageNode
 
 struct UiEdgeData
 {
-    ushort inputNodeNameHashIndex <comment=GetHashComment>;
+    ushort inputNodeNameHashIndex <comment=GetStrCode32Comment>;
 
     // Values found: "func", "start"
-    ushort propertyNameHashIndex1 <comment=GetHashComment>;
+    ushort propertyNameHashIndex1 <comment=GetStrCode32Comment>;
 
     // Values found: "event", "param", "end"
     // Only used when linking a UiActionNode to UiEventNode?
-    ushort propertyNameHashIndex2 <comment=GetHashComment>;
+    ushort propertyNameHashIndex2 <comment=GetStrCode32Comment>;
     ushort n3;
 };
 
 struct UiOutputEdgeData
 {    
-    ushort nodeNameHash <comment=GetHashComment>;
+    ushort nodeNameHash <comment=GetStrCode32Comment>;
 
     // Example: "start", "stop"
-    ushort hashIdx1 <comment=GetHashComment>;
+    ushort hashIdx1 <comment=GetStrCode32Comment>;
 
     // Examples: "event"
-    ushort hashIdx2 <comment=GetHashComment>;
+    ushort hashIdx2 <comment=GetStrCode32Comment>;
 
     // Never read?
     ushort nodeName2Hash;
@@ -186,7 +188,7 @@ struct LayoutLink
     ushort hashIndex2;
 };
 
-struct FileReference
+typedef struct
 {
     // This is the hashed name of a .uilb (e.g., UI_demo_provisional 2238145568)
     // Might also be a .uia
@@ -201,13 +203,13 @@ struct FileReference
     // Number of hashes
     ubyte hashCount;
 
-    // This is an offset from section5Offset
+    // This is an offset from BuffersSectionOffset
     ushort hashIndicesOffset;
 
     // Never read?
     ushort u4;
     Assert(u4 == 0);
-};
+} FileReference <optimize = true>;
 
 /* UiPhaseNodes receive input from UiPageNodes. */
 struct UiPhaseNode
@@ -243,7 +245,7 @@ struct UiEventNode
     ubyte layoutLinkCount;
 
     currentPosition = FTell();
-    FSeek(header.section5Offset + layoutLinksRead);
+    FSeek(header.BuffersSectionOffset + layoutLinksRead);
     LayoutLink layoutLinks[layoutLinkCount];
     layoutLinksRead += layoutLinkCount;
     FSeek(currentPosition);
@@ -257,7 +259,7 @@ struct UiEventNode
     uint paramsOffset;
 
     currentPosition = FTell();
-    FSeek(header.section5Offset + paramsOffset);
+    FSeek(header.BuffersSectionOffset + paramsOffset);
     ubyte params[paramBytes];
     FSeek(currentPosition);
 
@@ -292,7 +294,7 @@ struct UiActionNode
     ubyte layoutLinkCount;
 
     currentPosition = FTell();
-    FSeek(header.section5Offset + layoutLinksRead * sizeof(LayoutLink));
+    FSeek(header.BuffersSectionOffset + layoutLinksRead * sizeof(LayoutLink));
     LayoutLink layoutLinks[layoutLinkCount];
     layoutLinksRead += layoutLinkCount;
     FSeek(currentPosition);
@@ -320,7 +322,7 @@ struct UiActionNode
     // TODO2: This is always an 8 byte value
     if (paramOffset != INVALID_OFFSET)
     {
-        FSeek(header.section5Offset + paramOffset);
+        FSeek(header.BuffersSectionOffset + paramOffset);
         ubyte params[paramBytes];
     }
 
@@ -355,7 +357,7 @@ struct UiOperationNode
     ubyte layoutLinkCount;
 
     currentPosition = FTell();
-    FSeek(header.section5Offset + layoutLinksRead);
+    FSeek(header.BuffersSectionOffset + layoutLinksRead);
     LayoutLink layoutLinks[layoutLinkCount];
     layoutLinksRead += layoutLinkCount;
     FSeek(currentPosition);
@@ -369,7 +371,7 @@ struct UiOperationNode
     uint paramsOffset;
 
     currentPosition = FTell();
-    FSeek(header.section5Offset + paramsOffset);
+    FSeek(header.BuffersSectionOffset + paramsOffset);
     ubyte params[paramBytes];
     FSeek(currentPosition);
 
@@ -401,12 +403,12 @@ enum <ubyte> UiNodeType
 struct UiNodeData
 {
     ushort nodeTypeHashIndex <comment=GetNodeTypeComment, fgcolor=0xFFFFFF>;
-    ushort nodeNameHashIndex <comment=GetHashComment>;
+    ushort nodeNameHashIndex <comment=GetStrCode32Comment>;
 
     ubyte nodeSzeInBytes;
     UiNodeType type;
 
-    local uint nodeTypeHash = GetHash(nodeTypeHashIndex);
+    local uint nodeTypeHash = GetStrCode32(nodeTypeHashIndex);
 
     switch(type)
     {
@@ -435,10 +437,10 @@ FSeek(header.layoutTableOffset);
 
 struct UiLayoutData
 {
-    ushort hashIndex <comment=GetHashComment, fgcolor=0xFFFFFF>;
+    ushort hashIndex <comment=GetStrCode32Comment, fgcolor=0xFFFFFF>;
 
     // Interesting note: these are always 6 apart
-    ushort layoutPathHashIndex <comment=GetUilbHashComment>;
+    ushort layoutPathHashIndex <comment=GetPathCode64Comment>;
 
     // Boolean; sets some flag in the uilb
     ubyte flag1;
@@ -448,20 +450,12 @@ struct UiLayoutData
     ubyte n2;
 
     // Values found: LMENU (equip_cross.uigb)
-    ushort drawPriorityHashIndex <comment=GetHashComment>;
+    ushort drawPriorityHashIndex <comment=GetStrCode32Comment>;
 
     // These are in the exe, but no clue what any of them are.
-    ushort connectionHashIndex <comment=GetHashComment>;
-    ushort u1 <comment=GetHashComment>;
-} layouts[header.uilbCount] <bgcolor=COLOR4>;
-
-struct Vector4
-{
-    float x;
-    float y;
-    float z;
-    float w;
-};
+    ushort connectionHashIndex <comment=GetStrCode32Comment>;
+    ushort u1 <comment=GetStrCode32Comment>;
+} layouts[header.uilbCount] <optimize = false, bgcolor=COLOR4>;
 
 struct Section2Entry
 {
@@ -503,17 +497,25 @@ struct Section4
     } entries[header.uigbCount] <optimize=false>;
 } section4 <bgcolor=COLOR8, fgcolor=0xFFFFFF>;
 
-FSeek(header.section5Offset);
-ubyte section5[header.hashTableOffset/2];
-uint hashes[header.strCode32HashCount] <bgcolor=COLOR5>;
+if (header.StrCode32sRelativeOffset != -1)
+{
+	//Assert(FTell() == header.BuffersSectionOffset + header.StrCode32sRelativeOffset);
+	FSeek(header.BuffersSectionOffset + header.StrCode32sRelativeOffset);
+	StrCode32 StrCode32s[header.StrCode32Count] <bgcolor=0x75A2FA, fgcolor=0xFFFFFF>;
+}
 
-FSeek(header.section5Offset + header.uilbHashesOffset);
-uint64 filePathHashes[header.fileReferenceCount] <bgcolor=COLOR6>;
+FAlign(8);
+
+if (header.PathCode64sRelativeOffset != -1)
+{
+	Assert(FTell() == header.BuffersSectionOffset + header.PathCode64sRelativeOffset);
+	PathCode64 PathCode64s[header.PathCode64Count] <bgcolor=0x856ACE, fgcolor=0xFFFFFF>;
+}
 
 /* Get the comment string for a given hash index. */
 string GetNodeTypeComment(ushort hashIndex)
 {
-    local uint hash = GetHash(hashIndex);
+    local uint hash = GetStrCode32(hashIndex);
     switch(hash)
     {
         case StrCode32_UiEventNode:
@@ -606,9 +608,9 @@ string GetNodeTypeComment(ushort hashIndex)
 }
 
 /* Get the hash at a given index. */
-uint GetHash(ushort hashIndex)
+uint GetStrCode32(ushort hashIndex)
 {
-    local uint hashTableOffset = header.section5Offset + header.hashTableOffset;
+    local uint hashTableOffset = header.BuffersSectionOffset + header.StrCode32sRelativeOffset;
     local ulong currentPosition = FTell();
 
     FSeek(hashTableOffset + sizeof(uint) * hashIndex);
@@ -620,12 +622,12 @@ uint GetHash(ushort hashIndex)
 }
 
 /* Get the uilb hash at a given index. */
-ulong GetUilbHash(ushort hashIndex)
+ulong GetPathCode64(ushort hashIndex)
 {
-    local uint hashTableOffset = header.section5Offset + header.hashTableOffset;
+    local uint hashTableOffset = header.BuffersSectionOffset + header.PathCode64sRelativeOffset;
     local ulong currentPosition = FTell();
 
-    FSeek(hashTableOffset + header.uilbHashesOffset + (sizeof(uint64) * hashIndex));
+    FSeek(hashTableOffset + (sizeof(uint64) * hashIndex));
 
     local uint hash = ReadUInt64();
     FSeek(currentPosition);
@@ -651,26 +653,26 @@ string GetVersionComment(ubyte versionNumber)
 }
 
 /* Get the comment string for a given hash index. */
-string GetHashComment(ushort hashIndex)
+string GetStrCode32Comment(ushort hashIndex)
 {
     if (hashIndex == INVALID_INDEX)
     {
         return "";
     }
 
-    local uint hash = GetHash(hashIndex);
+    local uint hash = GetStrCode32(hashIndex);
     return Itoa(hash);
 }
 
 /* Get the comment string for a given uilb hash index. */
-string GetUilbHashComment(ushort hashIndex)
+string GetPathCode64Comment(ushort hashIndex)
 {
     if (hashIndex == INVALID_INDEX)
     {
         return "";
     }
 
-    local uint64 hash = GetUilbHash(hashIndex);
+    local uint64 hash = GetPathCode64(hashIndex);
     return Ltoa(hash);
 }
 

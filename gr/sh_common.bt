@@ -14,4 +14,42 @@ string ReadUInt24HTime(uint time)
 	return Str("%02d:%02d:%02d",hours,minutes,seconds);
 };
 
+typedef struct
+{
+	ushort value <hidden = true>;
+} ShHalf <read = ReadShHalf>;
+string ReadShHalf(ShHalf& half)
+{
+	local uint tempA = (uint)half.value << 0x10;
+	local uint tempB = 0;
+	if ((tempA & 0x7fffffff) == 0)
+		tempB = 0;
+	else
+		tempB = tempA & 0xb8000000 | 0x38000000;
+
+	tempA = ((tempA & 0x7fffffff) >> 3) + tempB;
+
+	local ubyte value[4];
+	ConvertDataToBytes(tempA, value);
+
+	float result = ConvertBytesToFloat(value);
+
+	return Str("%f", result);
+}
+
+typedef struct
+{
+	ShHalf x;
+	ShHalf y;
+	ShHalf z;
+} VectorShH3 <read = Str("(%s, %s, %s)", ReadShHalf(x), ReadShHalf(y), ReadShHalf(z))>;
+
+typedef struct
+{
+	ShHalf x;
+	ShHalf y;
+	ShHalf z;
+	ShHalf w;
+} VectorShH4 <read = Str("(%s, %s, %s, %s)", ReadShHalf(x), ReadShHalf(y), ReadShHalf(z), ReadShHalf(w))>;
+
 #endif

@@ -1,0 +1,175 @@
+#ifndef ANIM_COMMON_BT
+#define ANIM_COMMON_BT
+
+typedef struct
+{
+	ushort value <hidden = true>;
+} AnimHalf <read = ReadAnimHalf>;
+string ReadAnimHalf(AnimHalf& half)
+{
+	local uint sign = (half.value & 0x8000) >> 8;
+	local uint exponent = half.value & 0x7C00;
+	if (exponent > 0)
+		exponent = exponent + 0x1DC00 >> 3;
+	local uint mantissa = (half.value & 1023) << 5;
+
+	local ubyte value[4];
+	value[0] = 0;
+	value[1] = mantissa & 0xFF;
+	value[2] = exponent & 0x80 | (mantissa >> 8) & 0xFF;
+	value[3] = sign | exponent >> 8 & 0xFF;
+
+	float result = ConvertBytesToFloat(value);
+
+	return Str("%f", result);
+}
+
+typedef struct
+{
+	AnimHalf x;
+	AnimHalf y;
+	AnimHalf z;
+} VectorAnimH3 <read = Str("(%s, %s, %s)", ReadAnimHalf(x), ReadAnimHalf(y), ReadAnimHalf(z))>;
+
+typedef struct
+{
+	AnimHalf x;
+	AnimHalf y;
+	AnimHalf z;
+	AnimHalf w;
+} VectorAnimH4 <read = Str("(%s, %s, %s, %s)", ReadAnimHalf(x), ReadAnimHalf(y), ReadAnimHalf(z), ReadAnimHalf(w))>;
+
+typedef struct
+{
+	uint EntryCount <hidden = true>;
+
+	uint SubEntryCount;
+
+	uint Unknown;
+
+	uint FrameCount;
+
+	uint Unknown1;
+
+	uint EntryOffsets[EntryCount] <hidden = true>;
+
+	local uint trkIdx;
+	for (trkIdx = 0; trkIdx < EntryCount; trkIdx++)
+	{
+		FSeek(startof(this) + EntryOffsets[trkIdx]);
+
+		struct AnimTrack
+		{
+			// For SAND, hash of the sub object, like a bone, ie SKL_000_WAIST
+			enum <uint> TrackNameStrCode32
+			{
+				// CANI, UIA, etc.
+				ROTATE          = 283103795,
+				SCALE           = 2236677358,
+				TRANSLATE       = 2739596730,
+				COLOR           = 1662570759,
+
+				// 
+			} Name;
+
+			ubyte SegmentCount <hidden = true>;
+
+			enum <ushort> AnimTrackFlags
+			{
+				ANIM_TRACK_FLAGS_NO_FRAMES = 0x4,
+			} Flags; Assert(Flags == ANIM_TRACK_FLAGS_NO_FRAMES || Flags == 0);
+
+			ubyte Padding <hidden = true>; Assert(Padding == 0);
+
+			typedef struct
+			{
+				int DataOffset;
+
+				short MotionSegmentId; // .fsm DEMO chunk motion segment id
+
+				struct AnimSegmentHeaderInfo
+				{
+					// enum <ubyte> AnimSegmentHeaderType
+					// {
+					// 	ANIM_SEGMENT_HEADER_TYPE_ROTATION = 0,
+					// 	ANIM_SEGMENT_HEADER_TYPE_POSITION = 3,
+					// 	ANIM_SEGMENT_HEADER_TYPE_COLOR = 4,
+					// 	ANIM_SEGMENT_HEADER_TYPE_ROOT_ROT = 5,
+					// 	ANIM_SEGMENT_HEADER_TYPE_ROOT_POS = 6,
+					// } Type : 3;
+					ubyte ComponentCount : 3;
+
+					ubyte Padding : 4 <hidden = true>; Assert(Padding == 0);
+
+					ubyte HasNextEntry : 1;
+				} Info;
+
+				ubyte ComponentBitSize;
+
+				struct AnimFrame
+				{
+					switch (Info.ComponentCount)
+					{
+					case 1:
+						if (ComponentBitSize == 16)
+							AnimHalf Value;
+						else
+							Assert(false);
+						break;
+					case 3:
+						if (ComponentBitSize == 16)
+							VectorAnimH3 Value;
+						else
+							Assert(false);
+						break;
+					case 4:
+						if (ComponentBitSize == 16)
+							VectorAnimH4 Value;
+						else
+							Assert(false);
+						break;
+					default:
+						Assert(false);
+						break;
+					}
+				};
+
+				if (DataOffset != 0)
+				{
+					FSeek(startof(this) + DataOffset);
+
+					AnimFrame InitFrame;
+
+					if ((Flags & ANIM_TRACK_FLAGS_NO_FRAMES) == 0)
+					{
+						local uint frameIndex = 0;
+						do
+						{
+							struct AnimKeyframe
+							{
+								ubyte FrameCount;
+
+								AnimFrame Frame;
+							} Keyframe;
+
+							frameIndex += Keyframe.FrameCount;
+						}
+						while (frameIndex < FrameCount);
+					}
+				}
+			} AnimSegmentHeader <optimize = true>;
+
+			if (SegmentCount > 4)
+			{
+				Assert(false);
+				AnimSegmentHeader SegmentHeader;
+			}
+			else
+			{
+				AnimSegmentHeader SegmentHeaders[SegmentCount];
+			}
+		} Track;
+	}
+} AnimTracks <bgcolor = 0x8ADEF3>;
+
+#endif

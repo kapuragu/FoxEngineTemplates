@@ -1,96 +1,30 @@
 LittleEndian();
 
+#include "common/common.bt"
+#include "anim/anim_common.bt"
+
 // Found hashes: UI 3105039150 (UI_sys_end_lyric_setout)
 // UShift_ScreenTex 801765990 (UI_trp_end_lyt_p1_lp_s)
 // VShift_ScreenTex 460060629 (UI_trp_end_lyt_p1_lp_s)
 // COLOR 1662570759 (UI_sys_end_lyric_setout)
 
-// Note: This is currently hard-coded to UI_sys_end_lyric_setin
-
-#define StrCode32_ROOT 3933341002
-#define StrCode32_UI 3105039150
 #define StrCode32_COLOR 1662570759
 #define StrCode32_TRANSLATE 2739596730
 
-struct Color
+enum <uint> NodeNameHash
 {
-    ubyte r;
-    ubyte g;
-    ubyte b;
-    ubyte a;
+	ROOT            = 3933341002,
+	UI              = 3105039150,
+	SHADER          = 2250865118,
 };
 
-struct Header
-{
-    uint signatureHash;
-    uint version;
-    uint fileBytes;
+#define FOX_DATA_HASH_ENUM
+#define FOX_DATA_HASH_TYPE NodeNameHash
 
-    FSkip(20);
-} header;
+#define FOX_DATA_PAYLOAD AnimTracks
 
-struct RootTrack
-{
-    uint vals[5];
-    uint trackBytes;
-    uint vals2[5];
-};
+#include "common/FoxDataCommon.bt"
 
-struct UiTrack
-{
-    uint vals[5];
-    uint trackBytes;
-    uint vals2[5];
-};
+FoxDataHeader Header;
 
-struct ColorTrack
-{
-    ubyte n1;
-    ubyte n2;
-    ushort n3;
-    uint n4;
-    ushort n5;
-    ushort n6;
-    ushort n7;
-    ushort n8;
-    ushort n9;
-    ushort n10;
-    uint n11;
-};
-
-struct Track3362505965
-{
-};
-
-struct Track2964781249
-{
-    uint vals[21];
-};
-
-struct Tracks
-{
-    while (true)
-    {
-        uint trackTypeHash;
-    
-        switch (trackTypeHash)
-        {
-            case StrCode32_ROOT:
-                RootTrack rootTrack;
-                break;
-            case StrCode32_UI:
-                UiTrack uiTrack;
-                break;
-            case StrCode32_COLOR:
-                ColorTrack colorTrack;
-                break;
-            case 2964781249:
-                Track2964781249 track2964781249;
-                break;
-            case 2467780273:
-                return;
-            default:
-                return;
-        }
-    }
-} tracks <optimize=false>;
+FoxDataNodes Nodes;
