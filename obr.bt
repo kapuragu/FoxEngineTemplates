@@ -1,4 +1,26 @@
 #include "common/common.bt"
+
+typedef struct
+{
+	Assert(parentof(this).Flags == 1); Assert(parentof(this).ParentNodeOffset == 0); Assert(parentof(this).ChildNodeOffset == 0);
+
+	local uint numObjects = parentof(this).Parameter[GetFoxDataNodeParamIndex(parentof(this), "numObjects")].Value;
+
+	struct Object
+	{
+		float YPositionFWS;
+		short XPositionEFOS;
+		short ZPositionEFOS;
+		HQuaternion Rotation;
+		ushort BlockIndex;
+		ubyte PluginBrushIndex; // Index of ObjBrush dataset entity's pluginHandle list entry
+		ubyte NormalizedScale; // scale = lerp(minScale, maxScale, (float)NormalizedScale / 0xFF) found in DataSet plugin definition
+		uint GlobalObjectIndex;
+	} Objects[numObjects] <read = Str("plugin: %d, block: %d, globalIndex: %d", PluginBrushIndex, BlockIndex, GlobalObjectIndex), bgcolor = 0x8CAF5A>;
+} ObjectBrush;
+
+#define FOX_DATA_PAYLOAD ObjectBrush
+
 #include "common/FoxDataCommon.bt"
 
 FoxDataHeader Header;
@@ -7,22 +29,3 @@ Assert(Header.Version == 3);
 FSeek(Header.NodesOffset);
 
 FoxDataNodes Nodes;
-
-#define ObjectBrushNode Nodes.Node[0]
-Assert(ObjectBrushNode.Flags == 1); Assert(ObjectBrushNode.ParentNodeOffset == 0); Assert(ObjectBrushNode.ChildNodeOffset == 0);
-
-#define NumObjects ObjectBrushNode.Parameter[GetFoxDataNodeParamIndex(ObjectBrushNode, "numObjects")].Value
-
-FSeek(startof(ObjectBrushNode) + ObjectBrushNode.DataOffset);
-
-struct Object
-{
-    float YPositionFWS;
-	short XPositionEFOS;
-	short ZPositionEFOS;
-    HQuaternion Rotation;
-    ushort BlockIndex;
-    ubyte PluginBrushIndex; // Index of ObjBrush dataset entity's pluginHandle list entry
-    ubyte NormalizedScale; // scale = lerp(minScale, maxScale, NormalizedScale) found in DataSet plugin definition
-    uint GlobalObjectIndex;
-} Objects[NumObjects] <read = Str("plugin: %d, block: %d, globalIndex: %d", PluginBrushIndex, BlockIndex, GlobalObjectIndex), bgcolor = 0x8CAF5A>;

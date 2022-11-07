@@ -1,47 +1,134 @@
 #include "common/common.bt"
-#include "common/FoxDataCommon.bt"
 #include "gr/sh_common.bt"
 
 typedef struct
 {
-    hfloat r;
-    hfloat g;
-    hfloat b;
-    hfloat skyVisibility;
-} ShCoefficients <read=Str("(%f, %f, %f, %f)", r, g, b, skyVisibility)>;
+	ShHalf r;
+	ShHalf g;
+	ShHalf b;
+	ShHalf skyVisibility;
+} ShCoefficients <read = Str("(%s, %s, %s, %s)", ReadShHalf(r), ReadShHalf(g), ReadShHalf(b), ReadShHalf(skyVisibility))>;
 
 typedef struct(int selfIndex)
 {
-    local int SelfIndex = selfIndex;
-    
-                        // Band   Basis
-    ShCoefficients c00; //  0       0
+	local int SelfIndex = selfIndex;
+	
+						// Band   Basis
+	ShCoefficients c00; //  0       0
 
-    ShCoefficients c10; //  1      -1
-    ShCoefficients c11; //  1       0 
-    ShCoefficients c12; //  1       1
+	ShCoefficients c10; //  1      -1
+	ShCoefficients c11; //  1       0 
+	ShCoefficients c12; //  1       1
 
-    ShCoefficients c20; //  2      -2
-    ShCoefficients c21; //  2      -1
-    ShCoefficients c22; //  2       0
-    ShCoefficients c23; //  2       1
-    ShCoefficients c24; //  2       2
+	ShCoefficients c20; //  2      -2
+	ShCoefficients c21; //  2      -1
+	ShCoefficients c22; //  2       0
+	ShCoefficients c23; //  2       1
+	ShCoefficients c24; //  2       2
 
-    // a0 = sqrt(1/(4pi))   = 0.282095
-    // a1 = sqrt(3/(4pi))   = 0.488603
-    // a2 = sqrt(15/(4pi))  = 1.092548
-    // a3 = sqrt(5/(16pi))  = 0.315392
-    // a4 = sqrt(15/(16pi)) = 0.546274
-    // Stored in SH matrix used in SH_SphereMap.hlsl:
-    // [ +a4*c24  , a2*c20/2 , a2*c23/2 , a1*c12/2      ]
-    // [ a2*c20/2 , -a4*c24  , a2*c21/2 , a1*c10/2      ]
-    // [ a2*c23/2 , a2*c21/2 , 3*a3*c22 , a1*c11/2      ]
-    // [ a1*c12/2 , a1*c10/2 , a1*c11/2 , a0*c00-a3*c22 ]
+	// a0 = sqrt(1/(4pi))   = 0.282095
+	// a1 = sqrt(3/(4pi))   = 0.488603
+	// a2 = sqrt(15/(4pi))  = 1.092548
+	// a3 = sqrt(5/(16pi))  = 0.315392
+	// a4 = sqrt(15/(16pi)) = 0.546274
+	// Stored in SH matrix used in SH_SphereMap.hlsl:
+	// [ +a4*c24  , a2*c20/2 , a2*c23/2 , a1*c12/2      ]
+	// [ a2*c20/2 , -a4*c24  , a2*c21/2 , a1*c10/2      ]
+	// [ a2*c23/2 , a2*c21/2 , 3*a3*c22 , a1*c11/2      ]
+	// [ a1*c12/2 , a1*c10/2 , a1*c11/2 , a0*c00-a3*c22 ]
 } CoefficientSet <read = ReadCoefficientSetString(SelfIndex < 0 ? 0 : parentof(parentof(this)).Times[SelfIndex], SelfIndex), bgcolor = 0x00ff00, optimize = true>;
 string ReadCoefficientSetString(uint time, int index)
 {
-    return index < 0 ? "" : ReadUInt24HTime(time);
+	return index < 0 ? "" : ReadUInt24HTime(time);
 }
+
+typedef struct
+{
+	Assert(parentof(this).Flags == 1); Assert(parentof(this).ParentNodeOffset == 0); Assert(parentof(this).ChildNodeOffset == 0);
+
+	local uint numDiv = parentof(this).Parameter[GetFoxDataNodeParamIndex(parentof(this), "numDiv")].Value;
+	local uint numLightProbes = parentof(this).Parameter[GetFoxDataNodeParamIndex(parentof(this), "numLightProbes")].Value;
+
+	// Only in Version 4 files
+	local uint formatType = parentof(this).Parameter[GetFoxDataNodeParamIndex(parentof(this), "formatType")].Value; Assert(formatType == 1);
+
+	uint Times[numDiv] <hidden = true, optimize = true>;
+
+	FAlign(16);
+
+	struct
+	{
+		int NameStringOffset <hidden = true>;
+		int DataOffset <hidden = true>;
+		
+		uint enable24hSH : 1 <hidden = true>;
+		uint enableWeatherSH : 1 <hidden = true>;
+		uint enableRelatedLightSH : 1 <hidden = true>;
+		uint enableOcclusionMode : 1 <hidden = true>; Assert(enableOcclusionMode == 0);
+
+		uint Padding : 28 <hidden = true>; Assert(Padding == 0);
+		
+		local uint NextStartPos = FTell();
+			
+		FSeek(DataOffset);
+		
+		local int k;
+
+		if (enable24hSH)
+		{
+			for (k = 0; k < numDiv; k++)
+				CoefficientSet Weather0(k);
+		}
+		else
+		{
+			CoefficientSet Weather0(-1);
+		}
+
+		if (enableWeatherSH)
+		{
+			if (enable24hSH)
+			{
+				for (k = 0; k < numDiv; k++)
+					CoefficientSet Weather1(k);
+			}
+			else
+			{
+				CoefficientSet Weather1(-1);
+			}
+		}
+
+		if (enableRelatedLightSH)
+		{
+			CoefficientSet RelatedLight(-1)[2];
+		}
+
+		if (enableOcclusionMode)
+		{
+			CoefficientSet Occlusion(-1)[1];
+		}
+
+		FSeek(NextStartPos);
+	} Probes[numLightProbes] <read = ReadProbeMetadata(NameStringOffset, enable24hSH, enableWeatherSH, enableRelatedLightSH, enableOcclusionMode), bgcolor = 0xff00ff, optimize = false>;
+} LightProbeSHCoefficients <bgcolor = 0x00aaff>;
+string ReadProbeMetadata(uint nameStringOffset, uint enable24hSH, uint enableWeatherSH, uint enableRelatedLightSH, uint enableOcclusionMode)
+{
+	string result = ReadString(nameStringOffset);
+	
+	if (enable24hSH)
+		result += ", enable24hSH";
+	if (enableWeatherSH)
+		result += ", enableWeatherSH";
+	if (enableRelatedLightSH)
+		result += ", enableRelatedLightSH";
+	if (enableOcclusionMode)
+		result += ", enableOcclusionMode";
+
+	return result;
+}
+
+#define FOX_DATA_PAYLOAD LightProbeSHCoefficients
+
+#include "common/FoxDataCommon.bt"
 
 FoxDataHeader Header;
 Assert(Header.Version == 3 || Header.Version == 4);
@@ -49,90 +136,3 @@ Assert(Header.Version == 3 || Header.Version == 4);
 FSeek(Header.NodesOffset);
 
 FoxDataNodes Nodes;
-
-#define LightProbeSHCoefficientsNode Nodes.Node[0]
-Assert(LightProbeSHCoefficientsNode.Flags == 1); Assert(LightProbeSHCoefficientsNode.ParentNodeOffset == 0); Assert(LightProbeSHCoefficientsNode.ChildNodeOffset == 0);
-
-#define NumDiv LightProbeSHCoefficientsNode.Parameter[GetFoxDataNodeParamIndex(LightProbeSHCoefficientsNode, "numDiv")].Value
-#define NumLightProbes LightProbeSHCoefficientsNode.Parameter[GetFoxDataNodeParamIndex(LightProbeSHCoefficientsNode, "numLightProbes")].Value
-
-// Only in Version 4 files
-#define FormatType LightProbeSHCoefficientsNode.Parameter[GetFoxDataNodeParamIndex(LightProbeSHCoefficientsNode, "formatType")].Value
-
-FSeek(startof(LightProbeSHCoefficientsNode) + LightProbeSHCoefficientsNode.DataOffset);
-
-struct
-{
-    uint Times[NumDiv] <hidden = true, optimize = true>;
-
-    FAlign(16);
-
-    struct
-    {
-        int NameStringOffset <hidden = true>;
-        int DataOffset <hidden = true>;
-        
-        uint enable24hSH : 1 <hidden = true>;
-        uint enableWeatherSH : 1 <hidden = true>;
-        uint enableRelatedLightSH : 1 <hidden = true>;
-        uint enableOcclusionMode : 1 <hidden = true>; Assert(enableOcclusionMode == 0);
-
-        uint Padding : 28 <hidden = true>; Assert(Padding == 0);
-        
-        local uint NextStartPos = FTell();
-            
-        FSeek(DataOffset);
-        
-        local int k;
-
-        if (enable24hSH)
-        {
-            for (k = 0; k < NumDiv; k++)
-                CoefficientSet Weather0(k);
-        }
-        else
-        {
-            CoefficientSet Weather0(-1);
-        }
-
-        if (enableWeatherSH)
-        {
-            if (enable24hSH)
-            {
-                for (k = 0; k < NumDiv; k++)
-                    CoefficientSet Weather1(k);
-            }
-            else
-            {
-                CoefficientSet Weather1(-1);
-            }
-        }
-
-        if (enableRelatedLightSH)
-        {
-            CoefficientSet RelatedLight(-1)[2];
-        }
-
-        if (enableOcclusionMode)
-        {
-            CoefficientSet Occlusion(-1)[1];
-        }
-
-        FSeek(NextStartPos);
-    } Probes[NumLightProbes] <read = ReadProbeMetadata(NameStringOffset, enable24hSH, enableWeatherSH, enableRelatedLightSH, enableOcclusionMode), bgcolor = 0xff00ff, optimize = false>;
-} LightProbeSHCoefficients <bgcolor = 0x00aaff>;
-string ReadProbeMetadata(uint nameStringOffset, uint enable24hSH, uint enableWeatherSH, uint enableRelatedLightSH, uint enableOcclusionMode)
-{
-    string result = ReadString(nameStringOffset);
-    
-    if (enable24hSH)
-        result += ", enable24hSH";
-    if (enableWeatherSH)
-        result += ", enableWeatherSH";
-    if (enableRelatedLightSH)
-        result += ", enableRelatedLightSH";
-    if (enableOcclusionMode)
-        result += ", enableOcclusionMode";
-
-    return result;
-}

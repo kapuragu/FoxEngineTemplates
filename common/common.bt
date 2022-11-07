@@ -1,21 +1,6 @@
 #ifndef COMMON_BT
 #define COMMON_BT
 
-/*
-float halfToFloat(ushort half)
-{
-    uint32_t tempA = half << 0x10;
-    uint32_t tempB = 0;
-    if ((tempA & 0x7fffffff) == 0)
-        tempB = 0;
-    else
-        tempB = tempA & 0xb8000000 | 0x38000000;
-        
-    uint32_t temp = ((tempA & 0x7fffffff) >> 3) + tempB;
-    
-    return *(float*)&temp;
-}*/
-
 typedef struct
 {
     uint hash<format=hex>;
@@ -73,7 +58,7 @@ typedef struct
 	hfloat y;
 	hfloat z;
     hfloat w;
-} HVector4 <read = Str("(%g, %g, %g, %g)", x, y, z, w)>;
+}VectorH4 <read = Str("(%g, %g, %g, %g)", x, y, z, w)>;
 
 typedef struct
 {
