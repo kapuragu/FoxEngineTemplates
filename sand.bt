@@ -34,7 +34,8 @@ typedef enum <uint>
 
 struct Header
 {
-	uint Version; // June 23rd, 2014 if (magic==372703500) { BigEndian();}
+	uint Version; // June 23rd, 2014 
+    if (Version==372703500) { BigEndian();}
 	uint FileSize; Assert(FileSize == FileSize());
 	uint sectionParamCount; Assert(sectionParamCount==4); // Four sections always
 	uint objectCount;
