@@ -381,11 +381,7 @@ struct Object
 							{
 								struct ArrayGraphs
 								{
-									struct ArrayGraphPoints
-									{
-										float From, To;
-										Curve_Shape Interp;
-									} graphpoints[clipauto.arraySize];
+									ArrayGraphPoints graphpoints[clipauto.arraySize];
 								} arraygraphs;
 							}
 						}

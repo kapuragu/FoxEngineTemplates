@@ -1,5 +1,10 @@
 // All the stuff used for the SoundStructure, including the struct itself
 
+#ifndef SOUNDSTRUCTURE_H
+#define SOUNDSTRUCTURE_H
+
+#include "common.bt"
+
 enum <byte> CoordinateDimension
 {
 	Pos2D=0,
@@ -416,20 +421,7 @@ struct SoundStructure
 					{
 						float X_coordinate;
 						float Y_coordinate;
-						enum <uint> Curve_Shape
-						{
-							Logarithmic_Base3 = 0, // (Base 3)
-							Sine_FadeIn = 1, // (Constant Power Fade In)
-							Logarithmic_Base141 = 2, // (Base 1.41)
-							Inverted_S_Curve = 3,
-							Linear = 4,
-							S_Curve = 5,
-							Exponential_Base141 = 6, // (Base 1.41)
-							Sine_FadeOut = 7, // (Constant Power Fade Out)
-							Exponential_Base3 = 8, // (Base 3)
-							Constant = 9
-						} curve_shape;
-						
+						Curve_Shape curve_shape;
 					} point <comment="NOTE: these points work differently if the Y axis effect is set to 'Positioning Type'.">;
 				}
 				
@@ -439,3 +431,5 @@ struct SoundStructure
 	// NOTE: we're gonna have a problem here. apparently no read action's performed if CAkBankMgr::BankHasFeedback() returns false...
 	uint bank_feedback_ID <comment="Unknown purpose, it's only used if CAkBankMgr::BankHasFeedback() returns true and this uint is != 0">;
 };
+
+#endif

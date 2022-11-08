@@ -2,6 +2,12 @@ Just a file that details all the changes to the template with every new
 version. This is only for looking back at the progress we've made (and
 hopefully find bugs more easily)!
 
+[2022-Nov-08]:
++ Moved the definition of Curve_Shape from soundstructure.bt to
+common.bt
++ Added some preprocessor checks for soundstructure.bt and
+common.bt when they're included in more than one file
+
 [2022-Aug-12]:
 + Fixed & reimplemented parsing for Music Switch Containers, based on
 both the integration demo code and previous notes on names for settings

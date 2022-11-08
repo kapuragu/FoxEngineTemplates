@@ -1,5 +1,8 @@
 // HWL commonly used structs in WWise soundbanks
 
+#ifndef COMMON_H
+#define COMMON_H
+
 enum <int> ObjectSoundEmbedOrStream
 {
 	Embedded=0,
@@ -11,6 +14,20 @@ enum <byte> ObjectSoundType
 {
 	SFX=0,
 	Voice=1,
+};
+
+enum <uint> Curve_Shape
+{
+	Logarithmic_Base3 = 0, // (Base 3)
+	Sine_FadeIn = 1, // (Constant Power Fade In)
+	Logarithmic_Base141 = 2, // (Base 1.41)
+	Inverted_S_Curve = 3,
+	Linear = 4,
+	S_Curve = 5,
+	Exponential_Base141 = 6, // (Base 1.41)
+	Sine_FadeOut = 7, // (Constant Power Fade Out)
+	Exponential_Base3 = 8, // (Base 3)
+	Constant = 9
 };
 
 struct SourceInfo
@@ -98,3 +115,11 @@ enum <byte> SoundStrctureParameterType
 	Window_TopOutput_GameParameter_Min = 30,
 	Window_TopOutput_GameParameter_Max = 31,
 };
+
+struct ArrayGraphPoints
+{
+	float From, To;
+	Curve_Shape Interp;
+};
+
+#endif
