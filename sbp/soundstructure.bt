@@ -22,7 +22,7 @@ enum <uint> PlayType
 	RandomStepPickNewPathWhenStarts=5,
 };
 
-
+#include "common.bt"
 
 // ===================
 // The structure here

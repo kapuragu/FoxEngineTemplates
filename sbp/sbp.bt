@@ -24,7 +24,7 @@ enum <byte> ObjectType {
 	AuxillaryBus=20,
 };
 
-#include "common/common.bt"
+#include "../common/common.bt"
 
 #include "soundstructure.bt"
 #include "obj_settings.bt"
