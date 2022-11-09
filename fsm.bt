@@ -5,7 +5,6 @@
 // Can be run on .fsm files and per-chunk output of FsmTool by BobDoleOwndU!
 // https://github.com/BobDoleOwndU/FsmTool
 
-LittleEndian();
 //Joey's FoxDataNodes and etc:
 #include "common/common.bt"
 #include "common/anim_common.bt"
@@ -126,7 +125,7 @@ while (FTell()!=FileSize())
 		
 		struct Header
 		{
-			char sign[4]; if (sign=="OMED" || sign==" SYS" || sign==" DNS" || sign==" DNE") { BigEndian(); };
+			char sign[4]; if (sign=="OMED" || sign==" SYS" || sign==" DNS" || sign==" DNE") { BigEndian();BitfieldRightToLeft(); };
 			uint chunkSize;
 			double demoStart;
 			

@@ -3,159 +3,49 @@
 // https://metalgearmodding.fandom.com/wiki/GANI
 // Me: Remove this comment when you actually start having to use those templates^
 
+#include "common/common.bt"
+#include "common/anim_common.bt"
+
 #define COLOR_HEADER 0x4F93FF
 #define COLOR_NODES 0x12E8C2
 
-LittleEndian();
-
-enum NodeType
+string ResolveHashFunc(StrCode32& hash)
 {
-	ROOT            = 3933341002,
-	MOTION          = 143688520,
-	SLOPE_DIR       = 3426329078,
-	SLOPE_ANGLE     = 35201703,
-	Unknown0        = 2447659851, // Skeletons
-	Unknown1        = 3337172921,
-};
-
-struct Node
-{
-	NodeType nodeType;
-	if (nodeType==ROOT || nodeType==MOTION)
+	switch (hash.hash)
 	{
-		uint offsetToNodeTypeString;
-		uint objectCount;
-		uint objectOffset;
+	case 3933341002: return "ROOT";
+	case 3254096966: return "DEMO";
+	case 2620425302: return "CAMERA";
+	case 3150281601: return "MOVE";
+	case 2862912361: return "CameraParam";
+	case 1885607306: return "SI Frame";
+	case 1889896775: return "SKEL";
+	case 2454300086: return "MESH_EVENT";
+	case 143688520: return "MOTION";
+	case 2215748180: return "MODEL";
+	case 3736262940: return "SKELINFO";
+	case 917055795: return "MTPINFO";
+	case 2846912397: return "MTEV";
+	case 494270195: return "MTP";
+	case 2250865118: return "SHADER";
+	case 3937479969: return "MTP_LIST";
+	case 4042487769: return "MTP_PARENT_LIST";
+	case 3187573380: return "LOCATOR";
+	case 2036377104: return "GLOBALSRT";
+	case 2053459263: return "Unknown";
 
-		uint listSize;
-		int offsetToParentNode <comment="Not actually to the ROOT node, not always">;
-		int offsetToNextNode;
-		int offsetToPreviousNode;
-		
-		uint nodeSize;
-		uint offsetToNodeEnd;
-		
-		if (FTell() % 16 != 0)
-		{
-			FSkip(16 - (FTell() % 16));
-		}
-		
-		char nodeString[];
-		
-		if (FTell() % 16 != 0)
-		{
-			FSkip(16 - (FTell() % 16));
-		}
-		
-		if (nodeType==MOTION)
-		{
-			struct NodeSlope
-			{
-				ushort unk0;
-				ushort unk1;
-				NodeType slopeNodeType;
-				uint offsetToString;
-				uint offsetMaybe;
+	// Parameter names
+	case 2570203771: return "TARGET_NAME";
+	case 3426329078: return "SLOPE_DIR";
+	case 35201703: return "SLOPE_ANGLE";
 
-			} slopeNodes[2];
-		}
+	default: return "";
 	}
-	else if (nodeType==Unknown0)
-	{
-		FSkip(0x8);
-		int objectOffset;
-
-		int listSize;
-		int offsetToParentNode <comment="Not actually to the ROOT node, not always">;
-		int offsetToNextNode;
-		int offsetToPreviousNode;
-		
-		int nodeSize;
-		FSkip(0xC);
-		
-		int objectCount;
-		struct BoneName
-		{
-			uint boneNameHash;
-			int offsetToBoneNameString;
-			
-		} boneName[objectCount];
-		
-		if (FTell() % 16 != 0)
-		{
-			FSkip(16 - (FTell() % 16));
-		}
-		
-		FSkip(0x8);
-		struct BoneNameStrings
-		{
-			char boneNameString[];
-			
-		} boneNameStrings[objectCount] <optimize=false>;
-		
-		if (FTell() % 16 != 0)
-		{
-			FSkip(16 - (FTell() % 16));
-		}
-	}
-	else if (nodeType==Unknown1)
-	{
-		FSkip(0x4);
-		int objectCount;
-		int objectOffset;
-
-		int listSize;
-		int offsetToParentNode <comment="Not actually to the ROOT node, not always">;
-		int offsetToNextNode;
-		int offsetToPreviousNode;
-		
-		int nodeSize;
-		FSkip(0xC);
-		
-		int someCount;
-		int someOtherCount;
-		int unknown0;
-		int someYetOtherCount;
-		int someYetAnotherCount;
-		int offsetToSomeList[someCount];
-		
-		if (FTell() % 16 != 0)
-		{
-			FSkip(16 - (FTell() % 16));
-		}
-		FSkip(0x8);
-		
-		struct SomeObject
-		{
-			int someName;
-			byte subCount;
-			byte u1;
-			short someShort;
-			struct SomeSubObject
-			{
-				int someOffset;
-				short someSubShort;
-				short someOtherSubShort;
-				
-			} someSubObject[subCount];
-				
-		} someObject[someCount] <optimize=false>;
-	}
-	else
-	{
-		Assert(2+2==5,"Unknown nodeType!!");
-	}
-};
-
-struct SkelNode
-{
-	NodeType nodeType;
-	
-};
+}
 
 struct Header
 {
-	int magic <comment="June 13th, 2011">; if (magic==-761070581) { BigEndian(); }
+	int magic <comment="June 13th, 2011">; if (magic==3533896715) {BigEndian();BitfieldRightToLeft();}
 	int offsetToNodes;
 	int fileSize; Assert(fileSize==FileSize());
 	FSkip(0x4);
@@ -164,11 +54,63 @@ struct Header
 	
 } header <bgcolor=COLOR_HEADER>;
 
-struct Nodes
+FSeek(header.offsetToNodes);
+
+struct FoxDataString;
+struct StringList
 {
-	while (FTell()<header.fileSize)
+    uint EntryCount <hidden = true>;
+    local int64 mtpLstIdx;
+    for (mtpLstIdx = 0; mtpLstIdx < EntryCount; mtpLstIdx++)
+    {
+        FoxDataString Entry <optimize = true>;
+    }
+};
+
+struct GANI
+{
+	switch (ResolveHashFunc(parentof(this).Name.Hash))
 	{
-		Node node;
+	case "MOVE":
+	case "CameraParam":
+	case "SI Frame":
+	case "SKEL":
+	case "Unknown":
+	case "MTP":
+    case "MOTION":
+        AnimTracks Tracks; //AnimFrame invalid componentcount
+		break;
+	case "MTP_LIST":
+	case "MTP_PARENT_LIST":
+		StringList MTPList <bgcolor = 0xF38ADE>;
+		break;
+	default:
+		{
+			if (parentof(this).ParentNodeOffset != 0)
+			{
+				if (ReadUInt(startof(parentof(this)) + parentof(this).ParentNodeOffset) == 2250865118 /*SHADER*/)
+				{
+					AnimTracks Tracks; //AnimFrame invalid componentcount
+				}
+			}
+            switch (parentof(this).Name.Hash.hash)
+            {
+            case 2447659851:
+		        StringList BoneList <bgcolor = 0xF38ADE>;
+                break;
+            case 3337172921:
+                AnimTracks Tracks; //AnimFrame invalid componentcount
+                break;
+            }
+		}
 	}
-	
-} nodes <bgcolor=COLOR_NODES>;
+};
+
+#define FOX_DATA_FLAG_IS_HAS_PAYLOAD
+#define FOX_DATA_RESOLVE_HASH_FUNC ResolveHashFunc
+
+#define FOX_DATA_PAYLOAD GANI
+
+#include "common/FoxData_common.bt"
+
+FoxDataNodes Nodes;
