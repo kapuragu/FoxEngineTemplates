@@ -3,20 +3,8 @@ LittleEndian();
 #include "common/common.bt"
 #include "common/anim_common.bt"
 
-// Found hashes: UI 3105039150 (UI_sys_end_lyric_setout)
 // UShift_ScreenTex 801765990 (UI_trp_end_lyt_p1_lp_s)
 // VShift_ScreenTex 460060629 (UI_trp_end_lyt_p1_lp_s)
-// COLOR 1662570759 (UI_sys_end_lyric_setout)
-
-#define StrCode32_COLOR 1662570759
-#define StrCode32_TRANSLATE 2739596730
-
-enum <uint> NodeNameHash
-{
-	ROOT            = 3933341002,
-	UI              = 3105039150,
-	SHADER          = 2250865118,
-};
 
 string ResolveHashFunc(StrCode32& hash)
 {
