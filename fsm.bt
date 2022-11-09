@@ -166,8 +166,9 @@ while (FTell()!=FileSize())
 						
 					} indices <bgcolor=0x0080C0, comment="Might have something to do with what kinda data is in the Motions">;
 
-					struct SegmentMotion
+					/*struct SegmentMotion
 					{
+                        
 						// There's some empty ones at the end with this kind of parsing, so maybe the type indices define the length of the individual segments
 						if ((demoData.offsetToEventSection>0) & (demoData.offsetToEventSection<header.chunkSize))
 						{
@@ -180,12 +181,44 @@ while (FTell()!=FileSize())
 						{
 							while ( (FTell() - startOfChunk) < header.chunkSize )
 							{
-								ushort motion;
+                                ushort motion;
 							}
 						};
 						
 					} motion <optimize=false, bgcolor=0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
-					
+					*/
+                    local uint segId=0;
+                    struct SegmentMotion
+					{
+                        FSeek(startof(demoData)+segmentOffsetSection.segmentOffset[segId]);
+                        if (segId<demoData.segmentCount-1)
+                        {
+                            while (FTell()<startof(demoData)+segmentOffsetSection.segmentOffset[segId+1])
+							{
+                                ushort motion;
+							}
+                        }
+                        else
+                        {
+                            if ((demoData.offsetToEventSection>0) & (demoData.offsetToEventSection<header.chunkSize))
+                            {
+							    while ( (FTell() - startOfChunk) < demoData.offsetToEventSection+0x10 )
+							    {
+								    ushort motion;
+							    }
+                            }
+						    else
+						    {
+							    while ( (FTell() - startOfChunk) < header.chunkSize )
+							    {
+                                    ushort motion;
+							    }
+						    };
+                        }
+                        segId++;
+						
+					} motion[demoData.segmentCount] <optimize=false, bgcolor=0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
+
 				} motionSection <optimize=false, bgcolor=0x008000>;
 			};
 

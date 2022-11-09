@@ -76,8 +76,12 @@ typedef struct
 
 			enum <ushort> AnimTrackFlags
 			{
+				ANIM_TRACK_FLAGS_1 = 0x1, //Appears in gz gani
 				ANIM_TRACK_FLAGS_NO_FRAMES = 0x4,
-			} Flags; Assert(Flags == ANIM_TRACK_FLAGS_NO_FRAMES || Flags == 0);
+			} Flags; Assert(Flags ==  0
+                || (Flags || ANIM_TRACK_FLAGS_1)
+                || (Flags || ANIM_TRACK_FLAGS_NO_FRAMES)
+            );
 
 			ubyte Padding <hidden = true>; Assert(Padding == 0);
 
@@ -113,22 +117,29 @@ typedef struct
 					case 1:
 						if (ComponentBitSize == 16)
 							AnimHalf Value;
+						else if (ComponentBitSize == 32)
+							float Value;
 						else
 							Assert(false);
 						break;
 					case 3:
 						if (ComponentBitSize == 16)
 							VectorAnimH3 Value;
+						else if (ComponentBitSize == 32)
+							Vector3 Value;
 						else
 							Assert(false);
 						break;
 					case 4:
 						if (ComponentBitSize == 16)
 							VectorAnimH4 Value;
+						else if (ComponentBitSize == 32)
+							Vector4 Value;
 						else
 							Assert(false);
 						break;
 					default:
+						Printf("@%u Unknown component count: %u\n",FTell(),Info.ComponentCount);
 						Assert(false);
 						break;
 					}
