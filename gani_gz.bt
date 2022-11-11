@@ -43,25 +43,12 @@ string ResolveHashFunc(StrCode32& hash)
 	}
 }
 
-struct Header
-{
-	int magic <comment="June 13th, 2011">; if (magic==3533896715) {BigEndian();BitfieldRightToLeft();}
-	int offsetToNodes;
-	int fileSize; Assert(fileSize==FileSize());
-	FSkip(0x4);
-	
-	FSkip(0x10);
-	
-} header <bgcolor=COLOR_HEADER>;
-
-FSeek(header.offsetToNodes);
-
 struct FoxDataString;
 struct StringList
 {
     uint EntryCount <hidden = true>;
-    local int64 mtpLstIdx;
-    for (mtpLstIdx = 0; mtpLstIdx < EntryCount; mtpLstIdx++)
+    local int64 strIdx;
+    for (strIdx = 0; strIdx < EntryCount; strIdx++)
     {
         FoxDataString Entry <optimize = true>;
     }
@@ -112,5 +99,9 @@ struct GANI
 #define FOX_DATA_PAYLOAD GANI
 
 #include "common/FoxData_common.bt"
+
+FoxDataHeader Header<bgcolor = COLOR_HEADER>;
+
+FSeek(Header.NodesOffset);
 
 FoxDataNodes Nodes;
