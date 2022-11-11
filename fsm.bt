@@ -68,9 +68,9 @@ struct SAND
 			}
 		} List <bgcolor = 0xF38ADE>;
 		break;
-    case "MOTION":
-        AnimTracks Tracks;
-        break;
+	case "MOTION":
+		AnimTracks Tracks;
+		break;
 	default:
 		{
 			if (parentof(this).ParentNodeOffset != 0)
@@ -97,23 +97,23 @@ local int startOfChunk = FTell(); // In case is run from offset inside .fsm
 
 struct DemoData
 {
-    uint chunkType;
-    if (demoData.chunkType==0)
-    {
-        int u0;
-        int startFrame; //chunk i is i*frameCount
-        int frameCount;
+	uint chunkType;
+	if (demoData.chunkType==0)
+	{
+		int u0;
+		int startFrame; //chunk i is i*frameCount
+		int frameCount;
 					
-        int segmentCount;
-    }
+		int segmentCount;
+	}
 				
-    int offsetToChunkEnd <comment="Chunk size starting from demoData">;
-    int offsetToEventSection <comment="Offset starts from demoData">;
+	int offsetToChunkEnd <comment="Chunk size starting from demoData">;
+	int offsetToEventSection <comment="Offset starts from demoData">;
 				
-    if (demoData.chunkType==1)
-    {
-        FSkip(0x4);
-    }
+	if (demoData.chunkType==1)
+	{
+		FSkip(0x4);
+	}
 
 };
 
@@ -137,7 +137,7 @@ while (FTell()!=FileSize())
 		}
 		else if (header.sign=="DEMO" || header.sign=="OMED")
 		{
-            DemoData demoData <bgcolor=0x800080>;
+			DemoData demoData <bgcolor=0x800080>;
 
 			if (demoData.chunkType==0)
 			{
@@ -168,7 +168,7 @@ while (FTell()!=FileSize())
 
 					/*struct SegmentMotion
 					{
-                        
+						
 						// There's some empty ones at the end with this kind of parsing, so maybe the type indices define the length of the individual segments
 						if ((demoData.offsetToEventSection>0) & (demoData.offsetToEventSection<header.chunkSize))
 						{
@@ -181,41 +181,41 @@ while (FTell()!=FileSize())
 						{
 							while ( (FTell() - startOfChunk) < header.chunkSize )
 							{
-                                ushort motion;
+								ushort motion;
 							}
 						};
 						
 					} motion <optimize=false, bgcolor=0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
 					*/
-                    local uint segId=0;
-                    struct SegmentMotion
+					local uint segId=0;
+					struct SegmentMotion
 					{
-                        FSeek(startof(demoData)+segmentOffsetSection.segmentOffset[segId]);
-                        if (segId<demoData.segmentCount-1)
-                        {
-                            while (FTell()<startof(demoData)+segmentOffsetSection.segmentOffset[segId+1])
+						FSeek(startof(demoData)+segmentOffsetSection.segmentOffset[segId]);
+						if (segId<demoData.segmentCount-1)
+						{
+							while (FTell()<startof(demoData)+segmentOffsetSection.segmentOffset[segId+1])
 							{
-                                ushort motion;
+								ushort motion;
 							}
-                        }
-                        else
-                        {
-                            if ((demoData.offsetToEventSection>0) & (demoData.offsetToEventSection<header.chunkSize))
-                            {
-							    while ( (FTell() - startOfChunk) < demoData.offsetToEventSection+0x10 )
-							    {
-								    ushort motion;
-							    }
-                            }
-						    else
-						    {
-							    while ( (FTell() - startOfChunk) < header.chunkSize )
-							    {
-                                    ushort motion;
-							    }
-						    };
-                        }
-                        segId++;
+						}
+						else
+						{
+							if ((demoData.offsetToEventSection>0) & (demoData.offsetToEventSection<header.chunkSize))
+							{
+								while ( (FTell() - startOfChunk) < demoData.offsetToEventSection+0x10 )
+								{
+									ushort motion;
+								}
+							}
+							else
+							{
+								while ( (FTell() - startOfChunk) < header.chunkSize )
+								{
+									ushort motion;
+								}
+							};
+						}
+						segId++;
 						
 					} motion[demoData.segmentCount] <optimize=false, bgcolor=0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
 
@@ -258,30 +258,28 @@ while (FTell()!=FileSize())
 					// Something similar also seems to be used in .gani files.
 					struct Event
 					{
-						uint eventType <comment="Node type hash - usually ExecCommand/595181585">;
+						StrCode32 Name;
 						
 						byte timeSectionCount; // Might be a bitfield, but unaffected by endianness
 						byte paramIntCount;
 						byte paramFloatCount;
 						byte paramStringCount;
 						
-                        if (timeSectionCount>0)
-						    struct TimeSection
-						    {
-							    int startFrame;
-							    int endFrame; // Two shorts? Endianness and all that really screws these up, especially some paramInts.
-							    
-						    } timeSection[timeSectionCount] <optimize=false>;
+						if (timeSectionCount>0)
+							struct TimeSection
+							{
+								int startFrame;
+								int endFrame; // Two shorts? Endianness and all that really screws these up, especially some paramInts.
+							} timeSection[timeSectionCount] <optimize=false>;
 						
-                        if (paramIntCount>0)
-					    	int paramInt[paramIntCount] <optimize=false>;
+						if (paramIntCount>0)
+							int paramInt[paramIntCount] <optimize=false>;
 						
-                        if (paramFloatCount>0)
-						    float paramFloat[paramFloatCount] <optimize=false>;
+						if (paramFloatCount>0)
+							float paramFloat[paramFloatCount] <optimize=false>;
 							
-                        if (paramStringCount>0)
-						    uint64 paramString[paramStringCount] <comment="Sometimes uses fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s", optimize=false>;
-						
+						if (paramStringCount>0)
+							uint64 paramString[paramStringCount] // Sometimes uses fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s
 					} event[eventOffsets.eventCount] <optimize=false, bgcolor=0xF0F080>;
 					
 				} eventSection <bgcolor=0x00C000>;
@@ -295,7 +293,7 @@ while (FTell()!=FileSize())
 			// GZ only. Since GZ has no .sand files, it uses this instead. Usually the first chunk, after SYS if that exists.
 			if (demoData.chunkType==1)
 			{
-                FoxDataNodes Nodes <bgcolor=0x0CC0C0>;
+				FoxDataNodes Nodes <bgcolor=0x0CC0C0>;
 			}
 			
 		}
@@ -334,8 +332,8 @@ while (FTell()!=FileSize())
 			Assert(2+2==5, "Unknown Chunk Type!!!"); // In case something goes very very wrong
 		}
 
-        if (header.sign!="END " && header.sign!=" DNE")
-            FSeek(startof(header.sign)+header.chunkSize);
+		if (header.sign!="END " && header.sign!=" DNE")
+			FSeek(startof(header.sign)+header.chunkSize);
 		
 	} demoChunk;
 }

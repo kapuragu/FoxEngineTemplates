@@ -1,0 +1,262 @@
+LittleEndian();
+
+/* Color defines. */
+#define COLOR_HEADER 0x85CFCA
+#define COLOR_UIMODELDATA 0x8CBA80
+#define COLOR_SECTION_1 0x9C8E65
+#define COLOR_STRCODE32 0x634651
+
+#include "common/common.bt"
+
+#define ANIM_GANI
+#include "common/anim_common.bt"
+
+struct Mtar2Header
+{
+	uint Version;
+
+	uint FileCount;
+	
+	ushort IkGroupCount; // Same as FRIG
+
+	ushort BoneCount; // Same as FRIG
+
+	ushort Unknown[4];
+
+	uint BindPoseOffset;
+
+	uint64 Padding <hidden = true>; Assert(Padding == 0);
+} Header <bgcolor = COLOR_HEADER>;
+
+struct FileHeader
+{
+	PathCode64 Path; Assert((Path.hash >> 52) == (0xFC50 >> 4));
+
+	uint DataOffset;
+
+	ushort DataSize;
+
+	ushort FkDataOffset;
+
+	uint FkDataSize;
+
+	uint Padding0; Assert(Padding0 == 0);
+	uint MotionEventsOffset;
+	uint Padding1; Assert(Padding1 == 0);
+} FileHeaders[Header.FileCount] <bgcolor = COLOR_UIMODELDATA, optimize = false>;
+
+FSeek(Header.BindPoseOffset);
+
+typedef struct
+{
+	StrCode32 Name;
+
+	uint DataSize;
+
+	uint NextNodeOffset;
+
+	uint Padding <hidden = true>; Assert(Padding == 0);
+} Mtar2CompressedDataNode <bgcolor = COLOR_HEADER>;
+
+struct Mtar2BindPose
+{
+	Mtar2CompressedDataNode BindPoseData;
+
+	AnimTracks Tracks;
+
+	FSeek(startof(BindPoseData) + BindPoseData.NextNodeOffset);
+
+	Mtar2CompressedDataNode BoneList;
+
+	struct Mtar2BoneAssociations
+	{
+		uint Count <hidden = true>;
+
+		local uint bnAIdx;
+		for (bnAIdx = 0; bnAIdx < Count; bnAIdx++)
+		{
+			struct Mtar2BoneAssociation
+			{
+				StrCode32 UnknownName;
+
+				StrCode32 BoneName;
+			} BoneAssociation <optimize = true>;
+		}
+	} BoneAssociations;
+} BindPose <bgcolor = COLOR_STRCODE32>;
+
+struct AnimKeyframe2(uint componentBitSize)
+{
+	switch (componentBitSize)
+	{
+		case 12:
+			QuatAnim12 Value;
+			break;
+		case 16:
+			VectorAnimH3 Value;
+			break;
+		case 32:
+			Vector3 Value;
+			break;
+		default:
+			Printf("@%Lx Unknown component bit size: %u\n", FTell(), componentBitSize);
+			Assert(false);
+			break;
+	}
+};
+
+local uint flIdx;
+for (flIdx = 0; flIdx < Header.FileCount; flIdx++)
+{
+	FSeek(FileHeaders[flIdx].DataOffset);
+
+	struct Gani2File
+	{
+		uint64 FrameCount;
+
+		ubyte MaybeFlags[Header.IkGroupCount];
+
+		FAlign(4);
+
+		struct Mtar2MiniSegmentHeader
+		{
+			uint ComponentBitSize : 8;
+
+			uint DataOffset : 24;
+		} SegmentHeaders[Header.BoneCount];
+
+		FSkip(16);
+
+		// local uint sgIdx;
+		// for (sgIdx = 0; sgIdx < Header.BoneCount; sgIdx++)
+		// {
+		// 	struct Mtar2AnimTrack
+		// 	{
+		// 		FSeek(startof(SegmentHeaders[sgIdx]) + SegmentHeaders[sgIdx].DataOffset);
+
+		// 		if (SegmentHeaders[sgIdx].ComponentBitSize == 12)
+		// 			BitfieldDisablePadding();
+				
+		// 		AnimKeyframe2 InitFrame(SegmentHeaders[sgIdx].ComponentBitSize);
+
+		// 		if (SegmentHeaders[sgIdx].ComponentBitSize == 12)
+		// 			BitfieldEnablePadding();
+
+		// 		if (SegmentHeaders[sgIdx].ComponentBitSize == 12)
+		// 			BitfieldDisablePadding();
+				
+		// 		local uint frameIndex = 0;
+		// 		do
+		// 		{
+		// 			struct AnimKey
+		// 			{
+		// 				ubyte FrameCount : 8;
+
+		// 				AnimKeyframe2 Frame(SegmentHeaders[sgIdx].ComponentBitSize);
+		// 			} Key;
+
+		// 			frameIndex += Key.FrameCount;
+		// 		}
+		// 		while (frameIndex < FrameCount);
+
+		// 		if (SegmentHeaders[sgIdx].ComponentBitSize == 12)
+		// 			BitfieldEnablePadding();
+		// 	} Tracks;
+		// }
+
+		if ((FileHeaders[flIdx].FkDataSize) != 0)
+		{
+			FSeek(startof(this) + FileHeaders[flIdx].FkDataOffset * 0x10);
+
+			AnimTracks FkTracks;
+		}
+
+		if (FileHeaders[flIdx].MotionEventsOffset != 0)
+		{
+			FSeek(FileHeaders[flIdx].MotionEventsOffset);
+
+			struct
+			{
+				uint Version <hidden = true>;
+
+				uint Count <hidden = true>;
+
+				uint EntryOffsets[Count] <hidden = true>;
+
+				local uint eIdx;
+				local uint sIdx;
+				for (eIdx = 0; eIdx < Count; eIdx++)
+				{
+					FSeek(startof(this) + EntryOffsets[eIdx]);
+
+					struct MotionEventGroup
+					{
+						enum <uint> MotionEventGroupName
+						{
+							ag = 2079928349,
+							cc = 3342815349,
+							fx = 2569337208,
+							sd = 179473302,
+							vo = 1455888052,
+						} Name;
+
+						ushort SubCount <hidden = true>;
+
+						ushort Unknown;
+
+						uint SubEntryOffsets[SubCount] <hidden = true>;
+
+						for (sIdx = 0; sIdx < SubCount; sIdx++)
+						{
+							FSeek(startof(this) + SubEntryOffsets[sIdx]);
+							
+							struct MotionEvent
+							{
+								enum <uint> MotionEventName
+								{
+									// fx
+									FX_CREATE_EFFECT_WITH_SKL = 312449893,
+
+									// ag
+									MTEV_AG_SYNC_L = 877721620,
+									MTEV_AG_SYNC_R = 3647133869,
+									MTEV_FOOT_STOP_R = 2051014260,
+									MTEV_FOOT_STOP_L = 4246579437,
+									MTEV_FOOT_START_R = 3689287927,
+									MTEV_FOOT_START_L = 3049626829,
+
+									// sd
+									right_foot_ground = 2122718581,
+									right_foot_leave = 3453979597,
+									left_foot_ground = 1190238672,
+									left_foot_leave = 3446064903,
+									rattle_weapon = 2416440354,
+									rattle_suit = 1532442511,
+								} Name;
+
+								byte TimeSectionCount : 7;
+								byte unknown : 1;
+
+								byte IntParamCount;
+								byte FloatParamCount;
+								byte StringParamCount;
+
+								struct TimeSection
+								{
+									ushort StartFrame;
+									ushort EndFrame;
+								} TimeSections[TimeSectionCount];
+
+								int IntParams[IntParamCount];
+
+								float FloatParams[FloatParamCount];
+
+								StrCode StringParams[StringParamCount];
+							} Event <read = EnumToString(Name)>;
+						}
+					} Group <read = EnumToString(Name)>;
+				}
+			} MotionEvents;
+		}
+	} File <bgcolor = COLOR_SECTION_1>;
+}

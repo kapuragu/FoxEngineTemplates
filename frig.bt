@@ -181,6 +181,8 @@ struct ChannelInfo
 I dont remember much of this as it has been 6 months since I made this. but basically it is a mapping from curve to bone between both files(edited)
 #endif
 
+#include "common/common.bt"
+
 typedef struct
 {
     //bones[2-3 seq in id] - tracks[2-3 seq in id] - other
@@ -271,7 +273,9 @@ struct FRigFile
     
     int groupAddr[groupCount]; //points to a 32byte data structure
     
-    char Name[20]; //"HumanBody"
+    string Name;
+
+    FAlign(16);
 
     local int i = 0;
     for( i =0; i < groupCount; i++)

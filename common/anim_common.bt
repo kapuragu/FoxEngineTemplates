@@ -39,6 +39,17 @@ typedef struct
 	AnimHalf w;
 } VectorAnimH4 <read = Str("(%s, %s, %s, %s)", ReadAnimHalf(x), ReadAnimHalf(y), ReadAnimHalf(z), ReadAnimHalf(w))>;
 
+// Not padded! BitfieldDisablePadding() needs to be called before using this. The frame count after it is also not padded!
+typedef struct
+{
+	ushort X : 12;
+	ushort Y : 12;
+	ushort Z : 12;
+	ushort X_Sign : 1;
+	ushort Y_Sign : 1;
+	ushort Z_Sign : 1;
+} QuatAnim12;
+
 typedef struct
 {
 	ubyte data[5];
@@ -86,9 +97,9 @@ typedef struct
 
 			enum <ushort> AnimTrackFlags
 			{
-				ANIM_TRACK_FLAGS_TYPED_TRACK = 0x1, //Appears in gz gani
+				ANIM_TRACK_FLAGS_GZ = 0x1, //Appears in gz gani
 				ANIM_TRACK_FLAGS_NO_FRAMES = 0x4,
-			} Flags <read = (this == 0 ? "" : ((this & ANIM_TRACK_FLAGS_TYPED_TRACK) ? ((this & ANIM_TRACK_FLAGS_NO_FRAMES) ? "ANIM_TRACK_FLAGS_NO_FRAMES | ANIM_TRACK_FLAGS_TYPED_TRACK" : "ANIM_TRACK_FLAGS_TYPED_TRACK") : ((this & ANIM_TRACK_FLAGS_NO_FRAMES) ? "ANIM_TRACK_FLAGS_NO_FRAMES" : "")))>; Assert((Flags & ~(ANIM_TRACK_FLAGS_TYPED_TRACK | ANIM_TRACK_FLAGS_NO_FRAMES)) == 0);
+			} Flags <read = (this == 0 ? "" : ((this & ANIM_TRACK_FLAGS_GZ) ? ((this & ANIM_TRACK_FLAGS_NO_FRAMES) ? "ANIM_TRACK_FLAGS_NO_FRAMES | ANIM_TRACK_FLAGS_GZ" : "ANIM_TRACK_FLAGS_GZ") : ((this & ANIM_TRACK_FLAGS_NO_FRAMES) ? "ANIM_TRACK_FLAGS_NO_FRAMES" : "")))>; Assert((Flags & ~(ANIM_TRACK_FLAGS_GZ | ANIM_TRACK_FLAGS_NO_FRAMES)) == 0);
 
 			ubyte Padding <hidden = true>; Assert(Padding == 0);
 
@@ -98,20 +109,17 @@ typedef struct
 
 				short MotionSegmentId; // .fsm DEMO chunk motion segment id
 				
-				if (Flags & ANIM_TRACK_FLAGS_TYPED_TRACK)
+#ifdef ANIM_GANI
+				enum <ubyte> AnimSegmentHeaderType
 				{
-					enum <ubyte> AnimSegmentHeaderType
-					{
-						ANIM_SEGMENT_HEADER_TYPE_ROTATION = 0,
-						ANIM_SEGMENT_HEADER_TYPE_POSITION = 3,
-						ANIM_SEGMENT_HEADER_TYPE_ROOT_ROT = 5,
-						ANIM_SEGMENT_HEADER_TYPE_ROOT_POS = 6,
-					} Type : 3;
-				}
-				else
-				{
-					ubyte ComponentCount : 3;
-				}
+					ANIM_SEGMENT_HEADER_TYPE_ROTATION = 0,
+					ANIM_SEGMENT_HEADER_TYPE_POSITION = 3,
+					ANIM_SEGMENT_HEADER_TYPE_ROOT_ROT = 5,
+					ANIM_SEGMENT_HEADER_TYPE_ROOT_POS = 6,
+				} Type : 3;
+#else
+				ubyte ComponentCount : 3;
+#endif
 
 				ubyte Padding : 4 <hidden = true>; Assert(Padding == 0);
 
@@ -121,102 +129,107 @@ typedef struct
 
 				struct AnimKeyframe
 				{
-					if (Flags & ANIM_TRACK_FLAGS_TYPED_TRACK)
+#ifdef ANIM_GANI
+					switch (Type)
 					{
-						switch (Type)
-						{
-							case ANIM_SEGMENT_HEADER_TYPE_ROTATION:
-								if (ComponentBitSize == 13)
-									QuatAnim13 Value;
-								else
-									Assert(false);
-								break;
-							case ANIM_SEGMENT_HEADER_TYPE_POSITION:
-								if (ComponentBitSize == 32)
-									Vector3 Value;
-								else
-									Assert(false);
-								break;
-							case ANIM_SEGMENT_HEADER_TYPE_ROOT_ROT:
-								if (ComponentBitSize == 15)
-									QuatAnim15 Value;
-								else
-									Assert(false);
-								break;
-							case ANIM_SEGMENT_HEADER_TYPE_ROOT_POS:
-								if (ComponentBitSize == 32)
-									Vector3 Value;
-								else
-									Assert(false);
-								break;
-							default:
-								Printf("@%Lx Unknown component count: %u\n", FTell(), DataOffset);
+						case ANIM_SEGMENT_HEADER_TYPE_ROTATION:
+							if (ComponentBitSize == 12)
+								QuatAnim12 Value;
+							else if (ComponentBitSize == 13)
+								QuatAnim13 Value;
+							else
 								Assert(false);
-								break;
-						}
+							break;
+						case ANIM_SEGMENT_HEADER_TYPE_POSITION:
+							if (ComponentBitSize == 32)
+								Vector3 Value;
+							else
+								Assert(false);
+							break;
+						case ANIM_SEGMENT_HEADER_TYPE_ROOT_ROT:
+							if (ComponentBitSize == 12)
+								QuatAnim12 Value;
+							else if (ComponentBitSize == 15)
+								QuatAnim15 Value;
+							else
+								Assert(false);
+							break;
+						case ANIM_SEGMENT_HEADER_TYPE_ROOT_POS:
+							if (ComponentBitSize == 32)
+								Vector3 Value;
+							else
+								Assert(false);
+							break;
+						default:
+							Printf("@%Lx Unknown component count: %u\n", FTell(), DataOffset);
+							Assert(false);
+							break;
 					}
-					else
+#else 
+					switch (ComponentCount)
 					{
-						switch (ComponentCount)
-						{
-							case 1:
-								if (ComponentBitSize == 16)
-									AnimHalf Value;
-								else if (ComponentBitSize == 32)
-									float Value;
-								else
-									Assert(false);
-								break;
-							case 3:
-								if (ComponentBitSize == 16)
-									VectorAnimH3 Value;
-								else if (ComponentBitSize == 32)
-									Vector3 Value;
-								else
-									Assert(false);
-								break;
-							case 4:
-								if (ComponentBitSize == 16)
-									VectorAnimH4 Value;
-								else if (ComponentBitSize == 32)
-									Vector4 Value;
-								else
-									Assert(false);
-								break;
-							default:
-								Printf("@%Lx Unknown component count: %u\n", FTell(), DataOffset);
+						case 1:
+							if (ComponentBitSize == 16)
+								AnimHalf Value;
+							else if (ComponentBitSize == 32)
+								float Value;
+							else
 								Assert(false);
-								break;
-						}
+							break;
+						case 3:
+							if (ComponentBitSize == 16)
+								VectorAnimH3 Value;
+							else if (ComponentBitSize == 32)
+								Vector3 Value;
+							else
+								Assert(false);
+							break;
+						case 4:
+							if (ComponentBitSize == 16)
+								VectorAnimH4 Value;
+							else if (ComponentBitSize == 32)
+								Vector4 Value;
+							else
+								Assert(false);
+							break;
+						default:
+							Printf("@%Lx Unknown component count: %u\n", FTell(), DataOffset);
+							Assert(false);
+							break;
 					}
+#endif
 				};
 
-				if (DataOffset != 0)
-				{
-					FSeek(startof(this) + DataOffset);
+				// if (DataOffset != 0)
+				// {
+				// 	FSeek(startof(this) + DataOffset);
 
-					AnimKeyframe InitFrame;
+				// 	AnimKeyframe InitFrame;
 
-					if ((Flags & ANIM_TRACK_FLAGS_NO_FRAMES) == 0)
-					{
-						local uint frameIndex = 0;
-						do
-						{
-							struct AnimKey
-							{
-								ubyte FrameCount;
+				// 	if ((Flags & ANIM_TRACK_FLAGS_NO_FRAMES) == 0)
+				// 	{
+				// 		local uint frameIndex = 0;
+				// 		do
+				// 		{
+				// 			struct AnimKey
+				// 			{
+				// 				ubyte FrameCount;
 
-								AnimKeyframe Frame;
-							} Key;
+				// 				AnimKeyframe Frame;
+				// 			} Key;
 
-							frameIndex += Key.FrameCount;
-						}
-						while (frameIndex < FrameCount);
-					}
+				// 			frameIndex += Key.FrameCount;
+				// 		}
+				// 		while (frameIndex < FrameCount);
+				// 	}
 
-					FSeek(startof(this) + 8);
-				}
-			} SegmentHeaders[SegmentCount] <read = ((parentof(this).Flags & ANIM_TRACK_FLAGS_TYPED_TRACK) ? EnumToString(Type) : Str("%u, %u", ComponentCount, ComponentBitSize)), optimize = false>;
+				// 	FSeek(startof(this) + 8);
+				// }
+#ifdef ANIM_GANI
+			} SegmentHeaders[SegmentCount] <read = EnumToString(Type), optimize = false>;
+#else 
+			} SegmentHeaders[SegmentCount] <read = Str("%u, %u", ComponentCount, ComponentBitSize), optimize = false>;
+#endif
 		} Track;
 	}
 } AnimTracks <bgcolor = 0x8ADEF3>;
