@@ -190,31 +190,34 @@ while (FTell()!=FileSize())
 					local uint segId=0;
 					struct SegmentMotion
 					{
-						FSeek(startof(demoData)+segmentOffsetSection.segmentOffset[segId]);
-						if (segId<demoData.segmentCount-1)
-						{
-							while (FTell()<startof(demoData)+segmentOffsetSection.segmentOffset[segId+1])
-							{
-								ushort motion;
-							}
-						}
-						else
-						{
-							if ((demoData.offsetToEventSection>0) & (demoData.offsetToEventSection<header.chunkSize))
-							{
-								while ( (FTell() - startOfChunk) < demoData.offsetToEventSection+0x10 )
-								{
-									ushort motion;
-								}
-							}
-							else
-							{
-								while ( (FTell() - startOfChunk) < header.chunkSize )
-								{
-									ushort motion;
-								}
-							};
-						}
+                        if (segmentOffsetSection.segmentOffset[segId]>0)
+                        {
+						    FSeek(startof(demoData)+segmentOffsetSection.segmentOffset[segId]);
+						    if (segId<demoData.segmentCount-1)
+						    {
+							    while (FTell()<startof(demoData)+segmentOffsetSection.segmentOffset[segId+1])
+							    {
+								    ushort motion;
+							    }
+						    }
+						    else
+						    {
+							    if ((demoData.offsetToEventSection>0) & (demoData.offsetToEventSection<header.chunkSize))
+							    {
+								    while ( (FTell() - startOfChunk) < demoData.offsetToEventSection+0x10 )
+								    {
+									    ushort motion;
+								    }
+							    }
+							    else
+							    {
+								    while ( (FTell() - startOfChunk) < header.chunkSize )
+								    {
+									    ushort motion;
+								    }
+							    };
+						    }
+                        }
 						segId++;
 						
 					} motion[demoData.segmentCount] <optimize=false, bgcolor=0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
@@ -279,7 +282,7 @@ while (FTell()!=FileSize())
 							float paramFloat[paramFloatCount] <optimize=false>;
 							
 						if (paramStringCount>0)
-							uint64 paramString[paramStringCount] // Sometimes uses fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s
+							uint64 paramString[paramStringCount]; // Sometimes uses fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s
 					} event[eventOffsets.eventCount] <optimize=false, bgcolor=0xF0F080>;
 					
 				} eventSection <bgcolor=0x00C000>;
