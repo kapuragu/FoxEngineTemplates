@@ -53,6 +53,8 @@ struct SAND
 	case "SI Frame":
 	case "SKEL":
 	case "Unknown":
+	case "MOTION":
+	case "GLOBALSRT":
 	case "MTP":
 		AnimTracks Tracks;
 		break;
@@ -67,9 +69,6 @@ struct SAND
 				FoxDataString Entry <optimize = true>;
 			}
 		} List <bgcolor = 0xF38ADE>;
-		break;
-	case "MOTION":
-		AnimTracks Tracks;
 		break;
 	default:
 		{
