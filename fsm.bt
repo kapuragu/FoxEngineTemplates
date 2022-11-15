@@ -94,12 +94,27 @@ local int passedSoundChunk = 0; // Probably a better way to tell that it's the f
 
 local int startOfChunk = FTell(); // In case is run from offset inside .fsm
 
+enum <uint> FSM_CHUNK_TYPE
+{
+    TRACKS=0,
+    NODES=1,//GZ/PT/that unused one in TPP only
+    EVENTS_ONLY=2,
+};
+
+enum <uint> FSM_DEMO_FLAGS
+{
+    FLAG_1 = 0x1,//Mostly used in GZ
+    FLAG_2 = 0x2,//When it's the only flag enabled, the frame count is 1
+    HAS_ROOT_POSITION = 0x4,//add a vector3 pos before segment flags
+    USE_SAND = 0x8,//only appears in tpp fsms with no node chunks
+};
+
 struct DemoData
 {
-	uint chunkType;
-	if (demoData.chunkType==0)
+	FSM_CHUNK_TYPE chunkType; //0==motion segments, 1==nodes, 2==events only
+	if (demoData.chunkType==TRACKS)
 	{
-		int u0;
+		FSM_DEMO_FLAGS flags; Printf("flags:%u,%u,%u,%u\n",(flags&FLAG_1),(flags&FLAG_2),(flags&HAS_ROOT_POSITION),(flags&USE_SAND));
 		int startFrame; //chunk i is i*frameCount
 		int frameCount;
 					
@@ -109,7 +124,7 @@ struct DemoData
 	int offsetToChunkEnd <comment="Chunk size starting from demoData">;
 	int offsetToEventSection <comment="Offset starts from demoData">;
 				
-	if (demoData.chunkType==1)
+	if (demoData.chunkType==NODES)
 	{
 		FSkip(0x4);
 	}
@@ -138,7 +153,7 @@ while (FTell()!=FileSize())
 		{
 			DemoData demoData <bgcolor=0x800080>;
 
-			if (demoData.chunkType==0)
+			if (demoData.chunkType==TRACKS)
 			{
 				struct MotionSection
 				{
@@ -148,15 +163,9 @@ while (FTell()!=FileSize())
 						
 					} segmentOffsetSection <bgcolor=0x008000, comment="Offsets start from demoData">;
 					
-					if (demoData.u0!=10)
+					if (demoData.flags & HAS_ROOT_POSITION)
 					{
-						struct RootVector3
-						{
-							float x;
-							float y;
-							float z;
-							
-						} rootVector3 <bgcolor=0xC08000, comment="World translation root of the demo chunk. Thanks to Ventos to pointing it out!">;
+						Vector3 rootPos <bgcolor=0xC08000, comment="World translation root of the demo chunk. Thanks to Ventos to pointing it out!">;
 					};
 					
 					struct SegmentTypeIndices
@@ -165,27 +174,6 @@ while (FTell()!=FileSize())
 						
 					} indices <bgcolor=0x0080C0, comment="Might have something to do with what kinda data is in the Motions">;
 
-					/*struct SegmentMotion
-					{
-						
-						// There's some empty ones at the end with this kind of parsing, so maybe the type indices define the length of the individual segments
-						if ((demoData.offsetToEventSection>0) & (demoData.offsetToEventSection<header.chunkSize))
-						{
-							while ( (FTell() - startOfChunk) < demoData.offsetToEventSection+0x10 )
-							{
-								ushort motion;
-							}
-						}
-						else
-						{
-							while ( (FTell() - startOfChunk) < header.chunkSize )
-							{
-								ushort motion;
-							}
-						};
-						
-					} motion <optimize=false, bgcolor=0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
-					*/
 					local uint segId=0;
 					struct SegmentMotion
 					{
@@ -224,7 +212,7 @@ while (FTell()!=FileSize())
 				} motionSection <optimize=false, bgcolor=0x008000>;
 			};
 
-			if (((demoData.chunkType==2) || (demoData.offsetToEventSection>0)) & (demoData.offsetToEventSection<header.chunkSize))
+			if (((demoData.chunkType==EVENTS_ONLY) || (demoData.offsetToEventSection>0)) & (demoData.offsetToEventSection<header.chunkSize))
 			{
 				struct EventSection
 				{
@@ -237,14 +225,14 @@ while (FTell()!=FileSize())
 
 					} eventOffsets <bgcolor=0x00C000, comment="Offsets to nodes, relative from the start of the section.">;
 
-					if (demoData.chunkType==0)
+					if (demoData.chunkType==TRACKS)
 					{
 						if ((FTell() - startOfChunk) % 16 != 0)
 						{
 							FSkip(16 - ((FTell() - startOfChunk) % 16));
 						}
 					}
-					else if (demoData.chunkType==2)
+					else if (demoData.chunkType==EVENTS_ONLY)
 					{
 						if ((FTell() - startOfChunk) % 16 != 0)
 						{	
@@ -293,7 +281,7 @@ while (FTell()!=FileSize())
 			}
 
 			// GZ only. Since GZ has no .sand files, it uses this instead. Usually the first chunk, after SYS if that exists.
-			if (demoData.chunkType==1)
+			if (demoData.chunkType==NODES)
 			{
 				FoxDataNodes Nodes <bgcolor=0x0CC0C0>;
 			}
