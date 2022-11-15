@@ -115,14 +115,13 @@ struct DemoData
 	if (demoData.chunkType==TRACKS)
 	{
 		FSM_DEMO_FLAGS flags; Printf("flags:%u,%u,%u,%u\n",(flags&FLAG_1),(flags&FLAG_2),(flags&HAS_ROOT_POSITION),(flags&USE_SAND));
-		int startFrame; //chunk i is i*frameCount
+		int startFrame;
 		int frameCount;
-					
 		int segmentCount;
 	}
 				
 	int offsetToChunkEnd <comment="Chunk size starting from demoData">;
-	int offsetToEventSection <comment="Offset starts from demoData">;
+	int offsetToEvents <comment="Offset starts from demoData">;
 				
 	if (demoData.chunkType==NODES)
 	{
@@ -153,85 +152,62 @@ while (FTell()!=FileSize())
 		{
 			DemoData demoData <bgcolor=0x800080>;
 
-			if (demoData.chunkType==TRACKS)
-			{
-				struct MotionSection
-				{
-					struct SegmentOffsets
-					{
-						int segmentOffset[demoData.segmentCount];
-						
-					} segmentOffsetSection <bgcolor=0x008000, comment="Offsets start from demoData">;
-					
-					if (demoData.flags & HAS_ROOT_POSITION)
-					{
+			if (demoData.chunkType==TRACKS){
+				struct MotionSection{
+					int segmentOffset[demoData.segmentCount] <bgcolor=0x008000, comment="Offsets start from demoData">;
+					if (demoData.flags & HAS_ROOT_POSITION){
 						Vector3 rootPos <bgcolor=0xC08000, comment="World translation root of the demo chunk. Thanks to Ventos to pointing it out!">;
 					};
-					
-					struct SegmentTypeIndices
-					{
-						ushort typeIndex[demoData.segmentCount];
-						
-					} indices <bgcolor=0x0080C0, comment="Might have something to do with what kinda data is in the Motions">;
-
-					local uint segId=0;
-                    local uint nextOffset=0;
-                    local uint nextIndex=0;
-					struct SegmentMotion
-					{
-                        if (segmentOffsetSection.segmentOffset[segId]>0)
-                        {
-						    FSeek(startof(demoData)+segmentOffsetSection.segmentOffset[segId]);
-						    if (segId<demoData.segmentCount-1)
-						    {
-                                nextIndex=segId+1;
-                                nextOffset=segmentOffsetSection.segmentOffset[nextIndex];
-                                if (nextOffset==0)
-                                {
-                                    while(nextIndex<demoData.segmentCount & nextOffset==0)
-                                    {
-                                        nextIndex++;
-                                        nextOffset=segmentOffsetSection.segmentOffset[nextIndex];
+					ushort segmentFlags[demoData.segmentCount] <bgcolor=0x0080C0, comment="Might have something to do with what kinda data is in the Motions">;
+                    struct SegmentTracks{
+					    local uint segId=0;
+                        local uint nextOffset=0;
+                        local uint nextIndex=0;
+					    struct SegmentTrack{
+                            //Endianness difference shows that these are indeed stored as shorts
+                            //However their content seems to be a stream of values that can even be floats
+                            //Or even floats with single bytes between them
+                            if (segmentOffset[segId]>0){
+						        FSeek(startof(demoData)+segmentOffset[segId]);
+						        if (segId<demoData.segmentCount-1){
+                                    nextIndex=segId+1;
+                                    nextOffset=segmentOffset[nextIndex];
+                                    if (nextOffset==0){
+                                        while(nextIndex<demoData.segmentCount & nextOffset==0){
+                                            nextIndex++;
+                                            nextOffset=segmentOffset[nextIndex];
+                                        }
                                     }
-                                }
-
-                                while (FTell()<startof(demoData)+nextOffset)
-                                {
-                                    ushort motion;
-                                }
-						    }
-						    else
-						    {
-							    if ((demoData.offsetToEventSection>0) & (demoData.offsetToEventSection<header.chunkSize))
-							    {
-								    while ( (FTell() - startOfChunk) < demoData.offsetToEventSection+0x10 )
-								    {
-									    ushort motion;
-								    }
-							    }
-							    else
-							    {
-								    while ( (FTell() - startOfChunk) < header.chunkSize )
-								    {
-									    ushort motion;
-								    }
-							    };
-						    }
-                        }
-						segId++;
-						
-					} motion[demoData.segmentCount] <optimize=false, bgcolor=0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
-
+                                    while (FTell()<startof(demoData)+nextOffset){
+                                        ushort motion;
+                                    }
+						        }
+						        else{
+							        if ((demoData.offsetToEvents>0) & (demoData.offsetToEvents<header.chunkSize)){
+								        while ( (FTell() - startOfChunk) < demoData.offsetToEvents+0x10 ){
+									        ushort motion;
+								        }
+							        }
+							        else{
+								        while ( (FTell() - startOfChunk) < header.chunkSize ){
+									        ushort motion;
+								        }
+							        };
+						        }
+                            }
+						    segId++;
+					    } track[demoData.segmentCount] <optimize=false, bgcolor=0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
+                    } tracks;
 				} motionSection <optimize=false, bgcolor=0x008000>;
 			};
 
-			if (((demoData.chunkType==EVENTS_ONLY) || (demoData.offsetToEventSection>0)) & (demoData.offsetToEventSection<header.chunkSize))
+			if (((demoData.chunkType==EVENTS_ONLY) || (demoData.offsetToEvents>0)) & (demoData.offsetToEvents<header.chunkSize))
 			{
 				struct EventSection
 				{
 					struct EventOffsets
 					{
-						uint name <comment="StrCode32">;
+						StrCode32 name;
 						ushort eventCount;
 						FSkip(0x2);
 						uint offsetToEvent[eventCount]; // offset to a node from uint name here
@@ -259,31 +235,36 @@ while (FTell()!=FileSize())
 					
 					// Thanks .evfs!
 					// Something similar also seems to be used in .gani files.
-					struct Event
-					{
-						StrCode32 Name;
-						
-						byte timeSectionCount; // Might be a bitfield, but unaffected by endianness
-						byte paramIntCount;
-						byte paramFloatCount;
-						byte paramStringCount;
-						
-						if (timeSectionCount>0)
-							struct TimeSection
-							{
-								int startFrame;
-								int endFrame; // Two shorts? Endianness and all that really screws these up, especially some paramInts.
-							} timeSection[timeSectionCount] <optimize=false>;
-						
-						if (paramIntCount>0)
-							int paramInt[paramIntCount] <optimize=false>;
-						
-						if (paramFloatCount>0)
-							float paramFloat[paramFloatCount] <optimize=false>;
-							
-						if (paramStringCount>0)
-							uint64 paramString[paramStringCount]; // Sometimes uses fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s
-					} event[eventOffsets.eventCount] <optimize=false, bgcolor=0xF0F080>;
+                    struct Events
+                    {
+					    struct Event
+					    {
+						    StrCode32 Name;
+						    
+						    byte timeSectionCount; // Might be a bitfield, but unaffected by endianness
+						    byte paramIntCount;
+						    byte paramFloatCount;
+						    byte paramStringCount;
+						    
+						    if (timeSectionCount>0)
+							    struct TimeSection
+							    {
+								    int startFrame;
+								    int endFrame; // Two shorts? Endianness and all that really screws these up, especially some paramInts.
+							    } timeSection[timeSectionCount] <optimize=false>;
+						    
+						    if (paramIntCount>0)
+							    int paramInt[paramIntCount] <optimize=false>;
+						    
+						    if (paramFloatCount>0)
+							    float paramFloat[paramFloatCount] <optimize=false>;
+							    
+                            //StrCode64, but written as two truncated halves, as uints, according to endianness.
+						    if (paramStringCount>0)
+							    uint64 paramString[paramStringCount]; // Sometimes uses fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s
+					    } event[eventOffsets.eventCount] <optimize=false, bgcolor=0xF0F080>;
+
+                    } events;
 					
 				} eventSection <bgcolor=0x00C000>;
 			};
