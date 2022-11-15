@@ -175,6 +175,8 @@ while (FTell()!=FileSize())
 					} indices <bgcolor=0x0080C0, comment="Might have something to do with what kinda data is in the Motions">;
 
 					local uint segId=0;
+                    local uint nextOffset=0;
+                    local uint nextIndex=0;
 					struct SegmentMotion
 					{
                         if (segmentOffsetSection.segmentOffset[segId]>0)
@@ -182,10 +184,21 @@ while (FTell()!=FileSize())
 						    FSeek(startof(demoData)+segmentOffsetSection.segmentOffset[segId]);
 						    if (segId<demoData.segmentCount-1)
 						    {
-							    while (FTell()<startof(demoData)+segmentOffsetSection.segmentOffset[segId+1])
-							    {
-								    ushort motion;
-							    }
+                                nextIndex=segId+1;
+                                nextOffset=segmentOffsetSection.segmentOffset[nextIndex];
+                                if (nextOffset==0)
+                                {
+                                    while(nextIndex<demoData.segmentCount & nextOffset==0)
+                                    {
+                                        nextIndex++;
+                                        nextOffset=segmentOffsetSection.segmentOffset[nextIndex];
+                                    }
+                                }
+
+                                while (FTell()<startof(demoData)+nextOffset)
+                                {
+                                    ushort motion;
+                                }
 						    }
 						    else
 						    {
