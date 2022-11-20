@@ -90,9 +90,9 @@ struct SAND
 
 #include "common/FoxData_common.bt"
 
-local int passedSoundChunk = 0; // Probably a better way to tell that it's the first SND chunk
+local int passedSoundPacket = 0; // Probably a better way to tell that it's the first SND chunk
 
-local int startOfChunk = FTell(); // In case is run from offset inside .fsm
+local int startOfPacket = FTell(); // In case is run from offset inside .fsm
 
 enum <uint> FSM_CHUNK_TYPE
 {
@@ -109,21 +109,21 @@ enum <uint> FSM_DEMO_FLAGS
     USE_SAND = 0x8,//only appears in tpp fsms with no node chunks
 };
 
-struct DemoData
+struct DemoPacketHeader
 {
-	FSM_CHUNK_TYPE chunkType; //0==motion segments, 1==nodes, 2==events only
-	if (demoData.chunkType==TRACKS)
+	FSM_CHUNK_TYPE demoPacketType; //0==motion segments, 1==nodes, 2==events only
+	if (demoPacketType==TRACKS)
 	{
 		FSM_DEMO_FLAGS flags; Printf("flags:%u,%u,%u,%u\n",(flags&FLAG_1),(flags&FLAG_2),(flags&HAS_ROOT_POSITION),(flags&USE_SAND));
-		int startFrame;
-		int frameCount;
-		int segmentCount;
+		int frameStart;
+		int frameRate;
+		int trackCount;
 	}
 				
-	int offsetToChunkEnd <comment="Chunk size starting from demoData">;
-	int offsetToEvents <comment="Offset starts from demoData">;
+	int offsetToPacketEnd <comment="Chunk size starting from demoPacketHeader">;
+	int offsetToEvents <comment="Offset starts from demoPacketHeader">;
 				
-	if (demoData.chunkType==NODES)
+	if (demoPacketType==NODES)
 	{
 		FSkip(0x4);
 	}
@@ -132,76 +132,86 @@ struct DemoData
 
 while (FTell()!=FileSize())
 {
-	struct DemoChunk
+	struct Packet
 	{
-		startOfChunk = FTell(); // When the chunk needs to get the offset of its start
+		startOfPacket = FTell(); // When the chunk needs to get the offset of its start
 		
 		struct Header
 		{
-			char sign[4]; if (sign=="OMED" || sign==" SYS" || sign==" DNS" || sign==" DNE") { BigEndian();BitfieldRightToLeft(); };
-			uint chunkSize;
-			double demoStart;
+			char packetType[4]; if (packetType=="OMED" || packetType==" SYS" || packetType==" DNS" || packetType==" DNE") { BigEndian();BitfieldRightToLeft(); };
+			uint packetSize;
+			double packetStartTime;
 			
 		} header <bgcolor=0x800000>;
 		
-		if (header.sign=="SYS " || header.sign==" SYS")
+		if (header.packetType=="SYS " || header.packetType==" SYS")
 		{
 			
 		}
-		else if (header.sign=="DEMO" || header.sign=="OMED")
+		else if (header.packetType=="DEMO" || header.packetType=="OMED")
 		{
-			DemoData demoData <bgcolor=0x800080>;
+			DemoPacketHeader demoPacketHeader <bgcolor=0x800080>;
 
-			if (demoData.chunkType==TRACKS){
-				struct MotionSection{
-					int segmentOffset[demoData.segmentCount] <bgcolor=0x008000, comment="Offsets start from demoData">;
-					if (demoData.flags & HAS_ROOT_POSITION){
+			if (demoPacketHeader.demoPacketType==TRACKS){
+				struct TracksSection{
+					int trackOffset[demoPacketHeader.trackCount] <bgcolor=0x008000, comment="Offsets start from demoPacketHeader">;
+					if (demoPacketHeader.flags & HAS_ROOT_POSITION){
 						Vector3 rootPos <bgcolor=0xC08000, comment="World translation root of the demo chunk. Thanks to Ventos to pointing it out!">;
 					};
-					ushort segmentFlags[demoData.segmentCount] <bgcolor=0x0080C0, comment="Might have something to do with what kinda data is in the Motions">;
-                    struct SegmentTracks{
+					ushort trackFlags[demoPacketHeader.trackCount] <bgcolor=0x0080C0, comment="Might have something to do with what kinda data is in the Motions">;
+                    struct Tracks{
 					    local uint segId=0;
                         local uint nextOffset=0;
                         local uint nextIndex=0;
-					    struct SegmentTrack{
+					    struct Track{
                             //Endianness difference shows that these are indeed stored as shorts
                             //However their content seems to be a stream of values that can even be floats
                             //Or even floats with single bytes between them
-                            if (segmentOffset[segId]>0){
-						        FSeek(startof(demoData)+segmentOffset[segId]);
-						        if (segId<demoData.segmentCount-1){
+                            if (trackOffset[segId]>0)
+                            {
+						        FSeek(startof(demoPacketHeader)+trackOffset[segId]);
+						        if (segId<demoPacketHeader.trackCount-1)
+                                {
                                     nextIndex=segId+1;
-                                    nextOffset=segmentOffset[nextIndex];
+                                    nextOffset=trackOffset[nextIndex];
                                     if (nextOffset==0){
-                                        while(nextIndex<demoData.segmentCount & nextOffset==0){
+                                        while(nextIndex<demoPacketHeader.trackCount & nextOffset==0)
+                                        {
                                             nextIndex++;
-                                            nextOffset=segmentOffset[nextIndex];
+                                            nextOffset=trackOffset[nextIndex];
                                         }
                                     }
-                                    while (FTell()<startof(demoData)+nextOffset){
+                                    while (FTell()<startof(demoPacketHeader)+nextOffset)
+                                    {
                                         ushort motion;
                                     }
 						        }
 						        else{
-							        if ((demoData.offsetToEvents>0) & (demoData.offsetToEvents<header.chunkSize)){
-								        while ( (FTell() - startOfChunk) < demoData.offsetToEvents+0x10 ){
+							        if ((demoPacketHeader.offsetToEvents>0) 
+                                    & (demoPacketHeader.offsetToEvents<header.packetSize))
+                                    {
+								        while ( (FTell() - startOfPacket) < demoPacketHeader.offsetToEvents+0x10 )
+                                        {
 									        ushort motion;
 								        }
 							        }
-							        else{
-								        while ( (FTell() - startOfChunk) < header.chunkSize ){
+							        else
+                                    {
+								        while ( (FTell() - startOfPacket) < header.packetSize )
+                                        {
 									        ushort motion;
 								        }
 							        };
 						        }
                             }
 						    segId++;
-					    } track[demoData.segmentCount] <optimize=false, bgcolor=0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
+					    } track[demoPacketHeader.trackCount] <optimize=false, bgcolor=0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
                     } tracks;
-				} motionSection <optimize=false, bgcolor=0x008000>;
+				} tracksSection <optimize=false, bgcolor=0x008000>;
 			};
 
-			if (((demoData.chunkType==EVENTS_ONLY) || (demoData.offsetToEvents>0)) & (demoData.offsetToEvents<header.chunkSize))
+			if (((demoPacketHeader.demoPacketType==EVENTS_ONLY) 
+            || (demoPacketHeader.offsetToEvents>0)) & (demoPacketHeader.offsetToEvents<header.packetSize))
 			{
 				struct EventSection
 				{
@@ -214,18 +224,18 @@ while (FTell()!=FileSize())
 
 					} eventOffsets <bgcolor=0x00C000, comment="Offsets to nodes, relative from the start of the section.">;
 
-					if (demoData.chunkType==TRACKS)
+					if (demoPacketHeader.demoPacketType==TRACKS)
 					{
-						if ((FTell() - startOfChunk) % 16 != 0)
+						if ((FTell() - startOfPacket) % 16 != 0)
 						{
-							FSkip(16 - ((FTell() - startOfChunk) % 16));
+							FSkip(16 - ((FTell() - startOfPacket) % 16));
 						}
 					}
-					else if (demoData.chunkType==EVENTS_ONLY)
+					else if (demoPacketHeader.demoPacketType==EVENTS_ONLY)
 					{
-						if ((FTell() - startOfChunk) % 16 != 0)
+						if ((FTell() - startOfPacket) % 16 != 0)
 						{	
-							FSkip(16 - ((FTell() - startOfChunk) % 16) - 4);
+							FSkip(16 - ((FTell() - startOfPacket) % 16) - 4);
 						}
 						else
 						{
@@ -275,17 +285,17 @@ while (FTell()!=FileSize())
 			}
 
 			// GZ only. Since GZ has no .sand files, it uses this instead. Usually the first chunk, after SYS if that exists.
-			if (demoData.chunkType==NODES)
+			if (demoPacketHeader.demoPacketType==NODES)
 			{
 				FoxDataNodes Nodes <bgcolor=0x0CC0C0>;
 			}
 			
 		}
-		else if (header.sign=="SND " || header.sign==" DNS")
+		else if (header.packetType=="SND " || header.packetType==" DNS")
 		{
-			if (passedSoundChunk==0)
+			if (passedSoundPacket==0)
 			{
-				passedSoundChunk = 1; // There's probably a better way to tell that it's the first SND chunk to parse this section.
+				passedSoundPacket = 1; // There's probably a better way to tell that it's the first SND chunk to parse this section.
 				struct SoundData
 				{
 					uint completeSoundFileLength;
@@ -302,12 +312,12 @@ while (FTell()!=FileSize())
 			struct RiffSection
 			{
 				// I mean, do I reverse .wem files here or what?
-				char riffData[(startOfChunk+header.chunkSize)-FTell()];
+				char riffData[(startOfPacket+header.packetSize)-FTell()];
 				
 			} riffSection <bgcolor=0xF08040>;
 			
 		}
-		else if (header.sign=="END " || header.sign==" DNE")
+		else if (header.packetType=="END " || header.packetType==" DNE")
 		{
 			FSkip(FileSize()-FTell()); // Sometimes there's tons of null lines after the END
 		}
@@ -316,8 +326,8 @@ while (FTell()!=FileSize())
 			Assert(2+2==5, "Unknown Chunk Type!!!"); // In case something goes very very wrong
 		}
 
-		if (header.sign!="END " && header.sign!=" DNE")
-			FSeek(startof(header.sign)+header.chunkSize);
+		if (header.packetType!="END " && header.packetType!=" DNE")
+			FSeek(startof(header.packetType)+header.packetSize);
 		
-	} demoChunk;
+	} packet;
 }
