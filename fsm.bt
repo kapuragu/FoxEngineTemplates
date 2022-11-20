@@ -96,25 +96,25 @@ local int startOfPacket = FTell(); // In case is run from offset inside .fsm
 
 enum <uint> DEMO_PACKET_TYPE
 {
-    TRACKS=0,
-    NODES=1,//GZ/PT/that unused one in TPP only
-    EVENTS_ONLY=2,
+    DEMO_PACKET_TYPE_SEGMENTS=0,
+    DEMO_PACKET_TYPE_NODES=1,//GZ/PT/that unused one in TPP only
+    DEMO_PACKET_TYPE_EVENTS=2,
 };
 
 enum <uint> DEMO_PACKET_FLAGS
 {
-    FLAG_1 = 0x1,//Mostly used in GZ
-    FLAG_2 = 0x2,//When it's the only flag enabled, the frame count is 1
-    HAS_ROOT_POSITION = 0x4,//add a vector3 pos before segment flags
-    USE_SAND = 0x8,//only appears in tpp fsms with no node chunks
+    DEMO_PACKET_FLAGS_FLAG_1 = 0x1,//Mostly used in GZ
+    DEMO_PACKET_FLAGS_FLAG_2 = 0x2,//When it's the only flag enabled, the frame count is 1
+    DEMO_PACKET_FLAGS_ROOTPOS = 0x4,//add a vector3 pos before segment flags
+    DEMO_PACKET_FLAGS_HAS_SAND = 0x8,//only appears in tpp fsms with no node chunks
 };
 
 struct DemoPacketHeader
 {
 	DEMO_PACKET_TYPE demoPacketType; //0==motion segments, 1==nodes, 2==events only
-	if (demoPacketType==TRACKS)
+	if (demoPacketType==DEMO_PACKET_TYPE_SEGMENTS)
 	{
-		DEMO_PACKET_FLAGS flags; Printf("flags:%u,%u,%u,%u\n",(flags&FLAG_1),(flags&FLAG_2),(flags&HAS_ROOT_POSITION),(flags&USE_SAND));
+		DEMO_PACKET_FLAGS flags;
 		int frameStart;
 		int frameCount;
 		int segmentCount;
@@ -123,11 +123,38 @@ struct DemoPacketHeader
 	int offsetToPacketEnd <comment="Chunk size starting from demoPacketHeader">;
 	int offsetToEvents <comment="Offset starts from demoPacketHeader">;
 				
-	if (demoPacketType==NODES)
+	if (demoPacketType==DEMO_PACKET_TYPE_NODES)
 	{
 		FSkip(0x4);
 	}
 
+};
+
+struct Event
+{
+	StrCode32 Name;
+	
+	byte timeSectionCount; // Might be a bitfield, but unaffected by endianness
+	byte paramIntCount;
+	byte paramFloatCount;
+	byte paramStringCount;
+	
+	if (timeSectionCount>0)
+		struct TimeSection
+		{
+			int startFrame;
+			int endFrame; // Two shorts? Endianness and all that really screws these up, especially some paramInts.
+		} timeSection[timeSectionCount] <optimize=false>;
+	
+	if (paramIntCount>0)
+		int paramInt[paramIntCount] <optimize=false>;
+	
+	if (paramFloatCount>0)
+		float paramFloat[paramFloatCount] <optimize=false>;
+		
+                            //StrCode64, but written as two truncated halves, as uints, according to endianness.
+	if (paramStringCount>0)
+		uint64 paramString[paramStringCount]; // Sometimes uses fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s
 };
 
 while (FTell()!=FileSize())
@@ -135,31 +162,33 @@ while (FTell()!=FileSize())
 	struct Packet
 	{
 		startOfPacket = FTell(); // When the chunk needs to get the offset of its start
-		
+
 		struct Header
 		{
 			char packetType[4]; if (packetType=="OMED" || packetType==" SYS" || packetType==" DNS" || packetType==" DNE") { BigEndian();BitfieldRightToLeft(); };
 			uint packetSize;
 			double packetStartTime;
-			
 		} header <bgcolor=0x800000>;
-		
+
 		if (header.packetType=="SYS " || header.packetType==" SYS")
 		{
-			
-		}
+        }
 		else if (header.packetType=="DEMO" || header.packetType=="OMED")
 		{
 			DemoPacketHeader demoPacketHeader <bgcolor=0x800080>;
 
-			if (demoPacketHeader.demoPacketType==TRACKS){
-				struct DataSegmentSection{
+			if (demoPacketHeader.demoPacketType==DEMO_PACKET_TYPE_SEGMENTS)
+            {
+				struct DataSegmentSection
+                {
 					int segmentOffset[demoPacketHeader.segmentCount] <bgcolor=0x008000, comment="Offsets start from demoPacketHeader">;
-					if (demoPacketHeader.flags & HAS_ROOT_POSITION){
+					if (demoPacketHeader.flags & DEMO_PACKET_FLAGS_ROOTPOS)
+                    {
 						Vector3 rootPos <bgcolor=0xC08000, comment="World translation root of the demo chunk. Thanks to Ventos to pointing it out!">;
 					};
 					ushort segmentFlags[demoPacketHeader.segmentCount] <bgcolor=0x0080C0, comment="Might have something to do with what kinda data is in the Motions">;
-                    struct DataSegments{
+                    struct DataSegments
+                    {
 					    local uint segId=0;
                         local uint nextOffset=0;
                         local uint nextIndex=0;
@@ -209,8 +238,8 @@ while (FTell()!=FileSize())
                     } segments;
 				} segmentSection <optimize=false, bgcolor=0x008000>;
 			};
-
-			if (((demoPacketHeader.demoPacketType==EVENTS_ONLY) 
+            
+            if (((demoPacketHeader.demoPacketType==DEMO_PACKET_TYPE_EVENTS) 
             || (demoPacketHeader.offsetToEvents>0)) & (demoPacketHeader.offsetToEvents<header.packetSize))
 			{
 				struct EventSection
@@ -224,14 +253,14 @@ while (FTell()!=FileSize())
 
 					} eventOffsets <bgcolor=0x00C000, comment="Offsets to nodes, relative from the start of the section.">;
 
-					if (demoPacketHeader.demoPacketType==TRACKS)
+					if (demoPacketHeader.demoPacketType==DEMO_PACKET_TYPE_SEGMENTS)
 					{
 						if ((FTell() - startOfPacket) % 16 != 0)
 						{
 							FSkip(16 - ((FTell() - startOfPacket) % 16));
 						}
 					}
-					else if (demoPacketHeader.demoPacketType==EVENTS_ONLY)
+					else if (demoPacketHeader.demoPacketType==DEMO_PACKET_TYPE_EVENTS)
 					{
 						if ((FTell() - startOfPacket) % 16 != 0)
 						{	
@@ -247,32 +276,7 @@ while (FTell()!=FileSize())
 					// Something similar also seems to be used in .gani files.
                     struct Events
                     {
-					    struct Event
-					    {
-						    StrCode32 Name;
-						    
-						    byte timeSectionCount; // Might be a bitfield, but unaffected by endianness
-						    byte paramIntCount;
-						    byte paramFloatCount;
-						    byte paramStringCount;
-						    
-						    if (timeSectionCount>0)
-							    struct TimeSection
-							    {
-								    int startFrame;
-								    int endFrame; // Two shorts? Endianness and all that really screws these up, especially some paramInts.
-							    } timeSection[timeSectionCount] <optimize=false>;
-						    
-						    if (paramIntCount>0)
-							    int paramInt[paramIntCount] <optimize=false>;
-						    
-						    if (paramFloatCount>0)
-							    float paramFloat[paramFloatCount] <optimize=false>;
-							    
-                            //StrCode64, but written as two truncated halves, as uints, according to endianness.
-						    if (paramStringCount>0)
-							    uint64 paramString[paramStringCount]; // Sometimes uses fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s
-					    } event[eventOffsets.eventCount] <optimize=false, bgcolor=0xF0F080>;
+					    Event event[eventOffsets.eventCount] <optimize=false, bgcolor=0xF0F080>;
 
                     } events;
 					
@@ -285,7 +289,7 @@ while (FTell()!=FileSize())
 			}
 
 			// GZ only. Since GZ has no .sand files, it uses this instead. Usually the first chunk, after SYS if that exists.
-			if (demoPacketHeader.demoPacketType==NODES)
+			if (demoPacketHeader.demoPacketType==DEMO_PACKET_TYPE_NODES)
 			{
 				FoxDataNodes Nodes <bgcolor=0x0CC0C0>;
 			}
