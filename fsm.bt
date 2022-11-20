@@ -116,7 +116,7 @@ struct DemoPacketHeader
 	{
 		FSM_DEMO_FLAGS flags; Printf("flags:%u,%u,%u,%u\n",(flags&FLAG_1),(flags&FLAG_2),(flags&HAS_ROOT_POSITION),(flags&USE_SAND));
 		int frameStart;
-		int frameRate;
+		int frameCount;
 		int trackCount;
 	}
 				
