@@ -94,14 +94,14 @@ local int passedSoundPacket = 0; // Probably a better way to tell that it's the 
 
 local int startOfPacket = FTell(); // In case is run from offset inside .fsm
 
-enum <uint> FSM_CHUNK_TYPE
+enum <uint> DEMO_PACKET_TYPE
 {
     TRACKS=0,
     NODES=1,//GZ/PT/that unused one in TPP only
     EVENTS_ONLY=2,
 };
 
-enum <uint> FSM_DEMO_FLAGS
+enum <uint> DEMO_PACKET_FLAGS
 {
     FLAG_1 = 0x1,//Mostly used in GZ
     FLAG_2 = 0x2,//When it's the only flag enabled, the frame count is 1
@@ -111,10 +111,10 @@ enum <uint> FSM_DEMO_FLAGS
 
 struct DemoPacketHeader
 {
-	FSM_CHUNK_TYPE demoPacketType; //0==motion segments, 1==nodes, 2==events only
+	DEMO_PACKET_TYPE demoPacketType; //0==motion segments, 1==nodes, 2==events only
 	if (demoPacketType==TRACKS)
 	{
-		FSM_DEMO_FLAGS flags; Printf("flags:%u,%u,%u,%u\n",(flags&FLAG_1),(flags&FLAG_2),(flags&HAS_ROOT_POSITION),(flags&USE_SAND));
+		DEMO_PACKET_FLAGS flags; Printf("flags:%u,%u,%u,%u\n",(flags&FLAG_1),(flags&FLAG_2),(flags&HAS_ROOT_POSITION),(flags&USE_SAND));
 		int frameStart;
 		int frameCount;
 		int trackCount;
