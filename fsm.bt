@@ -117,7 +117,7 @@ struct DemoPacketHeader
 		DEMO_PACKET_FLAGS flags; Printf("flags:%u,%u,%u,%u\n",(flags&FLAG_1),(flags&FLAG_2),(flags&HAS_ROOT_POSITION),(flags&USE_SAND));
 		int frameStart;
 		int frameCount;
-		int trackCount;
+		int segmentCount;
 	}
 				
 	int offsetToPacketEnd <comment="Chunk size starting from demoPacketHeader">;
@@ -153,32 +153,32 @@ while (FTell()!=FileSize())
 			DemoPacketHeader demoPacketHeader <bgcolor=0x800080>;
 
 			if (demoPacketHeader.demoPacketType==TRACKS){
-				struct TracksSection{
-					int trackOffset[demoPacketHeader.trackCount] <bgcolor=0x008000, comment="Offsets start from demoPacketHeader">;
+				struct DataSegmentSection{
+					int segmentOffset[demoPacketHeader.segmentCount] <bgcolor=0x008000, comment="Offsets start from demoPacketHeader">;
 					if (demoPacketHeader.flags & HAS_ROOT_POSITION){
 						Vector3 rootPos <bgcolor=0xC08000, comment="World translation root of the demo chunk. Thanks to Ventos to pointing it out!">;
 					};
-					ushort trackFlags[demoPacketHeader.trackCount] <bgcolor=0x0080C0, comment="Might have something to do with what kinda data is in the Motions">;
-                    struct Tracks{
+					ushort segmentFlags[demoPacketHeader.segmentCount] <bgcolor=0x0080C0, comment="Might have something to do with what kinda data is in the Motions">;
+                    struct DataSegments{
 					    local uint segId=0;
                         local uint nextOffset=0;
                         local uint nextIndex=0;
-					    struct Track{
+					    struct DataSegment{
                             //Endianness difference shows that these are indeed stored as shorts
                             //However their content seems to be a stream of values that can even be floats
                             //Or even floats with single bytes between them
-                            if (trackOffset[segId]>0)
+                            if (segmentOffset[segId]>0)
                             {
-						        FSeek(startof(demoPacketHeader)+trackOffset[segId]);
-						        if (segId<demoPacketHeader.trackCount-1)
+						        FSeek(startof(demoPacketHeader)+segmentOffset[segId]);
+						        if (segId<demoPacketHeader.segmentCount-1)
                                 {
                                     nextIndex=segId+1;
-                                    nextOffset=trackOffset[nextIndex];
+                                    nextOffset=segmentOffset[nextIndex];
                                     if (nextOffset==0){
-                                        while(nextIndex<demoPacketHeader.trackCount & nextOffset==0)
+                                        while(nextIndex<demoPacketHeader.segmentCount & nextOffset==0)
                                         {
                                             nextIndex++;
-                                            nextOffset=trackOffset[nextIndex];
+                                            nextOffset=segmentOffset[nextIndex];
                                         }
                                     }
                                     while (FTell()<startof(demoPacketHeader)+nextOffset)
@@ -205,9 +205,9 @@ while (FTell()!=FileSize())
 						        }
                             }
 						    segId++;
-					    } track[demoPacketHeader.trackCount] <optimize=false, bgcolor=0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
-                    } tracks;
-				} tracksSection <optimize=false, bgcolor=0x008000>;
+					    } segment[demoPacketHeader.segmentCount] <optimize=false, bgcolor=0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
+                    } segments;
+				} segmentSection <optimize=false, bgcolor=0x008000>;
 			};
 
 			if (((demoPacketHeader.demoPacketType==EVENTS_ONLY) 
