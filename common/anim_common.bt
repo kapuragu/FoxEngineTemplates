@@ -306,6 +306,15 @@ typedef struct
 	}
 } TrackHeader <bgcolor = 0x8ADEF3>;
 
+//Hack for PS3 files
+typedef struct
+{
+    uint paramA <hidden=true>;
+    uint paramB <hidden=true>;
+	local StrCode param<format=hex>;
+	param.hash = (ulong)paramA|(ulong)paramB*4294967296; //cbf with bitshifting, loops at 32
+} PARAM_STRING <read=Str("%I64u",param.hash)>; 
+
 typedef struct
 {
 	enum <uint> EvfCategoryName_StrCode32Alias
@@ -401,7 +410,7 @@ typedef struct
 				float FloatParams[FloatParamCount];
 
 			if (StringParamCount != 0)
-				StrCode StringParams[StringParamCount];
+				PARAM_STRING StringParams[StringParamCount];
 		} Event <read = EnumToString(EventName)>;
 	}
 } EvpData <read = EnumToString(CategoryName), bgcolor = 0x00C010>;
