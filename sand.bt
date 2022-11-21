@@ -75,7 +75,7 @@ struct SAND
 	case "SKEL":
 	case "Unknown":
 	case "MTP":
-		AnimTracks Tracks;
+		TrackHeader Tracks;
 		break;
 	case "MTP_LIST":
 	case "MTP_PARENT_LIST":
@@ -90,7 +90,7 @@ struct SAND
 		} List <bgcolor = 0xF38ADE>;
 		break;
     case "MOTION":
-        AnimTracks Tracks;
+        TrackHeader Tracks;
         break;
 	default:
 		{
@@ -98,7 +98,7 @@ struct SAND
 			{
 				if (ReadUInt(startof(parentof(this)) + parentof(this).ParentNodeOffset) == 2250865118 /*SHADER*/)
 				{
-					AnimTracks Tracks;
+					TrackHeader Tracks;
 				}
 			}
 		}

@@ -24,6 +24,17 @@ string ReadAnimHalf(AnimHalf& half)
 	return Str("%f", result);
 }
 
+enum <ubyte> TrackType
+{
+	TRACK_TYPE_QUAT = 0,
+	TRACK_TYPE_FLOAT = 1,
+	TRACK_TYPE_VECTOR2 = 2,
+	TRACK_TYPE_VECTOR3 = 3,
+	TRACK_TYPE_VECTOR4 = 4,
+	TRACK_TYPE_QUAT_DIFF = 5,
+	TRACK_TYPE_ROOT_POS = 6,
+};
+
 typedef struct
 {
 	AnimHalf x;
@@ -39,7 +50,8 @@ typedef struct
 	AnimHalf w;
 } VectorAnimH4 <read = Str("(%s, %s, %s, %s)", ReadAnimHalf(x), ReadAnimHalf(y), ReadAnimHalf(z), ReadAnimHalf(w))>;
 
-// Not padded! BitfieldDisablePadding() needs to be called before using this. The frame count after it is also not padded!
+// These are not padded! BitfieldDisablePadding() needs to be called before using them. 
+// The frame count after each instance is also not padded!
 typedef struct
 {
 	ushort X : 12;
@@ -52,37 +64,203 @@ typedef struct
 
 typedef struct
 {
-	ubyte data[5];
+	ushort X : 13;
+	ushort Y : 13;
+	ushort Z : 13;
+	ushort X_Sign : 1;
+	ushort Y_Sign : 1;
+	ushort Z_Sign : 1;
 } QuatAnim13;
 
 typedef struct
 {
-	ubyte data[6];
+	ushort X : 15;
+	ushort Y : 15;
+	ushort Z : 15;
+	ushort X_Sign : 1;
+	ushort Y_Sign : 1;
+	ushort Z_Sign : 1;
 } QuatAnim15;
+
+struct AnimKeyframeData(TrackType type, ubyte componentBitSize)
+{
+	switch (type)
+	{
+		case TRACK_TYPE_QUAT:
+			switch (componentBitSize)
+			{
+			case 12:
+				QuatAnim12 Value;
+				break;
+			case 13:
+				QuatAnim13 Value;
+				break;
+			case 15:
+				QuatAnim15 Value;
+				break;
+			default:
+				Assert(false);
+				break;
+			}
+			break;
+		case TRACK_TYPE_FLOAT:
+			switch (componentBitSize)
+			{
+			case 16:
+				AnimHalf Value;
+				break;
+			case 32:
+				float Value;
+				break;
+			default:
+				Assert(false);
+				break;
+			}
+			break;
+		case TRACK_TYPE_VECTOR3:
+			switch (componentBitSize)
+			{
+			case 0:
+				break;
+			case 16:
+				VectorAnimH3 Value;
+				break;
+			case 32:
+				Vector3 Value;
+				break;
+			default:
+				Assert(false);
+				break;
+			}
+			break;
+		case TRACK_TYPE_VECTOR4:
+			switch (componentBitSize)
+			{
+			case 16:
+				VectorAnimH4 Value;
+				break;
+			case 32:
+				Vector4 Value;
+				break;
+			default:
+				Assert(false);
+				break;
+			}
+			break;
+		case TRACK_TYPE_QUAT_DIFF:
+			switch (componentBitSize)
+			{
+			case 12:
+				QuatAnim12 Value;
+				break;
+			case 15:
+				QuatAnim15 Value;
+				break;
+			default:
+				Assert(false);
+				break;
+			}
+			break;
+		case TRACK_TYPE_ROOT_POS:
+			switch (componentBitSize)
+			{
+			case 32:
+				Vector3 Value;
+				break;
+			default:
+				Assert(false);
+				break;
+			}
+			break;
+		default:
+			Printf("@%Lx Unknown component bit size: %u\n", FTell(), componentBitSize);
+			Assert(false);
+			break;
+	}
+};
+
+struct TrackDataBlob(TrackType type, ubyte componentBitSize, ubyte noFrames)
+{
+	if (!(componentBitSize == 8 || componentBitSize == 16 || componentBitSize == 32 || componentBitSize == 64))
+		BitfieldDisablePadding();
+	AnimKeyframeData InitFrame(type, componentBitSize);
+	if (!(componentBitSize == 8 || componentBitSize == 16 || componentBitSize == 32 || componentBitSize == 64))
+		BitfieldEnablePadding();
+
+	if (!(componentBitSize == 8 || componentBitSize == 16 || componentBitSize == 32 || componentBitSize == 64))
+		BitfieldDisablePadding();
+	if (noFrames == 0)
+	{
+		local uint frameIndex = 0;
+		do
+		{
+			struct AnimKeyframe(TrackType type, ubyte componentBitSize)
+			{
+				ubyte FrameCount : 8;
+
+				AnimKeyframeData Data(type, componentBitSize);
+			} Key(type, componentBitSize);
+
+			frameIndex += Key.FrameCount;
+		}
+		while (frameIndex < FrameCount);
+	}
+	if (!(componentBitSize == 8 || componentBitSize == 16 || componentBitSize == 32 || componentBitSize == 64))
+		BitfieldEnablePadding();
+
+	FAlign(2);
+};
+
+typedef enum <ubyte>
+{
+	TRACK_UNIT_FLAGS_LOOP = 0x1,
+	TRACK_UNIT_FLAGS_HERMITE_VECTOR_INTERPOLATION = 0x2,
+	TRACK_UNIT_FLAGS_NO_FRAMES = 0x4,
+} TrackUnitFlags <read = ReadTrackUnitFlags>;
+string ReadTrackUnitFlags(TrackUnitFlags flags)
+{
+	local string result = flags == 0 ? "" : "| ";
+	local ubyte i;
+	local string enumName;
+	local TrackUnitFlags temp;
+	for (i = 1; i < 0x8; i = i << 1)
+	{
+		temp = flags & i;
+		enumName = EnumToString(temp);
+		if (enumName != "")
+			result += " " + enumName + " |";
+	}
+
+	return result;
+}
 
 typedef struct
 {
-	uint EntryCount <hidden = true>;
+	uint ChannelCount;
 
-	uint SubEntryCount;
+	uint TrackCount;
+	
+	ushort HeaderIndex; // Used in SAND and set to 1 for TPP-style MTAR bind pose
 
-	uint Unknown;
+	ubyte Unknown;
+
+	ubyte Flag;
 
 	uint FrameCount;
 
 	uint Unknown1;
 
-	uint EntryOffsets[EntryCount] <hidden = true>;
+	uint UnitOffsets[ChannelCount] <hidden = true>;
 
 	local uint trkIdx;
-	for (trkIdx = 0; trkIdx < EntryCount; trkIdx++)
+	for (trkIdx = 0; trkIdx < ChannelCount; trkIdx++)
 	{
-		FSeek(startof(this) + EntryOffsets[trkIdx]);
+		FSeek(startof(this) + UnitOffsets[trkIdx]);
 
-		struct AnimTrack
+		struct TrackUnit
 		{
-			// For SAND, hash of the sub object, like a bone, ie SKL_000_WAIST
-			enum <uint> TrackNameStrCode32
+			// For SAND, hash of the sub object, like a bone, ie SKL_000_WAIST. For GANI, it's the name of a Motion Point.
+			enum <uint> TrackName_StrCode32Alias
 			{
 				// CANI, UIA, etc.
 				ROTATE          = 283103795,
@@ -93,145 +271,156 @@ typedef struct
 				// 
 			} Name;
 
-			ubyte SegmentCount <hidden = true>;
+			ubyte SegmentCount;
 
-			enum <ushort> AnimTrackFlags
-			{
-				ANIM_TRACK_FLAGS_GZ = 0x1, //Appears in gz gani
-				ANIM_TRACK_FLAGS_NO_FRAMES = 0x4,
-			} Flags <read = (this == 0 ? "" : ((this & ANIM_TRACK_FLAGS_GZ) ? ((this & ANIM_TRACK_FLAGS_NO_FRAMES) ? "ANIM_TRACK_FLAGS_NO_FRAMES | ANIM_TRACK_FLAGS_GZ" : "ANIM_TRACK_FLAGS_GZ") : ((this & ANIM_TRACK_FLAGS_NO_FRAMES) ? "ANIM_TRACK_FLAGS_NO_FRAMES" : "")))>; Assert((Flags & ~(ANIM_TRACK_FLAGS_GZ | ANIM_TRACK_FLAGS_NO_FRAMES)) == 0);
+			TrackUnitFlags Flags;
 
-			ubyte Padding <hidden = true>; Assert(Padding == 0);
+			ushort Padding <hidden = true>; Assert(Padding == 0);
 
-			struct SegmentHeader
+			struct TrackData
 			{
 				int DataOffset;
 
 				short MotionSegmentId; // .fsm DEMO chunk motion segment id
 				
-#ifdef ANIM_GANI
-				enum <ubyte> AnimSegmentHeaderType
-				{
-					ANIM_SEGMENT_HEADER_TYPE_ROTATION = 0,
-					ANIM_SEGMENT_HEADER_TYPE_POSITION = 3,
-					ANIM_SEGMENT_HEADER_TYPE_ROOT_ROT = 5,
-					ANIM_SEGMENT_HEADER_TYPE_ROOT_POS = 6,
-				} Type : 3;
-#else
-				ubyte ComponentCount : 3;
-#endif
+				TrackType Type : 4;
 
-				ubyte Padding : 4 <hidden = true>; Assert(Padding == 0);
-
-				ubyte HasNextEntry : 1;
+				ubyte NextEntryOffset : 4; Assert(NextEntryOffset == 0 || NextEntryOffset == 8); // The offset to the next entry is (NextEntryOffset & 0x8). since NextEntryOffset is always 0 or 8, this does nothing. 
 
 				ubyte ComponentBitSize;
 
-				struct AnimKeyframe
+#ifdef FILE_TYPE_MTAR2
+				if (DataOffset != 0 && HeaderIndex < 1)
+#else
+				if (DataOffset != 0)
+#endif
 				{
-#ifdef ANIM_GANI
-					switch (Type)
-					{
-						case ANIM_SEGMENT_HEADER_TYPE_ROTATION:
-							if (ComponentBitSize == 12)
-								QuatAnim12 Value;
-							else if (ComponentBitSize == 13)
-								QuatAnim13 Value;
-							else
-								Assert(false);
-							break;
-						case ANIM_SEGMENT_HEADER_TYPE_POSITION:
-							if (ComponentBitSize == 32)
-								Vector3 Value;
-							else
-								Assert(false);
-							break;
-						case ANIM_SEGMENT_HEADER_TYPE_ROOT_ROT:
-							if (ComponentBitSize == 12)
-								QuatAnim12 Value;
-							else if (ComponentBitSize == 15)
-								QuatAnim15 Value;
-							else
-								Assert(false);
-							break;
-						case ANIM_SEGMENT_HEADER_TYPE_ROOT_POS:
-							if (ComponentBitSize == 32)
-								Vector3 Value;
-							else
-								Assert(false);
-							break;
-						default:
-							Printf("@%Lx Unknown component count: %u\n", FTell(), DataOffset);
-							Assert(false);
-							break;
-					}
-#else 
-					switch (ComponentCount)
-					{
-						case 1:
-							if (ComponentBitSize == 16)
-								AnimHalf Value;
-							else if (ComponentBitSize == 32)
-								float Value;
-							else
-								Assert(false);
-							break;
-						case 3:
-							if (ComponentBitSize == 16)
-								VectorAnimH3 Value;
-							else if (ComponentBitSize == 32)
-								Vector3 Value;
-							else
-								Assert(false);
-							break;
-						case 4:
-							if (ComponentBitSize == 16)
-								VectorAnimH4 Value;
-							else if (ComponentBitSize == 32)
-								Vector4 Value;
-							else
-								Assert(false);
-							break;
-						default:
-							Printf("@%Lx Unknown component count: %u\n", FTell(), DataOffset);
-							Assert(false);
-							break;
-					}
-#endif
-				};
+					FSeek(startof(this) + DataOffset);
 
-				// if (DataOffset != 0)
-				// {
-				// 	FSeek(startof(this) + DataOffset);
+					TrackDataBlob Data(Type, ComponentBitSize, Flags & TRACK_UNIT_FLAGS_NO_FRAMES);
 
-				// 	AnimKeyframe InitFrame;
-
-				// 	if ((Flags & ANIM_TRACK_FLAGS_NO_FRAMES) == 0)
-				// 	{
-				// 		local uint frameIndex = 0;
-				// 		do
-				// 		{
-				// 			struct AnimKey
-				// 			{
-				// 				ubyte FrameCount;
-
-				// 				AnimKeyframe Frame;
-				// 			} Key;
-
-				// 			frameIndex += Key.FrameCount;
-				// 		}
-				// 		while (frameIndex < FrameCount);
-				// 	}
-
-				// 	FSeek(startof(this) + 8);
-				// }
-#ifdef ANIM_GANI
+					FSeek(startof(this) + 8); // + sizeof(TrackData)
+				}
 			} SegmentHeaders[SegmentCount] <read = EnumToString(Type), optimize = false>;
-#else 
-			} SegmentHeaders[SegmentCount] <read = Str("%u, %u", ComponentCount, ComponentBitSize), optimize = false>;
-#endif
 		} Track;
 	}
-} AnimTracks <bgcolor = 0x8ADEF3>;
+} TrackHeader <bgcolor = 0x8ADEF3>;
+
+typedef struct
+{
+	enum <uint> EvfCategoryName_StrCode32Alias
+	{
+		Normal = 3371498678,
+		ag = 2079928349,
+		cc = 3342815349,
+		fx = 2569337208,
+		sd = 179473302,
+		vo = 1455888052,
+	} CategoryName;
+
+	ushort SubCount <hidden = true>;
+
+	ushort Unknown;
+
+	if (SubCount != 0)
+		uint SubEntryOffsets[SubCount] <hidden = true>;
+
+	local uint sIdx;
+	for (sIdx = 0; sIdx < SubCount; sIdx++)
+	{
+		FSeek(startof(this) + SubEntryOffsets[sIdx]);
+		
+		struct EventUnitInfo
+		{
+			enum <uint> EventUnitInfoEventName_StrCode32Alias
+			{
+				// fx
+				FX_CREATE_EFFECT_WITH_SKL = 312449893,
+
+				// ag
+				MTEV_AG_SYNC_L = 877721620,
+				MTEV_AG_SYNC_R = 3647133869,
+				MTEV_FOOT_STOP_R = 2051014260,
+				MTEV_FOOT_STOP_L = 4246579437,
+				MTEV_FOOT_START_R = 3689287927,
+				MTEV_FOOT_START_L = 3049626829,
+
+				// sd
+				right_foot_ground = 2122718581,
+				right_foot_leave = 3453979597,
+				left_foot_ground = 1190238672,
+				left_foot_leave = 3446064903,
+				rattle_weapon = 2416440354,
+				rattle_suit = 1532442511,
+			} EventName;
+
+			byte TimeSectionCount : 6 <hidden = true>;
+			enum <byte> TIME_SECTION_FORMAT
+			{
+				TIME_SECTION_FORMAT_INT = 0,
+				TIME_SECTION_FORMAT_SHORT = 1,
+				TIME_SECTION_FORMAT_BYTE = 2,
+				TIME_SECTION_FORMAT_INFINITE = 3,
+			} Format : 2 <hidden = true>;
+
+			byte IntParamCount <hidden = true>;
+			byte FloatParamCount <hidden = true>;
+			byte StringParamCount <hidden = true>;
+
+			if (TimeSectionCount != 0)
+			{
+				struct TimeSection
+				{
+					switch (parentof(this).Format)
+					{
+					case TIME_SECTION_FORMAT_INT:
+						int StartFrame <read = (this < 0 ? this : this & 0xBFFFFFFF)>;
+						int EndFrame <read = (this < 0 ? this : this & 0xBFFFFFFF)>;
+						break;
+					case TIME_SECTION_FORMAT_SHORT:
+						short StartFrame;
+						short EndFrame;
+						break;
+					case TIME_SECTION_FORMAT_BYTE:
+						byte StartFrame;
+						byte EndFrame;
+						break;
+					case TIME_SECTION_FORMAT_INFINITE:
+						break;
+					}
+					// This read function gets messy because of the formats but basically it's just saying TIME_SECTION_FORMAT_INFINITE -> (-1, 1), else to whatever the read function above is (which is only non-default for TYPE_INT).
+				} TimeSections[TimeSectionCount] <read = (parentof(this).Format == TIME_SECTION_FORMAT_INFINITE ? "(-1, -1)" : Str("(%d, %d)", parentof(this).Format == TIME_SECTION_FORMAT_INT ? (StartFrame < 0 ? StartFrame : StartFrame & 0xBFFFFFFF) : StartFrame, parentof(this).Format == TIME_SECTION_FORMAT_INT ? (EndFrame < 0 ? EndFrame : EndFrame & 0xBFFFFFFF) : EndFrame)), optimize = true>;
+			}
+
+			FAlign(4);
+
+			if (IntParamCount != 0)
+				int IntParams[IntParamCount];
+
+			if (FloatParamCount != 0)
+				float FloatParams[FloatParamCount];
+
+			if (StringParamCount != 0)
+				StrCode StringParams[StringParamCount];
+		} Event <read = EnumToString(EventName)>;
+	}
+} EvpData <read = EnumToString(CategoryName), bgcolor = 0x00C010>;
+
+typedef struct
+{
+	uint Version <hidden = true>;
+
+	uint Count <hidden = true>;
+
+	uint EntryOffsets[Count] <hidden = true>;
+
+	local uint eIdx;
+	for (eIdx = 0; eIdx < Count; eIdx++)
+	{
+		FSeek(startof(this) + EntryOffsets[eIdx]);
+
+		EvpData Data;
+	}
+} EvpGroup <bgcolor = 0x00C000>;
 
 #endif

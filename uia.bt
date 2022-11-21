@@ -20,7 +20,7 @@ string ResolveHashFunc(StrCode32& hash)
 
 #define FOX_DATA_HASH_RESOLVE_FUNC ResolveHashFunc
 
-#define FOX_DATA_PAYLOAD AnimTracks
+#define FOX_DATA_PAYLOAD TrackHeader
 
 #include "common/FoxData_common.bt"
 

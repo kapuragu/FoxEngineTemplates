@@ -56,7 +56,7 @@ struct SAND
 	case "MOTION":
 	case "GLOBALSRT":
 	case "MTP":
-		AnimTracks Tracks;
+		TrackHeader Tracks;
 		break;
 	case "MTP_LIST":
 	case "MTP_PARENT_LIST":
@@ -70,13 +70,16 @@ struct SAND
 			}
 		} List <bgcolor = 0xF38ADE>;
 		break;
+	case "MOTION":
+		TrackHeader Tracks;
+		break;
 	default:
 		{
 			if (parentof(this).ParentNodeOffset != 0)
 			{
 				if (ReadUInt(startof(parentof(this)) + parentof(this).ParentNodeOffset) == 2250865118 /*SHADER*/)
 				{
-					AnimTracks Tracks;
+					TrackHeader Tracks;
 				}
 			}
 		}
@@ -159,124 +162,63 @@ while (FTell()!=FileSize())
 						Vector3 rootPos <bgcolor=0xC08000, comment="World translation root of the demo chunk. Thanks to Ventos to pointing it out!">;
 					};
 					ushort segmentFlags[demoPacketHeader.segmentCount] <bgcolor=0x0080C0, comment="Might have something to do with what kinda data is in the Motions">;
-                    struct DataSegments{
-					    local uint segId=0;
-                        local uint nextOffset=0;
-                        local uint nextIndex=0;
-					    struct DataSegment{
-                            //Endianness difference shows that these are indeed stored as shorts
-                            //However their content seems to be a stream of values that can even be floats
-                            //Or even floats with single bytes between them
-                            if (segmentOffset[segId]>0)
-                            {
-						        FSeek(startof(demoPacketHeader)+segmentOffset[segId]);
-						        if (segId<demoPacketHeader.segmentCount-1)
-                                {
-                                    nextIndex=segId+1;
-                                    nextOffset=segmentOffset[nextIndex];
-                                    if (nextOffset==0){
-                                        while(nextIndex<demoPacketHeader.segmentCount & nextOffset==0)
-                                        {
-                                            nextIndex++;
-                                            nextOffset=segmentOffset[nextIndex];
-                                        }
-                                    }
-                                    while (FTell()<startof(demoPacketHeader)+nextOffset)
-                                    {
-                                        ushort motion;
-                                    }
-						        }
-						        else{
-							        if ((demoPacketHeader.offsetToEvents>0) 
-                                    & (demoPacketHeader.offsetToEvents<header.packetSize))
-                                    {
-								        while ( (FTell() - startOfPacket) < demoPacketHeader.offsetToEvents+0x10 )
-                                        {
-									        ushort motion;
-								        }
-							        }
-							        else
-                                    {
-								        while ( (FTell() - startOfPacket) < header.packetSize )
-                                        {
-									        ushort motion;
-								        }
-							        };
-						        }
-                            }
-						    segId++;
-					    } segment[demoPacketHeader.segmentCount] <optimize=false, bgcolor=0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
-                    } segments;
+            //         struct DataSegments{
+			// 		    local uint segId=0;
+            //             local uint nextOffset=0;
+            //             local uint nextIndex=0;
+			// 		    struct DataSegment{
+            //                 //Endianness difference shows that these are indeed stored as shorts
+            //                 //However their content seems to be a stream of values that can even be floats
+            //                 //Or even floats with single bytes between them
+            //                 if (segmentOffset[segId]>0)
+            //                 {
+			// 			        FSeek(startof(demoPacketHeader)+segmentOffset[segId]);
+			// 			        if (segId<demoPacketHeader.segmentCount-1)
+            //                     {
+            //                         nextIndex=segId+1;
+            //                         nextOffset=segmentOffset[nextIndex];
+            //                         if (nextOffset==0){
+            //                             while(nextIndex<demoPacketHeader.segmentCount & nextOffset==0)
+            //                             {
+            //                                 nextIndex++;
+            //                                 nextOffset=segmentOffset[nextIndex];
+            //                             }
+            //                         }
+            //                         while (FTell()<startof(demoPacketHeader)+nextOffset)
+            //                         {
+            //                             ushort motion;
+            //                         }
+			// 			        }
+			// 			        else{
+			// 				        if ((demoPacketHeader.offsetToEvents>0) 
+            //                         & (demoPacketHeader.offsetToEvents<header.packetSize))
+            //                         {
+			// 					        while ( (FTell() - startOfPacket) < demoPacketHeader.offsetToEvents+0x10 )
+            //                             {
+			// 						        ushort motion;
+			// 					        }
+			// 				        }
+			// 				        else
+            //                         {
+			// 					        while ( (FTell() - startOfPacket) < header.packetSize )
+            //                             {
+			// 						        ushort motion;
+			// 					        }
+			// 				        };
+			// 			        }
+            //                 }
+			// 			    segId++;
+			// 		    } segment[demoPacketHeader.segmentCount] <optimize=false, bgcolor=0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
+            //         } segments;
 				} segmentSection <optimize=false, bgcolor=0x008000>;
 			};
 
-			if (((demoPacketHeader.demoPacketType==EVENTS_ONLY) 
-            || (demoPacketHeader.offsetToEvents>0)) & (demoPacketHeader.offsetToEvents<header.packetSize))
+			if (((demoPacketHeader.demoPacketType==EVENTS_ONLY) || (demoPacketHeader.offsetToEvents>0)) & (demoPacketHeader.offsetToEvents<header.packetSize))
 			{
-				struct EventSection
-				{
-					struct EventOffsets
-					{
-						StrCode32 name;
-						ushort eventCount;
-						FSkip(0x2);
-						uint offsetToEvent[eventCount]; // offset to a node from uint name here
+				FSeek(startof(demoPacketHeader) + demoPacketHeader.offsetToEvents);
 
-					} eventOffsets <bgcolor=0x00C000, comment="Offsets to nodes, relative from the start of the section.">;
-
-					if (demoPacketHeader.demoPacketType==TRACKS)
-					{
-						if ((FTell() - startOfPacket) % 16 != 0)
-						{
-							FSkip(16 - ((FTell() - startOfPacket) % 16));
-						}
-					}
-					else if (demoPacketHeader.demoPacketType==EVENTS_ONLY)
-					{
-						if ((FTell() - startOfPacket) % 16 != 0)
-						{	
-							FSkip(16 - ((FTell() - startOfPacket) % 16) - 4);
-						}
-						else
-						{
-							FSkip(0xC);
-						};
-					};
-					
-					// Thanks .evfs!
-					// Something similar also seems to be used in .gani files.
-                    struct Events
-                    {
-					    struct Event
-					    {
-						    StrCode32 Name;
-						    
-						    byte timeSectionCount; // Might be a bitfield, but unaffected by endianness
-						    byte paramIntCount;
-						    byte paramFloatCount;
-						    byte paramStringCount;
-						    
-						    if (timeSectionCount>0)
-							    struct TimeSection
-							    {
-								    int startFrame;
-								    int endFrame; // Two shorts? Endianness and all that really screws these up, especially some paramInts.
-							    } timeSection[timeSectionCount] <optimize=false>;
-						    
-						    if (paramIntCount>0)
-							    int paramInt[paramIntCount] <optimize=false>;
-						    
-						    if (paramFloatCount>0)
-							    float paramFloat[paramFloatCount] <optimize=false>;
-							    
-                            //StrCode64, but written as two truncated halves, as uints, according to endianness.
-						    if (paramStringCount>0)
-							    uint64 paramString[paramStringCount]; // Sometimes uses fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s
-					    } event[eventOffsets.eventCount] <optimize=false, bgcolor=0xF0F080>;
-
-                    } events;
-					
-				} eventSection <bgcolor=0x00C000>;
+				// The strings are sometimes fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s
+				EvpData EventSection;
 			};
 
 			if (FTell() % 16 != 0)

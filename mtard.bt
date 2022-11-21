@@ -1,0 +1,20 @@
+LittleEndian();
+
+#define COLOR_HEADER 0x85CFCA
+
+#include "common/common.bt"
+
+struct MtardHeader
+{
+	uint Version;
+	
+	uint MtarFileSize;
+	
+	PathCode64 MtarPath;
+
+	uint MtarFileCount;
+} Header <bgcolor = COLOR_HEADER>;
+
+FAlign(16);
+
+Assert(FTell() == FileSize());

@@ -46,12 +46,12 @@ string ResolveHashFunc(StrCode32& hash)
 struct FoxDataString;
 struct StringList
 {
-    uint EntryCount <hidden = true>;
-    local int64 strIdx;
-    for (strIdx = 0; strIdx < EntryCount; strIdx++)
-    {
-        FoxDataString Entry <optimize = true>;
-    }
+	uint EntryCount <hidden = true>;
+	local int64 strIdx;
+	for (strIdx = 0; strIdx < EntryCount; strIdx++)
+	{
+		FoxDataString Entry <optimize = true>;
+	}
 };
 
 struct GANI
@@ -64,8 +64,8 @@ struct GANI
 	case "SKEL":
 	case "Unknown":
 	case "MTP":
-    case "MOTION":
-        AnimTracks Tracks; //AnimFrame invalid componentcount
+	case "MOTION":
+		TrackHeader Tracks;
 		break;
 	case "MTP_LIST":
 	case "MTP_PARENT_LIST":
@@ -77,18 +77,18 @@ struct GANI
 			{
 				if (ReadUInt(startof(parentof(this)) + parentof(this).ParentNodeOffset) == 2250865118 /*SHADER*/)
 				{
-					AnimTracks Tracks; //AnimFrame invalid componentcount
+					TrackHeader Tracks;
 				}
 			}
-            switch (parentof(this).Name.Hash.hash)
-            {
-            case 2447659851:
-		        StringList BoneList <bgcolor = 0xF38ADE>;
-                break;
-            case 3337172921:
-                AnimTracks Tracks; //AnimFrame invalid componentcount
-                break;
-            }
+			switch (parentof(this).Name.Hash.hash)
+			{
+			case 2447659851:
+				StringList BoneList <bgcolor = 0xF38ADE>;
+				break;
+			case 3337172921:
+				TrackHeader Tracks;
+				break;
+			}
 		}
 	}
 };

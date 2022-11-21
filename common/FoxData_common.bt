@@ -99,15 +99,15 @@ typedef struct
 
 typedef struct
 {
-	FoxDataString Name;
-    uint Flags; // Unknown. Greatest diversity is in GEOM and HTRE nodes. Most other formats have 0 or 1 (see their asserts for details).
-    int DataOffset; // 0 means no data
-    uint DataSize; // 0 means no data
-    int ParentNodeOffset; // Surmised based on confirmation of ChildNodeOffset and behavior (if slightly wonky; see htre.bt for details) in HTRE V3 format.
-    int ChildNodeOffset; // Confirmed thanks to PES SO
-    int PreviousNodeOffset; // 0 means no previous nodes
-    int NextNodeOffset; // 0 means no more nodes
-    int ParametersOffset; // 0 means no params
+	FoxDataString Name <hidden = true>;
+    uint Flags <hidden = true>; // Unknown. Greatest diversity is in GEOM and HTRE nodes. Most other formats have 0 or 1 (see their asserts for details).
+    int DataOffset <hidden = true>; // 0 means no data
+    uint DataSize <hidden = true>; // 0 means no data
+    int ParentNodeOffset <hidden = true>; // Surmised based on confirmation of ChildNodeOffset and behavior (if slightly wonky; see htre.bt for details) in HTRE V3 format.
+    int ChildNodeOffset <hidden = true>; // Confirmed thanks to PES SO
+    int PreviousNodeOffset <hidden = true>; // 0 means no previous nodes
+    int NextNodeOffset <hidden = true>; // 0 means no more nodes
+    int ParametersOffset <hidden = true>; // 0 means no params
     uint Padding0 <hidden = true>; Assert(Padding0 == 0);
     uint Padding1 <hidden = true>; Assert(Padding1 == 0);
 
@@ -146,7 +146,7 @@ typedef struct
 		FOX_DATA_PAYLOAD Payload;
 	}
 #endif
-} FoxDataNode <read = ReadFoxDataString(Name)>;
+} FoxDataNode <read = Str("%s, Flags: %u", ReadFoxDataString(Name), Flags)>;
 
 int GetFoxDataNodeParamIndex(FoxDataNode& node, string name)
 {
@@ -184,7 +184,7 @@ typedef struct
     uint FileSize;
 	FoxDataString Name;
 
-	uint Padding <hidden = true>; Assert(Padding == 0);
+	uint Flags;
 
 	uint64 Unknown;
 } FoxDataHeader <read = Str("Version: %d, Name: %s", Version, ReadFoxDataString(Name)), bgcolor = 0xaaaaaa>;
