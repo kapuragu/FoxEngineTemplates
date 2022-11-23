@@ -6,485 +6,166 @@
 #define COLOR_MS_RED 0x3F00D0
 #define COLOR_MS_BLK 0x000007
 
-LittleEndian();
+#include "common/common.bt"
 
-struct Vector3
+enum <uint> TransformType
 {
-	float x;
-	float y;
-	float z;
+	FXLB_TTYPE_SRT=0,
+	FXLB_TTYPE_RT=1,
+	FXLB_TTYPE_ST=2,
+	FXLB_TTYPE_T=3,
+	FXLB_TTYPE_SRTSRT=4,
+	FXLB_TTYPE_SRTT=12,	// \s10130\s10130_area_fpkd\Assets\tpp\level\location\mafr\block_large\lab\s10130_area_FxLocators
+	FXLB_TTYPE_RTRT=13,	// s10280_d14_FxLocators
+	FXLB_TTYPE_TT=15,	// \s10070\s10070_d01_fpkd\Assets\tpp\level\mission2\story\s10150\s10070_d01_FxLocators
 };
 
-struct Quat4
+enum <uint> ParamType
 {
-	float x;
-	float y;
-	float z;
-	float w;
+	FXLB_PTYPE_ID=1,//s10020_d01_FxLocators.vfxlb, hash of argument of TppDataUtility.CreateEffectFromId/DestroyEffectFromId, ex FxLocator_fx_tpp_flrdia03_s1
+	FXLB_PTYPE_SOMEHASH=2,//cypr_s_stage_02_FxLocators.vfxlb ???
+	FXLB_PTYPE_SUBENTRIES=4,//afgh_130_147_FxLocators.vfxlb ???
+	FXLB_PTYPE_ARRAY=8,//group s10010_l01_FxLocators.vfxlb, hash of argument of TppDataUtility.SetVisibleEffectFromGroupId, ex FxLocatorGroup_fx_tpp_dstwhtviw01_s2VD
 };
+
+typedef struct 
+{
+	uint flags0 : 4; //I think mafr_145_124_FxLocators.vfxlb gets affected by this when it's 14
+	ParamType paramsFlags : 4 <comment="Bitfield of four types of param sets">;
+	TransformType transformType : 4 <comment="Enum of transform set type">;
+	uint flags3 : 4; if (flags3!=2&&flags3!=0) {Printf("Flags3 isn't 2 or 0!! It's %d\n",flags3);} //Usually 2 in locators, 0 in groups
+	uint param4 : 4;
+	uint param5 : 4;
+	uint param6 : 4;
+	uint param7 : 4;
+} Flags;
+
+typedef struct
+{
+	switch (parentof(this).flags.transformType)
+	{
+		case FXLB_TTYPE_SRT:
+			Vector3 scale;
+			Quaternion rotation;
+			Vector3 translation;
+			break;
+		case FXLB_TTYPE_RT:
+			Quaternion rotation;
+			Vector3 translation;
+			break;
+		case FXLB_TTYPE_ST:
+			Vector3 scale;
+			Vector3 translation;
+			break;
+		case FXLB_TTYPE_T:
+			Vector3 translation;
+			break;
+		case FXLB_TTYPE_SRTSRT:
+			Vector3 scale;
+			Quaternion rotation;
+			Vector3 translation;
+			Vector3 scale;
+			Quaternion rotation;
+			Vector3 translation;
+			break;
+		case FXLB_TTYPE_SRTT:
+			Vector3 scale;
+			Quaternion rotation;
+			Vector3 translation;
+			Vector3 translation;
+			break;
+		case FXLB_TTYPE_RTRT:
+			Quaternion rotation;
+			Vector3 translation;
+			Quaternion rotation;
+			Vector3 translation;
+			break;
+		case FXLB_TTYPE_TT:
+			Vector3 translation;
+			Vector3 translation;
+			break;
+		default:
+			Assert(false,"unknown transformType");
+			break;
+	};
+} Transforms;
+
+typedef struct
+{
+	ushort locatorCount;
+	ushort locatorIndex[locatorCount];
+} LocatorArray;
+
+typedef struct
+{
+	uint subEntryCount;
+	uint hash[subEntryCount];
+	uint flags[subEntryCount]; //more goddam flags that decide the following???
+	//TODO, hash or float here, based on uints
+} ParamSubEntries;
+
+typedef struct
+{
+	if (parentof(this).flags.paramsFlags&FXLB_PTYPE_ID)
+		StrCode32 name <comment="StrCode32 hash of TppDataUtility handle">;
+	if (parentof(this).flags.paramsFlags&FXLB_PTYPE_SOMEHASH)
+		StrCode32 somehash <comment="StrCode32 hash of TppDataUtility handle">;
+	if (parentof(this).flags.paramsFlags&FXLB_PTYPE_ARRAY)
+		LocatorArray locatorArray;
+	if (parentof(this).flags.paramsFlags&FXLB_PTYPE_SUBENTRIES)
+		ParamSubEntries paramSubEntries;
+	
+	if (parentof(this).flags.flags0&4)
+		int someInt;
+} Parameters;
+
+typedef struct 
+{
+	PathCode64 vfxFile <comment="PathCode64+Extension hash">;
+	Flags flags;
+	uint padding <hidden=true>; Assert(padding==0);
+	Transforms transforms;
+	if (flags.paramsFlags>0)
+		Parameters parameters;
+} FxLocator;
+
+typedef struct
+{
+	PathCode64 vfxFile <hidden=true>;
+	Flags flags;
+	uint padding <hidden=true>; Assert(padding==0);
+	Transforms transforms;
+	if (flags.paramsFlags>0)
+		Parameters parameters;
+} FxLocatorGroup;
 
 struct Header
 {
 	char sign[5] <hidden=true>; Assert(sign=="VFXLB");
 	byte version;
-	ushort section0Count <fgcolor=COLOR_MS_RED>;
-	ushort section1Count <fgcolor=COLOR_MS_BLU>;
-	struct EntryOffsets {
-		uint entryOffset;
-	} entryOffsets[section0Count+section1Count];
-	
-} header <bgcolor=COLOR_MS_BLK>;
+	ushort locatorCount <fgcolor=COLOR_MS_RED>;
+	ushort groupCount <fgcolor=COLOR_MS_BLU>;
+	uint locatorOffsets[locatorCount] <fgcolor=COLOR_MS_RED>;
+	uint groupOffsets[groupCount] <fgcolor=COLOR_MS_BLU>;
+	local uint endOfHeader = FTell();
+	local uint locIdx=0;
+	local uint grpIdx=0;
+} header <bgcolor=COLOR_MS_BLK, hidden=true>;
 
-struct Section0
-{
-	struct Entry 
+if (header.locatorCount>0)
+	for (header.locIdx = 0; header.locIdx < header.locatorCount; header.locIdx++)
 	{
-		uint64 vfxPath <comment="PathCode64+Extension hash">;
-		uint param0 : 4;
-		uint extraParams : 4 <comment="0 through 3 + far more">;
-		uint transformType : 4 <comment="0 through 4 + 15">;
-		uint param3 : 4 <comment="Typically 2 or 0">;
-		uint param4 : 4;
-		uint param5 : 4;
-		uint param6 : 4;
-		uint param7 : 4;
-		
-		// Assert(param0!=13,"param0 is unknown!!!");
-		
-		FSkip(4);
-		
-		if (transformType==0)
-		{
-			struct TransformType0
-			{
-				Vector3 scale;
-				Quat4 rotation;
-				Vector3 translation;
-				
-			} transform;
-		}
-		else if (transformType==1)
-		{
-			struct TransformType1
-			{
-				Quat4 rotation;
-				Vector3 translation;
-				
-			} transform;
-		}
-		else if (transformType==2)
-		{
-			struct TransformType2
-			{
-				Vector3 scale;
-				Vector3 translation;
-				
-			} transform;
-		}
-		else if (transformType==3)
-		{
-			struct TransformType3
-			{
-				Vector3 translation;
-				
-			} transform;
-		}
-		else if (transformType==4)
-		{
-			struct TransformType4
-			{
-				Vector3 scale0;
-				Quat4 rotation0;
-				Vector3 translation0;
-				
-				Vector3 scale1;
-				Quat4 rotation1;
-				Vector3 translation1;
-				
-			} transform;
-		}
-		else if (transformType==15)	// \s10070\s10070_d01_fpkd\Assets\tpp\level\mission2\story\s10150\s10070_d01_FxLocators
-		{
-			struct TransformType15
-			{
-				Vector3 translation0;
-				Vector3 translation1;
-				
-			} transform;
-		}
-		else if (transformType==13)	// s10280_d14_FxLocators
-		{
-			struct TransformType13
-			{
-				Quat4 rotation0;
-				Vector3 translation0;
-				Quat4 rotation1;
-				Vector3 translation1;
-				
-			} transform;
-		}
-		else if (transformType==12)	// \s10130\s10130_area_fpkd\Assets\tpp\level\location\mafr\block_large\lab\s10130_area_FxLocators
-		{
-			struct TransformType12
-			{
-				Vector3 scale;
-				Quat4 rotation;
-				Vector3 translation0;
-				Vector3 translation1;
-				
-			} transform;
-		}
-		else 
-		{
-			Assert((2+2)==5, "Unknown sec0 transformType!!!");
-		};
-		
-		if (extraParams==1)
-		{
-			uint name <comment="StrCode32 hash of TppDataUtility handle">;
-		}
-		else if (extraParams==2)
-		{
-			uint param1;
-		}
-		else if (extraParams==3)
-		{
-			uint name <comment="StrCode32 hash of TppDataUtility handle">;
-			uint param1;
-		}
-		else if (extraParams==4)	// The simulation didn't prepare me for this - afgh_village_FxLocators mafr_outland_FxLocators
-		{
-			uint cnt;				// 2
-			uint parameter0[cnt];		// 1290022858 2671619559
-			uint parameter1[cnt];		// 3145984 3409408
-			uint param2;			// 0 
-			if (cnt>1)
-			{
-				uint param3;			// Empty string??
-			};
-		}
-		else if (extraParams==0)
-		{
-		}
-		else if (extraParams==8)	// \s10070\s10070_d01_fpkd\Assets\tpp\level\mission2\story\s10150\s10070_d01_FxLocators
-		{
-			ushort indicesCount;
-			ushort indices[indicesCount];
-		}
-		else if (extraParams==12)	// \s10070\s10070_d01_fpkd\Assets\tpp\level\mission2\story\s10150\s10070_d01_FxLocators s10110\s10110_area02_fpkd\Assets\tpp\level\location\mafr\block_large\factory\s10110_area02_FxLocators 
-		{
-			// I have no idea. s10070's entry[80] has this working, but s10110's entry[28] also has an integer and a float after this, and I do not know how it decides that.
-			ushort indicesCount;
-			ushort indices[indicesCount];
-			uint unknown0;
-			uint unknown1[unknown0];
-			uint unknown2[unknown0];
-			uint unknown3;
-			if (unknown0>1)	// lets just pretend it's an interp value of sorts between entries
-			{
-				uint unknown4;
-				
-				if (unknown0>2) // s10280_d14_FxLocators
-				{
-					float unknown5;
-				};
-			};
-		}
-		else if (extraParams==13)	// s10081_area_FxLocators
-		{
-			uint id <comment="StrCode32 hash of effect id">; // "smoke" in s10081
-			ushort unknown1;
-			ushort unknown2[unknown1];
-			uint unknown3;
-			if (unknown3==5)
-			{
-				uint unknown4[5];
-				uint unknown5[5];
-				uint unknown6;
-				uint unknown7;
-				float unknown8;
-				float unknown9;
-			}
-			else if (unknown3==1)	// s10130
-			{
-				uint unknown10;
-				uint unknown11;
-				uint unknown12;
-			}
-			else
-			{
-				Assert((2+2)==5,"OH PLEASE GOD HELP ME");
-			};
-		}
-		else if (extraParams==5)	// s10151_area01_FxLocators
-		{
-			uint unknown0;
-			uint unknown1;
-			uint unknown2;
-			uint unknown3;
-			uint unknown4;
-			uint unknown5;
-			uint unknown6;
-			uint unknown7;
-			
-		}
-		else 
-		{
-			Assert((2+2)==5, "Unknown sec0 extraParams!!!");
-		};
-		
-		// s10010_s01_FxLocators ???
-		
-		if (param0==12)
-		{
-			uint unknown0;
-		}
-		else if (param0==14)
-		{
-			uint unknown0;
-		}
-		else if (param0==13)
-		{
-			uint unknown0;
-		}
-		else if (param0==8)
-		{
-			// float unknown0;
-		};
-	
-	} entry[header.section0Count] <optimize=false>;
-	
-} section0 <bgcolor=COLOR_MS_RED>;
+		FSeek(header.endOfHeader);
+		FSkip(header.locatorOffsets[header.locIdx]);
+		FxLocator locator <bgcolor=COLOR_MS_RED>;
+	};
 
-if (header.section1Count>0)
-{
-	struct Section1
+if (header.groupCount>0)
+	for (header.grpIdx = 0; header.grpIdx < header.groupCount; header.grpIdx++)
 	{
-		struct ShellEntry
-		{
-			uint64 vfxPath;
-			uint param0 : 4;
-			uint extraParams : 4;
-			uint transformType : 4;
-			uint param3 : 4;
-			uint param4 : 4;
-			uint param5 : 4;
-			uint param6 : 4;
-			uint param7 : 4;
-			
-			FSkip(4);
-			
-			Vector3 translation;
-			
-			if (extraParams==12)
-			{
-				ushort locatorsInEntry;
-				ushort entryIndices[locatorsInEntry];
-				uint commandType;
-				if (commandType==2)
-				{
-					uint unknown0;
-					uint unknown1;
-					uint unknown2;
-					uint unknown3;
-					uint unknown4;
-					float unknown5;
-				}
-				else if (commandType==25)	// afgh_village_FxLocators
-				{
-					uint unknown0[25];
-					uint unknown1[25];
-					uint unknown2;
-					ubyte unknown3;
-					uint unknown4;
-					uint unknown5;
-					ubyte unknown5_1;
-					uint unknown5_2;
-					uint unknown5_3;
-					uint unknown6;
-					uint unknown6_1;
-					ubyte unknown7;
-					uint unknown8;
-					ubyte unknown9;
-					uint unknown10;
-					uint unknown11;
-					uint unknown12;
-					uint unknown13;
-				}
-				else if (commandType==3)	// s10260_area_FxLocators
-				{
-					uint unknown0;
-					uint unknown1;
-					uint unknown2;
-					uint unknown3;
-					uint unknown4;
-					uint unknown5;
-					uint unknown6;
-					uint unknown7;
-					float unknown8;
-				}
-				else if (commandType==6)	// afgh_waterway_FxLocators
-				{
-					uint unknown0[commandType];
-					uint unknown1[commandType];
-					uint unknown2;
-					uint unknown3;
-					float unknown4;
-					float unknown5[unknown2];
-				}
-				else if (commandType==5)	// mafr_lab_FxLocators
-				{
-					uint unknown0[commandType];
-					uint unknown1[commandType];
-					
-					uint unknown2;
-					
-					uint unknown3;
-					uint unknown4;
-					uint unknown5;
-					uint unknown6;
-				}
-				else if (commandType==28)	// mafr_lab_FxLocators
-				{
-					uint unknown0[commandType];
-					uint unknown1[commandType];
-					
-					uint unknown2;
-					if (unknown2==1116)	// mafr_lab_FxLocators
-					{
-						ubyte unknown9; // 4
-						float unknown11;
-						uint unknown12;
-						float unknown13;
-						ubyte unknown15; // 14
-						uint unknown16;
-						float unknown17;
-						uint unknown18;
-						float unknown19;
-						ubyte unknown20; // 6
-						uint unknown21;
-						ubyte unknown22; // 18
-						float unknown23;
-						float unknown24;
-						float unknown25;
-						float unknown26;
-						uint unknown27;
-						
-					}
-					else
-					{
-						uint unknown3;
-						uint unknown4;
-						uint unknown5;
-						uint unknown6;
-					};
-					
-				}
-				else 
-				{
-					Assert((2+2)==5, "Unknown sec1 commandType!!!");
-				};
-			}
-			else if (extraParams==0)
-			{
-				uint commandName;
-			}
-			else if (extraParams==1)
-			{
-				uint commandName;
-			}
-			else if (extraParams==3)
-			{
-				ubyte commandName;
-			}
-			else if (extraParams==6)
-			{
-				uint commandName;
-			}
-			else if (extraParams==9)	// s10010_l01_FxLocators
-			{
-				uint commandName;
-				ushort section0EntriesCount;
-				ushort section0EntryIndices[section0EntriesCount];
-			}
-			else if (extraParams==8)	// s10010_s05_FxLocators
-			{
-				ushort section0EntriesCount;
-				ushort section0EntryIndices[section0EntriesCount];
-			}
-			else if (extraParams==13)	// s10110\s10110_area02_fpkd\Assets\tpp\level\location\mafr\block_large\factory\s10110_area02_FxLocators mafr_outland_FxLocators
-			{
-				uint unknown0;
-				ushort unknown1;
-				ushort unknown2[unknown1];
-				uint unknown3;
-				uint unknown4[unknown3];
-				uint unknown5[unknown3];
-				uint unknown6;
-				if (unknown6==674) // mafr_outland_FxLocators
-				{
-					ubyte unknown7_1;
-					uint unknown7_2;
-					float unknown7_3; // 20
-					ubyte unknown7_4;
-					uint unknown7_5;
-					uint unknown7_6;
-					uint unknown7_7; // 2304335147
-					uint unknown7_8;
-					ubyte unknown7_9; // 8
-					uint unknown7_10; // 191059317
-					ubyte unknown7_9; // 20
-					uint unknown7_11;
-					uint unknown7_12;
-					uint unknown7_13;
-					uint unknown7_14;
-				}
-				else if (unknown6==550) // mafr_outland_FxLocators
-				{
-					ubyte unknown7_1;
-					uint unknown7_2;
-					float unknown7_3; // 20
-					ubyte unknown7_4;
-					uint unknown7_5;
-					uint unknown7_6;
-					uint unknown7_7; // 2304335147
-					uint unknown7_8;
-					ubyte unknown7_9; // 8
-					uint unknown7_10; // 191059317
-					ubyte unknown7_9; // 20
-					uint unknown7_11;
-					uint unknown7_12;
-					uint unknown7_13;
-					uint unknown7_14;
-				}
-				else if (unknown6==0) // mafr_flowStation_FxLocators
-				{
-					uint unknown8;
-					float unknown9;
-					if (unknown3>3)  // mafr_flowStation_FxLocators s10110_area02_FxLocators
-					{
-						float unknown10;
-					};
-				}
-				else if (unknown6==2639047403) // mafr_lab_FxLocators This is hell I'm so sorry
-				{
-					float unknown9;
-				}
-				else
-				{
-					uint unknown8;
-					float unknown9;
-					float unknown10;
-				};
-			}
-			else
-			{
-				Assert((2+2)==5, "Unknown sec1 extraParams!!!");
-			};
-			
-		} shellEntry[header.section1Count] <optimize=false>;
-		
-	} section1 <bgcolor=COLOR_MS_BLU>;
-};
+		FSeek(header.endOfHeader);
+		FSkip(header.groupOffsets[header.grpIdx]);
+		FxLocatorGroup group <bgcolor=COLOR_MS_BLU>;
+	};
 
-Assert(FTell() == FileSize(), "Failed to reach EoF.");
+//Assert(FTell() == FileSize(), "Failed to reach EoF.");
