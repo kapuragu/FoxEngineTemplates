@@ -8,13 +8,17 @@
 
 #include "common/common.bt"
 
+//1 0001 - Exclude Scale
+//2 0010 - Exclude Rotation
+//4 0100 - Include second transform
+//8 1000 - Hide something in the second transform?
 enum <uint> TransformType
 {
 	FXLB_TTYPE_SRT=0,
 	FXLB_TTYPE_RT=1,
 	FXLB_TTYPE_ST=2,
 	FXLB_TTYPE_T=3,
-	FXLB_TTYPE_SRTSRT=4,
+	FXLB_TTYPE_SRTSRT=4, // second transform is definitely an offset, same elsewhere
 	FXLB_TTYPE_SRTT=12,	// \s10130\s10130_area_fpkd\Assets\tpp\level\location\mafr\block_large\lab\s10130_area_FxLocators
 	FXLB_TTYPE_RTRT=13,	// s10280_d14_FxLocators
 	FXLB_TTYPE_TT=15,	// \s10070\s10070_d01_fpkd\Assets\tpp\level\mission2\story\s10150\s10070_d01_FxLocators
@@ -30,14 +34,14 @@ enum <uint> ParamType
 
 typedef struct 
 {
-	uint flags0 : 4; //I think mafr_145_124_FxLocators.vfxlb gets affected by this when it's 14
+	uint flags0 : 4; //I think mafr_145_124_FxLocators.vfxlb gets affected by this when it's 14, 8 doesn't affect it or 2
 	ParamType paramsFlags : 4 <comment="Bitfield of four types of param sets">;
 	TransformType transformType : 4 <comment="Enum of transform set type">;
-	uint flags3 : 4; if (flags3!=2&&flags3!=0) {Printf("Flags3 isn't 2 or 0!! It's %d\n",flags3);} //Usually 2 in locators, 0 in groups
-	uint param4 : 4;
-	uint param5 : 4;
-	uint param6 : 4;
-	uint param7 : 4;
+	uint flags3 : 4; if (flags3!=2&&flags3!=0&&flags3!=3) {Printf("@%d Flags3 isn't 2 or 0 or 3!! It's %d\n",FTell(),flags3);} //2 in locators, 0 in groups, 3 twice in s10130_area02_FxLocators.vfxlb on locator, many times in mafr_flowStation_FxLocators.vfxlb
+	uint param4 : 4 <hidden=true>; if (param4!=0) {Printf("@%d param4 isn't 0!! It's %d\n",FTell(),param4);}
+	uint param5 : 4 <hidden=true>; if (param5!=0) {Printf("@%d param4 isn't 0!! It's %d\n",FTell(),param5);}
+	uint param6 : 4 <hidden=true>; if (param6!=0) {Printf("@%d param4 isn't 0!! It's %d\n",FTell(),param6);}
+	uint param7 : 4 <hidden=true>; if (param4!=0) {Printf("@%d param4 isn't 0!! It's %d\n",FTell(),param7);}
 } Flags;
 
 typedef struct
@@ -98,25 +102,51 @@ typedef struct
 
 typedef struct
 {
-	uint subEntryCount;
-	uint hash[subEntryCount];
-	uint flags[subEntryCount]; //more goddam flags that decide the following???
-	//TODO, hash or float here, based on uints
-} ParamSubEntries;
+	uint flags0 : 4 <hidden=true>; if (flags0!=0) {Printf("@%d flags0 isn't 0!! It's %d\n",FTell(),flags0);}
+	uint flags1 : 4 <hidden=true>; if (flags1!=0) {Printf("@%d flags1 isn't 0!! It's %d\n",FTell(),flags1);}
+	uint flags2 : 4;
+	uint flags3 : 4 <hidden=true>; if (flags3!=0) {Printf("@%d flags3 isn't 0!! It's %d\n",FTell(),flags3);}
+	uint flags4 : 4;
+	uint flags5 : 4;
+	uint flags6 : 4;
+	uint flags7 : 4 <hidden=true>; if (flags7!=0) {Printf("@%d flags7 isn't 0!! It's %d\n",FTell(),flags7);}
+} ExtraParametersFlags;
 
 typedef struct
 {
-	if (parentof(this).flags.paramsFlags&FXLB_PTYPE_ID)
+	uint subEntryCount;
+	StrCode32 hash[subEntryCount];
+	ExtraParametersFlags extraParamFlags[subEntryCount]; //more goddam flags that decide the following
+	local uint paramIdx=0;
+	struct ExtraParams
+	{
+		for (paramIdx = 0; paramIdx < subEntryCount; paramIdx++)
+		{
+			struct ExtraParam
+			{
+				//This is not consistent at all. I thought it was simple.
+				/* if (extraParamFlags[paramIdx].flags2&1)
+					float param;
+				if (extraParamFlags[paramIdx].flags2&2)
+					int param;
+				if (extraParamFlags[paramIdx].flags2&4)
+					StrCode32 param; */
+				//TODO, hash or float here, based on flags?
+			} extraParam;
+		};
+	} extraParams;
+} ExtraParameters;
+
+typedef struct
+{
+	if (parentof(this).flags.paramsFlags&FXLB_PTYPE_ID)//1
 		StrCode32 name <comment="StrCode32 hash of TppDataUtility handle">;
-	if (parentof(this).flags.paramsFlags&FXLB_PTYPE_SOMEHASH)
+	if (parentof(this).flags.paramsFlags&FXLB_PTYPE_SOMEHASH)//2
 		StrCode32 somehash <comment="StrCode32 hash of TppDataUtility handle">;
-	if (parentof(this).flags.paramsFlags&FXLB_PTYPE_ARRAY)
+	if (parentof(this).flags.paramsFlags&FXLB_PTYPE_ARRAY)//8
 		LocatorArray locatorArray;
-	if (parentof(this).flags.paramsFlags&FXLB_PTYPE_SUBENTRIES)
-		ParamSubEntries paramSubEntries;
-	
-	if (parentof(this).flags.flags0&4)
-		int someInt;
+	if (parentof(this).flags.paramsFlags&FXLB_PTYPE_SUBENTRIES)//4
+		ExtraParameters extraParameters;
 } Parameters;
 
 typedef struct 
@@ -127,6 +157,8 @@ typedef struct
 	Transforms transforms;
 	if (flags.paramsFlags>0)
 		Parameters parameters;
+	if (flags.flags0&4) //s10010_s03_FxLocators.vfxlb
+		int someInt;
 } FxLocator;
 
 typedef struct
