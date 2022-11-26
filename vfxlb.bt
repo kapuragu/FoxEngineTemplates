@@ -2,6 +2,11 @@
 // Template by RLC, based on documentation by Morbidslinky - inspired by other FOX templates by the researchers of Modders' Heaven!
 // https://metalgearmodding.fandom.com/wiki/VFXLB
 
+// BigEndian();
+
+// Regardless of endianness
+BitfieldRightToLeft();
+
 #define COLOR_MS_BLU 0xFBB700
 #define COLOR_MS_RED 0x3F00D0
 #define COLOR_MS_BLK 0x000007
@@ -10,152 +15,136 @@
 
 enum <uint> FxLocatorHeaderFlags
 {
-	FXLB_HDR_0_1 		= 0x1,
-	FXLB_HDR_0_2 		= 0x2,
-	FXLB_HDR_SOMEINT	= 0x4, //s10010_s03_FxLocators.vfxlb
-	FXLB_HDR_0_8 		= 0x8,
-	
-	FXLB_HDR_ID			= 0x10,
-	FXLB_HDR_SOME_HASH	= 0x20,
-	FXLB_HDR_EXTRA		= 0x40,
-	FXLB_HDR_CHILDREN	= 0x80,
-	
-	FXLB_HDR_HIDE_SCALE		= 0x100,
-	FXLB_HDR_HIDE_ROT		= 0x200,
-	FXLB_HDR_ADD_TRANSFORM	= 0x400,
-	FXLB_HDR_HIDE_IN_ADD 	= 0x800,
-	
-	FXLB_HDR_3_1 		= 0x1000, //twice in s10130_area02_FxLocators.vfxlb on locator, many times in mafr_flowStation_FxLocators.vfxlb, in locators
-	FXLB_HDR_IS_LOCATOR = 0x2000,
-	FXLB_HDR_3_4 		= 0x4000,
-	FXLB_HDR_3_8 		= 0x8000,
-};
+	FX_LOCATOR_HEADER_FLAGS_0		= 0x1,
+	FX_LOCATOR_HEADER_FLAGS_1		= 0x2,
+	FX_LOCATOR_HEADER_FLAGS_SOMEINT = 0x4, //s10010_s03_FxLocators.vfxlb
+	FX_LOCATOR_HEADER_FLAGS_3 	= 0x8,
 
-enum <uint> FxLocatorExtraParametersFlags
-{
-	FXLB_EXT_0_1 = 0x1,
-	FXLB_EXT_0_2 = 0x2,
-	FXLB_EXT_0_4 = 0x4,
-	FXLB_EXT_0_8 = 0x8,
-	
-	FXLB_EXT_1_1 = 0x10,
-	FXLB_EXT_1_2 = 0x20,
-	FXLB_EXT_1_4 = 0x40,
-	FXLB_EXT_1_8 = 0x80,
-	//maybe what defines the parameters?
-	FXLB_EXT_2_1 = 0x100,
-	FXLB_EXT_2_2 = 0x200,
-	FXLB_EXT_2_4 = 0x400,
-	FXLB_EXT_2_8 = 0x800,
-	
-	FXLB_EXT_3_1 = 0x1000,
-	FXLB_EXT_3_2 = 0x2000,
-	FXLB_EXT_3_4 = 0x4000,
-	FXLB_EXT_3_8 = 0x8000,
-	
-	FXLB_EXT_4_1 = 0x10000,
-	FXLB_EXT_4_2 = 0x20000,
-	FXLB_EXT_4_4 = 0x40000,
-	FXLB_EXT_4_8 = 0x80000,
-	
-	FXLB_EXT_5_1 = 0x100000,
-	FXLB_EXT_5_2 = 0x200000,
-	FXLB_EXT_5_4 = 0x400000,
-	FXLB_EXT_5_8 = 0x800000,
-	
-	FXLB_EXT_6_1 = 0x1000000,
-	FXLB_EXT_6_2 = 0x2000000,
-	FXLB_EXT_6_4 = 0x4000000,
-	FXLB_EXT_6_8 = 0x8000000,
-	
-	FXLB_EXT_7_1 = 0x10000000,
-	FXLB_EXT_7_2 = 0x20000000,
-	FXLB_EXT_7_4 = 0x40000000,
-	FXLB_EXT_7_8 = 0x80000000,
+	FX_LOCATOR_HEADER_FLAGS_ID		   = 0x10,
+	FX_LOCATOR_HEADER_FLAGS_SOMEHASH   = 0x20,
+	FX_LOCATOR_HEADER_FLAGS_PARAMETERS = 0x40,
+	FX_LOCATOR_HEADER_FLAGS_CHILDREN   = 0x80,
+
+	FX_LOCATOR_HEADER_FLAGS_NO_SCALE = 0x100,
+	FX_LOCATOR_HEADER_FLAGS_NO_ROT	 = 0x200,
+
+	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2				= 0x400,
+	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_SCALE	    = 0x800,
+	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_ROT		= 0x1000, //twice in s10130_area02_FxLocators.vfxlb on locator, many times in mafr_flowStation_FxLocators.vfxlb, in locators
+
+	FX_LOCATOR_HEADER_FLAGS_D = 0x2000,
+	FX_LOCATOR_HEADER_FLAGS_E		   = 0x4000,
+	FX_LOCATOR_HEADER_FLAGS_F		   = 0x8000,
 };
 
 typedef struct 
 {
-	PathCode64 VfxFile <comment="PathCode64+Extension hash", fgcolor=0x000007>;
-	FxLocatorHeaderFlags flags : 16;
-	uint padding1 : 16 <hidden=true>; Assert(padding1==0);
-	uint padding2 <hidden=true>; Assert(padding2==0);
+	PathCode64 VfxFile <fgcolor=0x000007>;
+
+	FxLocatorHeaderFlags Flags; Assert(Flags < 0x10000);
+
+	uint Padding <hidden=true>; Assert(Padding == 0);
 	
-	if (flags&FXLB_HDR_3_1)
-		Printf("@%d FXLB_HDR_3_1\n",FTell());
-	
-	if (!(flags&FXLB_HDR_HIDE_SCALE))
-		Vector3 scale;
-	if (!(flags&FXLB_HDR_HIDE_ROT))
-		Quaternion rotation;
-	Vector3 translation;
-	if (flags&FXLB_HDR_ADD_TRANSFORM)
+	if (!(Flags & FX_LOCATOR_HEADER_FLAGS_NO_SCALE))
+		Vector3 Scale;
+	if (!(Flags & FX_LOCATOR_HEADER_FLAGS_NO_ROT))
+		Quaternion Rotation;
+	Vector3 Translation;
+
+	if (Flags & FX_LOCATOR_HEADER_FLAGS_TRANSFORM2)
 	{
-		if ((flags&FXLB_HDR_HIDE_IN_ADD)&&!(flags&FXLB_HDR_HIDE_SCALE))
-			Vector3 scale;
-		if ((flags&FXLB_HDR_HIDE_IN_ADD)&&!(flags&FXLB_HDR_HIDE_ROT))
-			Quaternion rotation;
-		Vector3 translation;
+		if (!(Flags & FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_SCALE))
+			Vector3 Scale2;
+		if (!(Flags & FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_ROT))
+			Quaternion Rotation2;
+		Vector3 Translation2;
 	}
 	
-	if (flags&FXLB_HDR_ID)
-		StrCode32 name <comment="StrCode32 hash of TppDataUtility handle">;
-	if (flags&FXLB_HDR_SOME_HASH)
-		StrCode32 somehash;
-	if (flags&FXLB_HDR_CHILDREN)
+	if (Flags & FX_LOCATOR_HEADER_FLAGS_ID)
+		StrCode32 TppDataUtilityHandleName; // StrCode32 hash of TppDataUtility handle
+
+	if (Flags & FX_LOCATOR_HEADER_FLAGS_SOMEHASH)
+		StrCode32 SomeHash;
+
+	if (Flags & FX_LOCATOR_HEADER_FLAGS_CHILDREN)
 	{
-		ushort childCount <hidden=true>;
-		ushort childLocatorIndex[childCount];
+		ushort ChildCount <hidden=true>;
+		ushort ChildLocatorIndex[ChildCount];
 	}
-	if (flags&FXLB_HDR_EXTRA)
+
+	if (Flags & FX_LOCATOR_HEADER_FLAGS_PARAMETERS)
 	{
-		uint parameterCount <hidden=true>;
-		StrCode32 parameterHash[parameterCount];
-		FxLocatorExtraParametersFlags extraParamFlags[parameterCount];
-		local uint paramIdx <hidden=true>;
-		for (paramIdx = 0; paramIdx < parameterCount; paramIdx++)
+		uint ParameterCount <hidden = true>;
+
+		StrCode32 ParameterName[ParameterCount];
+		
+		struct FxVfxInstanceParameterDesc
 		{
-			//This is not consistent at all. I thought it was simple.
-			/* if (extraParamFlags[paramIdx]&FXLB_EXT_2_1)
-				float param;
-			if (extraParamFlags[paramIdx]&FXLB_EXT_2_2)
-				int param;
-			if (extraParamFlags[paramIdx]&FXLB_EXT_2_4)
-				StrCode32 param; */
+			uint Unknown : 8; Assert(Unknown == 0);
+			uint Type : 8;
+			uint Offset : 16;
+		} ParameterDesc[ParameterCount] <optimize = false, hidden = true>;
+
+		local uint pmIdx;
+		for (pmIdx = 0; pmIdx < ParameterCount; pmIdx++)
+		{
+			FSeek(startof(this) + ParameterDesc[pmIdx].Offset);
+			switch (ParameterDesc[pmIdx].Type)
+			{
+			case 0:
+				int Param;
+				break;
+			case 1:
+				float Param;
+				break;
+			case 6:
+				StrCode32 Param;
+				break;
+			default:
+				Assert(false);
+				break;
+			}
 		};
 	}
 	
-	if (flags&FXLB_HDR_SOMEINT) //s10010_s03_FxLocators.vfxlb
-		int someInt;
-} FxLocatorHeader;
+	if (Flags & FX_LOCATOR_HEADER_FLAGS_SOMEINT) //s10010_s03_FxLocators.vfxlb
+		int SomeInt;
+} FxLocatorCommonHeader;
 
-struct Header
+struct FxLocatorBinaryHeader
 {
-	char sign[5]; Assert(sign=="VFXLB");
-	byte version;
-	ushort locatorCount <fgcolor=COLOR_MS_RED>;
-	ushort groupCount <fgcolor=COLOR_MS_BLU>;
-	uint locatorOffsets[locatorCount] <fgcolor=COLOR_MS_RED>;
-	uint groupOffsets[groupCount] <fgcolor=COLOR_MS_BLU>;
-	local uint endOfHeader; endOfHeader = FTell();
-} header <bgcolor=COLOR_MS_BLK, hidden=true>;
+	char Signature[5]; Assert(Signature == "VFXLB");
 
-//FSeek tomfoolery to work around unfinished extra parameters
-if (header.locatorCount>0)
-	local uint locIdx <hidden=true>;
-	for (locIdx = 0; locIdx < header.locatorCount; locIdx++)
-	{
-		FSeek(header.endOfHeader+header.locatorOffsets[locIdx]);
-		FxLocatorHeader LocatorData <bgcolor=COLOR_MS_RED>;
-	};
+	byte Version;
 
-if (header.groupCount>0)
-	local uint grpIdx <hidden=true>;
-	for (grpIdx = 0; grpIdx < header.groupCount; grpIdx++)
+	ushort LocatorCount <fgcolor = COLOR_MS_RED>;
+	ushort GroupCount <fgcolor = COLOR_MS_BLU>;
+
+	uint LocatorOffsets[LocatorCount] <fgcolor = COLOR_MS_RED>;
+	uint GroupOffsets[GroupCount] <fgcolor = COLOR_MS_BLU>;
+} Header <bgcolor = COLOR_MS_BLK, hidden = true>;
+
+if (Header.LocatorCount > 0)
+{
+	local uint lcIdx;
+	for (lcIdx = 0; lcIdx < Header.LocatorCount; lcIdx++)
 	{
-		FSeek(header.endOfHeader+header.groupOffsets[grpIdx]);
-		FxLocatorHeader LocatorGroup <bgcolor=COLOR_MS_BLU>;
+		FSeek(10 + 4*(Header.LocatorCount + Header.GroupCount) + Header.LocatorOffsets[lcIdx]);
+		
+		FxLocatorCommonHeader LocatorData <bgcolor = COLOR_MS_RED>;
 	};
+}
+
+if (Header.GroupCount > 0)
+{
+	local uint gpIdx;
+	for (gpIdx = 0; gpIdx < Header.GroupCount; gpIdx++)
+	{
+		FSeek(10 + 4*(Header.LocatorCount + Header.GroupCount) + Header.GroupOffsets[gpIdx]);
+		
+		FxLocatorCommonHeader LocatorGroup <bgcolor = COLOR_MS_BLU>;
+	};
+}
 
 //Assert(FTell() == FileSize(), "Failed to reach EoF.");
 
