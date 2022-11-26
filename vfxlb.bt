@@ -19,23 +19,22 @@ enum <uint> FxLocatorHeaderFlags
 	FX_LOCATOR_HEADER_FLAGS_0		= 0x1,
 	FX_LOCATOR_HEADER_FLAGS_1		= 0x2,
 	FX_LOCATOR_HEADER_FLAGS_SOMEINT = 0x4, //s10010_s03_FxLocators.vfxlb
-	FX_LOCATOR_HEADER_FLAGS_3 	= 0x8,
+	FX_LOCATOR_HEADER_FLAGS_3 		= 0x8,
 
 	FX_LOCATOR_HEADER_FLAGS_ID		   = 0x10,
 	FX_LOCATOR_HEADER_FLAGS_SOMEHASH   = 0x20,
 	FX_LOCATOR_HEADER_FLAGS_PARAMETERS = 0x40,
 	FX_LOCATOR_HEADER_FLAGS_CHILDREN   = 0x80,
 
-	FX_LOCATOR_HEADER_FLAGS_NO_SCALE = 0x100,
-	FX_LOCATOR_HEADER_FLAGS_NO_ROT	 = 0x200,
-
+	FX_LOCATOR_HEADER_FLAGS_NO_SCALE				= 0x100,
+	FX_LOCATOR_HEADER_FLAGS_NO_ROT	 				= 0x200,
 	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2				= 0x400,
 	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_SCALE	    = 0x800,
 	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_ROT		= 0x1000, //twice in s10130_area02_FxLocators.vfxlb on locator, many times in mafr_flowStation_FxLocators.vfxlb, in locators
 
-	FX_LOCATOR_HEADER_FLAGS_D = 0x2000,
-	FX_LOCATOR_HEADER_FLAGS_E		   = 0x4000,
-	FX_LOCATOR_HEADER_FLAGS_F		   = 0x8000,
+	FX_LOCATOR_HEADER_FLAGS_D			= 0x2000,
+	FX_LOCATOR_HEADER_FLAGS_E			= 0x4000,
+	FX_LOCATOR_HEADER_FLAGS_F			= 0x8000,
 };
 
 typedef struct 
@@ -89,7 +88,7 @@ typedef struct
 			uint Offset : 16;
 		} ParameterDesc[ParameterCount] <optimize = false, bgcolor = COLOR_MS_RED>; //hidden = true>;
 
-		local uint pmIdx;
+		local uint pmIdx <hidden=true>;
 		for (pmIdx = 0; pmIdx < ParameterCount; pmIdx++)
 		{
 			if (ParameterName[pmIdx].hash == 3612282275 || ParameterName[pmIdx].hash == 1594808049)
@@ -101,7 +100,7 @@ typedef struct
 				{
 				case 0:
 					uint Param <bgcolor = COLOR_MS_ONG>;
-					// For some reason, ((Param >> Unknown) == and != 0) is important. No clue why. 
+					// For some reason, ((Param >> Unknown) == and != 0) is sometimes important. No clue why. mgsvtpp.exe!14cbd5de0
 					break;
 				case 1:
 					float Param;
@@ -144,7 +143,7 @@ struct FxLocatorBinaryHeader
 
 if (Header.LocatorCount > 0)
 {
-	local uint lcIdx;
+	local uint lcIdx <hidden=true>;
 	for (lcIdx = 0; lcIdx < Header.LocatorCount; lcIdx++)
 	{
 		FSeek(10 + 4*(Header.LocatorCount + Header.GroupCount) + Header.LocatorOffsets[lcIdx]);
@@ -155,7 +154,7 @@ if (Header.LocatorCount > 0)
 
 if (Header.GroupCount > 0)
 {
-	local uint gpIdx;
+	local uint gpIdx <hidden=true>;
 	for (gpIdx = 0; gpIdx < Header.GroupCount; gpIdx++)
 	{
 		FSeek(10 + 4*(Header.LocatorCount + Header.GroupCount) + Header.GroupOffsets[gpIdx]);
