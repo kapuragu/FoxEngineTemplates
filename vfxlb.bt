@@ -37,6 +37,16 @@ enum <uint> FxLocatorHeaderFlags
 	FX_LOCATOR_HEADER_FLAGS_F			= 0x8000,
 };
 
+enum <uint> FxLocatorParamType
+{
+	FX_LOCATOR_PARAM_TYPE_SHARED_BOOL = 0,
+	FX_LOCATOR_PARAM_TYPE_FLOAT = 1,
+	FX_LOCATOR_PARAM_TYPE_BYTE = 3,
+	FX_LOCATOR_PARAM_TYPE_UNKNOWN32BIT_0 = 4, // Possibly int?
+	FX_LOCATOR_PARAM_TYPE_UNKNOWN32BIT_1 = 5, // Possibly uint?
+	FX_LOCATOR_PARAM_TYPE_HASH = 6, // Possibly uint?
+};
+
 typedef struct 
 {
 	PathCode64 VfxFile <fgcolor=0x000007>;
@@ -81,10 +91,10 @@ typedef struct
 		
 		struct FxVfxInstanceParameterDesc
 		{
-			uint Unknown : 5;
+			uint BitIndex : 5;
 			uint Padding : 3 <hidden = true>; Assert(Padding == 0);
 
-			uint Type : 8;
+			FxLocatorParamType Type : 8;
 			uint Offset : 16;
 		} ParameterDesc[ParameterCount] <optimize = false, bgcolor = COLOR_MS_RED>; //hidden = true>;
 
@@ -98,23 +108,22 @@ typedef struct
 			
 				switch (ParameterDesc[pmIdx].Type)
 				{
-				case 0:
-					uint Param <bgcolor = COLOR_MS_ONG>;
-					// For some reason, ((Param >> Unknown) == and != 0) is sometimes important. No clue why. mgsvtpp.exe!14cbd5de0
+				case FX_LOCATOR_PARAM_TYPE_SHARED_BOOL:
+					uint Param <bgcolor = COLOR_MS_ONG>; // The encoded bool is ((Param >> BitIndex) != 0).
 					break;
-				case 1:
+				case FX_LOCATOR_PARAM_TYPE_FLOAT:
 					float Param;
 					break;
-				case 3:
+				case FX_LOCATOR_PARAM_TYPE_BYTE:
 					ubyte Param;
 					break;
-				case 4:
+				case FX_LOCATOR_PARAM_TYPE_UNKNOWN32BIT_0:
 					uint Param; Assert(false);
 					break;
-				case 5:
+				case FX_LOCATOR_PARAM_TYPE_UNKNOWN32BIT_1:
 					uint Param; Assert(false);
 					break;
-				case 6:
+				case FX_LOCATOR_PARAM_TYPE_HASH:
 					StrCode32 Param;
 					break;
 				default:
