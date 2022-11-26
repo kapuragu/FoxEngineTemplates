@@ -1,0 +1,22 @@
+LittleEndian();
+
+#include "common/common.bt"
+
+typedef struct
+{
+	Vector4 Translation; Assert(Translation.w == 1);
+	Vector4 Rotation;
+	Vector4 Scale; Assert(Scale.w == 1);
+} FCNP;
+
+#define FOX_DATA_PAYLOAD FCNP
+
+#define FOX_DATA_FORCE_LITTLE_ENDIAN
+
+#include "common/FoxData_common.bt"
+
+FoxDataHeader Header;
+
+FSeek(Header.NodesOffset);
+
+FoxDataNodes Nodes;

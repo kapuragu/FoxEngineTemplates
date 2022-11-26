@@ -18,7 +18,7 @@ enum <ushort> FOX_DATA_NODE_ENTRY_PARAM_TYPE
 typedef struct
 {
 	FOX_DATA_HASH_TYPE Hash;
-    uint StringOffset;
+	uint StringOffset;
 } FoxDataString <read = ReadFoxDataString>;
 string ReadFoxDataString(FoxDataString& str)
 {
@@ -40,8 +40,8 @@ string ReadFoxDataString(FoxDataString& str)
 
 typedef struct
 {
-    FOX_DATA_NODE_ENTRY_PARAM_TYPE Type;
-    short NextParameterOffset;
+	FOX_DATA_NODE_ENTRY_PARAM_TYPE Type;
+	short NextParameterOffset;
 	FoxDataString Name;
 	switch (Type)
 	{
@@ -49,10 +49,10 @@ typedef struct
 		uint Value;
 		break;
 	case FOX_DATA_NODE_ENTRY_PARAM_TYPE_STRING:
-    	FoxDataString Value;
+		FoxDataString Value;
 		break;
 	case FOX_DATA_NODE_ENTRY_PARAM_TYPE_FLOAT:
-    	float Value;
+		float Value;
 		break;
 	default:
 		Assert(false, "Unknown parameter type.");
@@ -100,16 +100,16 @@ typedef struct
 typedef struct
 {
 	FoxDataString Name <hidden = true>;
-    uint Flags <hidden = true>; // Unknown. Greatest diversity is in GEOM and HTRE nodes. Most other formats have 0 or 1 (see their asserts for details).
-    int DataOffset <hidden = true>; // 0 means no data
-    uint DataSize <hidden = true>; // 0 means no data
-    int ParentNodeOffset <hidden = true>; // Surmised based on confirmation of ChildNodeOffset and behavior (if slightly wonky; see htre.bt for details) in HTRE V3 format.
-    int ChildNodeOffset <hidden = true>; // Confirmed thanks to PES SO
-    int PreviousNodeOffset <hidden = true>; // 0 means no previous nodes
-    int NextNodeOffset <hidden = true>; // 0 means no more nodes
-    int ParametersOffset <hidden = true>; // 0 means no params
-    uint Padding0 <hidden = true>; Assert(Padding0 == 0);
-    uint Padding1 <hidden = true>; Assert(Padding1 == 0);
+	uint Flags <hidden = true>; // Unknown. Greatest diversity is in GEOM and HTRE nodes. Most other formats have 0 or 1 (see their asserts for details).
+	int DataOffset <hidden = true>; // 0 means no data
+	uint DataSize <hidden = true>; // 0 means no data
+	int ParentNodeOffset <hidden = true>; // Surmised based on confirmation of ChildNodeOffset and behavior (if slightly wonky; see htre.bt for details) in HTRE V3 format.
+	int ChildNodeOffset <hidden = true>; // Confirmed thanks to PES SO
+	int PreviousNodeOffset <hidden = true>; // 0 means no previous nodes
+	int NextNodeOffset <hidden = true>; // 0 means no more nodes
+	int ParametersOffset <hidden = true>; // 0 means no params
+	uint Padding0 <hidden = true>; Assert(Padding0 == 0);
+	uint Padding1 <hidden = true>; Assert(Padding1 == 0);
 
 	if (ChildNodeOffset != 0)
 	{
@@ -157,7 +157,7 @@ int GetFoxDataNodeParamIndex(FoxDataNode& node, string name)
 			return pIdx;
 	}
 
-    return -1;
+	return -1;
 }
 
 int GetFoxDataNodeIndex(FoxDataNodes& nodes, string name)
@@ -169,19 +169,31 @@ int GetFoxDataNodeIndex(FoxDataNodes& nodes, string name)
 			return nIdx;
 	}
 
-    return -1;
+	return -1;
 }
 
 typedef struct
 {
+	#ifdef FOX_DATA_FORCE_LITTLE_ENDIAN
+	LittleEndian();
+	#define FOX_DATA_FORCED_ENDIAN
+	#endif
+
+	#ifdef FOX_DATA_FORCE_BIG_ENDIAN
+	BigEndian();
+	#define FOX_DATA_FORCED_ENDIAN
+	#endif
+
+	#ifndef FOX_DATA_FORCED_ENDIAN
 	if (ReadUShort() == 0 || ReadUInt() == 372637195 || ReadUInt() == 1144389900) // 201209110, 201406020
 		BigEndian();
 	else
 		LittleEndian();
+	#endif
 
-    uint Version;
-    uint NodesOffset;
-    uint FileSize;
+	uint Version;
+	uint NodesOffset;
+	uint FileSize;
 	FoxDataString Name;
 
 	uint Flags;
