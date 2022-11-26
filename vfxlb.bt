@@ -10,6 +10,7 @@ BitfieldRightToLeft();
 #define COLOR_MS_BLU 0xFBB700
 #define COLOR_MS_RED 0x3F00D0
 #define COLOR_MS_BLK 0x000007
+#define COLOR_MS_ONG 0x00B7FB
 
 #include "common/common.bt"
 
@@ -76,34 +77,51 @@ typedef struct
 	{
 		uint ParameterCount <hidden = true>;
 
+		// Notable ones: 804179602, 3612282275, or 1594808049
 		StrCode32 ParameterName[ParameterCount];
 		
 		struct FxVfxInstanceParameterDesc
 		{
-			uint Unknown : 8; Assert(Unknown == 0);
+			uint Unknown : 5;
+			uint Padding : 3 <hidden = true>; Assert(Padding == 0);
+
 			uint Type : 8;
 			uint Offset : 16;
-		} ParameterDesc[ParameterCount] <optimize = false, hidden = true>;
+		} ParameterDesc[ParameterCount] <optimize = false, bgcolor = COLOR_MS_RED>; //hidden = true>;
 
 		local uint pmIdx;
 		for (pmIdx = 0; pmIdx < ParameterCount; pmIdx++)
 		{
+			if (ParameterName[pmIdx].hash == 3612282275 || ParameterName[pmIdx].hash == 1594808049)
+				Assert(false, "There's some sort of weirdness. Take a look at mgsvtpp.exe!141b3d9b7.");
+
 			FSeek(startof(this) + ParameterDesc[pmIdx].Offset);
-			switch (ParameterDesc[pmIdx].Type)
-			{
-			case 0:
-				int Param;
-				break;
-			case 1:
-				float Param;
-				break;
-			case 6:
-				StrCode32 Param;
-				break;
-			default:
-				Assert(false);
-				break;
-			}
+			
+				switch (ParameterDesc[pmIdx].Type)
+				{
+				case 0:
+					uint Param <bgcolor = COLOR_MS_ONG>;
+					// For some reason, ((Param >> Unknown) == and != 0) is important. No clue why. 
+					break;
+				case 1:
+					float Param;
+					break;
+				case 3:
+					ubyte Param;
+					break;
+				case 4:
+					uint Param; Assert(false);
+					break;
+				case 5:
+					uint Param; Assert(false);
+					break;
+				case 6:
+					StrCode32 Param;
+					break;
+				default:
+					Assert(false);
+					break;
+				}
 		};
 	}
 	
