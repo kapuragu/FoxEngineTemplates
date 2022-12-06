@@ -96,27 +96,27 @@ typedef struct
 					Assert(false, "Unknown GEO_PRIM_TYPE type detected!");
 				}
 				
-				// FSeek(SelfStartPos + Header.VertexBufferOffset);
+				FSeek(startof(this) + Header.VertexBufferOffset);
 
-				// local uint highestNodeIndex = 0;
-				// local uint i;
-				// if (Header.PrimCount > 0)
-				// {
-				//     // Manually get number of vertices
-				//     for (i = 0; i < Header.PrimCount; i++)
-				//     {
-				//         if (Edges[i].InIndex > highestNodeIndex)
-				//             highestNodeIndex = Edges[i].InIndex;
-				//         else if (Edges[i].OutIndex > highestNodeIndex)
-				//             highestNodeIndex = Edges[i].OutIndex;
-				//     }
+				local uint highestNodeIndex = 0;
+				local uint i;
+				if (Header.PrimCount > 0)
+				{
+				    // Manually get number of vertices
+				    for (i = 0; i < Header.PrimCount; i++)
+				    {
+				        if (Prim[i].InIndex > highestNodeIndex)
+				            highestNodeIndex = Prim[i].InIndex;
+				        else if (Prim[i].OutIndex > highestNodeIndex)
+				            highestNodeIndex = Prim[i].OutIndex;
+				    }
 				
-				//     struct Node
-				//     {
-				//         Vector3 Position;
-				//         GEO_NODE_TAGS Tags;
-				//     } Nodes [highestNodeIndex + 1] <bgcolor=COLOR_NODE>;
-				// }
+				    struct Point
+				    {
+				        Vector3 Position;
+				        GEO_NODE_TAGS Tags;
+				    } Points [highestNodeIndex + 1] <bgcolor=COLOR_NODE>;
+				}
 			} Shape <bgcolor = COLOR_GEOSHAPE>;
 		}
 	} Shapes;
