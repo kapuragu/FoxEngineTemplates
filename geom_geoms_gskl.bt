@@ -294,6 +294,8 @@ typedef struct
 		if (parentof(this).DataOffset != 0)
 		{
 			GeoBoundingVolume BoundingVolume <bgcolor = COLOR_ENTRYBVHSECTION>;
+
+			FAlign(16);
 		}
 
 		GeoGroup Group;
