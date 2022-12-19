@@ -1,7 +1,6 @@
 //NTA - NavTacticalAction File
 //Based on youarebritish's documentation, by RLC
 //https://metalgearmodding.fandom.com/wiki/NTA
-LittleEndian();
 
 //Coolors
 #define SpringGreen 0x8DFC5E
@@ -10,68 +9,52 @@ LittleEndian();
 #define VioletBlueCrayola 0xD17783
 #define OldLavender 0x725A6D
 
-//These hashes are used in GkTacticalActionEdge entities as actionName
-enum <uint64> Str64
-{
-    EmptyHash=203000540209048,
-    StepOn=221776209274273,
-    StepDown=74196699949876,
-    LadderUp=188057460958932,
-    LadderDown=263911609609000,
-};
-
-enum <uint> Str32
-{
-    EmptyHash32=3205930904,
-    StepOn32=1277978017,
-    StepDown32=1139911476,
-    LadderUp32=2317903572,
-    LadderDown32=3049138984,
-};
-
-struct Vector3
-{
-    float x;
-    float y;
-    float z;
-};
+#include "common/common.bt"
 
 struct Header 
 {
     char sign[4];
-    short magic1; if (magic1==256) {BigEndian();}; //For Big End/PS3
-    short magic2; Assert(magic2==1,"Magic2 isn't 1!!!");
-    uint headerSize; Assert(headerSize==12,"headerSize is incorrect!!!");
+    short unk0;
+    short unk1;
+    uint offsetToData;
 } header <bgcolor=SpringGreen, hidden=true>;
 
-struct Metadata
+FSeek(header.offsetToData);
+
+struct Data
 {
-    Str64 hash; Assert(hash==EmptyHash,"Metadata hash isn't empty!!!");
-    uint entryCount;
-    int magic4 <hidden=true>; Assert(magic4==24,"Magic4 isn't 24!!! Where is the bomb?!!!");
-    uint hashTableOffset <hidden=true>;
-    uint fileSize <hidden=true>;
-} metadata<bgcolor=ElectricBlue>;
+    StrCode DefaultEdgeActionName; //???
 
-struct Entry
-{
-    Vector3 entryPosition <fgcolor=PaleCerulean>;
-    Str32 enterActionName;
-    Vector3 exitPosition <fgcolor=PaleCerulean>;
-    Str32 exitActionName;
-    Str64 emptyHash; //Not always empty! Ex: gntn_common.nta
-    short unk0; //These unknowns scare me the most
-    short unk1;
-    short unk2;
-    short unk3;
-} entry[metadata.entryCount] <bgcolor=OldLavender, optimize=false>;
+    uint actionCount <hidden=true>;
+    int unknown0 <hidden=true>; Assert(unknown0==24,"unknown0 isn't 24!!! Where is the bomb?!!!");
+    uint actionNameOffset <hidden=true>;
+    uint dataSize <hidden=true>;
+    
+    local int i <hidden=true>;
+    local uint pos <hidden=true>;
+    for (i = 0; i < actionCount; i++)
+    {
+        struct GkTacticalAction
+        {
+            pos = FTell();
+            FSeek(header.offsetToData + actionNameOffset + i * sizeof(StrCode));
 
-local uint hashTableStart = header.headerSize + metadata.hashTableOffset;
-Assert(hashTableStart==FTell(),"Not at hash table start!!!");
+            StrCode actionName <bgcolor=VioletBlueCrayola>; //Entry name?
 
-//Having each entry here have the name it in its struct would make a real ugly mess
-//So leave it in the lap of the gods
-uint64 entryHash[metadata.entryCount] <bgcolor=VioletBlueCrayola, optimize=false>;
+            FSeek(pos);
 
-local uint totalFileSize = header.headerSize + metadata.fileSize;
-Assert(totalFileSize==FTell(),"File size is incorrect!!!");
+            struct GkTacticalActionWaypoint
+            {
+                Vector3 position <fgcolor=PaleCerulean>;
+                StrCode32 waypointAction;
+            } waypoint[2];
+
+            StrCode edgeActionName; //Not always empty! Ex: gntn_common.nta. But what kinda name???
+
+            short unk0; //These unknowns scare me the most
+            short unk1 <hidden=true>; Assert(unk1==0,"unk1 isn't 0!");
+            short unk2 <hidden=true>; Assert(unk2==0,"unk2 isn't 0!!");
+            short unk3 <hidden=true>; Assert(unk3==0,"unk3 isn't 0!!!");
+        } action <bgcolor=OldLavender, optimize=false>;
+    };
+} data<bgcolor=ElectricBlue>;
