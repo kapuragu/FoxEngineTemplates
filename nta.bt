@@ -11,6 +11,20 @@
 
 #include "common/common.bt"
 
+string ResolveHashFunc(StrCode& hash)
+{
+	switch (hash.hash)
+	{
+	case 221776209274273: return "StepOn";
+	case 74196699949876: return "StepDown";
+	case 188057460958932: return "LadderUp";
+	case 263911609609000: return "LadderDown";
+	default: return "";
+	}
+}
+
+#define FOX_DATA_HASH_RESOLVE_FUNC ResolveHashFunc
+
 struct Header 
 {
     char sign[4];
