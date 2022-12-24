@@ -19,7 +19,7 @@ FSeek(header.offsetToArray);
 typedef struct
 {
 	Vector3 scale;
-	Vector4 rotation;
+	Quaternion rotation;
 	Vector3 translation;
 } Transform;
 
@@ -125,8 +125,7 @@ typedef struct
 	hfloat innerScaleXNegative;
 	hfloat innerScaleYNegative;
 	hfloat innerScaleZNegative;
-	if (offsetToLightArea>0)
-		Transform lightArea;
+	Transform transform;
 	float vals16; //translation's w?
 	short priority;
 	ushort shapeType;
