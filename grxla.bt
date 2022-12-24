@@ -1,260 +1,198 @@
 // rlc Original template by sai/youarebritish!
 // Will read GZ and TPP .grxla LightArray and .grxoc OccluderArray files!
 
+#include "common/common.bt"
+
 #define COLOR_HEADER_RED 0x8284F2
 #define COLOR_ENTRY_YELL 0x81C9F7
-
-// For testing against PS3 files:
-local byte byteSex = 1;
-if (byteSex==0)	{BigEndian();} else {LittleEndian();};
 
 struct Header
 {
     char FGxL[4] <hidden=true>;
 	FSkip(4);
-
     int offsetToArray; //0x10
     int n2; //1
-	
-} header <bgcolor=COLOR_HEADER_RED>;
+} header <bgcolor=COLOR_HEADER_RED, hidden=true>;
 
-struct LightArray
+FSeek(header.offsetToArray);
+
+typedef struct
 {
-	
-    struct Vector4
-    {
-        float x;
-        float y;
-        float z;
-        float w;
-    };
-	
-    struct Vector3
-    {
-        float x;
-        float y;
-        float z;
-    };
-	
-    struct HalfVector3
-    {
-        hfloat x;
-        hfloat y;
-        hfloat z;
-    };
-	
-    struct HalfColor
-    {
-        hfloat r;
-        hfloat g;
-        hfloat b;
-        hfloat a;
-    };
-	
-	while (FTell()!=FileSize()) // rlc since it probably doesn't count them and just stacks them arbitrarily
+	Vector3 scale;
+	Vector4 rotation;
+	Vector3 translation;
+} Transform;
+
+typedef struct
+{
+	char cstring[];
+	if (FTell() % 4 != 0)
+		FSkip(4-FTell() % 4);
+} PaddedString <read=cstring>;
+
+typedef struct
+{
+	StrCode dataSetFilenameHash;
+	uint offsetToDataSetFileNameString; //8
+	FSkip(4);
+	if (offsetToDataSetFileNameString>0)
+		PaddedString dataSetFilename;
+} CM00;
+
+typedef struct
+{
+	StrCode lightNameHash;
+	int offsetToString; // Different in GZ
+	uint flags1; // Different in GZ
+	uint lightFlags;
+	uint flags2; // Sometimes different in GZ?
+	int offsetToLightArea;
+	Vector3 translation;
+	VectorH3 reachPoint;
+	VectorH4 color;
+	hfloat temperature;
+	float colorDeflection;
+	float lumen;
+	hfloat lightSize;
+	hfloat dimmer;
+	hfloat shadowBias;
+	hfloat lodFarSize;
+	hfloat lodNearSize;
+	hfloat lodShadowDrawRate;
+	int lodRadiusLevel;
+	int lodFadeType;
+	int offsetToIrraditationTransform;
+	if (offsetToString>0)
+		PaddedString lightName;
+	if (offsetToLightArea>0)
+		Transform lightArea;
+	if (offsetToIrraditationTransform>0)
+		Transform irradiationPoint;
+} PointLight;
+
+typedef struct
+{
+	StrCode lightNameHash;
+	int offsetToString; // Different in PS3
+	uint flags1; // Different in PS3
+	uint lightFlags;
+	uint flags2;
+	int offsetToLightArea;
+	Vector3 translation;
+	Vector3 reachPoint;
+	Vector4 rotation;
+	hfloat outerRange;
+	hfloat innerRange;
+	hfloat umbraAngle;
+	hfloat penumbraAngle;
+	hfloat attenuationExponent;
+	hfloat dimmer;
+	VectorH4 color;
+	hfloat temperature;
+	hfloat colorDeflection;
+	float lightSize;
+	hfloat vals10;
+	hfloat shadowUmbraAngle;
+	hfloat shadowPenumbraAngle;
+	hfloat shadowAttenuationExponent;
+	hfloat shadowBias;
+	hfloat viewBias;
+	hfloat powerScale;
+	hfloat lodFarSize;
+	hfloat lodNearSize;
+	hfloat lodShadowDrawRate;
+	int lodRadiusLevel;
+	int lodFadeType;
+	int offsetToIrraditationTransform;
+	if (offsetToString>0)
+		PaddedString lightName;
+	if (offsetToLightArea>0)
+		Transform lightArea;
+	if (offsetToIrraditationTransform>0)
+		Transform irradiationPoint;
+} SpotLight;
+
+typedef struct
+{
+	StrCode lightNameHash;
+	int offsetToString;
+	uint flags1;
+	uint lightFlags;
+	uint flags2;
+	hfloat innerScaleXPositive;
+	hfloat innerScaleYPositive;
+	hfloat innerScaleZPositive;
+	hfloat innerScaleXNegative;
+	hfloat innerScaleYNegative;
+	hfloat innerScaleZNegative;
+	if (offsetToLightArea>0)
+		Transform lightArea;
+	float vals16; //translation's w?
+	short priority;
+	ushort shapeType;
+	ushort relatedLightIndex; // some other kind of index? sometimes it increases with entries, sometimes skips
+	ushort sphericalHarmonicsDataIndex;
+	float lightSize;
+	float u5;
+	if (offsetToString>0)
+		PaddedString lightName;
+} LightProbe;
+
+typedef struct
+{
+	int valsOcc_1;
+	int offsetToEdges;
+	int edgesCount;
+	int offsetToNodes;
+	int nodesCount;
+	Vector4 nodes[nodesCount];
+	struct Face
 	{
-		struct LightArrayEntry
+		short value1;
+		short value2;
+		short vertexIndex;
+		short size;
+	} faces[edgesCount];
+} Occluder;
+
+while (FTell()!=FileSize()) // rlc since it probably doesn't count them and just stacks them arbitrarily
+{
+	struct LightArrayEntry
+	{
+		char lightType[4] <hidden=true>;
+		int entrySize <hidden=true>;
+        switch (lightType)
 		{
-			local uint startOfEntry = FTell();
-			char lightType[4];
-			int entrySize;
-			if (lightType=="CM00") //rlc Header entry type; at the start of every file
-			{
-				uint64 dataSetFilenameHash;
-				int n3; //8
-				FSkip(4);
-
-				char dataSetFilename[];
-				if (FTell() % 4 != 0)
-				{
-					FSkip(4-FTell() % 4);
-				};
-			}
-			else if (lightType=="") // rlc Terminator Entry; this will be at the end of every file
-			{
-				
-			}
-			else if (lightType=="DL00") // rlc Directional Light - does it even exist?
-			{
-				Assert(2+2==5," WE FOUND DIRECTIONAL LIGHT!!!!");
-			}
-			else if (lightType=="PL01" || lightType=="PL02" || lightType=="PL03") // rlc PointLight GZ TPP
-			{
-				uint64 lightNameHash;
-				int offsetToString; // Different in GZ
-				uint flags1; // Different in GZ
-				uint lightFlags;
-				uint flags2; // Sometimes different in GZ?
-				int offsetToLightArea;
-				Vector3 translation;
-				HalfVector3 reachPoint;
-				HalfColor color;
-				hfloat temperature;
-				float colorDeflection;
-				float lumen;
-				hfloat lightSize;
-				hfloat dimmer;
-				hfloat shadowBias;
-				hfloat lodFarSize;
-				hfloat lodNearSize;
-				hfloat lodShadowDrawRate;
-				int lodRadiusLevel;
-				int lodFadeType;
-				int offsetToIrraditationTransform;
-				
-				if (offsetToString>0)
-				{
-					char lightName[];
-				
-					if (FTell() % 4 != 0)
-					{
-						FSkip(4-FTell() % 4);
-					};
-				};
-				
-				if (offsetToLightArea>0)
-				{
-					Vector3 lightAreaScale;
-					Vector4 lightAreaRotation;
-					Vector3 lightAreaTranslation;
-				};
-				if (offsetToIrraditationTransform>0)
-				{
-					Vector3 irradiationPointScale;
-					Vector4 irradiationPointRotation;
-					Vector3 irradiationPointTranslation;
-				};
-
-			}
-			else if (lightType=="SL01" || lightType=="SL02" || lightType=="SL03") // rlc SpotLight GZ TPP
-			{
-				uint64 lightNameHash;
-				int offsetToString; // Different in PS3
-				uint flags1; // Different in PS3
-				uint lightFlags;
-				uint flags2;
-				int offsetToLightArea;
-				Vector3 translation;
-				Vector3 reachPoint;
-				Vector4 rotation;
-				hfloat outerRange;
-				hfloat innerRange;
-				hfloat umbraAngle;
-				hfloat penumbraAngle;
-				hfloat attenuationExponent;
-				hfloat dimmer;
-				HalfColor color;
-				hfloat temperature;
-				hfloat colorDeflection;
-				float lightSize;
-				hfloat vals10;
-				hfloat shadowUmbraAngle;
-				hfloat shadowPenumbraAngle;
-				hfloat shadowAttenuationExponent;
-				hfloat shadowBias;
-				hfloat viewBias;
-				hfloat powerScale;
-				hfloat lodFarSize;
-				hfloat lodNearSize;
-				hfloat lodShadowDrawRate;
-				int lodRadiusLevel;
-				int lodFadeType;
-				int offsetToIrraditationTransform;
-
-				if (offsetToString>0)
-				{
-					char lightName[];
-				
-					if (FTell() % 4 != 0)
-					{
-						FSkip(4-FTell() % 4);
-					};
-				};
-				
-				if (offsetToLightArea>0)
-				{
-					Vector3 lightAreaScale;
-					Vector4 lightAreaRotation;
-					Vector3 lightAreaTranslation;
-				};
-				if (offsetToIrraditationTransform>0)
-				{
-					Vector3 irradiationPointScale;
-					Vector4 irradiationPointRotation;
-					Vector3 irradiationPointTranslation;
-				};
-				
-			}
-			else if (lightType=="LP00") // rlc Light Probe - unlike EP00???
-			{
-				Assert(2+2==5," WE FOUND  LIGHT probe!!!!");
-			}
-			else if (lightType=="EP00") // rlc LightProbe
-			{
-				uint64 lightNameHash;
-				int offsetToString;
-				uint flags1;
-				uint lightFlags;
-				uint flags2;
-				
-				hfloat innerScaleXPositive;
-				hfloat innerScaleYPositive;
-				hfloat innerScaleZPositive;
-				hfloat innerScaleXNegative;
-				hfloat innerScaleYNegative;
-				hfloat innerScaleZNegative;
-				
-				struct LightArea
-				{
-					Vector3 scale;
-					Vector4 rotation;
-					Vector3 translation;
-					
-				} lightArea;
-				
-				float vals16; //translation's w?
-				short priority;
-				ushort shapeType;
-				ushort relatedLightIndex; // some other kind of index? sometimes it increases with entries, sometimes skips
-				ushort sphericalHarmonicsDataIndex;
-				float lightSize;
-				float u5;
-				
-				if (offsetToString>0)
-				{
-					char lightName[];
-					
-					if (FTell() % 4 != 0)
-					{
-						FSkip(4-FTell() % 4);
-					};
-				};
-			}
-			else if (lightType=="OC00") // Occluder entry (.grxoc)
-			{
-				int valsOcc_1;
-				int offsetToEdges;
-				int edgesCount;
-				int offsetToNodes;
-				int nodesCount;
-				
-				Vector4 nodes[nodesCount];
-				struct Face
-				{
-					short value1;
-					short value2;
-					short vertexIndex;
-					short size;
-					
-				} faces[edgesCount];
-			}
-			else
-			{
-				Assert(2+2==5,"Unknown LightArrayEntry.lightType!!!!");
-			};
-			
-		} entry <optimize=false,bgcolor=COLOR_ENTRY_YELL>;
-		
-	}
-	
-} lightArray;
+        case "CM00": //rlc Header entry type; at the start of every file
+			CM00 light;
+                break;
+        case "": // rlc Terminator Entry; this will be at the end of every file
+                break;
+        case "DL00": // rlc Directional Light - does it even exist?
+			Assert(false," WE FOUND DIRECTIONAL LIGHT!!!!");
+                break;
+        case "PL01": // rlc PointLight GZ TPP
+        case "PL02":
+        case "PL03":
+			PointLight light;
+                break;
+        case "SL01": // rlc SpotLight GZ TPP
+        case "SL02":
+        case "SL03":
+			SpotLight light;
+                break;
+        case "LP00": // rlc Light Probe - unlike LightProbe???
+			Assert(false," WE FOUND  LIGHT probe!!!!");
+                break;
+        case "EP00": // rlc LightProbe
+			LightProbe light;
+                break;
+        case "OC00": // Occluder entry (.grxoc)
+			Occluder light;
+                break;
+        default: 
+			Assert(false,"Unknown LightArrayEntry.lightType!!!!");
+                break;
+        }
+	} entry <optimize=false,bgcolor=COLOR_ENTRY_YELL>;
+}

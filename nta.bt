@@ -23,6 +23,18 @@ string ResolveHashFunc(StrCode& hash)
 	}
 }
 
+string ResolveHashFunc32(StrCode32& hash)
+{
+	switch (hash.hash)
+	{
+	case 1277978017: return "StepOn";
+	case 1139911476: return "StepDown";
+	case 2317903572: return "LadderUp";
+	case 3049138984: return "LadderDown";
+	default: return "";
+	}
+}
+
 #define FOX_DATA_HASH_RESOLVE_FUNC ResolveHashFunc
 
 struct Header 
