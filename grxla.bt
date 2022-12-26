@@ -90,8 +90,8 @@ typedef struct
 	VectorH4 color;
 	hfloat temperature;
 	hfloat colorDeflection;
-	float lightSize;
-	hfloat vals10;
+	float lumen;
+	hfloat lightSize;
 	hfloat shadowUmbraAngle;
 	hfloat shadowPenumbraAngle;
 	hfloat shadowAttenuationExponent;
