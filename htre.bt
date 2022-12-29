@@ -31,10 +31,10 @@ typedef struct
 		{
 			Assert(Header.Version == 3);
 
-		    struct
-		    {
-		        Pixel data[dataSize / sizeof(Pixel)];
-		    } WeightMap <bgcolor=0x111199>;
+			struct
+			{
+				Pixel data[dataSize / sizeof(Pixel)];
+			} WeightMap <bgcolor=0x111199>;
 		}
 		break;
 	case "comboTexture":
@@ -93,11 +93,18 @@ typedef struct
 
 		struct
 		{
-			uint64 Unknown0;
-			uint64 Unknown1;
-			uint64 Unknown2;
+			uint64 UnknownA;
+			uint64 UnknownB;
 
-			DescriptionSubEntry SubEntry;
+			uint HeightFormat; Assert(HeightFormat == 1); // Very likely a third copy of heightFormat but I can't confirm that.
+			
+			uint CommonDescriptionOffset;
+
+			FSeek(startof(this) + 0x14 + CommonDescriptionOffset);
+
+			TerrainCommonDescription CommonDescription;
+
+			FAlign(16);
 		} PatchDescription <bgcolor=0x999900>;
 		break;
 	default:

@@ -3,59 +3,61 @@
 
 typedef struct
 {
-    ubyte r <fgcolor = 0xaaaaff>;
-    ubyte g <fgcolor = 0xaaffaa>;
-    ubyte b <fgcolor = 0xffaaaa>;
-    ubyte a <fgcolor = 0xaaaaaa>;
+	ubyte r <fgcolor = 0xaaaaff>;
+	ubyte g <fgcolor = 0xaaffaa>;
+	ubyte b <fgcolor = 0xffaaaa>;
+	ubyte a <fgcolor = 0xaaaaaa>;
 } Pixel <read=Str("#%02x%02x%02x%02x", r, g, b, a)>;
 
 typedef struct
 {
-    float near;
-    float offset;
-    float height;
-    float scale;
+	float near;
+	float offset;
+	float height;
+	float scale;
 } LodParam <read=Str("(%f, %f, %f, %f)", near, offset, height, scale)>;
 
-struct DescriptionSubEntry
+struct TerrainCommonDescription
 {
-    uint HeightFormat;
+	struct TerrainCommonTileDesc
+	{
+		uint HeightFormat; Assert(HeightFormat == 1 || HeightFormat == 4); // 1 for PC, 4 for PS3
 
-    float MaxHeightWS;
-    float MinHeightWS;
+		float MaxHeightWS;
+		float MinHeightWS;
 
-    uint HeightMapOffset; // selfpos + HeightMapOffset points to start of heightMap
-    uint HeightMapSize; // guess: heightMap size in bytes
-    uint ComboFormat; // Reader throws an error if Type => 7
-    uint ComboTextureOffset; // selfpos + ComboTextureOffset points to start of comboTexture
-    uint ComboTextureSize; // guess: comboTexture size in bytes
+		uint HeightMapOffset; // selfpos + HeightMapOffset points to start of heightMap
+		uint HeightMapSize; // guess: heightMap size in bytes
+		uint ComboFormat; // 6 for PC, 7 for PS3. But PC won't read the file if greater than 6.
+	} CommonTileDesc;
 
-    uint64 Unknown1;
+	uint ComboTextureOffset; // selfpos + ComboTextureOffset points to start of comboTexture
+	uint ComboTextureSize; // guess: comboTexture size in bytes
 
-    uint MaterialIdsOffset; // selfpos + MaterialIdsOffset points to start of materialIds
+	struct TerrainMatMapOffsets
+	{	
+		uint64 BaseOffset; Assert(BaseOffset == 0); // Probably added to all the other offsets below
 
-    uint ConfigrationIdsOffset; // selfpos + ConfigrationIdsOffset points to start of configrationIds
+		uint MaterialIdsOffset; // selfpos + MaterialIdsOffset points to start of materialIds
 
-    uint MaxHeightOffset; // selfpos + MaxHeightOffset points to start of maxHeight
-    uint MinHeightOffset; // selfpos + MaxHeightOffset points to start of minHeight
+		uint ConfigrationIdsOffset; // selfpos + ConfigrationIdsOffset points to start of configrationIds
 
-    uint ParamOffset; // selfpos + ParamOffset points to start of param
+		uint MaxHeightOffset; // selfpos + MaxHeightOffset points to start of maxHeight
+		uint MinHeightOffset; // selfpos + MaxHeightOffset points to start of minHeight
 
-    hfloat Unknown1_MGO;
-    ushort Padding0; Assert(Padding0 == 0);
-    
-    uint Padding1; Assert(Padding1 == 0);
-    
-    uint MapChunkWidthWS;
-    uint MapChunkHeightWS;
+		uint ParamOffset; // selfpos + ParamOffset points to start of param
+	} MatMapOffsets;
+	
+	FAlign(8);
+	
+	uint Unknown; Assert(Unknown == 0);
+	
+	uint MapChunkWidthWS;
+	uint MapChunkHeightWS;
 
-    ushort Unknown2; Assert(Unknown2 == 32);
-    ushort Unknown3; 
-    ushort Unknown4; // Often 5, CYPR is 1
-
-    ushort Unknown2_MGO <comment="Not convinced this is a half-float">;
-
-    uint Unknown5; // Non-null in Type == 4 HTREs
+	ushort ExtraHighSizeWS; Assert(ExtraHighSizeWS == 32);
+	ushort MaxLodLevel; 
+	ushort LodCount;
 };
 
 #endif

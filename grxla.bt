@@ -1,130 +1,173 @@
-// rlc Original template by sai/youarebritish!
-// Will read GZ and TPP .grxla LightArray and .grxoc OccluderArray files!
-
 #include "common/common.bt"
 
 #define COLOR_HEADER_RED 0x8284F2
 #define COLOR_ENTRY_YELL 0x81C9F7
 
-struct Header
+struct FGxHeader
 {
-    char FGxL[4] <hidden=true>;
-	FSkip(4);
-    int offsetToArray; //0x10
-    int n2; //1
-} header <bgcolor=COLOR_HEADER_RED, hidden=true>;
+	char FGxL[4] <hidden = true>;
+	uint Padding <hidden = true>; Assert(Padding == 0);
+	int DataOffset; //0x10
+	uint Version; Assert(Version == 1);
+} Header <hidden = true, bgcolor = COLOR_HEADER_RED>;
 
-FSeek(header.offsetToArray);
-
-typedef struct
-{
-	Vector3 scale;
-	Quaternion rotation;
-	Vector3 translation;
-} Transform;
+FSeek(Header.DataOffset);
 
 typedef struct
 {
-	char cstring[];
-	if (FTell() % 4 != 0)
-		FSkip(4-FTell() % 4);
-} PaddedString <read=cstring>;
+	StrCode Hash;
+
+	local int64 rewindPos = FTell();
+
+	uint StringOffset;
+	
+	uint Padding <hidden = true>; Assert(Padding == 0);
+
+	if (StringOffset > 0)
+	{
+		FSeek(rewindPos + StringOffset);
+		string String;
+		FAlign(4);
+	}
+
+	FSeek(rewindPos + 8);
+} GrxString <read = (StringOffset == 0 ? Hash.hash : String)>;
 
 typedef struct
 {
-	StrCode dataSetFilenameHash;
-	uint offsetToDataSetFileNameString; //8
-	FSkip(4);
-	if (offsetToDataSetFileNameString>0)
-		PaddedString dataSetFilename;
-} CM00;
+	char TypeName[4];
+	uint SelfSize;
+} FGxLightCommonHeader;
 
 typedef struct
 {
-	StrCode lightNameHash;
-	int offsetToString; // Different in GZ
-	uint flags1; // Different in GZ
+	GrxString Name;
+} CommonLight;
+
+typedef struct
+{
+	// StrCode lightNameHash;
+	// int offsetToString; // Different in GZ
+	// uint flags1; // Different in GZ
+	
+	GrxString Name;
+
 	uint lightFlags;
-	uint flags2; // Sometimes different in GZ?
-	int offsetToLightArea;
+
+	uint UnknownFlags; // Sometimes different in GZ?
+
+	uint LightAreaOffset <hidden = true>;
+
 	Vector3 translation;
-	VectorH3 reachPoint;
+	half outerRange;
+	half innerRange;
+	half dimmer;
 	VectorH4 color;
-	hfloat temperature;
-	float colorDeflection;
+	half temperature;
+	half colorDeflection;
+
+	FAlign(4);
+
 	float lumen;
-	hfloat lightSize;
-	hfloat dimmer;
-	hfloat shadowBias;
-	hfloat lodFarSize;
-	hfloat lodNearSize;
-	hfloat lodShadowDrawRate;
+	half lightSize;
+	half shadowBias;
+	half lodShadowDrawRate;
+	half lodNearSize;
+	half lodFarSize;
+
+	FAlign(4);
+
 	int lodRadiusLevel;
 	int lodFadeType;
-	int offsetToIrraditationTransform;
-	if (offsetToString>0)
-		PaddedString lightName;
-	if (offsetToLightArea>0)
+
+	uint IrraditationPointOffset <hidden = true>;
+	
+	if (LightAreaOffset != 0)
+	{
+		FSeek(startof(LightAreaOffset) + LightAreaOffset);
+
 		Transform lightArea;
-	if (offsetToIrraditationTransform>0)
+	}
+	if (IrraditationPointOffset != 0)
+	{
+		FSeek(startof(IrraditationPointOffset) + IrraditationPointOffset);
+
 		Transform irradiationPoint;
+	}
 } PointLight;
 
 typedef struct
 {
-	StrCode lightNameHash;
-	int offsetToString; // Different in PS3
-	uint flags1; // Different in PS3
+	// StrCode lightNameHash;
+	// int offsetToString; // Different in PS3
+	// uint flags1; // Different in PS3
+	
+	GrxString Name;
+
 	uint lightFlags;
-	uint flags2;
-	int offsetToLightArea;
+
+	uint UnknownFlags;
+
+	uint LightAreaOffset <hidden = true>;
+
 	Vector3 translation;
 	Vector3 reachPoint;
 	Vector4 rotation;
-	hfloat outerRange;
-	hfloat innerRange;
-	hfloat umbraAngle;
-	hfloat penumbraAngle;
-	hfloat attenuationExponent;
-	hfloat dimmer;
+	half outerRange;
+	half innerRange;
+	half umbraAngle;
+	half penumbraAngle;
+	half attenuationExponent;
+	half dimmer;
 	VectorH4 color;
-	hfloat temperature;
-	hfloat colorDeflection;
+	half temperature;
+	half colorDeflection;
 	float lumen;
-	hfloat lightSize;
-	hfloat shadowUmbraAngle;
-	hfloat shadowPenumbraAngle;
-	hfloat shadowAttenuationExponent;
-	hfloat shadowBias;
-	hfloat viewBias;
-	hfloat powerScale;
-	hfloat lodFarSize;
-	hfloat lodNearSize;
-	hfloat lodShadowDrawRate;
+	half lightSize;
+	half shadowUmbraAngle;
+	half shadowPenumbraAngle;
+	half shadowAttenuationExponent;
+	half shadowBias;
+	half viewBias;
+	half lodShadowDrawRate;
+	half lodFarSize;
+	half lodNearSize;
+	half powerScale;
 	int lodRadiusLevel;
 	int lodFadeType;
-	int offsetToIrraditationTransform;
-	if (offsetToString>0)
-		PaddedString lightName;
-	if (offsetToLightArea>0)
+
+	uint IrraditationPointOffset <hidden = true>;
+	
+	if (LightAreaOffset != 0)
+	{
+		FSeek(startof(LightAreaOffset) + LightAreaOffset);
+
 		Transform lightArea;
-	if (offsetToIrraditationTransform>0)
+	}
+	if (IrraditationPointOffset != 0)
+	{
+		FSeek(startof(IrraditationPointOffset) + IrraditationPointOffset);
+
 		Transform irradiationPoint;
+	}
 } SpotLight;
 
 typedef struct
 {
-	StrCode lightNameHash;
-	int offsetToString;
-	uint flags1;
+	// StrCode lightNameHash;
+	// int offsetToString;
+	// uint flags1;
+
+	GrxString Name;
+
 	uint lightFlags;
 	uint flags2;
-	hfloat innerScaleXPositive;
-	hfloat innerScaleYPositive;
-	hfloat innerScaleZPositive;
-	hfloat innerScaleXNegative;
-	hfloat innerScaleYNegative;
-	hfloat innerScaleZNegative;
+	half innerScaleXPositive;
+	half innerScaleYPositive;
+	half innerScaleZPositive;
+	half innerScaleXNegative;
+	half innerScaleYNegative;
+	half innerScaleZNegative;
 	Transform transform;
 	float vals16; //translation's w?
 	short priority;
@@ -133,8 +176,8 @@ typedef struct
 	ushort sphericalHarmonicsDataIndex;
 	float lightSize;
 	float u5;
-	if (offsetToString>0)
-		PaddedString lightName;
+	//if (offsetToString>0)
+	//	PaddedString lightName;
 } LightProbe;
 
 typedef struct
@@ -154,44 +197,48 @@ typedef struct
 	} faces[edgesCount];
 } Occluder;
 
-while (FTell()!=FileSize()) // rlc since it probably doesn't count them and just stacks them arbitrarily
+local int hasEntry = 1;
+while (hasEntry)
 {
 	struct LightArrayEntry
 	{
-		char lightType[4] <hidden=true>;
-		int entrySize <hidden=true>;
-        switch (lightType)
+		FGxLightCommonHeader Header;
+
+		switch (Header.TypeName)
 		{
-        case "CM00": //rlc Header entry type; at the start of every file
-			CM00 light;
-                break;
-        case "": // rlc Terminator Entry; this will be at the end of every file
-                break;
-        case "DL00": // rlc Directional Light - does it even exist?
-			Assert(false," WE FOUND DIRECTIONAL LIGHT!!!!");
-                break;
-        case "PL01": // rlc PointLight GZ TPP
-        case "PL02":
-        case "PL03":
-			PointLight light;
-                break;
-        case "SL01": // rlc SpotLight GZ TPP
-        case "SL02":
-        case "SL03":
-			SpotLight light;
-                break;
-        case "LP00": // rlc Light Probe - unlike LightProbe???
-			Assert(false," WE FOUND  LIGHT probe!!!!");
-                break;
-        case "EP00": // rlc LightProbe
-			LightProbe light;
-                break;
-        case "OC00": // Occluder entry (.grxoc)
-			Occluder light;
-                break;
-        default: 
-			Assert(false,"Unknown LightArrayEntry.lightType!!!!");
-                break;
-        }
-	} entry <optimize=false,bgcolor=COLOR_ENTRY_YELL>;
+		case "CM00": //rlc Header entry type; at the start of every file
+			CommonLight Light;
+			break;
+		case "\0\0\0\0": // rlc Terminator Entry; this will be at the end of every file
+			hasEntry = 0;
+			return;
+		case "DL00": // rlc Directional Light - does it even exist?
+			Assert(false," DirectionalLight: Unsupported.");
+			break;
+		case "PL01": // rlc PointLight GZ TPP
+		case "PL02":
+		case "PL03":
+			PointLight Light;
+			break;
+		case "SL01": // rlc SpotLight GZ TPP
+		case "SL02":
+		case "SL03":
+			SpotLight Light;
+			break;
+		case "LP00": // rlc Light Probe - unlike LightProbe?
+			Assert(false,"LightProbe: Unsupported.");
+			break;
+		case "EP00": // rlc LightProbe
+			LightProbe Light;
+			break;
+		case "OC00": // Occluder entry (.grxoc)
+			Occluder Light;
+			break;
+		default: 
+			Assert(false,"Unknown LightType!");
+			break;
+		}
+
+		FSeek(startof(this) + Header.SelfSize);
+	} Entry <optimize = false, bgcolor = COLOR_ENTRY_YELL>;
 }

@@ -12,66 +12,64 @@
 
 struct Header
 {
-    char groupId[4];
-    uint chunkSize;
-    char riffType[4];
-
+	char groupId[4];
+	uint chunkSize;
+	char riffType[4];
 } header;
 
 struct GenericChunk
 {
-    uint chunkSize;
-    char data[chunkSize];
-
+	uint chunkSize;
+	char data[chunkSize];
 };
 
 struct ListSubChunk
 {
-    char subChunkType[4];
-    uint subChunkSize;
-    uint unknownCount;
-    char embeddedFileNameMarker[] <bgcolor=DarkOrange>;
+	char subChunkType[4];
+	uint subChunkSize;
+	uint unknownCount;
+	char embeddedFileNameMarker[] <bgcolor=DarkOrange>;
 };
 
 struct ListChunk
 {
-    uint chunkSize;
-    char chunkType[4];
-    ListSubChunk subChunk;
-    if (FTell() % 2 != 0)
-        FSkip(2 - (FTell() % 2));
+	uint chunkSize;
+	char chunkType[4];
+	ListSubChunk subChunk;
+	if (FTell() % 2 != 0)
+		FSkip(2 - (FTell() % 2));
 };
 
 struct FormatChunk
 {
-    uint chunkSize;
-    short format;
-    short channels;
-    uint sampleRate;
-    uint avgBps;
-    ushort blockSize_0;
-    ushort blockSize_1;
-    ushort framing;
-    FSkip(framing); //idk
+	uint chunkSize;
+	short format;
+	short channels;
+	uint sampleRate;
+	uint avgBps;
+	ushort blockSize_0;
+	ushort blockSize_1;
+	ushort framing;
+	FSkip(framing); //idk
 };
 
 while( FTell() < header.chunkSize )
 {
-    struct Chunk
-    {
-        char chunkName[4];
-        switch( chunkName )
-        {
-            case "fmt ":
-                FormatChunk formatChunk;
-                break;
-            case "LIST":
-                ListChunk listChunk;
-                break;
-            case "data":
-            default:
-                GenericChunk genericChunk;
-                break;
-        };
-    } chunk;
+	struct Chunk
+	{
+		char chunkName[4];
+		switch( chunkName )
+		{
+			case "fmt ":
+				FormatChunk formatChunk;
+				break;
+			case "LIST":
+				ListChunk listChunk;
+				break;
+			case "data":
+			default:
+				GenericChunk genericChunk;
+				break;
+		};
+	} chunk;
 };

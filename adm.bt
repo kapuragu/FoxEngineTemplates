@@ -1,0 +1,27 @@
+LittleEndian();
+
+#include "common/common.bt"
+
+struct AdmHeader
+{
+	char Signature[4] <hidden = true, bgcolor = 0xFBFBFB>; Assert(Signature == "ADML");
+
+	ushort GridSize <fgcolor = cWhite, bgcolor = 0x0F0F0F>; // Meters
+
+	ushort CellCountX <fgcolor = cWhite, bgcolor = 0x2D2E2E>;
+	ushort CellCountZ <fgcolor = cWhite, bgcolor = 0x2D2E2E>;
+
+													   // Bounds:
+	short MinX <fgcolor = cWhite, bgcolor = 0x696971>; // (MinX, MinX + (CellCountX - 1) * GridSize)
+	short MinZ <fgcolor = cWhite, bgcolor = 0x696971>; // (MinZ, MinZ + (CellCountZ - 1) * GridSize)
+} Header;
+
+FAlign(16);
+
+struct AdmCell
+{
+	ushort A : 3;
+	ushort B : 3;
+	ushort C : 4;
+	ushort Padding : 6 <hidden = true>; Assert(Padding == 0);
+} Cells[Header.CellCountX * Header.CellCountZ] <optimize = false, bgcolor = 0xAEABBC>;

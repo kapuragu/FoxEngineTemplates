@@ -1,0 +1,83 @@
+LittleEndian();
+
+#include "common/common.bt"
+
+struct SubpHeader
+{
+	enum <ubyte> SUBP_ID_SORT
+	{
+		SUBP_ID_SORT_RANDOM = 2, // SubtitleUnitHeaders aren't sorted at all.
+		SUBP_ID_SORT_ASCENDING = 3, // SubtitleUnitHeaders are sorted in ascending order of numerical Hash values. 
+									// Exe uses a binary search in this case.
+	} SortType : 2; Assert(SortType != 1 && SortType != 0);
+	ubyte UnknownA : 1; Assert(UnknownA == 0);
+	ubyte UnknownB : 1;
+	ubyte UnknownC : 4;
+	
+	enum <ubyte> TEXT_LANGUAGE
+	{
+		TEXT_LANGUAGE_JPN = 0,
+		TEXT_LANGUAGE_ENG = 1,
+		TEXT_LANGUAGE_FRE = 2,
+		TEXT_LANGUAGE_ITA = 3,
+		TEXT_LANGUAGE_GER = 4,
+		TEXT_LANGUAGE_SPA = 5,
+		TEXT_LANGUAGE_POR = 6,
+		TEXT_LANGUAGE_RUS = 7,
+		TEXT_LANGUAGE_ARA = 8,
+		TEXT_LANGUAGE_CHT = 9,
+		TEXT_LANGUAGE_KOR = 10,
+	} Language;
+
+	switch (Language)
+	{
+	case TEXT_LANGUAGE_JPN:
+	case TEXT_LANGUAGE_POR:
+		SetFileCharSet(CHARSET_UTF8);
+		break;
+	case TEXT_LANGUAGE_RUS:
+		SetFileCharSet(CHARSET_CYRILLIC_ISO);
+		break;
+	}
+
+	ushort EntryCount;
+} Header <bgcolor = 0x5A4D33>;
+
+struct SubtitleUnitHeader
+{
+	StrCode32 Id;
+	uint DataOffset;
+} UnitHeaders[Header.EntryCount] <hidden = true, bgcolor = 0x9FB044>;
+
+local uint i;
+for (i = 0; i < Header.EntryCount; i++)
+{
+	FSeek(UnitHeaders[i].DataOffset);
+
+	struct SubtitleUnit
+	{
+		short Magic;
+
+		byte TimingCount;
+
+		byte Priority;
+
+		short StringDataSize;
+
+		short UTF8StringDataSize;
+
+		short CharacterId;
+
+		ubyte UnknownA;
+
+		ubyte UnknownB;
+
+		struct Timing
+		{
+			ushort StartTime;
+			ushort EndTime <read = (this == 0 ? -1 : this)>;
+		} Timings[TimingCount] <bgcolor = 0xB5DDE6>;
+
+		string Text <bgcolor = 0x3D85ED>;
+	} Subtitles <bgcolor = 0xAB9E30>;
+}

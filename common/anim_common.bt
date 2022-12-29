@@ -327,17 +327,17 @@ typedef struct
 		vo = 1455888052,
 	} CategoryName;
 
-	ushort SubCount <hidden = true>;
+	ushort UnitCount <hidden = true>;
 
-	ushort Unknown;
+	ushort ExtraSectionOffset;
 
-	if (SubCount != 0)
-		uint SubEntryOffsets[SubCount] <hidden = true>;
+	if (UnitCount != 0)
+		uint UnitOffsets[UnitCount] <hidden = true>;
 
 	local uint sIdx;
-	for (sIdx = 0; sIdx < SubCount; sIdx++)
+	for (sIdx = 0; sIdx < UnitCount; sIdx++)
 	{
-		FSeek(startof(this) + SubEntryOffsets[sIdx]);
+		FSeek(startof(this) + UnitOffsets[sIdx]);
 		
 		struct EventUnitInfo
 		{
@@ -404,7 +404,7 @@ typedef struct
 			FAlign(4);
 
 			if (IntParamCount != 0)
-				int IntParams[IntParamCount];
+				uint IntParams[IntParamCount];
 
 			if (FloatParamCount != 0)
 				float FloatParams[FloatParamCount];
@@ -412,6 +412,32 @@ typedef struct
 			if (StringParamCount != 0)
 				PARAM_STRING StringParams[StringParamCount];
 		} Event <read = EnumToString(EventName)>;
+	}
+
+	if (ExtraSectionOffset != 0)
+	{
+		FSeek(startof(this) + ExtraSectionOffset);
+
+		struct EventExtraInfo
+		{
+			uint IntParamOffset;
+			uint IntParamCount;
+
+			uint Unknown0; // Assert(Unknown0 == 0);
+			uint Unknown1; //Assert(Unknown1 == 2);
+
+			uint StringParamOffset;
+			uint StringParamCount;
+
+			if (IntParamOffset != 0) Assert(IntParamCount != 0 && FTell() == startof(IntParamOffset) + IntParamOffset);
+			if (IntParamCount != 0)
+				uint IntParams[IntParamCount];
+
+			if (StringParamOffset != 0) Assert(StringParamCount != 0 /*&& FTell() == startof(StringParamOffset) + StringParamOffset*/);
+			FSeek(startof(StringParamOffset) + StringParamOffset);
+			if (StringParamCount != 0)
+				StrCode StringParams[StringParamCount];
+		} ExtraInfo;
 	}
 } EvpData <read = EnumToString(CategoryName), bgcolor = 0x00C010>;
 

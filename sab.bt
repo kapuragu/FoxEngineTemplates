@@ -1,162 +1,166 @@
-// SAL - Stream Animation
-// By RLC - inspired by other FOX templates by the researchers of Modders' Heaven!
+LittleEndian();
 
-local int GzsOrTpp = 0;
+#define FILE_VERSION_TPP
+
+#include "common/common.bt"
 
 enum LipAnimIndex
 {
-	A	=	0,
-	AH	=	1,
-	AY	=	2,
-	B	=	3,
-	C	=	4,
-	CH	=	5,
-	D	=	6,
-	E	=	7,
-	EE	=	8,
-	ER	=	9,
-	F	=	10,
-	G	=	11,
-	H	=	12,
-	I	=	13,
-	J	=	14,
-	L	=	15,
-	M	=	16,
-	N	=	17,
-	NG	=	18,
-	OH	=	19,
-	OO	=	20,
-	OU	=	21,
-	OW	=	22,
-	OY	=	23,
-	P	=	24,
-	R	=	25,
-	S	=	26,
-	SH	=	27,
-	T	=	28,
-	TH	=	29,
-	TT	=	30,
-	U	=	31,
-	V	=	32,
-	W	=	33,
-	Y	=	34,
-	Z	=	35,
-	_i	=	36,
-	_tH	=	37,
+	A	= 0,
+	AH	= 1,
+	AY	= 2,
+	B	= 3,
+	C	= 4,
+	CH	= 5,
+	D	= 6,
+	E	= 7,
+	EE	= 8,
+	ER	= 9,
+	F	= 10,
+	G	= 11,
+	H	= 12,
+	I	= 13,
+	J	= 14,
+	L	= 15,
+	M	= 16,
+	N	= 17,
+	NG	= 18,
+	OH	= 19,
+	OO	= 20,
+	OU	= 21,
+	OW	= 22,
+	OY	= 23,
+	P	= 24,
+	R	= 25,
+	S	= 26,
+	SH	= 27,
+	T	= 28,
+	TH	= 29,
+	TT	= 30,
+	U	= 31,
+	V	= 32,
+	W	= 33,
+	Y	= 34,
+	Z	= 35,
+	_i	= 36,
+	_tH	= 37,
 };
 
-struct StreamAnimationLip
+struct SalHeader
 {
-	char sign[4];
-	int entryCount;
+	char Signature[4]; Assert(Signature == "SAL3");
+	uint AnimationCount;
+} Header;
+
+struct AnimationHeader
+{
+	StrCode Name <bgcolor = 0x776C7C>; // StrCode64 hash of the file name, string embedded in .wem file, *not* tolowered
+	uint DataOffset <bgcolor = 0x94A6AA>;
 	
-	struct Sa3Params
+	uint Padding <hidden = true>; Assert(Padding == 0);
+} AnimationHeaders[Header.AnimationCount] <hidden = true, optimize = true>;
+
+local uint i;
+local uint j;
+local uint k;
+for (i = 0; i < Header.AnimationCount; i++)
+{
+	Assert(FTell() == AnimationHeaders[i].DataOffset);
+	FSeek(AnimationHeaders[i].DataOffset);
+
+	struct SoundAnimationUnit
 	{
-		uint64 fileName <comment="StrCode64 hash of the file name, string embedded in .wem file, *not* tolowered", bgcolor=0x776C7C>;
-		int offsetToEntryStart <bgcolor=0x94A6AA>;
-		FSkip(4);
+		uint FileCount <bgcolor = 0x776C7C>;//2
 
-	} sa3Params[entryCount];
-	
-	struct Sa3Entry
-	{
-		int subEntryCount;//2
-		struct SubEntryData{
-			char entryType[];
-			if (FTell() % 4 != 0)
-				FSkip(4 - FTell() % 4);
-			int offsetToEntry;
-			
-		} subEntryData[subEntryCount] <bgcolor=0x776C7C>;
-
-		local int index = 0;
-
-		struct SubEntry
+		struct SoundAnimationFileHeader
 		{
-			if (subEntryData[index].entryType=="ls")
-			{
-				struct Header
-				{
-					int keyCount <comment="Key count including key zero">;
-					short offsetToKey[keyCount] <comment="Offset from keyCount", bgcolor=0x94A6AA>;
-					if (GzsOrTpp == 1)
-						if (FTell() % 4 != 0)
-							FSkip(4 - FTell() % 4);
-					
-				} header <bgcolor=0x776C7C>;
-				
-				struct KeysGZ
-				{
-					// this is "key zero" - this counts as a key for everything before it
-					ushort defaultPosition <comment="Position of a keyframe in the timeline.", fgcolor=0xFF0000, bgcolor=0x87E7FF>;
-					ushort defaultIntensity <comment="Always empty?", fgcolor=0x0000FF, bgcolor=0x87E7FF>;
-					byte paramsCount <bgcolor=0xB9C199>;
-					FSkip(3);
-					int keyZeroParam0 <bgcolor=0xB9C199>; Assert(keyZeroParam0==0,".ls KeyZero Param0 Isn't 0!!!!");
-					int keyCount2 <comment="Amount of keys aside from key zero... most of the time", bgcolor=0xB9C199>; //inaccurate in vox_ene_common_ru?
-					int keyZeroParam2 <comment="Most of the time 1, rarely 2 (vox_0100e chico-paz)", bgcolor=0xB9C199>; Assert(keyZeroParam2==1||keyZeroParam2==2,".ls KeyZero Param2 Isn't 1 or 2!!!!");
-					if (keyZeroParam2==2)
-						Printf("\n keyZeroParam2==2");
-					
-					local int realKeyCount = header.keyCount - 1;
-					
-					Assert(keyCount2==realKeyCount,"Wierd Keycount!!!!");
-					
-					struct KeyGZ
-					{
-						//these are keyframes
-						ushort position <comment="Position of a keyframe in the timeline.", fgcolor=0xFF0000, bgcolor=0x87E7FF>;
-						ushort intensity <comment="Duration or intensity?", fgcolor=0x0000FF, bgcolor=0x87E7FF>;
-						byte lipAnimCount <bgcolor=0xB8F8EB>;
-						byte strengthCount <comment="GZ doesn't have this, but TPP absolutely requires it!", bgcolor=0xA3D0D1>;
-						FSkip(2);
-						LipAnimIndex lipAnimIndex[lipAnimCount] <comment="Index of the mouth animation to play", bgcolor=0xB8F8EB>;
-						float strength[strengthCount] <comment="GZ doesn't have this, but TPP absolutely requires it!", bgcolor=0xA3D0D1>;
+			string Extension;
 
-					} keyGZ[realKeyCount] <optimize=false>;
-					
-					if (GzsOrTpp == 1)
+			FAlign(4);
+
+			int DataOffset;
+		} FileHeaders[FileCount] <optimize = false, hidden = true, bgcolor = 0x776C7C>;
+
+		for (j = 0; j < FileCount; j++)
+		{
+			Assert(FTell() == (startof(this) + FileHeaders[j].DataOffset));
+			FSeek(startof(this) + FileHeaders[j].DataOffset);
+
+			if (FileHeaders[j].Extension == "ls")
+			{
+				struct LsFile
+				{
+					struct LsKeyframeHeader
 					{
-						FSkip(1);
-						if (FTell() % 8 != 0)
-							FSkip((8 - (FTell() % 8)-2));
-					}
-					else
+						uint KeyframeCount <hidden = true>; // Keyframe count including key zero
+						ushort DataOffsets[KeyframeCount] <hidden = true>;
+
+						// ushort defaultPosition <fgcolor = 0xFF0000, bgcolor = 0x87E7FF>; // Position of a keyframe in the timeline
+						// ushort defaultIntensity <fgcolor = 0x0000FF, bgcolor = 0x87E7FF>; // Always empty?
+
+						// #ifdef FILE_VERSION_TPP
+						// FAlign(4);
+						// #else
+						// FAlign(2);
+						// #endif
+
+						// uint ParamsCount <hidden = true, bgcolor=0xB9C199>; Assert(ParamsCount == 3);
+
+						// uint Params[ParamsCount] <bgcolor = 0xB9C199>; 
+						// Assert(Params[0] == 0);
+						// Assert(Params[1] == KeyframeHeader.KeyframeCount - 1); //inaccurate in vox_ene_common_ru?
+						// Assert(Params[2] == 1 || Params[2] == 2); // Most of the time 1, rarely 2 (vox_0100e chico-paz)
+					} KeyframeHeader <bgcolor=0x94A6AA>;
+
+					for (k = 0; k < KeyframeHeader.KeyframeCount; k++)
 					{
-						FSkip(1);
-						if (FTell() % 2 != 0)
-							FSkip((2 - (FTell() % 2)));
+						FSeek(startof(KeyframeHeader) + KeyframeHeader.DataOffsets[k]);
+
+						struct LsKeyframe
+						{
+							ushort position <comment="Position of a keyframe in the timeline.", fgcolor=0xFF0000, bgcolor=0x87E7FF>;
+							ushort intensity <comment="Duration or intensity?", fgcolor=0x0000FF, bgcolor=0x87E7FF>;
+							byte lipAnimCount <bgcolor=0xB8F8EB>;
+							byte strengthCount <comment="GZ doesn't have this, but TPP absolutely requires it!", bgcolor=0xA3D0D1>;
+							ushort padding <hidden = true>; Assert(padding == 0);
+							LipAnimIndex lipAnimIndex[lipAnimCount] <comment="Index of the mouth animation to play", bgcolor=0xB8F8EB>;
+							float strength[strengthCount] <bgcolor=0xA3D0D1>;
+						} Keyframes <optimize = false>;
 					}
-				
-				} keysGZ <optimize=false>;
+				} File;
 			}
-			else if (subEntryData[index].entryType=="st")
+			else if (FileHeaders[j].Extension == "st")
 			{
-				struct MessageIdSection
+				struct StFile
 				{
-					int unknown0 <bgcolor=0x58D7E9>;
-					ushort unk0 <bgcolor=0x58D7E9>;
-					int unknown1 <bgcolor=0x58D7E9>;
-					ushort unk1 <bgcolor=0x58D7E9>;
-					ushort unk2 <bgcolor=0x58D7E9>;
-					int unknown3 <bgcolor=0x58D7E9>;
-					char messageId[] <bgcolor=0x737329>;
-					
-					if (FTell() % 4 != 0)
-						FSkip(4 - FTell() % 4);
-					
-				} messageIdSection <optimize=false>;
-			};
-			
-			char fileNameBackwards[6] <comment="Just backwards endianness file name?">;
-				
-			if (FTell() % 16 != 0)
-				FSkip(16 - (FTell() % 16));
-				
-			index+=1;
+					struct MessageIdUnit
+					{
+						int unknown0;
+						ushort unk0;
+						int unknown1;
+						ushort unk1;
+						ushort unk2;
+						int unknown3 ;
+						string messageId <bgcolor=0x737329>;
+					} MessageIds <bgcolor = 0x58D7E9, optimize=false>;
+				} File;
+			}
+			else
+			{
+				Assert(false);
+			}
 
-		} subEntry[subEntryCount] <optimize=false>;
+			#ifdef FILE_VERSION_TPP
+			if (FTell() % 8 == 0)
+				FSkip(4);
+			#else
+			// GZ
+			#endif
+			BigEndian();
+			StrCode Name; Assert(Name.hash == AnimationHeaders[i].Name.hash);
+			LittleEndian();
 
-	} sa3Entry[entryCount] <optimize=false>;
-	
-} streamAnimationLip;
+			FAlign(16);
+		}
+	} Animation;
+}

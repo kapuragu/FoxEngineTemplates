@@ -56,26 +56,25 @@ typedef struct
 	case "layoutDescription":
 		struct
 		{
-			uint64 Unknown0;
-			uint64 Unknown1;
+			uint64 UnknownA;
+			uint64 UnknownB;
 
 			uint WidthWS;
 			uint HeightWS;
-			uint SubEntryOffset;
+			uint CommonDescriptionOffset;
 			float MaxHeightWS;
 			float MinHeightWS;
 
 			float GridDistance;
-			ushort Unknown2;
-			ushort Unknown3;
-			uint Unknown4;
+			ushort LodCount;
 
-			FSeek(startof(this) + 0x18 + SubEntryOffset);
+			FAlign(16);
 
-			DescriptionSubEntry SubEntry;
+			FSeek(startof(this) + 0x18 + CommonDescriptionOffset);
 
-			uint Unknown5;
-			uint Unknown6;
+			TerrainCommonDescription CommonDescription;
+
+			FAlign(16);
 		} LayoutDescription <bgcolor=0x999900>;
 		break;
 	default:

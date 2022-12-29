@@ -108,8 +108,8 @@ typedef struct
 	int PreviousNodeOffset <hidden = true>; // 0 means no previous nodes
 	int NextNodeOffset <hidden = true>; // 0 means no more nodes
 	int ParametersOffset <hidden = true>; // 0 means no params
-	uint Padding0 <hidden = true>; Assert(Padding0 == 0);
-	uint Padding1 <hidden = true>; Assert(Padding1 == 0);
+
+	FAlign(16);
 
 	if (ChildNodeOffset != 0)
 	{
@@ -198,7 +198,7 @@ typedef struct
 
 	uint Flags;
 
-	uint64 Unknown;
+	FAlign(16);
 } FoxDataHeader <read = Str("Version: %d, Name: %s", Version, ReadFoxDataString(Name)), bgcolor = 0xaaaaaa>;
 
 #endif

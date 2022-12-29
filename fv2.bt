@@ -1,0 +1,103 @@
+LittleEndian();
+
+#include "common/common.bt"
+
+struct BoneModelAttachEntry 
+{
+	short fmdlIndex;
+	short frdvIndex;
+	short unkIndex0;
+	short unkIndex1;
+	short simIndex;
+	short unkIndex2;
+};
+
+struct CnpModelAttachEntry 
+{
+	uint cnpStrCode32;
+	uint emptyStrCode32;
+	short fmdlIndex;
+	short frdvIndex;
+	short unkIndex0;
+	short unkIndex1;
+	short simIndex;
+	short unkIndex2;
+};
+
+struct VariableDataSubEntry 
+{
+	uint meshGroupEntries[parent.meshGroupCount];
+	uint textureSwapMaterialInstanceStrCode32s[parent.textureSwapCount];
+	uint textureSwapTextureTypeStrCode32s[parent.textureSwapCount];
+	short textureSwapTextureIndices[parent.textureSwapCount];
+	short textureSwapMaterialParameterIndices[parent.textureSwapCount];
+	BoneModelAttachEntry boneModelAttachEntries[parent.boneModelAttachmentCount];
+	CnpModelAttachEntry cnpModelAttachEntries[parent.cnpModelAttachmentCount];
+};
+
+struct VariableDataEntry 
+{
+	ubyte typeEnum;
+	ubyte unknown0;
+	ubyte subEntryCount;
+	ubyte meshGroupCount;
+	ubyte textureSwapCount;
+	ubyte unknown1;
+	ubyte boneModelAttachmentCount;
+	ubyte cnpModelAttachmentCount;
+	
+	FSkip(4);
+
+	uint offset;
+	
+	FSeek(offset);
+	VariableDataSubEntry variableDataSubEntries[subEntryCount];
+};
+
+struct Fv2Header
+{
+	char Signature[7] <hidden = true>; Assert(Signature == "FOV2win");
+
+	ubyte Version <hidden = true>; Assert(Version == 1);
+
+	ushort variableDataSectionOffset;
+	ushort externalFileSectionOffset;
+	ushort variableDataSectionCount;
+	ushort externalFileSectionCount;
+	uint materialParameterSectionOffset;
+	uint materialParameterSectionCount;
+	ushort textureCount;
+
+	FSkip(6);
+
+	ubyte hideMeshGroupCount;
+	ubyte showMeshGroupCount;
+	ubyte textureSwapCount;
+	ubyte unk0;
+	ubyte boneModelAttachmentCount;
+	ubyte cnpModelAttachmentCount;
+	
+	FSkip(2);
+
+	//Static Data
+	uint hideMeshGroupEntries[hideMeshGroupCount];
+	uint showMeshGroupEntries[showMeshGroupCount];
+	uint textureSwapMaterialInstanceStrCode32s[textureSwapCount];
+	uint textureSwapTextureTypeStrCode32s[textureSwapCount];
+	short textureSwapTextureIndices[textureSwapCount];
+	short textureSwapMaterialParameterIndices[textureSwapCount];
+	BoneModelAttachEntry boneModelAttachEntries[boneModelAttachmentCount];
+	CnpModelAttachEntry cnpModelAttachEntries[cnpModelAttachmentCount];
+	
+	//Variable Data
+	FSeek(variableDataSectionOffset);
+	VariableDataEntry variableDataEntries[variableDataSectionCount];
+	
+	//Material Parameter Data
+	FSeek(materialParameterSectionOffset);
+	Vector4 materialParameterEntries[materialParameterSectionCount];
+	
+	//External File Data
+	FSeek(externalFileSectionOffset);
+	PathCode64 externalFileEntries[externalFileSectionCount];
+} Fv2;

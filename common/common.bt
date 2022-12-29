@@ -3,17 +3,40 @@
 
 typedef struct
 {
-    uint hash<format=hex>;
+	ushort value <hidden = true>;
+} half <read = ReadHalf>;
+string ReadHalf(half& value)
+{
+	local uint tempA = (uint)value.value << 0x10;
+	local uint tempB = 0;
+	if ((tempA & 0x7fffffff) == 0)
+		tempB = 0;
+	else
+		tempB = tempA & 0xb8000000 | 0x38000000;
+
+	tempA = ((tempA & 0x7fffffff) >> 3) + tempB;
+
+	local ubyte out[4];
+	ConvertDataToBytes(tempA, out);
+
+	float result = ConvertBytesToFloat(out);
+
+	return Str("%f", result);
+}
+
+typedef struct
+{
+	uint hash<format=hex>;
 } StrCode32 <read=(hash)>;
 
 typedef struct
 {
-    uint64 hash<format=hex>;
+	uint64 hash<format=hex>;
 } StrCode <read=(hash)>;
 
 typedef struct
 {
-    uint64 hash<format=hex>;
+	uint64 hash<format=hex>;
 } PathCode64 <read=(hash)>;
 
 typedef struct
@@ -24,6 +47,12 @@ typedef struct
 
 typedef struct
 {
+	half x;
+	half y;
+} VectorH2 <read = Str("(%s, %s)", ReadHalf(x), ReadHalf(y))>;
+
+typedef struct
+{
 	float x;
 	float y;
 	float z;
@@ -31,17 +60,17 @@ typedef struct
 
 typedef struct
 {
-	hfloat x;
-	hfloat y;
-	hfloat z;
-} VectorH3 <read = Str("(%g, %g, %g)", x, y, z)>;
+	half x;
+	half y;
+	half z;
+} VectorH3 <read = Str("(%s, %s, %s)", ReadHalf(x), ReadHalf(y), ReadHalf(z))>;
 
 typedef struct
 {
 	float x;
 	float y;
 	float z;
-    uint Padding <hidden = true>; Assert(Padding == 0);
+	uint Padding <hidden = true>; Assert(Padding == 0);
 } WideVector3 <read = Str("(%g, %g, %g)", x, y, z)>;
 
 typedef struct
@@ -54,11 +83,19 @@ typedef struct
 
 typedef struct
 {
-	hfloat x;
-	hfloat y;
-	hfloat z;
-    hfloat w;
-}VectorH4 <read = Str("(%g, %g, %g, %g)", x, y, z, w)>;
+	half x;
+	half y;
+	half z;
+	half w;
+} VectorH4 <read = Str("(%s, %s, %s, %s)", ReadHalf(x), ReadHalf(y), ReadHalf(z), ReadHalf(w))>;
+
+typedef struct
+{
+	ubyte x <read = ((float)this / 0xFF)>;
+	ubyte y <read = ((float)this / 0xFF)>;
+	ubyte z <read = ((float)this / 0xFF)>;
+	ubyte w <read = ((float)this / 0xFF)>;
+} VectorB4 <read = Str("(%g, %g, %g, %g)", (float)x / 0xFF, (float)y / 0xFF, (float)z / 0xFF, (float)w / 0xFF)>;
 
 typedef struct
 {
@@ -70,11 +107,11 @@ typedef struct
 
 typedef struct
 {
-    hfloat x;
-    hfloat y;
-    hfloat z;
-    hfloat w;
-} HQuaternion <read=Str("(%g, %g, %g, %g)", x, y, z, w)>;
+	half x;
+	half y;
+	half z;
+	half w;
+} QuaternionH <read = Str("(%s, %s, %s, %s)", ReadHalf(x), ReadHalf(y), ReadHalf(z), ReadHalf(w))>;
 
 typedef struct
 {
@@ -99,11 +136,24 @@ typedef struct
 	float w3;
 } Matrix4;
 
+typedef struct
+{
+	Vector4 Max;
+	Vector4 Min;
+} AABB;
+
+typedef struct
+{
+	Vector3 scale;
+	Quaternion rotation_quat;
+	Vector3 translation;
+} Transform;
+
 void FAlign(int alignment)
 {
-    local long alignmentRequired = FTell() % alignment;
-    if (alignmentRequired > 0)
-        FSeek(FTell() + alignment - alignmentRequired);
+	local long alignmentRequired = FTell() % alignment;
+	if (alignmentRequired > 0)
+		FSeek(FTell() + alignment - alignmentRequired);
 }
 
 #endif

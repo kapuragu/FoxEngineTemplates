@@ -1,0 +1,8 @@
+LittleEndian();
+
+#include "common/common.bt"
+
+struct LadbHeader
+{
+	uint Version <hidden = true>; Assert(Version == 1);
+} Header;

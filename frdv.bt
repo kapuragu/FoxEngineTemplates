@@ -43,13 +43,13 @@ enum <short> FRDV_ACTION_TYPE
 
 struct
 {
-    char Signature[4];
+	char Signature[4];
 
-    uint Version; 
+	uint Version; 
 	if (Version == 2830171915) 
 		BigEndian();
 
-    uint EntryCount;
+	uint EntryCount;
 } Header <hidden = true, bgcolor=CyberGrape>;
 
 FAlign(16);

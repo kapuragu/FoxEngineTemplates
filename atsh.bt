@@ -6,19 +6,19 @@ typedef struct(int selfIndex)
     local int SelfIndex = selfIndex;
     
                         // Band   Basis
-    VectorShH3 c00; //  0       0
+    VectorH3 c00; //  0       0
 
-    VectorShH3 c10; //  1      -1
-    VectorShH3 c11; //  1       0 
-    VectorShH3 c12; //  1       1
+    VectorH3 c10; //  1      -1
+    VectorH3 c11; //  1       0 
+    VectorH3 c12; //  1       1
 
-    VectorShH3 c20; //  2      -2
-    VectorShH3 c21; //  2      -1
-    VectorShH3 c22; //  2       0
-    VectorShH3 c23; //  2       1
-    VectorShH3 c24; //  2       2
+    VectorH3 c20; //  2      -2
+    VectorH3 c21; //  2      -1
+    VectorH3 c22; //  2       0
+    VectorH3 c23; //  2       1
+    VectorH3 c24; //  2       2
 
-    VectorShH3 SunColor;
+    VectorH3 SunColor;
 
     // a0 = sqrt(1/(4pi))   = 0.282095
     // a1 = sqrt(3/(4pi))   = 0.488603

@@ -109,7 +109,7 @@ struct StreamedPackage
 		if (hasLipSync==1)
 			int offsetToLip <bgcolor=0x5285FF>;
 		
-	} streamedWemDefinition[wemCount];
+	} streamedWemDefinition[wemCount] <optimize = true>;
 	
 	if (FTell() % 16 != 0)
 		FSkip(16 - (FTell() % 16));
