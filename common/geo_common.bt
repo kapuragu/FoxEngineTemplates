@@ -346,9 +346,9 @@ typedef struct
 	Vector4 Scale;	// cap - I seem to remember Intrude triggers needing to be scaled up by two, but I don't remember if it applies to all boxes
 	
 	uint64 Padding0 <hidden = true>; Assert(Padding0 == 0);
-	uint64 Padding1 <hidden = true>; Assert(Padding0 == 0);
+	uint64 Padding1 <hidden = true>; Assert(Padding1 == 0);
 	
-	Matrix4 Transform;
+	Matrix4 transform;
 } GeoPrimBox; // Name taken from PES RTTI
 
 typedef struct
