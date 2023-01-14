@@ -138,9 +138,9 @@ typedef struct
 
 typedef struct
 {
-	Vector4 Max;
 	Vector4 Min;
-} AABB;
+	Vector4 Max;
+} BoundingBox;
 
 typedef struct
 {

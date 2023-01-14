@@ -72,8 +72,8 @@ typedef struct
 	half lightSize;
 	half shadowBias;
 	half lodShadowDrawRate;
-	half lodNearSize;
 	half lodFarSize;
+	half lodNearSize;
 
 	FAlign(4);
 
@@ -132,7 +132,9 @@ typedef struct
 	half lodShadowDrawRate;
 	half lodFarSize;
 	half lodNearSize;
-	half powerScale;
+
+	FAlign(4);
+
 	int lodRadiusLevel;
 	int lodFadeType;
 
@@ -160,24 +162,36 @@ typedef struct
 
 	GrxString Name;
 
-	uint lightFlags;
-	uint flags2;
+	uint localFlags;
+	
+	ushort shapeType;
+
+	FAlign(4);
+
 	half innerScaleXPositive;
 	half innerScaleYPositive;
 	half innerScaleZPositive;
 	half innerScaleXNegative;
 	half innerScaleYNegative;
 	half innerScaleZNegative;
+
 	Transform transform;
-	float vals16; //translation's w?
+
+	uint InnerAreaOffset <hidden = true>;
+
 	short priority;
-	ushort shapeType;
-	ushort relatedLightIndex; // some other kind of index? sometimes it increases with entries, sometimes skips
-	ushort sphericalHarmonicsDataIndex;
-	float lightSize;
-	float u5;
-	//if (offsetToString>0)
-	//	PaddedString lightName;
+	ushort relatedLightCount;
+	ushort relatedLightsStartIndex;
+	ushort drawRejectionLevelsAndShDataIndex;
+	
+	float occlusionModeOpenRate;
+	
+	if (InnerAreaOffset != 0)
+	{
+		FSeek(startof(InnerAreaOffset) + InnerAreaOffset);
+
+		Transform innerArea;
+	}
 } LightProbe;
 
 typedef struct

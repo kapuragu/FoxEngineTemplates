@@ -5,23 +5,23 @@ LittleEndian();
 #define COLOR_Header 0xDFEFAA
 #define COLOR_FeatureHeader 0x7DE39E
 #define COLOR_BufferHeader 0x00AAFF
-#define COLOR_FmdlBoneUnit 0xAED2E8
+#define COLOR_FmdlBoneDef 0xAED2E8
 #define COLOR_FmdlMeshGroupHeader 0xB9E8DD
 #define COLOR_FmdlMeshGroupDef 0xF7F205
-#define COLOR_FmdlMeshUnit 0x763765
+#define COLOR_FmdlMeshDef 0x763765
 #define COLOR_FmdlMaterialInstanceHeader 0x3C8D86
 #define COLOR_FmdlBoneGroup 0x8A9872
 #define COLOR_FmdlTextureRefUnit 0xED688E
 #define COLOR_FmdlMaterialParameter 0x7C706F
 #define COLOR_FmdlMaterialPlatformAliasUnit 0x939FC8
-#define COLOR_FmdlMeshFormatDesc 0x000080
-#define COLOR_FmdlMeshFormatElement 0x008000
-#define COLOR_FmdlVertexFormatElement 0x008080
+#define COLOR_FmdlMeshDataLayoutDesc 0x000080
+#define COLOR_FmdlMeshBufferHeader 0x008000
+#define COLOR_FmdlMeshBufferFormatElement 0x008080
 #define COLOR_FmdlStringHeader 0x800000
-#define COLOR_AABB 0x800080
-#define COLOR_FmdlMeshBufferHeader 0x808000
+#define COLOR_FmdlAABB 0x800080
+#define COLOR_FmdlFileMeshBufferHeader 0x808000
 #define COLOR_FmdlLodInfo 0x808080
-#define COLOR_FmdlVBufferSlice 0x000040
+#define COLOR_FmdlIBufferSlice 0x000040
 #define COLOR_FmdlType18 0x0000c0
 #define COLOR_FmdlType20 0x008040
 #define COLOR_PathCode64 0x0080c0
@@ -45,23 +45,23 @@ LittleEndian();
 
 enum <ubyte> FMDL_FEATURE_TYPE
 {
-	FMDL_FEATURE_TYPE_BONE_UNITS = 0,
-	FMDL_FEATURE_TYPE_MESH_GROUP_HEADERS = 1,
-	FMDL_FEATURE_TYPE_MESH_GROUP_DEFS = 2,
-	FMDL_FEATURE_TYPE_MESH = 3,
+	FMDL_FEATURE_TYPE_BONE_DEFS = 0,
+	FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_HEADERS = 1,
+	FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_DEFS = 2,
+	FMDL_FEATURE_TYPE_MESH_DEFS = 3,
 	FMDL_FEATURE_TYPE_MATERIAL_INSTANCE_HEADERS = 4,
-	FMDL_FEATURE_TYPE_BONE_GROUP = 5,
+	FMDL_FEATURE_TYPE_BONE_GROUPS = 5,
 	FMDL_FEATURE_TYPE_TEXTURE_REFS = 6,
 	FMDL_FEATURE_TYPE_MATERIAL_PARAMS = 7,
 	FMDL_FEATURE_TYPE_MATERIAL_PLATFORM_ALIASES = 8,
-	FMDL_FEATURE_TYPE_MESH_FORMAT_DESCS = 9,
-	FMDL_FEATURE_TYPE_MESH_FORMAT_ELEMENTS = 10,
-	FMDL_FEATURE_TYPE_VERTEX_FORMAT_ELEMENTS = 11,
+	FMDL_FEATURE_TYPE_MESH_DATA_LAYOUT_DESCS = 9,
+	FMDL_FEATURE_TYPE_MESH_BUFFER_HEADERS = 10,
+	FMDL_FEATURE_TYPE_MESH_BUFFER_FORMAT_ELEMENTS = 11,
 	FMDL_FEATURE_TYPE_STRING_HEADER = 12,
 	FMDL_FEATURE_TYPE_AABBS = 13,
-	FMDL_FEATURE_TYPE_VBUFFER_HEADERS = 14,
+	FMDL_FEATURE_TYPE_FILE_MESH_BUFFER_HEADERS = 14,
 	FMDL_FEATURE_TYPE_LOD_INFO = 16,
-	FMDL_FEATURE_TYPE_FACE_INFOS = 17,
+	FMDL_FEATURE_TYPE_IBUFFER_SLICES = 17,
 	FMDL_FEATURE_TYPE_UNK_18 = 18,
 	FMDL_FEATURE_TYPE_UNK_19 = 19,
 	FMDL_FEATURE_TYPE_UNK_20 = 20,
@@ -100,9 +100,10 @@ typedef ushort _PathIndex;
 
 struct FMDL_BONE_FLAGS
 {
-	byte A : 1;
-	byte B : 1;
-	byte   : 6;
+	ushort HasBoundingBox : 1;
+	ushort B : 1;
+	ushort C : 1;
+	ushort   : 5;
 };
 
 typedef struct
@@ -110,48 +111,48 @@ typedef struct
 	_NameIndex NameIndex;
 	short ParentIndex;
 	ushort AABBIndex;
-	FMDL_BONE_FLAGS Flags;
-	ubyte FlagPadding <hidden = true>; Assert(FlagPadding == 0);
+	FMDL_BONE_FLAGS Flags; Assert(Flags.B == 0 && Flags.C == 0);
 	FSkip(8);
 	Vector4 LocalPosition;
 	Vector4 WorldPosition;
-} FmdlBoneUnit <optimize = false, bgcolor = COLOR_FmdlBoneUnit>;
+} FmdlBoneDef <optimize = false, bgcolor = COLOR_FmdlBoneDef>;
 
 struct FMDL_MESH_GROUP_HEADER_FLAGS
 {
-	byte Invisible : 1;
-	byte A		   : 1;
-	byte B		   : 1;
-	byte		   : 5;
+	ushort Invisible : 1;
+	ushort A		 : 1;
+	ushort B		 : 1;
+	ushort		   : 5;
 };
 
 typedef struct
 {
 	_NameIndex NameIndex;
-	FMDL_MESH_GROUP_HEADER_FLAGS Flags;
-	ubyte FlagPadding <hidden = true>; Assert(FlagPadding == 0);
+	FMDL_MESH_GROUP_HEADER_FLAGS Flags; Assert(Flags.A == 0 && Flags.B == 0);
 	short ParentIndex;
 	short Unknown0; Assert(Unknown0 == -1); // Not read by the game.
 } FmdlMeshGroupHeader <optimize = false, bgcolor = COLOR_FmdlMeshGroupHeader>;
 
 typedef struct
 {
-	FSkip(4);
+	uint Unknown; Assert(Unknown == 0);
+
 	ushort MeshGroupHeaderIndex;
 	ushort MeshCount;
 	ushort MeshesStartIndex;
-	ushort MeshFormatDescIndexOrAABBIndex;
-	FSkip(4);
-	ushort VBufferSlicesStartIndex;
-	FSkip(0xE);
-} FmdlMeshGroupDef <optimize = true, bgcolor = COLOR_FmdlMeshGroupDef>;
 
-typedef struct
-{
-	uint StartIndex;
-	uint Count;
-} FmdlVBufferSlice <optimize = true, bgcolor = COLOR_FmdlVBufferSlice>;
+	ushort AABBIndex; // Unconfirmed.
 
+	uint Padding0 <hidden = true>; Assert(Padding0 == 0);
+
+	ushort IBufferSlicesStartIndex;
+
+	ushort Padding1 <hidden = true>; Assert(Padding1 == 0);
+	uint Padding2 <hidden = true>; Assert(Padding2 == 0);
+	uint64 Padding3 <hidden = true>; Assert(Padding3 == 0);
+} FmdlMeshGroupDef <optimize = false, bgcolor = COLOR_FmdlMeshGroupDef>;
+
+struct FmdlIBufferSlice;
 typedef struct
 {
 	// byte AlphaEnum;
@@ -164,32 +165,41 @@ typedef struct
 
 	ushort MaterialInstanceIndex;
 	ushort BoneGroupIndex;
-	ushort MeshGroupIndex; // No
+
+	ushort BufferLayoutDescIndex; // Unconfirmed.
+
 	ushort VertexCount;
-	FSkip(4);
-	FmdlVBufferSlice Slice;
-	uint VBufferSlicesStartIndex; // Only actually used if some EXE byte says to use multiple slices. Each slice's StartIndex is relative to the main slice.
+	ushort VerticesStartIndex; Assert(VerticesStartIndex == 0); // Unconfirmed.
+
+	ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
+
+	FmdlIBufferSlice HighLodSlice;
+
+	uint IBufferSlicesStartIndex; // Only actually used if some EXE byte says to use multiple slices. Each slice's StartIndex is relative to the main slice.
 	FSkip(0x14);
-} FmdlMeshUnit <optimize = true, bgcolor = COLOR_FmdlMeshUnit>;
+} FmdlMeshDef <optimize = false, bgcolor = COLOR_FmdlMeshDef>;
 
 typedef struct
 {
 	_NameIndex NameIndex;
-	FSkip(2);
+
+	ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
+
 	_NameIndex MaterialIndex;
 	byte TextureParamCount;
 	byte VectorParamCount;
 	ushort TextureParamsStartIndex;
 	ushort VectorParamsStartIndex;
-	FSkip(4);
-} FmdlMaterialInstanceHeader <optimize = true, bgcolor = COLOR_FmdlMaterialInstanceHeader>;
+	
+	uint Padding1 <hidden = true>; Assert(Padding1 == 0);
+} FmdlMaterialInstanceHeader <optimize = false, bgcolor = COLOR_FmdlMaterialInstanceHeader>;
 
 typedef struct
 {
-	ushort Unknown0;
-	ushort BoneIndexCount; Assert(Unknown0 <= BoneIndexCount);
-	ushort BoneIndices[BoneIndexCount];
-	FSkip(0x40 - BoneIndexCount * sizeof(ushort));
+	ushort UseWeightCount; Assert(UseWeightCount <= 4); // What is the largest number of bones any given vertex referencing this bone group use?
+	ushort BoneCount; Assert(UseWeightCount <= BoneCount);
+	ushort BoneIndices[BoneCount];
+	FSkip(0x40 - BoneCount * sizeof(ushort));
 } FmdlBoneGroup <optimize = false, bgcolor = COLOR_FmdlBoneGroup>;
 
 typedef struct
@@ -212,29 +222,59 @@ typedef struct
 
 typedef struct
 {
-	byte ElementCount;
-	byte VertexFormatCount;
-	byte Unknown0; Assert(Unknown0 == 0); //Possibly the first UV set's index.
+	byte BufferCount;
+	byte FormatElementCount;
+	byte Unknown0; //Assert(Unknown0 == 0); //Possibly the first UV set's index.
 	byte UvCount;
-	ushort MeshFormatElementsStartIndex;
-	ushort VertexFormatsStartIndex;
-} FmdlMeshFormatDesc <optimize = false, bgcolor = COLOR_FmdlMeshFormatDesc>;
+	ushort BufferHeadersStartIndex;
+	ushort FormatElementsStartIndex;
+} FmdlMeshDataLayoutDesc <optimize = false, bgcolor = COLOR_FmdlMeshDataLayoutDesc>;
 
 typedef struct
 {
-	byte MeshBufferHeaderIndex;
-	byte VertexFormatCount;
+	byte FileMeshBufferHeaderIndex;
+	byte FormatElementCount;
 	byte Stride;
-	byte Type;
+	byte BindSlot; Assert(BindSlot <= 3);
 	uint Offset;
-} FmdlMeshFormatElement <optimize = true, bgcolor = COLOR_FmdlMeshFormatElement>;
+} FmdlMeshBufferHeader <optimize = false, bgcolor = COLOR_FmdlMeshBufferHeader>;
+
+enum <ubyte> MESH_BUFFER_FORMAT_ELEMENT_USAGE
+{
+	MESH_BUFFER_FORMAT_ELEMENT_USAGE_POSITION = 0,
+	MESH_BUFFER_FORMAT_ELEMENT_USAGE_BONE_WEIGHT0 = 1,
+	MESH_BUFFER_FORMAT_ELEMENT_USAGE_NORMAL = 2,
+	MESH_BUFFER_FORMAT_ELEMENT_USAGE_COLOR = 3,
+
+	MESH_BUFFER_FORMAT_ELEMENT_USAGE_BONE_INDEX0 = 7,
+
+	MESH_BUFFER_FORMAT_ELEMENT_USAGE_UV0 = 8,
+	MESH_BUFFER_FORMAT_ELEMENT_USAGE_UV1 = 9,
+	MESH_BUFFER_FORMAT_ELEMENT_USAGE_UV2 = 10,
+	MESH_BUFFER_FORMAT_ELEMENT_USAGE_UV3 = 11,
+	
+	MESH_BUFFER_FORMAT_ELEMENT_USAGE_BONE_WEIGHT1 = 12,
+	MESH_BUFFER_FORMAT_ELEMENT_USAGE_BONE_INDEX1 = 13,
+
+	MESH_BUFFER_FORMAT_ELEMENT_USAGE_TANGENT = 14,
+};
+
+enum <ubyte> MESH_BUFFER_FORMAT_ELEMENT_TYPE
+{
+	MESH_BUFFER_FORMAT_ELEMENT_TYPE_R32G32B32_FLOAT = 1,
+	// MESH_BUFFER_FORMAT_ELEMENT_TYPE_R16_UINT = 4,
+	MESH_BUFFER_FORMAT_ELEMENT_TYPE_R16G16B16A16_FLOAT = 6,
+	MESH_BUFFER_FORMAT_ELEMENT_TYPE_R16G16_FLOAT = 7,
+	MESH_BUFFER_FORMAT_ELEMENT_TYPE_R8G8B8A8_UNORM = 8,
+	MESH_BUFFER_FORMAT_ELEMENT_TYPE_R8G8B8A8_UINT = 9,
+};
 
 typedef struct
 {
-	byte Type;
-	byte DataType;
+	MESH_BUFFER_FORMAT_ELEMENT_USAGE Usage; Assert(Usage != 4 && Usage != 5 && Usage != 6 && Usage < 15); Assert(Usage != 12 && Usage != 13);
+	MESH_BUFFER_FORMAT_ELEMENT_TYPE Type; Assert(Type != 0 && Type != 2 && Type != 3 && Type != 5 && Type < 10); Assert(Usage != 4);
 	ushort Offset;
-} FmdlVertexFormatElement <optimize = true, bgcolor = COLOR_FmdlVertexFormatElement>;
+} FmdlMeshBufferFormatElement <optimize = false, bgcolor = COLOR_FmdlMeshBufferFormatElement>;
 
 typedef struct
 {
@@ -243,19 +283,32 @@ typedef struct
 	uint Offset;
 } FmdlStringHeader <read = ReadString(Header.BuffersDataOffset + BufferHeaders[_BufferIndices[BufferType]].DataOffset + Offset, Length), optimize = false, bgcolor = COLOR_FmdlStringHeader>;
 
-enum <uint> FMDL_MESH_BUFFER_TYPE
+typedef struct
 {
-	FMDL_MESH_BUFFER_TYPE_VBUFFER = 0,
-	FMDL_MESH_BUFFER_TYPE_INDEX_BUFFER = 1,
+	Vector4 Min;
+	Vector4 Max;
+} FmdlAABB <bgcolor = COLOR_FmdlAABB>;
+
+enum <uint> FMDL_FILE_MESH_BUFFER_TYPE
+{
+	FMDL_FILE_MESH_BUFFER_TYPE_VBUFFER = 0,
+	FMDL_FILE_MESH_BUFFER_TYPE_INDEX_BUFFER = 1,
 };
 
 typedef struct
 {
-	FMDL_MESH_BUFFER_TYPE Type;
+	FMDL_FILE_MESH_BUFFER_TYPE Type;
 	uint DataSize;
 	uint DataOffset;
-	FSkip(4);
-} FmdlMeshBufferHeader <optimize = false, bgcolor = COLOR_FmdlMeshBufferHeader>;
+	
+	uint Padding <hidden = true>; Assert(Padding == 0);
+} FmdlFileMeshBufferHeader <optimize = false, bgcolor = COLOR_FmdlFileMeshBufferHeader>;
+
+typedef struct
+{
+	uint StartIndex;
+	uint Count;
+} FmdlIBufferSlice <optimize = true, bgcolor = COLOR_FmdlIBufferSlice>;
 
 typedef struct
 {
@@ -287,84 +340,6 @@ typedef struct
 	FSkip(0x5C);
 } FmdlType20 <optimize = true, bgcolor = COLOR_FmdlType20>;
 
-struct Triangles(int i)
-{
-	ushort triangles[FmdlMeshUnits[i].faceVertexCount];
-};
- 
-struct FmdlMeshAttributes 
-{
-	local int h;
-	local int position = FTell();
-
-	for (h = FmdlMeshFormatDescs[i].firstVertexFormatIndex; h < FmdlMeshFormatDescs[i].firstVertexFormatIndex + FmdlMeshFormatDescs[i].vertexFormatCount; h++)
-	{
-		FSeek(position + fmdlVertexFormats[h].offset);
-		switch (fmdlVertexFormats[h].type)
-		{
-			case 0:
-				break;
-			case 1:
-				VectorB4 boneWeights <bgcolor=COLOR_BoneWeights>;
-				break;
-			case 2:
-				VectorH4 normals <bgcolor=COLOR_Normals>;
-				break;
-			case 3:
-				VectorB4 colors <bgcolor=COLOR_Colors>;
-				break;
-			case 7:
-				VectorB4 boneIndices <bgcolor=COLOR_BoneIndices>;
-				break;
-			case 8:
-				VectorH2 uv1 <bgcolor=COLOR_Uv1>;
-				break;
-			case 9:
-				VectorH2 uv2 <bgcolor=COLOR_Uv2>;
-				break;
-			case 0xA:
-				VectorH2 uv3 <bgcolor=COLOR_Uv3>;
-				break;
-			case 0xB:
-				VectorH2 uv4 <bgcolor=COLOR_Uv4>;
-				break;
-			case 0xC:
-				VectorB4 unknownWeights <bgcolor=COLOR_UnknownWeights>;
-				break;
-			case 0xD:
-				VectorB4 unknownIndices <bgcolor=COLOR_UnknownIndices>;
-				break;
-			case 0xE:
-				VectorH4 tangents <bgcolor=COLOR_Tangents>;
-				break;
-			default:
-				Printf("Unknown Case");
-				break;
-		} //switch
-	}//for
-	FSeek(position + fmdlMeshFormats[FmdlMeshFormatDescs[i].firstMeshFormatIndex + 1].length);
-};
-
-struct FmdlMesh(int i) 
-{
-	FSeek(header.section1Offset + section1Infos[bufferIndex].offset + FmdlMeshBufferHeaders[0].offset + fmdlMeshFormats[FmdlMeshFormatDescs[i].firstMeshFormatIndex].offset);
-	Vector3 vertices[FmdlMeshUnits[i].vertexCount] <bgcolor=COLOR_Vertices, optimize=true>;
-	FSeek(header.section1Offset + section1Infos[bufferIndex].offset + FmdlMeshBufferHeaders[1].offset + fmdlMeshFormats[FmdlMeshFormatDescs[i].firstMeshFormatIndex + 1].offset);
-	
-	FmdlMeshAttributes fmdlMeshAttributes[FmdlMeshUnits[i].vertexCount] <optimize=true>;;
-	FSeek(header.section1Offset + section1Infos[bufferIndex].offset + FmdlMeshBufferHeaders[2].offset + FmdlMeshUnits[i].firstFaceVertexIndex * 2);
-	Triangles triangles(i) <bgcolor=COLOR_Triangles, optimize=true>;
-};
-
-struct FmdlMeshes 
-{
-	local int i;
-	for (i = 0; i < section0Infos[meshInfoIndex].entryCount; i++)
-	{
-		FmdlMesh fmdlMesh(i);
-	}
-};
-
 struct FmdlHeader
 {
 	char Signature[4]; Assert(Signature == "FMDL");
@@ -374,10 +349,10 @@ struct FmdlHeader
 	uint FileDescOffset;
 	uint Padding0 <hidden = true>; Assert(Padding0 == 0);
 
-	uint FeatureTypes <read = ((FMDL_FEATURE_TYPE)this)>;
+	uint FeatureTypes;
 	uint Padding1 <hidden = true>; Assert(Padding1 == 0);
 
-	uint BufferTypes <read = ((FMDL_BUFFER_TYPE)this)>;
+	uint BufferTypes;
 	uint Padding1 <hidden = true>; Assert(Padding1 == 0);
 	
 	uint FeatureCount;
@@ -410,36 +385,36 @@ for (bIdx = 0, rBIdx = 0, bFit = 1; bIdx < 4; bIdx++, bFit = bFit << 1 | ((int)b
 	_BufferIndices[bIdx] = ((Header.BufferTypes & bFit) == 0) ? -1 : rBIdx++;
 
 // Features
-if (_FeatureIndices[FMDL_FEATURE_TYPE_BONE_UNITS] != -1)
+if (_FeatureIndices[FMDL_FEATURE_TYPE_BONE_DEFS] != -1)
 {
-	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BONE_UNITS]].DataOffset);
-	FmdlBoneUnit Bones[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BONE_UNITS]])];
+	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BONE_DEFS]].DataOffset);
+	FmdlBoneDef BoneDefs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BONE_DEFS]])];
 }
-if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_GROUP_HEADERS] != -1)
+if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_HEADERS] != -1)
 {
-	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_GROUP_HEADERS]].DataOffset);
-	FmdlMeshGroupHeader MeshGroupHeaders[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_GROUP_HEADERS]])];
+	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_HEADERS]].DataOffset);
+	FmdlMeshGroupHeader MeshGroupHeaders[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_HEADERS]])];
 }
 /**/
-if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_GROUP_DEFS] != -1)
+if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_DEFS] != -1)
 {
-	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_GROUP_DEFS]].DataOffset);
-	FmdlMeshGroupDef MeshGroupDefs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_GROUP_DEFS]])];
+	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_DEFS]].DataOffset);
+	FmdlMeshGroupDef MeshGroupDefs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_DEFS]])];
 }
-if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH] != -1)
+if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS] != -1)
 {
-	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH]].DataOffset);
-	FmdlMeshUnit Meshes[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH]])];
+	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS]].DataOffset);
+	FmdlMeshDef MeshDefs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS]])];
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_INSTANCE_HEADERS] != -1)
 {
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_INSTANCE_HEADERS]].DataOffset);
-	FmdlMaterialInstanceHeader MaterialInstances[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_INSTANCE_HEADERS]])];
+	FmdlMaterialInstanceHeader MaterialInstanceHeaders[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_INSTANCE_HEADERS]])];
 }
-if (_FeatureIndices[FMDL_FEATURE_TYPE_BONE_GROUP] != -1)
+if (_FeatureIndices[FMDL_FEATURE_TYPE_BONE_GROUPS] != -1)
 {
-	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BONE_GROUP]].DataOffset);
-	FmdlBoneGroup BoneGroups[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BONE_GROUP]])];
+	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BONE_GROUPS]].DataOffset);
+	FmdlBoneGroup BoneGroups[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BONE_GROUPS]])];
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_TEXTURE_REFS] != -1)
 {
@@ -456,20 +431,20 @@ if (_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_PLATFORM_ALIASES] != -1)
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_PLATFORM_ALIASES]].DataOffset);
 	FmdlMaterialPlatformAliasUnit MaterialAliases[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_PLATFORM_ALIASES]])];
 }
-if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_FORMAT_DESCS] != -1)
+if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DATA_LAYOUT_DESCS] != -1)
 {
-	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_FORMAT_DESCS]].DataOffset);
-	FmdlMeshFormatDesc MeshFormatDescs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_FORMAT_DESCS]])];
+	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DATA_LAYOUT_DESCS]].DataOffset);
+	FmdlMeshDataLayoutDesc MeshDataLayoutDescs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DATA_LAYOUT_DESCS]])];
 }
-if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_FORMAT_ELEMENTS] != -1)
+if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_BUFFER_HEADERS] != -1)
 {
-	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_FORMAT_ELEMENTS]].DataOffset);
-	FmdlMeshFormatElement MeshFormatElements[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_FORMAT_ELEMENTS]])];
+	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_BUFFER_HEADERS]].DataOffset);
+	FmdlMeshBufferHeader MeshBufferHeaders[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_BUFFER_HEADERS]])];
 }
-if (_FeatureIndices[FMDL_FEATURE_TYPE_VERTEX_FORMAT_ELEMENTS] != -1)
+if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_BUFFER_FORMAT_ELEMENTS] != -1)
 {
-	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_VERTEX_FORMAT_ELEMENTS]].DataOffset);
-	FmdlVertexFormatElement VertexFormatElements[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_VERTEX_FORMAT_ELEMENTS]])];
+	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_BUFFER_FORMAT_ELEMENTS]].DataOffset);
+	FmdlMeshBufferFormatElement MeshBufferFormatElements[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_BUFFER_FORMAT_ELEMENTS]])];
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_STRING_HEADER] != -1)
 {
@@ -479,22 +454,22 @@ if (_FeatureIndices[FMDL_FEATURE_TYPE_STRING_HEADER] != -1)
 if (_FeatureIndices[FMDL_FEATURE_TYPE_AABBS] != -1)
 {
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_AABBS]].DataOffset);
-	AABB AABBs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_AABBS]])] <bgcolor = COLOR_AABB>;
+	FmdlAABB AABBs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_AABBS]])];
 }
-if (_FeatureIndices[FMDL_FEATURE_TYPE_VBUFFER_HEADERS] != -1)
+if (_FeatureIndices[FMDL_FEATURE_TYPE_FILE_MESH_BUFFER_HEADERS] != -1)
 {
-	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_VBUFFER_HEADERS]].DataOffset);
-	FmdlMeshBufferHeader MeshBufferHeaders[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_VBUFFER_HEADERS]])];
+	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_FILE_MESH_BUFFER_HEADERS]].DataOffset);
+	FmdlFileMeshBufferHeader FileMeshBufferHeaders[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_FILE_MESH_BUFFER_HEADERS]])];
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_LOD_INFO] != -1)
 {
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_LOD_INFO]].DataOffset);
 	FmdlLodInfo LodInfo; Assert(GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_LOD_INFO]]) == 1);
 }
-if (_FeatureIndices[FMDL_FEATURE_TYPE_FACE_INFOS] != -1)
+if (_FeatureIndices[FMDL_FEATURE_TYPE_IBUFFER_SLICES] != -1)
 {
-	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_FACE_INFOS]].DataOffset);
-	FmdlVBufferSlice FaceInfos[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_FACE_INFOS]])];
+	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_IBUFFER_SLICES]].DataOffset);
+	FmdlIBufferSlice IBufferSlices[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_IBUFFER_SLICES]])];
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_UNK_18] != -1)
 {

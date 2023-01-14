@@ -65,14 +65,86 @@ for (eIdx = 0; eIdx < Header.EntryCount; eIdx++)
 	{
 		FRDV_ACTION_TYPE Type;
 
-		// Put very little thought into these descriptions. See  mgsvtpp.exe!141ab14f6 for massive switch statement
-		short ShortParams[6];
-		ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
-		
-		float FloatParams[4];
-		
-		uint UIntParams[8];
-		
-		Vector4 UnknownVectors[4];
-	} Entry <optimize = true, bgcolor = PowderBlue>;
+		switch (Type)
+		{
+		case FRDV_ACTION_TYPE_12:
+			short ParamS0x2;
+			short ParamS0x4;
+
+			FSkip(2);
+
+			short ParamS0x8;
+			short ParamS0xA;
+
+			FSkip(2);
+
+			FAlign(16);
+
+			float ParamF0x10;
+
+			FSkip(16);
+
+			float ParamF0x24;
+
+			FSkip(4);
+
+			float ParamF0x2C;
+			float ParamF0x30;
+
+			uint ParamF0x34;
+
+			FAlign(16);
+
+			Vector4 ParamV0x40;
+			Vector4 ParamV0x50;
+			break;
+		case FRDV_ACTION_TYPE_19:
+			FSkip(2);
+
+			short ParamS0x4;
+
+			FSkip(4);
+
+			short ParamS0xA;
+
+			FSkip(2);
+
+			FAlign(16);
+
+			float ParamF0x10;
+
+			FSkip(4);
+
+			float ParamF0x18;
+			float ParamF0x1C;
+
+			uint ParamI0x20;
+
+			FAlign(16);
+
+			FSkip(4);
+
+			uint ParamI0x34;
+			uint ParamI0x38;
+			uint ParamI0x3C;
+
+			FAlign(16);
+
+			Vector4 ParamV0x40;
+			Vector4 ParamV0x50;
+			Vector4 ParamV0x60;
+			Vector4 ParamV0x70;
+			break;
+		default:
+			// Put very little thought into these descriptions. See  mgsvtpp.exe!141ab14f6 for massive switch statement
+			short ShortParams[6];
+			ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
+			
+			float FloatParams[4];
+			
+			uint UIntParams[8];
+			
+			Vector4 UnknownVectors[4];
+		}
+	} Entry <read = EnumToString(Type), optimize = true, bgcolor = PowderBlue>;
 }

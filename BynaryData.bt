@@ -1,0 +1,40 @@
+#include "common/common.bt"
+
+typedef struct
+{
+	uint Time;
+
+	VectorB4 Color;
+
+	float Lumen;
+} LightKeyframe <read = Time, bgcolor = cLtGreen, open = false>;
+
+typedef struct
+{
+	uint SelfIndex <hidden = true>;
+
+	uint KeyframeCount <hidden = true>;
+
+	uint DataOffset <hidden = true>;
+	
+	FSeek(DataOffset);
+	local uint i;
+	for(i = 0; i < KeyframeCount; i++)
+		LightKeyframe Keyframes;
+} LightTrackHeader <bgcolor = cLtPurple, open = true, optimize = false>;
+
+struct BynaryDataHeader
+{
+	uint Version; Assert((Version & 0x7fffffff) == 0);
+
+	uint TotalSize;
+
+	uint TrackCount;
+} Header <hidden = true, bgcolor = cLtBlue>;
+
+local uint i;
+for(i = 0; i < Header.TrackCount; i++)
+{
+	FSeek(startof(Header) + sizeof(Header) + 12 * i);
+	LightTrackHeader Tracks;
+}
