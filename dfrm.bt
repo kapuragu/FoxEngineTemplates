@@ -54,7 +54,7 @@ uint BlendShapeSpanIndices[Header.numBlock3Entries] <bgcolor = 0x74226C, fgcolor
 FSeek(Header.block4Offset);
 struct BlendShape
 {
-	ushort Unknown0;
+	ushort SubmeshIndex;
 	ushort Unknown1;
 } BlendShapes[Header.numBlock4Entries] <bgcolor = 0x42214B, fgcolor = 0xc0c0c0>;
 
