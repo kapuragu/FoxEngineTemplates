@@ -98,6 +98,8 @@ typedef struct
 typedef ushort _NameIndex;
 typedef ushort _PathIndex;
 
+local int typeC = 0;
+
 struct FMDL_BONE_FLAGS
 {
 	ushort HasBoundingBox : 1;
@@ -111,7 +113,10 @@ typedef struct
 	_NameIndex NameIndex;
 	short ParentIndex;
 	ushort AABBIndex;
-	FMDL_BONE_FLAGS Flags; Assert(Flags.B == 0 && Flags.C == 0);
+	FMDL_BONE_FLAGS Flags; Assert(Flags.B == 0);
+	if (Flags.C != 0)
+		typeC++;
+
 	FSkip(8);
 	Vector4 LocalPosition;
 	Vector4 WorldPosition;
@@ -128,9 +133,9 @@ struct FMDL_MESH_GROUP_HEADER_FLAGS
 typedef struct
 {
 	_NameIndex NameIndex;
-	FMDL_MESH_GROUP_HEADER_FLAGS Flags; Assert(Flags.A == 0 && Flags.B == 0);
+	FMDL_MESH_GROUP_HEADER_FLAGS Flags; Assert(Flags.B == 0);
 	short ParentIndex;
-	short Unknown0; Assert(Unknown0 == -1); // Not read by the game.
+	short Unknown0; // Assert(Unknown0 == -1); // Not read by the game.
 } FmdlMeshGroupHeader <optimize = false, bgcolor = COLOR_FmdlMeshGroupHeader>;
 
 typedef struct
@@ -141,7 +146,7 @@ typedef struct
 	ushort MeshCount;
 	ushort MeshesStartIndex;
 
-	ushort AABBIndex; // Unconfirmed.
+	ushort AABBIndex;
 
 	uint Padding0 <hidden = true>; Assert(Padding0 == 0);
 
@@ -271,7 +276,7 @@ enum <ubyte> MESH_BUFFER_FORMAT_ELEMENT_TYPE
 
 typedef struct
 {
-	MESH_BUFFER_FORMAT_ELEMENT_USAGE Usage; Assert(Usage != 4 && Usage != 5 && Usage != 6 && Usage < 15); Assert(Usage != 12 && Usage != 13);
+	MESH_BUFFER_FORMAT_ELEMENT_USAGE Usage; Assert(Usage != 4 && Usage != 5 && Usage != 6 && Usage < 15);
 	MESH_BUFFER_FORMAT_ELEMENT_TYPE Type; Assert(Type != 0 && Type != 2 && Type != 3 && Type != 5 && Type < 10); Assert(Usage != 4);
 	ushort Offset;
 } FmdlMeshBufferFormatElement <optimize = false, bgcolor = COLOR_FmdlMeshBufferFormatElement>;
@@ -390,6 +395,7 @@ if (_FeatureIndices[FMDL_FEATURE_TYPE_BONE_DEFS] != -1)
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BONE_DEFS]].DataOffset);
 	FmdlBoneDef BoneDefs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BONE_DEFS]])];
 }
+Printf("%d", typeC);
 if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_HEADERS] != -1)
 {
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_HEADERS]].DataOffset);

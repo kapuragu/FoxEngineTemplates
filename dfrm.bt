@@ -1,0 +1,63 @@
+LittleEndian();
+
+struct DfrmHeader
+{
+	char fileSignature[4]; //DFRM
+	float fileVersion; //1.0
+	uint headerLength; //0x40 (64) bytes 
+	
+	uint SubmeshDefCount;
+	uint numBlock1Entries;
+	uint numBlock2Entries;
+	uint numBlock3Entries;
+	uint numBlock4Entries;
+	uint numBlock5Entries;
+	
+	uint SubmeshDefsOffset;
+	uint block1Offset;
+	uint block2Offset;
+	uint block3Offset;
+	uint block4Offset;
+	uint block5Offset;
+
+	FSkip(4);
+} Header;
+
+// Just Span<uint> for BlendShapeSpanIndices the size of the submesh's vertex count
+FSeek(Header.SubmeshDefsOffset);
+struct SubmeshDef
+{
+	uint Count;
+	uint StartOffset;
+} SubmeshDefs[Header.SubmeshDefCount] <bgcolor = 0xD2EA97>;
+
+// Just Span<BlendShape>
+FSeek(Header.block1Offset);
+struct BlendShapeSpan
+{
+	uint Count;
+	uint StartOffset;
+} BlendShapeSpans[Header.numBlock1Entries] <bgcolor = 0xA1C78C>;
+
+// Just Span<Block5>
+FSeek(Header.block2Offset);
+struct Block5Span
+{
+	uint Count;
+	uint StartOffset;
+} Block5Spans[Header.numBlock2Entries] <bgcolor = 0x946E81, fgcolor = cLtGray>;
+
+FSeek(Header.block3Offset);
+uint BlendShapeSpanIndices[Header.numBlock3Entries] <bgcolor = 0x74226C, fgcolor = 0xa0a0a0>;
+
+// Unknown
+FSeek(Header.block4Offset);
+struct BlendShape
+{
+	ushort Unknown0;
+	ushort Unknown1;
+} BlendShapes[Header.numBlock4Entries] <bgcolor = 0x42214B, fgcolor = 0xc0c0c0>;
+
+// Unknown
+FSeek(Header.block5Offset);
+uint Block5s[Header.numBlock5Entries] <bgcolor = 0x53355B, fgcolor = 0xd0d0d0>;
