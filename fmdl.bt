@@ -98,8 +98,6 @@ typedef struct
 typedef ushort _NameIndex;
 typedef ushort _PathIndex;
 
-local int typeC = 0;
-
 struct FMDL_BONE_FLAGS
 {
 	ushort HasBoundingBox : 1;
@@ -114,8 +112,6 @@ typedef struct
 	short ParentIndex;
 	ushort AABBIndex;
 	FMDL_BONE_FLAGS Flags; Assert(Flags.B == 0);
-	if (Flags.C != 0)
-		typeC++;
 
 	FSkip(8);
 	Vector4 LocalPosition;
@@ -395,13 +391,11 @@ if (_FeatureIndices[FMDL_FEATURE_TYPE_BONE_DEFS] != -1)
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BONE_DEFS]].DataOffset);
 	FmdlBoneDef BoneDefs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BONE_DEFS]])];
 }
-Printf("%d", typeC);
 if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_HEADERS] != -1)
 {
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_HEADERS]].DataOffset);
 	FmdlMeshGroupHeader MeshGroupHeaders[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_HEADERS]])];
 }
-/**/
 if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_DEFS] != -1)
 {
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_DEFS]].DataOffset);

@@ -5,13 +5,13 @@ typedef struct
 {
 	ushort value <hidden = true>;
 } AnimHalf <read = ReadAnimHalf>;
-string ReadAnimHalf(AnimHalf& half)
+string ReadAnimHalf(AnimHalf& animHalf)
 {
-	local uint sign = (half.value & 0x8000) >> 8;
-	local uint exponent = half.value & 0x7C00;
+	local uint sign = (animHalf.value & 0x8000) >> 8;
+	local uint exponent = animHalf.value & 0x7C00;
 	if (exponent > 0)
 		exponent = exponent + 0x1DC00 >> 3;
-	local uint mantissa = (half.value & 1023) << 5;
+	local uint mantissa = (animHalf.value & 1023) << 5;
 
 	local ubyte value[4];
 	value[0] = 0;

@@ -7,18 +7,18 @@ struct DfrmHeader
 	uint headerLength; //0x40 (64) bytes 
 	
 	uint SubmeshDefCount;
-	uint numBlock1Entries;
-	uint numBlock2Entries;
-	uint numBlock3Entries;
-	uint numBlock4Entries;
-	uint numBlock5Entries;
+	uint BlendShapeSpanCount;
+	uint Block5SpanCount;
+	uint BlendShapeSpanIndexCount;
+	uint BlendShapeCount;
+	uint Block5Count;
 	
 	uint SubmeshDefsOffset;
-	uint block1Offset;
-	uint block2Offset;
-	uint block3Offset;
-	uint block4Offset;
-	uint block5Offset;
+	uint BlendShapeSpansOffset;
+	uint Block5SpansOffset;
+	uint BlendShapeSpanIndicesOffset;
+	uint BlendShapesOffset;
+	uint Block5sOffset;
 
 	FSkip(4);
 } Header;
@@ -32,32 +32,36 @@ struct SubmeshDef
 } SubmeshDefs[Header.SubmeshDefCount] <bgcolor = 0xD2EA97>;
 
 // Just Span<BlendShape>
-FSeek(Header.block1Offset);
+FSeek(Header.BlendShapeSpansOffset);
 struct BlendShapeSpan
 {
 	uint Count;
 	uint StartOffset;
-} BlendShapeSpans[Header.numBlock1Entries] <bgcolor = 0xA1C78C>;
+} BlendShapeSpans[Header.BlendShapeSpanCount] <bgcolor = 0xA1C78C>;
 
 // Just Span<Block5>
-FSeek(Header.block2Offset);
+FSeek(Header.Block5SpansOffset);
 struct Block5Span
 {
 	uint Count;
 	uint StartOffset;
-} Block5Spans[Header.numBlock2Entries] <bgcolor = 0x946E81, fgcolor = cLtGray>;
+} Block5Spans[Header.Block5SpanCount] <bgcolor = 0x946E81, fgcolor = cLtGray>;
 
-FSeek(Header.block3Offset);
-uint BlendShapeSpanIndices[Header.numBlock3Entries] <bgcolor = 0x74226C, fgcolor = 0xa0a0a0>;
+FSeek(Header.BlendShapeSpanIndicesOffset);
+uint BlendShapeSpanIndices[Header.BlendShapeSpanIndexCount] <bgcolor = 0x74226C, fgcolor = 0xa0a0a0>;
 
 // Unknown
-FSeek(Header.block4Offset);
+FSeek(Header.BlendShapesOffset);
 struct BlendShape
 {
 	ushort SubmeshIndex;
 	ushort Unknown1;
-} BlendShapes[Header.numBlock4Entries] <bgcolor = 0x42214B, fgcolor = 0xc0c0c0>;
+} BlendShapes[Header.BlendShapeCount] <bgcolor = 0x42214B, fgcolor = 0xc0c0c0>;
 
 // Unknown
-FSeek(Header.block5Offset);
-uint Block5s[Header.numBlock5Entries] <bgcolor = 0x53355B, fgcolor = 0xd0d0d0>;
+FSeek(Header.Block5sOffset);
+struct Block5
+{
+	ushort Unknown0;
+	ushort Unknown1;
+} Block5s[Header.Block5Count] <bgcolor = 0x53355B, fgcolor = 0xd0d0d0>;
