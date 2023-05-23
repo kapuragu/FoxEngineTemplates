@@ -270,7 +270,8 @@ struct Event
 			Assert(2+2==5,"Unknown aimpointtype!!!");
 		
 		//"Param6-Param9" in TPP. Fully depends on the event type, currently 48 of them, though most are empty. Sometimes hashes, sometimes ints.
-		if (eventType==CautionIdleAct)
+		if (eventType==CautionIdleAct
+				||eventType==RelaxedIdleAct)
 			EventExtensions_Common_IdleAct extensions;
 		else if (eventType==chase)
 			EventExtensions_chase extensions;
@@ -296,8 +297,6 @@ struct Event
 		else if (eventType==PutHostageInVehicle
 				||eventType==TakeHostageOutOfVehicle)
 			EventExtensions_Common_HostageVehicle extensions;
-		else if (eventType==RelaxedIdleAct)
-			EventExtensions_Common_IdleAct extensions;
 		else if (eventType==SendMessage)
 			EventExtensions_SendMessage extensions;
 		else if (eventType==SwitchRoute)
