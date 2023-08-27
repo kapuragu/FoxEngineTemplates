@@ -119,14 +119,14 @@ typedef struct
     if (EntryCount != 0)
     {
         uint Offsets[EntryCount] <hidden = true, bgcolor = 0x2A2B04, fgcolor=0xFCFCFC>;
+        
+        local uint blkIdx;
+        for (blkIdx = 0; blkIdx < EntryCount; blkIdx++)
+        {
+            FSeek(Offsets[blkIdx]);
 
-        // Technically, we should have every byte accounted for so the loop and offsets aren't necessary.
-        BlockDefinition Definition[EntryCount] <optimize = false, bgcolor = 0xF2F254>;
-        // local uint blkIdx;
-        // for (blkIdx = 0; blkIdx < EntryCount; blkIdx++)
-        // {
-        //     BlockDefinition Definition <bgcolor = 0xF2F254>;
-        // }
+            BlockDefinition Definition <bgcolor = 0xF2F254>;
+        }
     }
 } BlockDefinitions;
 
@@ -135,14 +135,12 @@ if (Header.BlockLevelCount != 0)
     FSeek(Header.BlockLevelsOffsetsOffset);
 
     uint Offsets[Header.BlockLevelCount] <hidden = true>;
+    
+    local uint defIdx;
+    for (defIdx = 0; defIdx < Header.BlockLevelCount; defIdx++)
+    {
+        FSeek(Offsets[defIdx]);
 
-    // Technically, we should have every byte accounted for so the loop and offsets aren't necessary.
-    BlockDefinitions Definitions[Header.BlockLevelCount] <optimize = false>; // Pack large, Pack extraLarge
-    // local uint defIdx;
-    // for (defIdx = 0; defIdx < Header.SectionCount; defIdx++)
-    // {
-    //     FSeek(Offsets[defIdx]);
-
-    //     BlockDefinitions Definitions; // Pack large, Pack extraLarge
-    // }
+        BlockDefinitions Definitions; // Pack large, Pack extraLarge
+    }
 }
