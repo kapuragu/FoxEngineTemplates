@@ -54,7 +54,7 @@ typedef struct
 // The frame count after each instance is also not padded!
 typedef struct
 {
-	ushort X : 12;
+	ushort Theta : 12;
 	ushort Y : 12;
 	ushort Z : 12;
 	ushort X_Sign : 1;
@@ -64,7 +64,7 @@ typedef struct
 
 typedef struct
 {
-	ushort X : 13;
+	ushort Theta : 13;
 	ushort Y : 13;
 	ushort Z : 13;
 	ushort X_Sign : 1;
@@ -74,7 +74,7 @@ typedef struct
 
 typedef struct
 {
-	ushort X : 15;
+	ushort Theta : 15;
 	ushort Y : 15;
 	ushort Z : 15;
 	ushort X_Sign : 1;

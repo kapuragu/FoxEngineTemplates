@@ -1,0 +1,57 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.2 Binary Template
+//
+//      File: pathid_list_ps3.bin
+//   Authors: rlc
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+#include "common/common.bt"
+
+BigEndian();
+
+struct Header
+{
+    uint ver;
+    uint hashCount;
+    uint pathCount;
+    uint stringCount;
+    
+    uint ver1;
+} header <bgcolor=0x000000>;
+
+FAlign(16);
+
+uint64 hash [header.hashCount] <bgcolor=0xFF0000>;
+
+FAlign(16);
+
+struct StringCompositeIndices
+{
+    ushort pathIdx;
+    ushort stringIdx;
+} stringCompositeEntry [header.hashCount] <bgcolor=0x00FF00>;
+
+FAlign(16);
+
+uint pathOffset [header.pathCount]<bgcolor=0x0000FF>;
+
+FAlign(16);
+
+uint stringOffset [header.stringCount] <bgcolor=0xFF00FF>;
+
+FAlign(16);
+
+struct PathArray
+{
+    char path[];
+} pathEntry[header.pathCount] <optimize=false, bgcolor=0x00FFFF>;
+
+struct StringArray
+{
+    char str[];
+} stringEntry[header.stringCount] <optimize=false, bgcolor=0x00FFFF>;
