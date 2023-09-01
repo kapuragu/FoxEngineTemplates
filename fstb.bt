@@ -101,7 +101,13 @@ struct BlockDefinition
         {
             uint Offsets[LargeLodBlockDefinitionsCount] <hidden = true>;
             
-            LargeLodBlockDefinition LargeLodBlock[LargeLodBlockDefinitionsCount] <optimize = false>;
+            local uint lblkIdx;
+            for (lblkIdx = 0; lblkIdx < LargeLodBlockDefinitionsCount; lblkIdx++)
+            {
+                FSeek(Offsets[lblkIdx]);
+
+                LargeLodBlockDefinition LargeLodBlock <optimize = false>;
+            }
         } LargeLodBlocks;
     }
 
