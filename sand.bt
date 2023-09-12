@@ -53,6 +53,10 @@ struct Header
 	
 } header <bgcolor=0xB3A797>;
 
+// Section #1: Track Offsets
+
+//Offsets to tracks within object nodes in the node tree.
+
 FSeek(startof(header.sectionParams[0]) + header.sectionParams[0].sectionStartOffset);
 
 struct
@@ -61,6 +65,10 @@ struct
 	for (trkIdx = 0; trkIdx < header.sectionParams[0].sectionEntriesCount; trkIdx++)
 		uint TracksOffset <optimize = true>; // Global offsets to nodes' tracks
 } TracksOffsets <bgcolor=0x8694EB>;
+
+// Section #2: Node tree
+
+//The meat of the file - the object node tree with track definitions.
 
 FSeek(startof(header.sectionParams[1]) + header.sectionParams[1].sectionStartOffset);
 
@@ -114,6 +122,10 @@ struct SAND
 
 FoxDataNodes Nodes;
 
+// Section #3: Camera object references
+
+//Names of camera-related objects and their track indices.
+
 FSeek(startof(header.sectionParams[2]) + header.sectionParams[2].sectionStartOffset);
 
 struct
@@ -121,13 +133,17 @@ struct
 	local int64 cmIdx;
 	for (cmIdx = 0; cmIdx < header.sectionParams[2].sectionEntriesCount; cmIdx++)
 	{
-		struct CameraObject
+		struct CameraObjectReference
 		{
 			StrCode32 Name; // Hash of the object name, sometimes CameraParam or SI Frame.
 			uint Id;
-		} Object <read = Str("Name: %u, Id: %u", Name.hash, Id), optimize = false>;
+		} cameraObjectReference <read = Str("Name: %u, Id: %u", Name.hash, Id), optimize = false>;
 	}
-} CameraObjects <bgcolor=0xB9E7CA>;
+} CameraObjectReferences <bgcolor=0xB9E7CA>;
+
+// Section #4: Object Track Sets
+
+//Names of actor objects and indices of related tracks, plus the shader track offset.
 
 FSeek(startof(header.sectionParams[3]) + header.sectionParams[3].sectionStartOffset);
 
@@ -136,14 +152,15 @@ struct
 	local int64 moIdx;
 	for (moIdx = 0; moIdx < header.sectionParams[3].sectionEntriesCount; moIdx++)
 	{
-		struct MoveObject
+        //header indices (+shader offset) of a named actor, -1 if n/a
+		struct ObjectTrackSet
 		{
 			StrCode32 Name; // Hash of the object name from fox2, ie HM_sna0_main0_def
-			short aShort0;
-			short aShort1; // These can be FFFF
-			short aShort2;
-			short aShort3;
-			uint offset;
-		} Object <read = Str("Name: %u", Name.hash), optimize = false>;
+			short headerIndex_Move;
+			short headerIndex_Skel;
+			short headerIndex_Unknown; if (headerIndex_Unknown>0) { Printf(Str("headerIndex_Unknown: %d", headerIndex_Unknown)); } // 2053459263 type node
+			short headerIndex_Mtp;
+			uint shaderOffset; // global offset to shader object
+		} objectTrackSet <read = Str("Name: %u", Name.hash), optimize = false>;
 	}
-} MoveObjects <bgcolor=0x9A7F7E>;
+} ObjectTrackSets <bgcolor=0x9A7F7E>;
