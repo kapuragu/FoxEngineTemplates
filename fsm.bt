@@ -222,7 +222,7 @@ while (FTell()!=FileSize())
                 {
 				    FSeek(startof(demoPacketHeader) + demoPacketHeader.offsetToEvents);
                 }
-                if (demoPacketHeader.demoPacketType==DEMO_PACKET_TYPE_EVENTS) {Assert(false);}
+                
 				// The strings are sometimes fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s
 				EvpData EventSection;
 			};
