@@ -180,15 +180,15 @@ while (FTell()!=FileSize())
                                     nextIndex=segId+1;
                                     nextOffset=segmentOffset[nextIndex];
                                     if (nextOffset==0){
-                                        while(nextIndex<demoPacketHeader.segmentCount & nextOffset==0)
+                                        while(nextIndex<demoPacketHeader.segmentCount & nextOffset==0 & nextIndex<demoPacketHeader.segmentCount-1)
                                         {
                                             nextIndex++;
                                             nextOffset=segmentOffset[nextIndex];
                                         }
-                                    }
-                                    while (FTell()<startof(demoPacketHeader)+nextOffset)
-                                    {
-                                        ushort motion;
+                                        while (FTell()<startof(demoPacketHeader)+nextOffset)
+                                        {
+                                            ushort motion;
+                                        }
                                     }
 						        }
 						        else{
@@ -218,8 +218,11 @@ while (FTell()!=FileSize())
             if (((demoPacketHeader.demoPacketType==DEMO_PACKET_TYPE_EVENTS) 
             || (demoPacketHeader.offsetToEvents>0)) & (demoPacketHeader.offsetToEvents<header.packetSize))
 			{
-				FSeek(startof(demoPacketHeader) + demoPacketHeader.offsetToEvents);
-
+                if (demoPacketHeader.offsetToEvents>0)
+                {
+				    FSeek(startof(demoPacketHeader) + demoPacketHeader.offsetToEvents);
+                }
+                
 				// The strings are sometimes fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s
 				EvpData EventSection;
 			};
