@@ -10,14 +10,18 @@ typedef struct
 		RIG_UNIT_TYPE_TWO_BONE = 3,
 		RIG_UNIT_TYPE_LOCAL_ORIENTATION = 4,
 		RIG_UNIT_TYPE_LOCAL_TRANSFORM = 5,
+
+		RIG_UNIT_TYPE_UNKNOWN_6 = 6,
+
 		RIG_UNIT_TYPE_TRANSFORM = 7,
 		RIG_UNIT_TYPE_ARM = 8,
 
-		RIG_UNIT_TYPE_UNKNOWN_A = 10,
+		RIG_UNIT_TYPE_UNKNOWN_9 = 9,
+		RIG_UNIT_TYPE_UNKNOWN_10 = 10,
 
 		RIG_UNIT_TYPE_LIST = 11,
 
-		RIG_UNIT_TYPE_UNKNOWN_B = 12,
+		RIG_UNIT_TYPE_UNKNOWN_12 = 12,
 	} Type;
 
 	short TrackCount;
@@ -28,33 +32,89 @@ typedef struct
 
 	short ParentIndex;
 
-	FSkip(4);
+	uint Padding <hidden = true>; Assert(Padding == 0);
 
 	switch (Type)
 	{
-	case RIG_UNIT_TYPE_ARM:
-	case RIG_UNIT_TYPE_TWO_BONE:
-		FSkip(32);
-		break;
-	}
-
-	switch (Type)
-	{
-	case RIG_UNIT_TYPE_ORIENTATION:
+	case RIG_UNIT_TYPE_ROOT:
+        short SegmentIndexA;
+        short SegmentIndexB;
+        break;
 	case RIG_UNIT_TYPE_LOCAL_ORIENTATION:
-	case RIG_UNIT_TYPE_TRANSFORM:
+	case RIG_UNIT_TYPE_ORIENTATION:
+        short SkelIndex;
+
+        short SegmentIndexA;
+        break;
 	case RIG_UNIT_TYPE_LOCAL_TRANSFORM:
-		ushort SkelIndices[BoneCount];
+	case RIG_UNIT_TYPE_TRANSFORM:
+        short SkelIndex;
+
+        short SegmentIndexA;
+        short SegmentIndexB;
 		break;
+	case RIG_UNIT_TYPE_UNKNOWN_6: // Can't say this one for certain but shares fox::anim::RigArmDef::GetSkelIndex
+        Vector4 UnknownVector;
+
+        Vector4 UnknownOtherVector;
+
+		short SkelIndexA;
+		short SkelIndexB;
+		short SkelIndexC;
+
+		short SegmentIndexA;
+		short SegmentIndexB;
 	case RIG_UNIT_TYPE_ARM:
-		ushort SkelAIndex;
-		ushort SkelBIndex;
-		ushort SkelCIndex;
+        FSkip(16);
+
+        Vector4 UnknownOtherVector;
+
+		short SkelIndexA;
+		short SkelIndexB;
+		short SkelIndexC;
+
+		short SegmentIndexA;
+		short SegmentIndexB;
+		short SegmentIndexC;
+
+		short UnknownSkelIndex;
+        
 		break;
 	case RIG_UNIT_TYPE_TWO_BONE:
-		ushort SkelAIndex;
-		ushort SkelBIndex;
+        FSkip(16);
+
+        Vector4 UnknownVector;
+
+		short SkelIndexA;
+		short SkelIndexB;
+
+		short SegmentIndexA;
+		short SegmentIndexB;
+
+		short UnknownSkelIndex;
 		break;
+    case RIG_UNIT_TYPE_UNKNOWN_9:
+        short SkelIndex;
+        break;
+    case RIG_UNIT_TYPE_UNKNOWN_10:
+        FSkip(24); // Unknown
+
+        short SkelIndexA;
+        short SkelIndexB;
+        short SkelIndexC;
+        short SkelIndexD;
+        break;
+    case RIG_UNIT_TYPE_LIST:
+        short SkelIndexStart;
+
+        short SegmentIndexStart;
+        break;
+    case RIG_UNIT_TYPE_UNKNOWN_12:
+        FSkip(16); // Unknown
+
+        short SkelIndexA;
+        short SkelIndexB;
+        break;
 	}
 } RigUnitDef <read = EnumToString(Type), bgcolor = cLtBlue>;
 

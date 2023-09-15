@@ -410,7 +410,7 @@ typedef struct
 				float FloatParams[FloatParamCount];
 
 			if (StringParamCount != 0)
-				PARAM_STRING StringParams[StringParamCount];
+				PARAM_STRING StringParams[StringParamCount] <optimize = true>;
 		} Event <read = EnumToString(EventName)>;
 	}
 
