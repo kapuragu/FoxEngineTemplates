@@ -190,6 +190,13 @@ while (FTell()!=FileSize())
                                             ushort motion;
                                         }
                                     }
+                                    else
+                                    {
+                                        while (FTell()<startof(demoPacketHeader)+nextOffset)
+                                        {
+                                            ushort motion;
+                                        }    
+                                    }
 						        }
 						        else{
 							        if ((demoPacketHeader.offsetToEvents>0) 
