@@ -82,6 +82,8 @@ struct SAND
 	case "SI Frame":
 	case "SKEL":
 	case "Unknown":
+    case "MOTION":
+	case "GLOBALSRT":
 	case "MTP":
 		TrackHeader Tracks;
 		break;
@@ -97,9 +99,6 @@ struct SAND
 			}
 		} List <bgcolor = 0xF38ADE>;
 		break;
-    case "MOTION":
-        TrackHeader Tracks;
-        break;
 	default:
 		{
 			if (parentof(this).ParentNodeOffset != 0)
@@ -122,9 +121,10 @@ struct SAND
 
 FoxDataNodes Nodes;
 
-// Section #3: Camera object references
+// Section #3: Non-object track header references
 
-//Names of camera-related objects and their track indices.
+//Names of non-object tracks and their indices. Ex: CameraParam, SI Image, and some shaders.
+//Sorted by name hash ascending order.
 
 FSeek(startof(header.sectionParams[2]) + header.sectionParams[2].sectionStartOffset);
 
@@ -143,7 +143,8 @@ struct
 
 // Section #4: Object Track Sets
 
-//Names of actor objects and indices of related tracks, plus the shader track offset.
+//Names of object actors and indices of related tracks, plus the shader track offset.
+//Sorted by name hash ascending order.
 
 FSeek(startof(header.sectionParams[3]) + header.sectionParams[3].sectionStartOffset);
 

@@ -410,7 +410,12 @@ typedef struct
 				float FloatParams[FloatParamCount];
 
 			if (StringParamCount != 0)
+            {
 				PARAM_STRING StringParams[StringParamCount] <optimize = true>;
+	            local uint stringIdx;
+	            for (stringIdx = 0; stringIdx < StringParamCount; stringIdx++)
+                Printf(Str("%I64u\n",StringParams[stringIdx].param.hash));
+            }
 		} Event <read = EnumToString(EventName)>;
 	}
 
