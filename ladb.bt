@@ -1,8 +1,171 @@
-LittleEndian();
-
 #include "common/common.bt"
+#include "common/anim_common.bt"
 
-struct LadbHeader
+#define COLOR_HEADER 0x925e78
+#define COLOR_TRACK_BONE 0xbd93bd
+#define COLOR_BONE_NAME 0xf2edeb
+#define COLOR_TRACK_MATERIAL 0xf05365
+#define COLOR_MATERIAL_NAME 0xfabc2a
+
+string ResolveHashFunc(StrCode32& hash)
 {
-	uint Version <hidden = true>; Assert(Version == 1);
-} Header;
+	switch (hash.hash)
+	{
+        //Bone names
+	    case 2980427939: return "SKL_401_MOUTHROOT";
+	    case 3418826165: return "SKL_404_JAWS";
+	    case 1189395861: return "SKL_405_LPUL";
+	    case 855958783: return "SKL_406_LPUR";
+	    case 3481914676: return "SKL_407_LPLL";
+	    case 3438176848: return "SKL_408_LPLR";
+	    case 3601534260: return "SKL_409_LPML";
+	    case 1916798009: return "SKL_410_LPMR";
+	    case 559937997: return "SKL_411_LPNL";
+	    case 784823345: return "SKL_412_LPCL";
+	    case 366472970: return "SKL_413_LPNR";
+	    case 458905806: return "SKL_414_LPCR";
+	    case 3757082006: return "SKL_415_LPUI";
+	    case 3535815907: return "SKL_416_LPLI";
+	    case 3619213744: return "SKL_417_MDBL";
+	    case 2248468077: return "SKL_418_MDBR";
+	    case 1242226980: return "SKL_419_TONE";
+	    case 3233311882: return "SKL_420_THRT";
+	    case 2243633294: return "SKL_421_CHKL";
+	    case 1803111448: return "SKL_422_CHKR";
+	    case 1756505910: return "SKL_423_JAWL";
+	    case 2850554155: return "SKL_424_JAWR";
+	    case 360845471: return "SKL_425_NOSE";
+	    case 3485901544: return "SKL_436_MCKL";
+	    case 2094828632: return "SKL_437_MCKR";
+        //Material instance names
+	    case 1097923221: return "TENSION_CHEEKL";
+	    case 890100143: return "TENSION_CHEEKR";
+	    case 1593769340: return "TENSION_EYEL";
+	    case 2498758629: return "TENSION_EYER";
+	    case 4248512667: return "TENSION_FHEAD";
+	    case 4173630774: return "TENSION_HEAD";
+	    case 2155534022: return "TENSION_NECK";
+	    case 1327326575: return "TENSION_NECK1";//idk
+	    case 1414775745: return "TENSION_NECK3";
+	    case 2053350546: return "TENSION_NECK4";
+	    case 582750109: return "TENSION_NECKL";
+	    case 2468285345: return "TENSION_NECKR";
+        //Material parameter
+	    case 2275904709: return "TensionController";
+	    case 2003538961: return "TensionShift";
+	    case 853304191: return "TensionRate";
+	    default: 
+            Printf("Unknown hash: %u\n",hash.hash);
+            return "";
+	}
+}
+
+#define FOX_DATA_RESOLVE_HASH_FUNC ResolveHashFunc
+
+local byte lipCount = 38;
+
+struct LipAdjustData
+{
+	uint version <hidden = true>; Assert(version == 1);
+    
+    uint boneCount;
+    uint materialCount;
+    
+    uint offsetToBoneTracks;
+    uint offsetToMaterialTracks;
+    
+    uint offsetToBoneNames;
+    uint offsetToMaterialInstanceNames;
+    uint offsetToMaterialParamStartIndices;
+    uint offsetToMaterialParamCounts;
+    uint offsetToMaterialParamNames;
+    
+    //Size of each keyframe in bytes
+    
+    uint materialTrackSize;
+    uint boneTrackSize;
+    
+    //GZ .lad LipAdjustData properties
+    
+    float whisperScl;
+    float volumeSameVowelNormal;
+    
+    float mouthSoundRate;
+    float preHermiteStartVel;
+    float preHermiteEndVel;
+    float aftHermiteUnivStartVel;
+    float aftHermiteUnivEndVel;
+    float aftHermiteLongStartVel;
+    float aftHermiteLongEndVel;
+    
+    float plosionPreTwoRate;
+    float plosionPreOneRate;
+    float plosionWeight;
+    
+    ushort afterSilentOffset;
+    ushort previousSilentOffset;
+    
+    ushort longVoice;
+    ushort silentZone;
+    ushort adjustPlosionOffset;
+    ushort plosionLongOffset;
+    
+    ushort offsetLip[lipCount] <optimize=false>;
+} lipAdjustData <bgcolor = COLOR_HEADER>;
+
+local uint materialTrackCount = lipAdjustData.materialTrackSize/4;
+local uint boneTrackCount = lipAdjustData.boneTrackSize/32;
+
+struct Tracks
+{
+    FSeek(lipAdjustData.offsetToBoneTracks);
+    struct BoneTracks
+    {
+        local ubyte trackIndex = 0;
+        for (trackIndex = 0; trackIndex < lipCount; trackIndex++)
+        {
+            struct BoneTrack
+            {
+                local LipAnimIndex lipAnimIndex = trackIndex;
+                Quaternion quat[boneTrackCount];
+                Vector4 pos[boneTrackCount];
+            } boneTrack <read=EnumToString(lipAnimIndex)>;
+        };
+    } boneTracks <bgcolor = COLOR_TRACK_BONE>;
+    
+    FSeek(lipAdjustData.offsetToMaterialTracks);
+    struct MaterialTracks
+    {
+        local ubyte trackIndex = 0;
+        for (trackIndex = 0; trackIndex < lipCount; trackIndex++)
+        {
+            struct MaterialTrack
+            {
+                local LipAnimIndex lipAnimIndex = trackIndex;
+                float material[materialTrackCount];
+            } materialTrack <read=EnumToString(lipAnimIndex)>;
+        };
+    } materialTracks <bgcolor = COLOR_TRACK_MATERIAL>;
+} tracks;
+
+struct Footer
+{
+    FSeek(lipAdjustData.offsetToBoneNames);
+    StrCode32 boneName[lipAdjustData.boneCount] <bgcolor = COLOR_BONE_NAME, optimize=false, read=ResolveHashFunc(this)>;
+    
+    FSeek(lipAdjustData.offsetToMaterialInstanceNames);
+    StrCode32 materialInstanceName[lipAdjustData.materialCount] <bgcolor = COLOR_MATERIAL_NAME, optimize=false, read=ResolveHashFunc(this)>;
+        
+    FSeek(lipAdjustData.offsetToMaterialParamStartIndices);
+    uint materialParamStartIndex[lipAdjustData.materialCount]<bgcolor = COLOR_MATERIAL_NAME>;
+        
+    FSeek(lipAdjustData.offsetToMaterialParamCounts);
+    uint materialParamCount[lipAdjustData.materialCount]<bgcolor = COLOR_MATERIAL_NAME>;
+        
+    FSeek(lipAdjustData.offsetToMaterialParamNames);
+    local uint matParamNameId = 0;
+    for (matParamNameId = 0; matParamNameId < lipAdjustData.materialCount; matParamNameId++)
+    {
+        StrCode32 materialParamName[materialParamCount[matParamNameId]] <bgcolor = COLOR_MATERIAL_NAME, optimize=false, read=ResolveHashFunc(this)>;
+    }
+} footer;
