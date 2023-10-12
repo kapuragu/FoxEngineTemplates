@@ -70,9 +70,6 @@ struct SAND
 			}
 		} List <bgcolor = 0xF38ADE>;
 		break;
-	case "MOTION":
-		TrackHeader Tracks;
-		break;
 	default:
 		{
 			if (parentof(this).ParentNodeOffset != 0)
@@ -189,6 +186,13 @@ while (FTell()!=FileSize())
                                         {
                                             ushort motion;
                                         }
+                                    }
+                                    else
+                                    {
+                                        while (FTell()<startof(demoPacketHeader)+nextOffset)
+                                        {
+                                            ushort motion;
+                                        }    
                                     }
 						        }
 						        else{

@@ -1,6 +1,9 @@
 // "LS2" - Lip Sync v2 (own name, offshoot of .ls, which is real name)
 // By RLC - inspired by other FOX templates by the researchers of Modders' Heaven!
 
+#include "common/common.bt"
+#include "common/anim_common.bt"
+
 local byte version = 1; //0 = ls, 1 = ls2
 
 enum LipAnimIndex

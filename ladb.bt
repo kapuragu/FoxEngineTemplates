@@ -1,8 +1,188 @@
-LittleEndian();
-
 #include "common/common.bt"
+#include "common/anim_common.bt"
 
-struct LadbHeader
+#define COLOR_HEADER 0x925e78
+#define COLOR_LIP_ADJUST_DATA 0xbd93bd
+#define COLOR_BONE_POSES 0xf2edeb
+#define COLOR_MATERIAL_PARAMS 0xf05365
+#define COLOR_FOOTER 0xfabc2a
+
+string ResolveHashFunc(StrCode32& hash)
 {
-	uint Version <hidden = true>; Assert(Version == 1);
-} Header;
+	switch (hash.hash)
+	{
+        //Bone name
+	    case 2558595117: return "SKL_400_HEADROOT";
+	    case 2980427939: return "SKL_401_MOUTHROOT";
+	    case 2277737411: return "SKL_402_EYELROOT";
+	    case 3483308352: return "SKL_403_EYERROOT";
+	    case 3418826165: return "SKL_404_JAWS";
+	    case 1189395861: return "SKL_405_LPUL";
+	    case 855958783: return "SKL_406_LPUR";
+	    case 3481914676: return "SKL_407_LPLL";
+	    case 3438176848: return "SKL_408_LPLR";
+	    case 3601534260: return "SKL_409_LPML";
+	    case 1916798009: return "SKL_410_LPMR";
+	    case 559937997: return "SKL_411_LPNL";
+	    case 784823345: return "SKL_412_LPCL";
+	    case 366472970: return "SKL_413_LPNR";
+	    case 458905806: return "SKL_414_LPCR";
+	    case 3757082006: return "SKL_415_LPUI";
+	    case 3535815907: return "SKL_416_LPLI";
+	    case 3619213744: return "SKL_417_MDBL";
+	    case 2248468077: return "SKL_418_MDBR";
+	    case 1242226980: return "SKL_419_TONE";
+	    case 3233311882: return "SKL_420_THRT";
+	    case 2243633294: return "SKL_421_CHKL";
+	    case 1803111448: return "SKL_422_CHKR";
+	    case 1756505910: return "SKL_423_JAWL";
+	    case 2850554155: return "SKL_424_JAWR";
+	    case 360845471: return "SKL_425_NOSE";
+	    case 1228344230: return "SKL_426_EBOL";
+	    case 778528543: return "SKL_427_EBOR";
+	    case 3689445114: return "SKL_428_EBEL";
+	    case 2330944983: return "SKL_429_EBER";
+	    case 455689337: return "SKL_430_EYEL";
+	    case 1928271391: return "SKL_431_EYER";
+	    case 1934882898: return "SKL_432_EIUL";
+	    case 3261977740: return "SKL_433_EIUR";
+	    case 968362314: return "SKL_434_EYLL";
+	    case 2218979245: return "SKL_435_EYLR";
+	    case 3485901544: return "SKL_436_MCKL";
+	    case 2094828632: return "SKL_437_MCKR";
+        //Material instance name
+	    case 1097923221: return "TENSION_CHEEKL";
+	    case 890100143: return "TENSION_CHEEKR";
+	    case 2155534022: return "TENSION_NECK";
+        //Material parameter name
+	    case 2275904709: return "TensionController";
+	    case 2003538961: return "TensionShift";
+	    case 853304191: return "TensionRate";
+	    default: 
+            Printf("Unknown hash: %u\n",hash.hash);
+            return "";
+	}
+}
+
+#define FOX_DATA_RESOLVE_HASH_FUNC ResolveHashFunc
+
+//LipAnimIndex array size
+local byte lipCount = 38;
+
+struct Header
+{
+	uint version <hidden = true>; Assert(version == 1);
+    
+    uint boneCount;
+    uint materialCount;
+    
+    uint offsetToBonePoses <hidden = true>;
+    uint offsetToMaterialParams <hidden = true>;
+    
+    uint offsetToBoneNames <hidden = true>;
+    uint offsetToMaterialInstanceNames <hidden = true>;
+    uint offsetToMaterialParamStartIndices <hidden = true>;
+    uint offsetToMaterialParamCounts <hidden = true>;
+    uint offsetToMaterialParamNames <hidden = true>;
+    
+    //Size of each pose in bytes for fseek
+    uint materialParamSize <hidden = true>;
+    uint bonePoseSize <hidden = true>;
+} header <bgcolor = COLOR_HEADER>;
+
+//GZ .lad LipAdjustData properties
+struct LipAdjustData
+{
+    float whisperScl;
+    float volumeSameVowelNormal;
+    
+    float mouthSoundRate;
+    float preHermiteStartVel;
+    float preHermiteEndVel;
+    float aftHermiteUnivStartVel;
+    float aftHermiteUnivEndVel;
+    float aftHermiteLongStartVel;
+    float aftHermiteLongEndVel;
+    
+    float plosionPreTwoRate;
+    float plosionPreOneRate;
+    float plosionWeight;
+    
+    ushort afterSilentOffset;
+    ushort previousSilentOffset;
+    
+    ushort longVoice;
+    ushort silentZone;
+    ushort adjustPlosionOffset;
+    ushort plosionLongOffset;
+    
+    //offsetLip
+    local ubyte offsetLipIndex;
+    for (offsetLipIndex = 0; offsetLipIndex < lipCount; offsetLipIndex++)
+    {
+        struct OffsetLip
+        {
+            local LipAnimIndex lipAnimIndex = offsetLipIndex;
+            ushort offsetLip;
+        } offsetLip <read=Str("%s = %u",EnumToString(lipAnimIndex),offsetLip)>;
+    };
+} lipAdjustData <bgcolor = COLOR_LIP_ADJUST_DATA>;
+
+//Hack: actual binary reading should multiply these by the footer indices.
+local uint materialParamCount = header.materialParamSize/4;
+local uint bonePoseCount = header.bonePoseSize/32;
+
+FSeek(header.offsetToBonePoses);
+struct BonePoses
+{
+    local ubyte poseIndex;
+    for (poseIndex = 0; poseIndex < lipCount; poseIndex++)
+    {
+        struct BonePose
+        {
+            local LipAnimIndex lipAnimIndex = poseIndex;
+            Quaternion rot[bonePoseCount];
+            Vector4 pos[bonePoseCount];
+        } bonePose <read=EnumToString(lipAnimIndex)>;
+    };
+} bonePoses <bgcolor = COLOR_BONE_POSES>;
+
+FSeek(header.offsetToMaterialParams);
+struct MaterialParams
+{
+    local ubyte paramIndex;
+    for (paramIndex = 0; paramIndex < lipCount; paramIndex++)
+    {
+        struct MaterialParam
+        {
+            local LipAnimIndex lipAnimIndex = paramIndex;
+            float param[materialParamCount];
+        } materialParam <read=EnumToString(lipAnimIndex)>;
+    };
+} materialParams <bgcolor = COLOR_MATERIAL_PARAMS>;
+
+//Footer likely follows the header when read
+//The poses and params are likely indexed through these and the sizes in the header
+
+struct Footer
+{
+    FSeek(header.offsetToBoneNames);
+    StrCode32 boneName[header.boneCount] <read=ResolveHashFunc(this)>;
+    
+    FSeek(header.offsetToMaterialInstanceNames);
+    StrCode32 materialInstanceName[header.materialCount] <read=ResolveHashFunc(this)>;
+        
+    FSeek(header.offsetToMaterialParamStartIndices);
+    uint materialParamStartIndex[header.materialCount];
+        
+    FSeek(header.offsetToMaterialParamCounts);
+    uint materialParamCount[header.materialCount];
+        
+    FSeek(header.offsetToMaterialParamNames);
+    local ubyte matParamNameId;
+    struct MaterialParamNames
+    {
+        StrCode32 materialParamName[materialParamCount[matParamNameId]] <optimize=false, read=ResolveHashFunc(this)>;
+        matParamNameId++;
+    } materialParamNames[header.materialCount] <optimize=false>;
+} footer <bgcolor = COLOR_FOOTER>;

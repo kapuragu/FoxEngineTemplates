@@ -361,6 +361,9 @@ typedef struct
 				left_foot_leave = 3446064903,
 				rattle_weapon = 2416440354,
 				rattle_suit = 1532442511,
+                
+                // Demo
+                ExecCommand = 595181585,
 			} EventName;
 
 			byte TimeSectionCount : 6 <hidden = true>;
@@ -410,7 +413,12 @@ typedef struct
 				float FloatParams[FloatParamCount];
 
 			if (StringParamCount != 0)
-				PARAM_STRING StringParams[StringParamCount] <optimize = true>;
+            {
+				PARAM_STRING StringParams[StringParamCount] <optimize = false>;
+	            local uint stringIdx;
+	            for (stringIdx = 0; stringIdx < StringParamCount; stringIdx++)
+                Printf(Str("%I64u\n",StringParams[stringIdx].param.hash));
+            }
 		} Event <read = EnumToString(EventName)>;
 	}
 
@@ -457,5 +465,48 @@ typedef struct
 		EvpData Data;
 	}
 } EvpGroup <bgcolor = 0x00C000>;
+
+
+typedef enum <ubyte>
+{
+	A	=	0,
+	AH	=	1,
+	AY	=	2,
+	B	=	3,
+	C	=	4,
+	CH	=	5,
+	D	=	6,
+	E	=	7,
+	EE	=	8,
+	ER	=	9,
+	F	=	10,
+	G	=	11,
+	H	=	12,
+	I	=	13,
+	J	=	14,
+	L	=	15,
+	M	=	16,
+	N	=	17,
+	NG	=	18,
+	OH	=	19,
+	OO	=	20,
+	OU	=	21,
+	OW	=	22,
+	OY	=	23,
+	P	=	24,
+	R	=	25,
+	S	=	26,
+	SH	=	27,
+	T	=	28,
+	TH	=	29,
+	TT	=	30,
+	U	=	31,
+	V	=	32,
+	W	=	33,
+	Y	=	34,
+	Z	=	35,
+	_i	=	36,
+	_tH	=	37,
+} LipAnimIndex;
 
 #endif
