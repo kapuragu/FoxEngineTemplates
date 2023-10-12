@@ -326,17 +326,20 @@ typedef struct
 
 typedef struct
 {
-	FSkip(4);
+    uint Unknown0 <hidden = true>; Assert(Unknown0 == 0);
+
 	float unknown0; //Nulling triggers lowest LOD faces.
 	float unknown1;
+
 	float unknown2;
-	float unknown3; //Always a whole number?
 
-	uint unknown4;
-	uint unknown5;
-	int unknown6;
+	float LodPolygonSize; //Always a whole number?
+	float LodNearSize;
+	float LodFarSize;
+	byte DrawRejectionLevel; // StaticModel's enum gets converted to this number
+    FSkip(3);
 
-	uint unknownBoolLike <read = ((this == 0) + 3)>;
+	byte RejectFarRangeShadowCastLevel <read = ((this == 0) + 3)>; // StaticModel's enum gets converted to this number
 
 	FSkip(0x5C);
 } FmdlType20 <optimize = true, bgcolor = COLOR_FmdlType20>;
