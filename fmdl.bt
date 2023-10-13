@@ -13,7 +13,7 @@ LittleEndian();
 #define COLOR_FmdlBoneGroup 0x8A9872
 #define COLOR_FmdlTextureRefUnit 0xED688E
 #define COLOR_FmdlMaterialParameter 0x7C706F
-#define COLOR_FmdlMaterialPlatformAliasUnit 0x939FC8
+#define COLOR_FmdlShaderPlatformAliasUnit 0x939FC8
 #define COLOR_FmdlMeshDataLayoutDesc 0x000080
 #define COLOR_FmdlMeshBufferHeader 0x008000
 #define COLOR_FmdlMeshBufferFormatElement 0x008080
@@ -53,7 +53,7 @@ enum <ubyte> FMDL_FEATURE_TYPE
 	FMDL_FEATURE_TYPE_BONE_GROUPS = 5,
 	FMDL_FEATURE_TYPE_TEXTURE_REFS = 6,
 	FMDL_FEATURE_TYPE_MATERIAL_PARAMS = 7,
-	FMDL_FEATURE_TYPE_MATERIAL_PLATFORM_ALIASES = 8,
+	FMDL_FEATURE_TYPE_SHADER_PLATFORM_ALIASES = 8,
 	FMDL_FEATURE_TYPE_MESH_DATA_LAYOUT_DESCS = 9,
 	FMDL_FEATURE_TYPE_MESH_BUFFER_HEADERS = 10,
 	FMDL_FEATURE_TYPE_MESH_BUFFER_FORMAT_ELEMENTS = 11,
@@ -153,16 +153,61 @@ typedef struct
 	uint64 Padding3 <hidden = true>; Assert(Padding3 == 0);
 } FmdlMeshGroupDef <optimize = false, bgcolor = COLOR_FmdlMeshGroupDef>;
 
+struct FMDL_MESH_DEF_FLAGS
+{
+	// BYTE 0
+	// =========
+
+	// 143bc6adc, & 0xF
+	uint UnknownOffset : 4;
+
+	// 143bc6ad2, & 0x10, some value = (UseUnknownOffset ? UnknownOffset + 1 : 0);
+    uint UseUnknownOffset : 1;
+
+	// 143bc6af2
+	uint NoBackfaceCulling : 1; // ! >> 5
+	uint I : 1; // ! >> 6
+
+	// 143bc6aab, >> 7
+	// 14025b2a3, set in code
+	uint G : 1;
+
+	// BYTE 1
+	// =========
+
+	// 14025b2a3 sets it in code
+	uint NoShadow : 1; 
+
+    uint C : 1;
+
+	// 14026c5c0, >> 10
+    uint A : 1;
+
+    uint : 2;
+
+	// 14026c5c6, >> 13
+    uint B : 1;
+
+	// 143bc6abd, >> 14
+	uint J : 1; // Related to byte 0 stuff
+
+	// 14025b6e8, >> 0xF
+    uint L: 1;
+
+	// BYTE 3
+	// =========
+
+	// 14025b42e, >> 0x10 & 0xF
+    uint D : 4;
+
+	// 14025b6ff & 0x7f00000
+	uint M : 7;
+};
+
 struct FmdlIBufferSlice;
 typedef struct
 {
-	// byte AlphaEnum;
-	// byte ShadowEnum;
-	// byte UnknownEnum0;
-	// byte UnknownEnum1; //Used by net fmdls in PES
-
-	// >> 10, >> 13
-	uint Flags;
+	FMDL_MESH_DEF_FLAGS Flags;
 
 	ushort MaterialInstanceIndex;
 	ushort BoneGroupIndex;
@@ -217,9 +262,9 @@ typedef struct
 
 typedef struct
 {
-	_NameIndex TypeNameIndex;
+	_NameIndex ShaderNameIndex;
 	_NameIndex TechniqueNameIndex;
-} FmdlMaterialPlatformAliasUnit <optimize = true, bgcolor = COLOR_FmdlMaterialPlatformAliasUnit>;
+} FmdlShaderPlatformAliasUnit <optimize = true, bgcolor = COLOR_FmdlShaderPlatformAliasUnit>;
 
 typedef struct
 {
@@ -315,7 +360,8 @@ typedef struct
 
 typedef struct
 {
-	uint lodCount;
+	ushort LodCount;
+	FSkip(2);
 	float unknown0;
 	float unknown1;
 	float unknown2;
@@ -431,10 +477,10 @@ if (_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_PARAMS] != -1)
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_PARAMS]].DataOffset);
 	FmdlMaterialParameter MaterialParameters[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_PARAMS]])];
 }
-if (_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_PLATFORM_ALIASES] != -1)
+if (_FeatureIndices[FMDL_FEATURE_TYPE_SHADER_PLATFORM_ALIASES] != -1)
 {
-	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_PLATFORM_ALIASES]].DataOffset);
-	FmdlMaterialPlatformAliasUnit MaterialAliases[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_PLATFORM_ALIASES]])];
+	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_SHADER_PLATFORM_ALIASES]].DataOffset);
+	FmdlShaderPlatformAliasUnit ShaderAliases[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_SHADER_PLATFORM_ALIASES]])];
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DATA_LAYOUT_DESCS] != -1)
 {
