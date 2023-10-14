@@ -11,7 +11,7 @@ LittleEndian();
 #define FILE_TYPE_MTAR
 #include "common/anim_common.bt"
 		
-#include "gani_gz.bt"
+#include "gani.bt"
 
 struct MtarHeader
 {
@@ -25,10 +25,10 @@ struct MtarHeader
 
 	uint Padding0 <hidden = true>; //Assert(Padding0 == 0);
 
-	enum <ushort> MTAR_FEATURE_FLAGS
+	enum <ushort> MTAR_UNKNOWN_FLAGS
     {
-        MTAR_FEATURE_FLAGS_IK = 0x8,
-    } FeatureFlags; Assert((FeatureFlags & ~MTAR_FEATURE_FLAGS_IK) == 0);
+        MTAR_UNKNOWN_FLAGS_UNKNOWN_0x8 = 0x8,
+    } UnknownFlags; Assert((UnknownFlags & ~MTAR_UNKNOWN_FLAGS_UNKNOWN_0x8) == 0);
 
 	enum <ushort> MTAR_FLAGS
 	{
@@ -48,7 +48,7 @@ struct MtarFileHeader
     uint DataOffset;
     ushort DataSize;
 
-    if (Header.FeatureFlags & MTAR_FEATURE_FLAGS_IK)
+    if (Header.Flags & MTAR_FLAGS_NEW)
     {
 	    ushort FkDataOffset;
 	    uint FkDataSize;
