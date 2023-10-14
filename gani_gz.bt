@@ -6,8 +6,9 @@
 #include "common/common.bt"
 #include "common/anim_common.bt"
 
+#ifndef FILE_TYPE_MTAR
 #define COLOR_HEADER 0x4F93FF
-#define COLOR_NODES 0x12E8C2
+#endif
 
 string ResolveHashFunc(StrCode32& hash)
 {
@@ -100,8 +101,10 @@ struct GANI
 
 #include "common/FoxData_common.bt"
 
+#ifndef FILE_TYPE_MTAR
 FoxDataHeader Header<bgcolor = COLOR_HEADER>;
 
 FSeek(Header.NodesOffset);
 
 FoxDataNodes Nodes;
+#endif
