@@ -335,7 +335,7 @@ typedef struct
 	Vector4 Max;
 } FmdlAABB <bgcolor = COLOR_FmdlAABB>;
 
-enum <uint> FMDL_FILE_MESH_BUFFER_TYPE
+enum <ushort> FMDL_FILE_MESH_BUFFER_TYPE
 {
 	FMDL_FILE_MESH_BUFFER_TYPE_VBUFFER = 0,
 	FMDL_FILE_MESH_BUFFER_TYPE_INDEX_BUFFER = 1,
@@ -344,6 +344,8 @@ enum <uint> FMDL_FILE_MESH_BUFFER_TYPE
 typedef struct
 {
 	FMDL_FILE_MESH_BUFFER_TYPE Type;
+	FSkip(2);
+
 	uint DataSize;
 	uint DataOffset;
 	
