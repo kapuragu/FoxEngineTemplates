@@ -65,6 +65,9 @@ struct GANI
 	case "SKEL":
 	case "Unknown":
 	case "MTP":
+	case "CAMERA":
+		TrackHeader Tracks;
+		break;
 	case "MOTION":
 		TrackHeader Tracks;
 		break;

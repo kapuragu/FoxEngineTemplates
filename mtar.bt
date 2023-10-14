@@ -49,7 +49,7 @@ struct MtarHeader
 
 struct MtarFileHeader
 {
-    PathCode64 Path; Assert((Path.hash >> 52) == (0xFC50 >> 4)); // Just confirming that these files are all GANIs by checking the extension
+    PathCode64 Path; Assert(((Path.hash >> 52) == (0xFC50 >> 4)) || ((Path.hash >> 52) == (0x4CB0 >> 4))); // Just confirming that these files are all GANIs by checking the extension
     uint DataOffset;
     ushort DataSize;
 
