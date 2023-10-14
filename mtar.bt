@@ -23,12 +23,17 @@ struct MtarHeader
 
 	ushort SegmentCount; // Same as FRIG's count
 
-	uint Padding0 <hidden = true>; //Assert(Padding0 == 0);
+	ushort ShaderNodeCount; // Shows up in "_facial" - seems to be the number of SHADER nodes per animation
+
+	ushort Unknown1; // Shows up in "_facial" normall (always?) as 0x1
 
 	enum <ushort> MTAR_UNKNOWN_FLAGS
     {
+        MTAR_UNKNOWN_FLAGS_UNKNOWN_0x1 = 0x1,
+        MTAR_UNKNOWN_FLAGS_UNKNOWN_0x2 = 0x2,
+        MTAR_UNKNOWN_FLAGS_UNKNOWN_0x4 = 0x4,
         MTAR_UNKNOWN_FLAGS_UNKNOWN_0x8 = 0x8,
-    } UnknownFlags; Assert((UnknownFlags & ~MTAR_UNKNOWN_FLAGS_UNKNOWN_0x8) == 0);
+    } UnknownFlags; Assert((UnknownFlags & ~(MTAR_UNKNOWN_FLAGS_UNKNOWN_0x1 | MTAR_UNKNOWN_FLAGS_UNKNOWN_0x2 | MTAR_UNKNOWN_FLAGS_UNKNOWN_0x4 | MTAR_UNKNOWN_FLAGS_UNKNOWN_0x8)) == 0);
 
 	enum <ushort> MTAR_FLAGS
 	{
@@ -39,7 +44,7 @@ struct MtarHeader
 
 	uint CommonInfoOffset;
 
-	uint64 Padding1 <hidden = true>; Assert(Padding1 == 0);
+	uint64 Padding <hidden = true>; Assert(Padding == 0);
 } Header <bgcolor = COLOR_HEADER>;
 
 struct MtarFileHeader
@@ -53,9 +58,10 @@ struct MtarFileHeader
 	    ushort FkDataOffset;
 	    uint FkDataSize;
         
-        uint Padding <hidden = true>; Assert(Padding == 0);
+        uint Padding0 <hidden = true>; Assert(Padding0 == 0);
 	    uint MotionEventsOffset;
-	    uint Unknown1;
+
+	    uint Padding1 <hidden = true>; Assert(Padding1 == 0);
     }
     else
     {
@@ -165,10 +171,9 @@ if (Header.Flags & MTAR_FLAGS_NEW)
 					uint ComponentBitSize : 8;
 
 					uint DataOffset : 24;
-				} SegmentHeaders[Header.SegmentCount];
+				} SegmentHeaders[CommonInfo.LayoutTrack.TrackCount];
 
 				FSkip(16);
-
 				local uint tkIdx;
 				local uint rlSgIdx;
 				local uint sgIdx = 0;
