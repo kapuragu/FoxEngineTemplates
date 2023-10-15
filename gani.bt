@@ -33,7 +33,6 @@ string ResolveHashFunc(StrCode32& hash)
 	case 4042487769: return "MTP_PARENT_LIST";
 	case 3187573380: return "LOCATOR";
 	case 2036377104: return "GLOBALSRT";
-	case 2053459263: return "Unknown";
 
 	// Parameter names
 	case 2570203771: return "TARGET_NAME";
@@ -63,7 +62,6 @@ struct GANI
 	case "CameraParam":
 	case "SI Frame":
 	case "SKEL":
-	case "Unknown":
 	case "MTP":
 	case "CAMERA":
 		TrackHeader Tracks;
@@ -77,21 +75,28 @@ struct GANI
 		break;
 	default:
 		{
+			switch (parentof(this).Name.Hash.hash)
+			{
+			case 2447659851:
+				StringList BoneList <bgcolor = 0xF38ADE>;
+				break;
+			case 2053459263:
+			case 3337172921:
+				TrackHeader Tracks;
+				break;
+			case 371357229:
+				// Node.Flags == 3
+				EvpGroup MotionEvents;
+				break;
+			}
+
+			// Each keyframed shader property is a child node of SHADER with the name of the property 
 			if (parentof(this).ParentNodeOffset != 0)
 			{
 				if (ReadUInt(startof(parentof(this)) + parentof(this).ParentNodeOffset) == 2250865118 /*SHADER*/)
 				{
 					TrackHeader Tracks;
 				}
-			}
-			switch (parentof(this).Name.Hash.hash)
-			{
-			case 2447659851:
-				StringList BoneList <bgcolor = 0xF38ADE>;
-				break;
-			case 3337172921:
-				TrackHeader Tracks;
-				break;
 			}
 		}
 	}

@@ -69,15 +69,15 @@ typedef struct
 
         Vector4 UnknownOtherVector;
 
-		short SkelIndexA;
-		short SkelIndexB;
-		short SkelIndexC;
+		short ChainIndexA;
+		short ChainIndexB;
+		short ChainIndexC;
 
 		short SegmentIndexA;
 		short SegmentIndexB;
 		short SegmentIndexC;
 
-		short UnknownSkelIndex;
+		short EffectorIndex;
         
 		break;
 	case RIG_UNIT_TYPE_TWO_BONE:
@@ -85,13 +85,13 @@ typedef struct
 
         Vector4 UnknownVector;
 
-		short SkelIndexA;
-		short SkelIndexB;
+		short ChainIndexA;
+		short ChainIndexB;
 
 		short SegmentIndexA;
 		short SegmentIndexB;
 
-		short UnknownSkelIndex;
+		short EffectorIndex;
 		break;
     case RIG_UNIT_TYPE_UNKNOWN_9:
         short SkelIndex;

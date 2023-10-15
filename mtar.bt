@@ -33,7 +33,8 @@ struct MtarHeader
         MTAR_UNKNOWN_FLAGS_UNKNOWN_0x2 = 0x2,
         MTAR_UNKNOWN_FLAGS_UNKNOWN_0x4 = 0x4,
         MTAR_UNKNOWN_FLAGS_UNKNOWN_0x8 = 0x8,
-    } UnknownFlags; Assert((UnknownFlags & ~(MTAR_UNKNOWN_FLAGS_UNKNOWN_0x1 | MTAR_UNKNOWN_FLAGS_UNKNOWN_0x2 | MTAR_UNKNOWN_FLAGS_UNKNOWN_0x4 | MTAR_UNKNOWN_FLAGS_UNKNOWN_0x8)) == 0);
+        MTAR_UNKNOWN_FLAGS_UNKNOWN_0x10 = 0x10,
+    } UnknownFlags; Assert((UnknownFlags & ~(MTAR_UNKNOWN_FLAGS_UNKNOWN_0x1 | MTAR_UNKNOWN_FLAGS_UNKNOWN_0x2 | MTAR_UNKNOWN_FLAGS_UNKNOWN_0x4 | MTAR_UNKNOWN_FLAGS_UNKNOWN_0x8 | MTAR_UNKNOWN_FLAGS_UNKNOWN_0x10)) == 0);
 
 	enum <ushort> MTAR_FLAGS
 	{
@@ -49,7 +50,7 @@ struct MtarHeader
 
 struct MtarFileHeader
 {
-    PathCode64 Path; Assert(((Path.hash >> 52) == (0xFC50 >> 4)) || ((Path.hash >> 52) == (0x4CB0 >> 4))); // Just confirming that these files are all GANIs by checking the extension
+    PathCode64 Path; //Assert(((Path.hash >> 52) == (0xFC50 >> 4)) || ((Path.hash >> 52) == (0x4CB0 >> 4))); // Just confirming that these files are all GANIs by checking the extension
     uint DataOffset;
     ushort DataSize;
 
@@ -65,7 +66,7 @@ struct MtarFileHeader
     }
     else
     {
-        ushort Padding <hidden = true>; Assert(Padding == 0); 
+        ushort Unknown; // 7 in player2_facial_snake_helispace.mtar, sometimes 1 in TppPlayer2Facial
     }
 } FileHeaders[Header.FileCount] <bgcolor = COLOR_FILEHEADER, optimize = true>;
 
@@ -88,7 +89,9 @@ if (Header.CommonInfoOffset != 0)
     {
 	    MtarMiniDataNode LayoutTrackNode;
     
+		disableTrackData = true;
 	    TrackHeader LayoutTrack;
+		disableTrackData = false;
     
 	    if (LayoutTrackNode.NextNodeOffset != 0)
 	    {

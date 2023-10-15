@@ -136,7 +136,7 @@ typedef struct
 
 #ifdef FOX_DATA_PAYLOAD
 #ifdef FOX_DATA_FLAG_IS_HAS_PAYLOAD
-	if (DataOffset != 0 && (Flags == 1 || DataSize != 0))
+	if (DataOffset != 0 && (Flags & 1 || DataSize != 0))
 #else
 	if (DataSize != 0 && DataOffset != 0)
 #endif

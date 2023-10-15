@@ -234,13 +234,15 @@ string ReadTrackUnitFlags(TrackUnitFlags flags)
 	return result;
 }
 
+local int disableTrackData = false;
+
 typedef struct
 {
 	uint ChannelCount;
 
 	uint TrackCount;
 	
-	ushort HeaderIndex; // Used in SAND and set to 1 for TPP-style MTAR bind pose
+	ushort HeaderIndex; // Used in SAND. In GANI, 0 for FK, 1 for IK
 
 	ubyte Unknown;
 
@@ -288,18 +290,14 @@ typedef struct
 				ubyte NextEntryOffset : 4; Assert(NextEntryOffset == 0 || NextEntryOffset == 8); // The offset to the next entry is (NextEntryOffset & 0x8). since NextEntryOffset is always 0 or 8, this does nothing. 
 
 				ubyte ComponentBitSize;
-
-#ifdef FILE_TYPE_MTAR
-				if (DataOffset != 0 && HeaderIndex < 1)
-#else
-				if (DataOffset != 0)
-#endif
+				
+				if (DataOffset != 0 && !disableTrackData)
 				{
 					FSeek(startof(this) + DataOffset);
 
 					TrackDataBlob Data(Type, ComponentBitSize, Flags & TRACK_UNIT_FLAGS_NO_FRAMES);
 
-					FSeek(startof(this) + 8); // + sizeof(TrackData)
+					FSeek(startof(this) + NextEntryOffset);
 				}
 			} SegmentHeaders[SegmentCount] <read = EnumToString(Type), optimize = false>;
 		} Track;
