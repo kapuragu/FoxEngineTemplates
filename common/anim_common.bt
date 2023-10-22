@@ -7,17 +7,16 @@ typedef struct
 } AnimHalf <read = ReadAnimHalf>;
 string ReadAnimHalf(AnimHalf& animHalf)
 {
-	local uint sign = (animHalf.value & 0x8000) >> 8;
-	local uint exponent = animHalf.value & 0x7C00;
-	if (exponent > 0)
-		exponent = exponent + 0x1DC00 >> 3;
-	local uint mantissa = (animHalf.value & 1023) << 5;
+    local uint num1 = (animHalf.value & 0x7C00);
+    if (num1 > 0)
+        num1 = (num1 + 0x1A400) << 13;      
+    num1 |= ((animHalf.value & 0x8000) << 16) | ((animHalf.value & 0x3FF) << 13);
 
 	local ubyte value[4];
-	value[0] = 0;
-	value[1] = mantissa & 0xFF;
-	value[2] = exponent & 0x80 | (mantissa >> 8) & 0xFF;
-	value[3] = sign | exponent >> 8 & 0xFF;
+	value[0] = (ubyte)((num1 >> 0) & 0xFF);
+	value[1] = (ubyte)((num1 >> 8) & 0xFF);
+	value[2] = (ubyte)((num1 >> 16) & 0xFF);
+	value[3] = (ubyte)((num1 >> 24) & 0xFF);
 
 	float result = ConvertBytesToFloat(value);
 
