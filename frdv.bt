@@ -9,6 +9,293 @@
 #define PowderBlue 0xD6D49A
 #define OxfordBlue 0x351910
 
+string ReadSkelIndex(short index)
+{
+    switch(index)
+	{
+	case 0:
+		return "SKL_000_WAIST";
+	case 1:
+		return "SKL_001_SPINE";
+	case 2:
+		return "SKL_002_CHEST";
+	case 3:
+		return "SKL_003_NECK";
+	case 4:
+		return "SKL_004_HEAD";
+	case 5:
+		return "SKL_010_LSHLD";
+	case 6:
+		return "SKL_011_LUARM";
+	case 7:
+		return "SKL_012_LFARM";
+	case 8:
+		return "SKL_013_LHAND";
+	case 9:
+		return "SKL_020_RSHLD";
+	case 10:
+		return "SKL_021_RUARM";
+	case 11:
+		return "SKL_022_RFARM";
+	case 12:
+		return "SKL_023_RHAND";
+	case 13:
+		return "SKL_030_LTHIGH";
+	case 14:
+		return "SKL_031_LLEG";
+	case 15:
+		return "SKL_032_LFOOT";
+	case 16:
+		return "SKL_033_LTOE";
+	case 17:
+		return "SKL_040_RTHIGH";
+	case 18:
+		return "SKL_041_RLEG";
+	case 19:
+		return "SKL_042_RFOOT";
+	case 20:
+		return "SKL_043_RTOE";
+	case 21:
+		return "SKL_101_LF10";
+	case 22:
+		return "SKL_102_LF11";
+	case 23:
+		return "SKL_103_LF12";
+	case 24:
+		return "SKL_104_LF21";
+	case 25:
+		return "SKL_105_LF22";
+	case 26:
+		return "SKL_106_LF23";
+	case 27:
+		return "SKL_107_LF31";
+	case 28:
+		return "SKL_108_LF32";
+	case 29:
+		return "SKL_109_LF33";
+	case 30:
+		return "SKL_110_LF40";
+	case 31:
+		return "SKL_111_LF41";
+	case 32:
+		return "SKL_112_LF42";
+	case 33:
+		return "SKL_113_LF43";
+	case 34:
+		return "SKL_114_LF51";
+	case 35:
+		return "SKL_115_LF52";
+	case 36:
+		return "SKL_116_LF53";
+	case 37:
+		return "SKL_201_RF10";
+	case 38:
+		return "SKL_202_RF11";
+	case 39:
+		return "SKL_203_RF12";
+	case 40:
+		return "SKL_204_RF21";
+	case 41:
+		return "SKL_205_RF22";
+	case 42:
+		return "SKL_206_RF23";
+	case 43:
+		return "SKL_207_RF31";
+	case 44:
+		return "SKL_208_RF32";
+	case 45:
+		return "SKL_209_RF33";
+	case 46:
+		return "SKL_210_RF40";
+	case 47:
+		return "SKL_211_RF41";
+	case 48:
+		return "SKL_212_RF42";
+	case 49:
+		return "SKL_213_RF43";
+	case 50:
+		return "SKL_214_RF51";
+	case 51:
+		return "SKL_215_RF52";
+	case 52:
+		return "SKL_216_RF53";
+	case 53:
+		return "SKL_300_ASRROOT";
+	case 54:
+		return "SKL_301_ASRBELT_A";
+	case 55:
+		return "SKL_302_ASRBELT_B";
+	case 56:
+		return "SKL_303_ASRBELT_C";
+	case 57:
+		return "SKL_304_ASRBELT_D";
+	case 58:
+		return "SKL_305_ASRBELT_E";
+	case 59:
+		return "SKL_306_SNRROOT";
+	case 60:
+		return "SKL_399_HAIRDRC";
+	case 61:
+		return "SKL_400_HEADROOT";
+	case 62:
+		return "SKL_401_MOUTHROOT";
+	case 63:
+		return "SKL_402_EYELROOT";
+	case 64:
+		return "SKL_403_EYERROOT";
+	case 65:
+		return "SKL_404_JAWS";
+	case 66:
+		return "SKL_405_LPUL";
+	case 67:
+		return "SKL_406_LPUR";
+	case 68:
+		return "SKL_407_LPLL";
+	case 69:
+		return "SKL_408_LPLR";
+	case 70:
+		return "SKL_409_LPML";
+	case 71:
+		return "SKL_410_LPMR";
+	case 72:
+		return "SKL_411_LPNL";
+	case 73:
+		return "SKL_412_LPCL";
+	case 74:
+		return "SKL_413_LPNR";
+	case 75:
+		return "SKL_414_LPCR";
+	case 76:
+		return "SKL_415_LPUI";
+	case 77:
+	return "SKL_416_LPLI";
+	case 78:
+		return "SKL_417_MDBL";
+	case 79:
+		return "SKL_418_MDBR";
+	case 80:
+		return "SKL_419_TONE";
+	case 81:
+		return "SKL_420_THRT";
+	case 82:
+		return "SKL_421_CHKL";
+	case 83:
+		return "SKL_422_CHKR";
+	case 84:
+		return "SKL_423_JAWL";
+	case 85:
+		return "SKL_424_JAWR";
+	case 86:
+		return "SKL_425_NOSE";
+	case 87:
+		return "SKL_426_EBOL";
+	case 88:
+		return "SKL_427_EBOR";
+	case 89:
+		return "SKL_428_EBEL";
+	case 90:
+		return "SKL_429_EBER";
+	case 91:
+		return "SKL_430_EYEL";
+	case 92:
+		return "SKL_431_EYER";
+	case 93:
+		return "SKL_432_EIUL";
+	case 94:
+		return "SKL_433_EIUR";
+	case 95:
+		return "SKL_434_EYLL";
+	case 96:
+		return "SKL_435_EYLR";
+	case 97:
+		return "SKL_436_MCKL";
+	case 98:
+		return "SKL_437_MCKR";
+	case 99:
+		return "SKL_500_LLRPZ_HLP";
+	case 100:
+		return "SKL_502_LHMRS_HLP";
+	case 101:
+		return "SKL_503_LUARL_HLP";
+	case 102:
+		return "SKL_504_LELBW_HLP";
+	case 103:
+		return "SKL_505_LFARL_HLP";
+	case 104:
+		return "SKL_506_LTNB_HLP";
+	case 105:
+		return "SKL_507_LTOW_HLP";
+	case 106:
+		return "SKL_509_RLRPZ_HLP";
+	case 107:
+		return "SKL_511_RHMRS_HLP";
+	case 108:
+		return "SKL_512_RUARL_HLP";
+	case 109:
+		return "SKL_513_RELBW_HLP";
+	case 110:
+		return "SKL_514_RFARL_HLP";
+	case 111:
+		return "SKL_515_RTNB_HLP";
+	case 112:
+		return "SKL_516_RTOW_HLP";
+	case 113:
+		return "SKL_518_LBUD_HLP";
+	case 114:
+		return "SKL_519_LMRF_HLP";
+	case 115:
+		return "SKL_520_LPTL_HLP";
+	case 116:
+		return "SKL_524_RBUD_HLP";
+	case 117:
+		return "SKL_525_RMRF_HLP";
+	case 118:
+		return "SKL_526_RPTL_HLP";
+	case 119:
+		return "SKL_530_CLVR_HLP";
+	case 120:
+		return "SKL_610_HAIR_SIM";
+	case 121:
+		return "SKL_611_HAIR_SIM";
+	case 122:
+		return "SKL_612_HAIR_SIM";
+	case 123:
+		return "SKL_613_HAIR_SIM";
+	case 124:
+		return "SKL_614_HAIR_SIM";
+	case 125:
+		return "SKL_615_HAIR_SIM";
+	case 126:
+		return "SKL_616_HAIR_SIM";
+	case 127:
+		return "SKL_617_HAIR_SIM";
+	case 128:
+		return "SKL_618_HAIR_SIM";
+	case 129:
+		return "SKL_619_HAIR_SIM";
+	case 130:
+		return "SKL_620_ITEM_SIM";
+	case 131:
+		return "SKL_623_ITEM_SIM";
+	case 132:
+		return "SKL_624_ITEM_SIM";
+	case 133:
+		return "SKL_625_ITEM_SIM";
+	case 134:
+		return "SKL_630_BRARD_SIM";
+	case 135:
+		return "SKL_631_BRARD_SIM";
+	case 136:
+		return "SKL_632_BRARD_SIM";
+	case 137:
+		return "SKL_633_BRARD_SIM";
+	case -1:
+		return "";
+	default:
+		return "INVALID";
+	}
+}
+
 LittleEndian();
 
 #include "common/common.bt"
@@ -41,6 +328,23 @@ enum <short> FRDV_ACTION_TYPE
 	FRDV_ACTION_TYPE_23 = 23,
 };
 
+enum <uint> FRDV_LIMIT_AXIS
+{
+	FRDV_LIMIT_AXIS_X = 0,
+	FRDV_LIMIT_AXIS_Y = 1,
+	FRDV_LIMIT_AXIS_Z = 2,
+};
+
+enum <uint> FRDV_ACTION_TYPE_14_UNK_ENUM
+{
+	FRDV_ACTION_TYPE_14_UNK_ENUM_0 = 0,
+	FRDV_ACTION_TYPE_14_UNK_ENUM_1 = 1,
+	FRDV_ACTION_TYPE_14_UNK_ENUM_2 = 2,
+	FRDV_ACTION_TYPE_14_UNK_ENUM_3 = 3,
+	FRDV_ACTION_TYPE_14_UNK_ENUM_4 = 4,
+	FRDV_ACTION_TYPE_14_UNK_ENUM_5 = 5,
+};
+
 struct
 {
 	char Signature[4];
@@ -65,86 +369,229 @@ for (eIdx = 0; eIdx < Header.EntryCount; eIdx++)
 	{
 		FRDV_ACTION_TYPE Type;
 
+		short TargetSkelIndex <read = ReadSkelIndex>;
+		short SourceSkelIndex <read = ReadSkelIndex>;
+		short SourceSkelIndex2 <read = ReadSkelIndex>;
+		short TargetParentIndex <read = ReadSkelIndex>;
+		short SourceParentSkelIndex <read = ReadSkelIndex>;
+		short SourceParentSkelIndex2 <read = ReadSkelIndex>;
+
+		ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
+		
+		// Weight
+		if (Type == 1 || Type == 3 || Type == 4 || Type == 6)
+			float WeightDeg;
+		else if (Type == 2 || Type == 5 || Type == 7 || Type == 8 || Type == 9 || Type == 10 || Type == 11 || Type == 12 || Type == 13 || Type == 14 || Type == 17 || Type == 18 || Type == 19 || Type == 20 || Type == 23)
+			float Weight;
+		else
+        {
+			uint Padding_Weight <hidden = true>; Assert(Padding_Weight == 0);
+        }
+		
+		// Offset
+		if (Type == 3 || Type == 23 || Type == 23)
+			float Offset;
+		else
+			uint Padding_Offset <hidden = true>; Assert(Padding_Offset == 0);
+		
+		// LimitMin, LimitMax
+		if (Type == 11 || Type == 13 || Type == 14)
+		{
+			float LimitMinDeg;
+			float LimitMaxDeg;
+		}
+		else if (Type == 1 || Type == 3 || Type == 4 || Type == 6 || Type == 10 || Type == 19 || Type == 20 || Type == 21 || Type == 23)
+		{
+			float LimitMin;
+			float LimitMax;
+		}
+		else
+		{
+			uint64 Padding_Limits <hidden = true>; Assert(Padding_Limits == 0);
+		}
+		
 		switch (Type)
 		{
-		case FRDV_ACTION_TYPE_12:
-			short ParamS0x2;
-			short ParamS0x4;
+			case FRDV_ACTION_TYPE_1:
+				FRDV_LIMIT_AXIS Axis;
 
-			FSkip(2);
+				uint Padding[7] <hidden = true>;
+				break;
+			case FRDV_ACTION_TYPE_2:
+				uint Padding[8] <hidden = true>;
+				break;
+			case FRDV_ACTION_TYPE_3:
+				FRDV_LIMIT_AXIS Axis;
+				float WeightB;
 
-			short ParamS0x8;
-			short ParamS0xA;
+				uint Padding[6] <hidden = true>;
+				break;
+			case FRDV_ACTION_TYPE_4:
+				FRDV_LIMIT_AXIS Axis;
 
-			FSkip(2);
+				uint Padding[7] <hidden = true>;
+				break;
+			case FRDV_ACTION_TYPE_5:
+				uint Padding[8] <hidden = true>;
+				break;
+			case FRDV_ACTION_TYPE_6:
+				FRDV_LIMIT_AXIS Axis;
+				float WeightB;
 
-			FAlign(16);
+				uint Padding[6] <hidden = true>;
+				break;
+			case FRDV_ACTION_TYPE_7:
+				uint Padding[8] <hidden = true>;
+				break;
+			case FRDV_ACTION_TYPE_8:
+				uint Padding[8] <hidden = true>;
+				break;
+			case FRDV_ACTION_TYPE_9:
+				uint PaddingA <hidden = true>; Assert(PaddingA == 0); // Probably the corresponding Axis
+				float WeightB;
+				uint Padding[6] <hidden = true>;
+				break;
+			case FRDV_ACTION_TYPE_9:
+				uint PaddingA <hidden = true>; Assert(PaddingA == 0); // Probably the corresponding Axis
+				float WeightB;
+				uint Padding[6] <hidden = true>;
+				break;
+			case FRDV_ACTION_TYPE_10:
+				FRDV_LIMIT_AXIS Axis;
+				uint Padding[7] <hidden = true>;
+				break;
+			case FRDV_ACTION_TYPE_11:
+				FRDV_LIMIT_AXIS Axis;
+				uint Padding[7] <hidden = true>;
+				break;
+			case FRDV_ACTION_TYPE_12:
+				uint PaddingA <hidden = true>; Assert(PaddingA == 0); // Probably the corresponding Axis
+				float WeightB;
+				uint PaddingB <hidden = true>; Assert(PaddingB == 0); // Probably the corresponding Offset
+				float LimitMinB;
+				float LimitMaxB;
 
-			float ParamF0x10;
+				FRDV_LIMIT_AXIS AxisB;
 
-			FSkip(16);
+				uint Padding[2] <hidden = true>;
+				break;
+			case FRDV_ACTION_TYPE_13:
+				FRDV_LIMIT_AXIS Axis;
+				float WeightB;
+				uint PaddingA <hidden = true>; Assert(PaddingA == 0); // Probably the corresponding Offset
+				float LimitMinB;
+				float LimitMaxB;
 
-			float ParamF0x24;
+				FRDV_LIMIT_AXIS AxisB;
 
-			FSkip(4);
+				uint Padding[2] <hidden = true>;
+				break;
+			case FRDV_ACTION_TYPE_14:
+				FRDV_LIMIT_AXIS Axis;
+				float WeightB;
+				uint PaddingA <hidden = true>; Assert(PaddingA == 0); // Probably the corresponding Offset
+				float LimitMinBDegrees;
+				float LimitMaxBDegrees;
 
-			float ParamF0x2C;
-			float ParamF0x30;
+				FRDV_LIMIT_AXIS AxisB;
+				char UnknownBool; FSkip(3);
+				FRDV_ACTION_TYPE_14_UNK_ENUM UnknownEnum; // If UnknownBool, use UnknownEnum
+				break;
+			case FRDV_ACTION_TYPE_19:
+				StrCode32 MaterialNameA;
+				uint Padding[4] <hidden = true>;
+				StrCode32 MaterialNameB;
+				StrCode32 MaterialParamA; // TensionRate
+				StrCode32 MaterialParamB; // TensionShift
+				break;
+			case FRDV_ACTION_TYPE_20:
+				StrCode32 MaterialNameA;
 
-			uint ParamF0x34;
+				uint Unknown0; Assert(Unknown0 == 0);
+				uint Unknown1; Assert(Unknown1 == 0);
 
-			FAlign(16);
-
-			Vector4 ParamV0x40;
-			Vector4 ParamV0x50;
-			break;
-		case FRDV_ACTION_TYPE_19:
-			FSkip(2);
-
-			short ParamS0x4;
-
-			FSkip(4);
-
-			short ParamS0xA;
-
-			FSkip(2);
-
-			FAlign(16);
-
-			float ParamF0x10;
-
-			FSkip(4);
-
-			float ParamF0x18;
-			float ParamF0x1C;
-
-			uint ParamI0x20;
-
-			FAlign(16);
-
-			FSkip(4);
-
-			uint ParamI0x34;
-			uint ParamI0x38;
-			uint ParamI0x3C;
-
-			FAlign(16);
-
-			Vector4 ParamV0x40;
-			Vector4 ParamV0x50;
-			Vector4 ParamV0x60;
-			Vector4 ParamV0x70;
-			break;
-		default:
-			// Put very little thought into these descriptions. See  mgsvtpp.exe!141ab14f6 for massive switch statement
-			short ShortParams[6];
-			ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
-			
-			float FloatParams[4];
-			
-			uint UIntParams[8];
-			
-			Vector4 UnknownVectors[4];
+				StrCode32 MaterialNameC;
+				StrCode32 MaterialParamC;
+				StrCode32 MaterialNameB;
+				StrCode32 MaterialParamA; // TensionRate
+				StrCode32 MaterialParamB; // TensionShift
+				break;
+			case FRDV_ACTION_TYPE_21:
+				StrCode32 MaterialNameA;
+				uint Padding[5] <hidden = true>;
+				StrCode32 MaterialParamA;
+				uint PaddingB <hidden = true>;
+				break;
+			default:
+				uint OperatorSpecific[8];
+				break;
+		}
+		
+		switch (Type)
+		{
+			case FRDV_ACTION_TYPE_5:
+				Vector3 VecA;
+				break;
+			case FRDV_ACTION_TYPE_6:
+				Vector3 VecA;
+				break;
+			case FRDV_ACTION_TYPE_7:
+				Vector3 VecA;
+				break;
+			case FRDV_ACTION_TYPE_8:
+				Vector3 VecA;
+				break;
+			case FRDV_ACTION_TYPE_9:
+				Vector3 VecA;
+				break;
+			case FRDV_ACTION_TYPE_10:
+				Vector3 VecA; FSkip(4);
+				Vector3 VecB; FSkip(4);
+				break;
+			case FRDV_ACTION_TYPE_11:
+				Vector3 VecA; FSkip(4);
+				Vector3 VecB; FSkip(4);
+				break;
+			case FRDV_ACTION_TYPE_12:
+				Vector3 VecA; FSkip(4);
+				Vector3 VecB; FSkip(4);
+				break;
+			case FRDV_ACTION_TYPE_13:
+				Vector3 VecA; FSkip(4);
+				Vector3 VecB; FSkip(4);
+				break;
+			case FRDV_ACTION_TYPE_14:
+				Vector3 VecA; FSkip(4);
+				Vector3 VecB; FSkip(4);
+				break;
+			case FRDV_ACTION_TYPE_15:
+				Vector3 VecA; FSkip(4);
+				Vector3 VecB; FSkip(4);
+				Vector3 VecC; FSkip(4);
+				Vector3 VecD; FSkip(4);
+				break;
+			case FRDV_ACTION_TYPE_16:
+				Vector3 VecA; FSkip(4);
+				Vector4 VecB; // Maybe a Vector4. Unclear. Both look very similar to 17 & 18
+				break;
+			case FRDV_ACTION_TYPE_17:
+			case FRDV_ACTION_TYPE_18:
+				Vector3 VecA; FSkip(4);
+				Vector4 VecB; // Maybe a Vector4. Unclear.
+				break;
+			case FRDV_ACTION_TYPE_19:
+			case FRDV_ACTION_TYPE_21:
+			case FRDV_ACTION_TYPE_23:
+				Vector3 Up; // Guesses
+				Vector3 Forward;
+				if (Type == FRDV_ACTION_TYPE_19)
+				{
+					Vector3 VecA; FSkip(4);
+					Vector3 VecB; FSkip(4);
+				}
+				break;
+			default:
+				break;
 		}
 	} Entry <read = EnumToString(Type), optimize = true, bgcolor = PowderBlue>;
 }
