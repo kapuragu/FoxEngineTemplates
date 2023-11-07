@@ -582,8 +582,8 @@ for (eIdx = 0; eIdx < Header.EntryCount; eIdx++)
 			case FRDV_ACTION_TYPE_19:
 			case FRDV_ACTION_TYPE_21:
 			case FRDV_ACTION_TYPE_23:
-				Vector3 Up; // Guesses
-				Vector3 Forward;
+				Vector3 Up; FSkip(4); // Guesses
+				Vector3 Forward; FSkip(4);
 				if (Type == FRDV_ACTION_TYPE_19)
 				{
 					Vector3 VecA; FSkip(4);
