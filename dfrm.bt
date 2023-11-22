@@ -2,9 +2,9 @@ LittleEndian();
 
 struct DfrmHeader
 {
-	char fileSignature[4]; //DFRM
-	float fileVersion; //1.0
-	uint headerLength; //0x40 (64) bytes 
+	char Signature[4]; //DFRM
+	float Version; Assert(Version == 1.0); //1.0
+	uint HeaderSize; Assert(HeaderSize == 0x40); 
 	
 	uint SubmeshDefCount;
 	uint BlendShapeSpanCount;
@@ -27,24 +27,24 @@ struct DfrmHeader
 FSeek(Header.SubmeshDefsOffset);
 struct SubmeshDef
 {
-	uint Count;
-	uint StartOffset;
+	uint BlendShapeSpanIndices_Count;
+	uint BlendShapeSpanIndices_StartOffset;
 } SubmeshDefs[Header.SubmeshDefCount] <bgcolor = 0xD2EA97>;
 
 // Just Span<BlendShape>
 FSeek(Header.BlendShapeSpansOffset);
 struct BlendShapeSpan
 {
-	uint Count;
-	uint StartOffset;
+	uint BlendShape_Count;
+	uint BlendShape_StartOffset;
 } BlendShapeSpans[Header.BlendShapeSpanCount] <bgcolor = 0xA1C78C>;
 
 // Just Span<Block5>
 FSeek(Header.Block5SpansOffset);
 struct Block5Span
 {
-	uint Count;
-	uint StartOffset;
+	uint Block5_Count;
+	uint Block5_StartOffset;
 } Block5Spans[Header.Block5SpanCount] <bgcolor = 0x946E81, fgcolor = cLtGray>;
 
 FSeek(Header.BlendShapeSpanIndicesOffset);
@@ -56,12 +56,11 @@ struct BlendShape
 {
 	ushort SubmeshIndex;
 	ushort Unknown1;
-} BlendShapes[Header.BlendShapeCount] <bgcolor = 0x42214B, fgcolor = 0xc0c0c0>;
+} BlendShapes[Header.BlendShapeCount] <optimize = false, bgcolor = 0x42214B, fgcolor = 0xc0c0c0>;
 
 // Unknown
 FSeek(Header.Block5sOffset);
 struct Block5
 {
-	ushort Unknown0;
-	ushort Unknown1;
-} Block5s[Header.Block5Count] <bgcolor = 0x53355B, fgcolor = 0xd0d0d0>;
+	uint BlendShapeSpanIndex;
+} Block5s[Header.Block5Count] <optimize = false, bgcolor = 0x53355B, fgcolor = 0xd0d0d0>;

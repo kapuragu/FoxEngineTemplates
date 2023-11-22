@@ -168,7 +168,7 @@ string ReadSkelIndex(short index)
 	case 76:
 		return "SKL_415_LPUI";
 	case 77:
-	return "SKL_416_LPLI";
+	    return "SKL_416_LPLI";
 	case 78:
 		return "SKL_417_MDBL";
 	case 79:
