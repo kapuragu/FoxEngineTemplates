@@ -25,7 +25,7 @@ enum <uint> FDES_SHAPE_TYPE
 	FDES_SHAPE_TYPE_BOX = 2,
 	FDES_SHAPE_TYPE_CYLINDER = 3,
 	FDES_SHAPE_TYPE_CAPSULE = 4,
-	FDES_SHAPE_TYPE_POLYHEDRON = 4,
+	FDES_SHAPE_TYPE_POLYHEDRON = 5,
 };
 
 struct QuadDef
@@ -38,7 +38,11 @@ struct QuadDef
 
 typedef struct
 {
-    Vector4 Vectors[3];
+    // See: PhShape and PhShapeParam
+    Vector3 Offset; uint Padding0 <hidden = true>;
+    Quaternion Rotation;
+    Vector3 Size; uint Padding1 <hidden = true>;
+
     FDES_SHAPE_TYPE ShapeType;
 
     uint VertexBufferOffset;
@@ -51,7 +55,7 @@ typedef struct
     // FSeek(startof(this) + QuadDefTableOffset);
     // QuadDef Quad;
     // FSeek(startof(QuadDefTableOffset) + sizeof(QuadDefTableOffset));
-    uint QuadDefCount;
+    uint QuadCount;
 
     FAlign(16);
 } FdesShapeDef <read = EnumToString(ShapeType), bgcolor = C_SUBENTRY>;
@@ -65,10 +69,10 @@ typedef struct
 
     uint Padding <hidden = true>; Assert(Padding == 0);
 
-    uint ShapeDefOffset <hidden = true>;
-    uint ShapeDefCount;
-    FSeek(startof(this) + ShapeDefOffset);
-    FdesShapeDef ShapeDef[ShapeDefCount];
+    uint ShapeDefsOffset <hidden = true>;
+    uint ShapeDefCount <hidden = true>;
+    FSeek(startof(this) + ShapeDefsOffset);
+    FdesShapeDef ShapeDef[ShapeDefCount] <optimize = true>;
     FSeek(startof(ShapeDefCount) + sizeof(ShapeDefCount));
 } FdesNode <bgcolor = C_UNIT, read = NameTable.Name[NameIndex].CString>;
 
