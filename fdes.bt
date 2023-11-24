@@ -66,11 +66,10 @@ typedef struct
     uint Padding <hidden = true>; Assert(Padding == 0);
 
     uint ShapeDefOffset <hidden = true>;
+    uint ShapeDefCount;
     FSeek(startof(this) + ShapeDefOffset);
-    FdesShapeDef ShapeDef;
-    FSeek(startof(ShapeDefOffset) + sizeof(ShapeDefOffset));
-    
-    uint UnknownInt; Assert(UnknownInt == 1 || UnknownInt == 2);
+    FdesShapeDef ShapeDef[ShapeDefCount];
+    FSeek(startof(ShapeDefCount) + sizeof(ShapeDefCount));
 } FdesNode <bgcolor = C_UNIT, read = NameTable.Name[NameIndex].CString>;
 
 typedef struct
