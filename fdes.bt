@@ -16,24 +16,45 @@ struct Header
     uint nameArrayOffset;
 } header <bgcolor=C_HEADER>;
 
+struct Entry2
+{
+    Vector4 vectors[3];
+    uint unknownIntA;
+    uint offsetToEndVector;
+    FSeek(startof(this)+offsetToEndVector);
+    Vector4 vectorA;
+    FSeek(startof(offsetToEndVector)+sizeof(offsetToEndVector));
+    uint unknownIntB;
+    uint offsetToEndInt;
+    FSeek(startof(this)+offsetToEndInt);
+    uint unknownEndInt;
+    FSeek(startof(offsetToEndInt)+sizeof(offsetToEndInt));
+    uint unknownIntC;
+    FAlign(16);
+};
+
+struct Entry
+{
+    Matrix4 matrixA;
+    Matrix4 matrixB;
+    uint index; //ascending including frame zero's 1
+    uint padA <hidden=true>; Assert(padA==0);
+    uint offsetToEntry2; //offset to another array in main from index
+    FSeek(startof(this)+offsetToEntry2);
+    Entry2 entry2;
+    FSeek(startof(offsetToEntry2)+sizeof(offsetToEntry2));
+    uint unknownInt; Assert(unknownInt<3); //1 or 2
+};
+    
 FSeek(header.dataOffset);
 struct Main
 {
-    struct Entry
-    {
-        Matrix4 matrixA;
-        Matrix4 matrixB;
-        uint index; //ascending including frame zero's 1
-        uint padA <hidden=true>; Assert(padA==0);
-        uint unknownOffset; //offset to another array in main from index
-        uint unknownInt; Assert(unknownInt<3); //1 or 2
-    };
     
     Entry initFrame;
     uint unknownCount;
     uint entryCount;
     FAlign(16);
-    Entry entry[entryCount];
+    Entry entry[entryCount] <optimize=false>;
     
     //then another array of two or three or a lot of vectors and some 8 integers 
     //60 weird integers at the end too
