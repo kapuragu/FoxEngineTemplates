@@ -18,26 +18,43 @@ struct FdesHeader
     uint NameTableOffset;
 } Header <hidden = true, bgcolor = C_HEADER>;
 
+enum <uint> FDES_SHAPE_TYPE
+{
+    FDES_SHAPE_TYPE_NONE = 0,
+	FDES_SHAPE_TYPE_SPHERE = 1,
+	FDES_SHAPE_TYPE_BOX = 2,
+	FDES_SHAPE_TYPE_CYLINDER = 3,
+	FDES_SHAPE_TYPE_CAPSULE = 4,
+	FDES_SHAPE_TYPE_POLYHEDRON = 4,
+};
+
+struct QuadDef
+{
+    uint A;
+    uint B;
+    uint C;
+    uint D;
+};
+
 typedef struct
 {
     Vector4 Vectors[3];
-    uint unknownIntA;
+    FDES_SHAPE_TYPE ShapeType;
 
-    uint VectorTableOffset;
-    FSeek(startof(this)+VectorTableOffset);
-    //Vector4 VectorTableStart;
-    FSeek(startof(VectorTableOffset) + sizeof(VectorTableOffset));
+    uint VertexBufferOffset;
+    //FSeek(startof(this) + VertexBufferOffset);
+    //WideVector3 Vertex;
+    //FSeek(startof(VertexBufferOffset) + sizeof(VertexBufferOffset));
+    uint VertexCount;
 
-    uint unknownIntB;
+    uint QuadDefTableOffset;
+    // FSeek(startof(this) + QuadDefTableOffset);
+    // QuadDef Quad;
+    // FSeek(startof(QuadDefTableOffset) + sizeof(QuadDefTableOffset));
+    uint QuadDefCount;
 
-    uint VectorIndexTableOffset;
-    FSeek(startof(this) + VectorIndexTableOffset);
-    //uint VectorIndexTableStart;
-    FSeek(startof(VectorIndexTableOffset)+sizeof(VectorIndexTableOffset));
-
-    uint unknownIntC;
     FAlign(16);
-} FdesSubentry <bgcolor = C_SUBENTRY>;
+} FdesShapeDef <read = EnumToString(ShapeType), bgcolor = C_SUBENTRY>;
 
 typedef struct
 {
@@ -48,10 +65,10 @@ typedef struct
 
     uint Padding <hidden = true>; Assert(Padding == 0);
 
-    uint SubentryOffset <hidden = true>;
-    FSeek(startof(this) + SubentryOffset);
-    FdesSubentry Subentry;
-    FSeek(startof(SubentryOffset) + sizeof(SubentryOffset));
+    uint ShapeDefOffset <hidden = true>;
+    FSeek(startof(this) + ShapeDefOffset);
+    FdesShapeDef ShapeDef;
+    FSeek(startof(ShapeDefOffset) + sizeof(ShapeDefOffset));
     
     uint UnknownInt; Assert(UnknownInt == 1 || UnknownInt == 2);
 } FdesNode <bgcolor = C_UNIT, read = NameTable.Name[NameIndex].CString>;
