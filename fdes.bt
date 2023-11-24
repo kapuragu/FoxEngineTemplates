@@ -2,80 +2,97 @@
 #include "common/FoxData_common.bt"
 
 #define C_HEADER 0x527f4b
-#define C_MAINER 0x81d17d
+#define C_ROOT 0x81d17d
+#define C_UNIT 0xF7BEC3
+#define C_SUBENTRY 0xFF4F8A
 #define C_FOOTER 0xbce896
 
-struct Header
+struct FdesHeader
 {
-    char signA[4] <hidden=true>;
-    char signB[4] <hidden=true>;
-    uint fileSize;
-    uint padding[2] <hidden=true>; Assert(padding[0]==0&&padding[1]==0);
-    uint dataOffset; Assert(dataOffset==32);
-    uint unknownCount; Assert(unknownCount==1);
-    uint nameArrayOffset;
-} header <bgcolor=C_HEADER>;
-
-struct Entry2
-{
-    Vector4 vectors[3];
-    uint unknownIntA;
-    uint offsetToEndVector;
-    FSeek(startof(this)+offsetToEndVector);
-    Vector4 vectorA;
-    FSeek(startof(offsetToEndVector)+sizeof(offsetToEndVector));
-    uint unknownIntB;
-    uint offsetToEndInt;
-    FSeek(startof(this)+offsetToEndInt);
-    uint unknownEndInt;
-    FSeek(startof(offsetToEndInt)+sizeof(offsetToEndInt));
-    uint unknownIntC;
-    FAlign(16);
-};
-
-struct Entry
-{
-    Matrix4 matrixA;
-    Matrix4 matrixB;
-    uint index; //ascending including frame zero's 1
-    uint padA <hidden=true>; Assert(padA==0);
-    uint offsetToEntry2; //offset to another array in main from index
-    FSeek(startof(this)+offsetToEntry2);
-    Entry2 entry2;
-    FSeek(startof(offsetToEntry2)+sizeof(offsetToEntry2));
-    uint unknownInt; Assert(unknownInt<3); //1 or 2
-};
-    
-FSeek(header.dataOffset);
-struct Main
-{
-    
-    Entry initFrame;
-    uint unknownCount;
-    uint entryCount;
-    FAlign(16);
-    Entry entry[entryCount] <optimize=false>;
-    
-    //then another array of two or three or a lot of vectors and some 8 integers 
-    //60 weird integers at the end too
-} main <bgcolor=C_MAINER>;
+    char Signature[4] <hidden = true>;
+    char Version[4] <hidden = true>;
+    uint FileSize;
+    uint Padding[2] <hidden = true>; Assert(Padding[0] == 0 && Padding[1] == 0);
+    uint DataOffset; Assert(DataOffset == 32);
+    uint RootNodeCount;
+    uint NameTableOffset;
+} Header <hidden = true, bgcolor = C_HEADER>;
 
 typedef struct
 {
-    StrCode32 fragmentNameHash;
-    uint fragmentNameStringLength;
-    char fragmentNameString[fragmentNameStringLength];
-} FragmentName <read = fragmentNameString>;
+    Vector4 Vectors[3];
+    uint unknownIntA;
 
-FSeek(header.nameArrayOffset);
-struct NameArray
+    uint VectorTableOffset;
+    FSeek(startof(this)+VectorTableOffset);
+    //Vector4 VectorTableStart;
+    FSeek(startof(VectorTableOffset) + sizeof(VectorTableOffset));
+
+    uint unknownIntB;
+
+    uint VectorIndexTableOffset;
+    FSeek(startof(this) + VectorIndexTableOffset);
+    //uint VectorIndexTableStart;
+    FSeek(startof(VectorIndexTableOffset)+sizeof(VectorIndexTableOffset));
+
+    uint unknownIntC;
+    FAlign(16);
+} FdesSubentry <bgcolor = C_SUBENTRY>;
+
+typedef struct
 {
-    uint nameCount;
-    uint nameOffset[nameCount];
-    local int i = 0;
-    for (i = 0; i < nameCount; i++)
+    Matrix4 MatrixA;
+    Matrix4 MatrixB;
+
+    uint NameIndex <hidden = true>;
+
+    uint Padding <hidden = true>; Assert(Padding == 0);
+
+    uint SubentryOffset <hidden = true>;
+    FSeek(startof(this) + SubentryOffset);
+    FdesSubentry Subentry;
+    FSeek(startof(SubentryOffset) + sizeof(SubentryOffset));
+    
+    uint UnknownInt; Assert(UnknownInt == 1 || UnknownInt == 2);
+} FdesNode <bgcolor = C_UNIT, read = NameTable.Name[NameIndex].CString>;
+
+typedef struct
+{
+    FdesNode Node <bgcolor = C_ROOT>;
+    uint ChildNodesOffset <hidden = true>;
+    uint ChildNodeCount <hidden = true>;
+    
+    uint Padding[2] <hidden = true>;
+    
+    FdesNode ChildNodes[Root.ChildNodeCount] <optimize=false>;
+} FdesRootNode <bgcolor = C_ROOT, read = NameTable.Name[Node.NameIndex].CString>;
+    
+FSeek(Header.DataOffset);
+local uint rIdx = 0;
+for (rIdx = 0; rIdx < Header.RootNodeCount; rIdx++)
+{
+    FdesRootNode Root;
+    
+    //then another array of two or three or a lot of vectors and some 8 integers 
+    //60 weird integers at the end too
+}
+
+typedef struct
+{
+    StrCode32 Hash;
+    uint Length;
+    string CString;
+} FdesNodeName <read = CString>;
+
+FSeek(Header.NameTableOffset);
+struct FdesNodeNameTable
+{
+    uint Count <hidden = true>;
+    uint Offsets[Count] <hidden = true>;
+    local uint i = 0;
+    for (i = 0; i < Count; i++)
     {
-        FSeek(startof(this)+nameOffset[i]);
-        FragmentName fragmentName;
+        FSeek(startof(this) + Offsets[i]);
+        FdesNodeName Name;
     }
-} nameArray <bgcolor=C_FOOTER>;
+} NameTable <hidden = true, bgcolor = C_FOOTER>;
