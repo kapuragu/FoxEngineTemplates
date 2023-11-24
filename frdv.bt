@@ -392,7 +392,9 @@ for (eIdx = 0; eIdx < Header.EntryCount; eIdx++)
 		if (Type == 3 || Type == 23 || Type == 23)
 			float Offset;
 		else
+        {
 			uint Padding_Offset <hidden = true>; Assert(Padding_Offset == 0);
+        }
 		
 		// LimitMin, LimitMax
 		if (Type == 11 || Type == 13 || Type == 14)
@@ -523,6 +525,7 @@ for (eIdx = 0; eIdx < Header.EntryCount; eIdx++)
 				uint PaddingB <hidden = true>;
 				break;
 			default:
+                Printf("@%d type %d\n",FTell(),Type);
 				uint OperatorSpecific[8];
 				break;
 		}

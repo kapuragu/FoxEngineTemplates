@@ -1,0 +1,60 @@
+#include "common/common.bt"
+#include "common/FoxData_common.bt"
+
+#define C_HEADER 0x527f4b
+#define C_MAINER 0x81d17d
+#define C_FOOTER 0xbce896
+
+struct Header
+{
+    char signA[4] <hidden=true>;
+    char signB[4] <hidden=true>;
+    uint fileSize;
+    uint padding[2] <hidden=true>; Assert(padding[0]==0&&padding[1]==0);
+    uint dataOffset; Assert(dataOffset==32);
+    uint unknownCount; Assert(unknownCount==1);
+    uint nameArrayOffset;
+} header <bgcolor=C_HEADER>;
+
+FSeek(header.dataOffset);
+struct Main
+{
+    struct Entry
+    {
+        Matrix4 matrixA;
+        Matrix4 matrixB;
+        uint index; //ascending including frame zero's 1
+        uint padA <hidden=true>; Assert(padA==0);
+        uint unknownOffset; //offset to another array in main from index
+        uint unknownInt; Assert(unknownInt<3); //1 or 2
+    };
+    
+    Entry initFrame;
+    uint unknownCount;
+    uint entryCount;
+    FAlign(16);
+    Entry entry[entryCount];
+    
+    //then another array of two or three or a lot of vectors and some 8 integers 
+    //60 weird integers at the end too
+} main <bgcolor=C_MAINER>;
+
+typedef struct
+{
+    StrCode32 fragmentNameHash;
+    uint fragmentNameStringLength;
+    char fragmentNameString[fragmentNameStringLength];
+} FragmentName <read = fragmentNameString>;
+
+FSeek(header.nameArrayOffset);
+struct NameArray
+{
+    uint nameCount;
+    uint nameOffset[nameCount];
+    local int i = 0;
+    for (i = 0; i < nameCount; i++)
+    {
+        FSeek(startof(this)+nameOffset[i]);
+        FragmentName fragmentName;
+    }
+} nameArray <bgcolor=C_FOOTER>;
