@@ -46,16 +46,16 @@ typedef struct
     FDES_SHAPE_TYPE ShapeType;
 
     uint VertexBufferOffset;
-    //FSeek(startof(this) + VertexBufferOffset);
-    //WideVector3 Vertex;
-    //FSeek(startof(VertexBufferOffset) + sizeof(VertexBufferOffset));
     uint VertexCount;
+    FSeek(startof(this) + VertexBufferOffset);
+    Vector4 Vertex[VertexCount];
+    FSeek(startof(VertexCount) + sizeof(VertexCount));
 
     uint QuadDefTableOffset;
-    // FSeek(startof(this) + QuadDefTableOffset);
-    // QuadDef Quad;
-    // FSeek(startof(QuadDefTableOffset) + sizeof(QuadDefTableOffset));
     uint QuadCount;
+    FSeek(startof(this) + QuadDefTableOffset);
+    QuadDef Quad[QuadCount];
+    FSeek(startof(QuadCount) + sizeof(QuadCount));
 
     FAlign(16);
 } FdesShapeDef <read = EnumToString(ShapeType), bgcolor = C_SUBENTRY>;
