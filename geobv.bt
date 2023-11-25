@@ -17,8 +17,10 @@ struct
 	switch (Version)
 	{
 	case 0x00030000:
+	case 0x00010000:
 		break;
 	case 0x00000300:
+	case 0x00000100:
 		BigEndian();
 		break;
 	default:
@@ -33,29 +35,6 @@ struct
 } Header <bgcolor = COLOR_HEADER>;
 
 FSeek(Header.SecondaryHeaderOffset);
-
-struct
-{
-    local uint SelfStartPos = FTell();
-
-	uint Grid0Offset;
-
-	uint Grid1Offset;
-
-	uint EntityListCount;
-
-	uint HashesOffset; // Linkage not immediately clear. For example,
-	                   // afgh_bridge_fpkl_edit_tmp_large_win.geobv has three hashes:
-					   // /Assets/tpp/level/location/afgh/block_large/bridge/afgh_bridge_light.fox2, 
-					   // /Assets/tpp/level/location/afgh/block_large/bridge/afgh_bridge_gimmick.fox2, 
-					   // /Assets/tpp/level/location/afgh/block_large/bridge/afgh_bridge_asset.fox2
-
-	PathCode64 PlaceHolder <hidden = true>; Assert(PlaceHolder.hash == 0);
-
-	uint EntityListOffset;
-
-	uint PlaceHolderListOffset;
-} SecondaryHeader <bgcolor = COLOR_SECONDARYHEADER>;
 
 typedef struct
 {
@@ -142,6 +121,32 @@ typedef struct
 	} Cells;
 } Grid <bgcolor = COLOR_GRID>;
 
+if (Header.Version==196608||Header.Version==2088519781)
+{
+
+struct
+{
+    local uint SelfStartPos = FTell();
+
+	uint Grid0Offset;
+
+	uint Grid1Offset;
+
+	uint EntityListCount;
+
+	uint HashesOffset; // Linkage not immediately clear. For example,
+	                   // afgh_bridge_fpkl_edit_tmp_large_win.geobv has three hashes:
+					   // /Assets/tpp/level/location/afgh/block_large/bridge/afgh_bridge_light.fox2, 
+					   // /Assets/tpp/level/location/afgh/block_large/bridge/afgh_bridge_gimmick.fox2, 
+					   // /Assets/tpp/level/location/afgh/block_large/bridge/afgh_bridge_asset.fox2
+
+	PathCode64 PlaceHolder <hidden = true>; Assert(PlaceHolder.hash == 0);
+
+	uint EntityListOffset;
+
+	uint PlaceHolderListOffset;
+} SecondaryHeader <bgcolor = COLOR_SECONDARYHEADER>;
+
 FSeek(SecondaryHeader.SelfStartPos + SecondaryHeader.Grid0Offset);
 Grid Grid0;
 
@@ -168,3 +173,51 @@ struct
 
 	PathCode64 DataSetPaths[Count];
 } Hashes <bgcolor = COLOR_HASHES>;
+
+}
+else if (Header.Version==256||Header.Version==65536)
+{
+
+struct
+{
+    Vector3 UnknownV0; uint OffsetToCells; //from gridSizeXYZ
+    Vector3 UnknownV1; ushort GridCountX; ushort GridCountY;
+    Vector3 GridSizeXYZ; ushort GridCountZ; ushort EntityListCount;
+    uint64 dataSetPathStrCode32WithExtension; uint EntityListOffset; uint PlaceHolderListOffset;
+    
+    int offset[GridCountX*GridCountY*GridCountZ];
+    FAlign(16);
+} GridGZ <bgcolor = COLOR_SECONDARYHEADER>;
+
+struct
+{
+    local uint clIdx;
+    for (clIdx = 0; clIdx < GridGZ.GridCountX*GridGZ.GridCountY*GridGZ.GridCountZ; clIdx++)
+    {
+        FSeek(startof(GridGZ.GridSizeXYZ)+GridGZ.OffsetToCells+clIdx*4);
+        if (GridGZ.offset[clIdx] > 0)
+        {
+            FSeek(startof(GridGZ) + GridGZ.offset[clIdx]);
+	        struct
+		    {
+                EntityAssocations Entities;
+	        } Cell;
+        }
+        else { struct {} Cell <hidden=true>; }
+    }
+} Cells;
+
+FSeek(startof(GridGZ) + GridGZ.EntityListOffset);
+struct
+{
+	uint ArrayIndex; // For StaticModelArrays
+	StrCode32 Hash; // References StaticModels and StaticModelArrays
+} EntityList[GridGZ.EntityListCount] <read = Str("%u[%d]", Hash.hash, ArrayIndex), bgcolor = COLOR_ENTITYLIST>;
+
+// Game patches this section with pointers to the Entities so it doesn't have to perform the hash resolution every time. Not directly into the DataSet but perhaps their DataBodies or something.
+FSeek(startof(GridGZ) + GridGZ.PlaceHolderListOffset);
+uint64 PlaceHolderList[GridGZ.EntityListCount];
+
+FAlign(16);
+
+}
