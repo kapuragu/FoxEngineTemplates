@@ -1,4 +1,5 @@
 #include "common/common.bt"
+#include "common/geo_common.bt"
 #include "common/FoxData_common.bt"
 
 #define C_HEADER 0x527f4b
@@ -99,7 +100,7 @@ for (rIdx = 0; rIdx < Header.RootNodeCount; rIdx++)
 
 typedef struct
 {
-    StrCode32 Hash;
+    GeoNameHash Hash;
     uint Length;
     string CString;
 } FdesNodeName <read = CString>;
