@@ -1,12 +1,26 @@
 //ENDS - Ending Credits
 //By RLC, inspired by the work of Modders' Heaven!
+
+#define C_H 0x000000
+#define C_0 0xFF0000
+#define C_1 0x00FF00
+#define C_2 0x0000FF
+#define C_3 0x00FFFF
+#define C_4 0xFF00FF
+#define C_5 0xFFFF00
+#define C_6 0xFFFFFF
+#define C_7 0x494949
+#define C_8 0x7a7a7c
+#define C_9 0x735dff
+
 struct Header
 {
     char header[7]; // ENDSwin, similar header chars to fova, same creator?
     byte version;
-} header <bgcolor=0x000000>;
+} header <bgcolor=C_H>;
 
 local int pos = FTell();
+
 struct Section0
 {
     uint offset0;
@@ -20,7 +34,7 @@ struct Section0
         uint unknown1;
     }array0[count0];
     FSeek(pos);
-} section0 <bgcolor=0xFF0000>;
+} section0 <bgcolor=C_0>;
 
 struct Section1
 {
@@ -34,7 +48,7 @@ struct Section1
         uint unknown1;
     }array1[count1];
     FSeek(pos);
-} section1 <bgcolor=0x00FF00>;
+} section1 <bgcolor=C_1>;
 
 struct Section2
 {
@@ -53,7 +67,7 @@ struct Section2
         int unknown3;
     }array2[count2];
     FSeek(pos);
-} section2 <bgcolor=0x0000FF>;
+} section2 <bgcolor=C_2>;
 
 struct Section3
 {
@@ -70,17 +84,98 @@ struct Section3
         int unknown3;
     }array3[count3];
     FSeek(pos);
-} section3 <bgcolor=0x00FFFF>;
+} section3 <bgcolor=C_3>;
 
 struct Section4
 {
     uint offset4;
+    uint offset4a;
     uint count4;
     pos = FTell();
     FSeek(offset4);
+    uint unknown4;
     struct Array4
     {
-        
+        uint64 hash;
+        int unknown;
+        byte u0; byte u1; byte u2; byte u3;
+        int unknown2;
+        int unknown3;
     }array4[count4];
     FSeek(pos);
-} section4 <bgcolor=0xFF00FF>;
+} section4 <bgcolor=C_4>;
+
+struct Section5
+{
+    uint offset5;
+    uint offset5a;
+    uint count5;
+    pos = FTell();
+    FSeek(offset5);
+    uint unknown5;
+    struct Array5
+    {
+        int unknown;
+        int unknown2;
+    }array5[count5];
+    FSeek(pos);
+} section5 <bgcolor=C_5>;
+
+struct Section6
+{
+    uint offset6;
+    uint count6;
+    pos = FTell();
+    FSeek(offset6);
+    struct Array6
+    {
+        uint64 hash;
+        int unknown;
+        int unknown2;
+        int unknown3;
+        int unknown4;
+    }array6[count6];
+    FSeek(pos);
+} section6 <bgcolor=C_6>;
+
+struct Section7
+{
+    uint offset7;
+    uint count7;
+    pos = FTell();
+    FSeek(offset7);
+    struct Array7
+    {
+        uint64 hash;
+        int unknown;
+        int unknown2;
+        int unknown3;
+        int unknown4;
+    }array7[count7];
+    FSeek(pos);
+} section7 <bgcolor=C_7>;
+
+struct Section8
+{
+    uint offset8;
+    uint count8;
+    pos = FTell();
+    FSeek(offset8);
+    struct Array8
+    {
+        byte u0; byte u1; byte u2; byte u3;
+    }array8[count8];
+    FSeek(pos);
+} section8 <bgcolor=C_8>;
+
+struct Section9
+{
+    uint offset9;
+    pos = FTell();
+    FSeek(offset9);
+    struct Array9
+    {
+        int unknown;
+    }array9[2];
+    FSeek(pos);
+} section9 <bgcolor=C_9>;
