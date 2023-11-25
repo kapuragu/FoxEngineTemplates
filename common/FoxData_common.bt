@@ -181,14 +181,20 @@ typedef struct
 
 	#ifdef FOX_DATA_FORCE_BIG_ENDIAN
 	BigEndian();
+    BitfieldRightToLeft();
 	#define FOX_DATA_FORCED_ENDIAN
 	#endif
 
 	#ifndef FOX_DATA_FORCED_ENDIAN
 	if (ReadUShort() == 0 || ReadUInt() == 372637195 || ReadUInt() == 1144389900) // 201209110, 201406020
-		BigEndian();
+	{
+        BigEndian();
+        BitfieldRightToLeft();
+	}
 	else
-		LittleEndian();
+	{
+        LittleEndian();
+	}
 	#endif
 
 	uint Version;
