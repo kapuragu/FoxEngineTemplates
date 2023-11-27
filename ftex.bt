@@ -1,0 +1,84 @@
+#include "common/common.bt"
+
+#define C_HEADER 0x527f4b
+#define C_ROOT 0x81d17d
+#define C_UNIT 0xF7BEC3
+#define C_SUBENTRY 0xFF4F8A
+#define C_FOOTER 0xbce896
+
+enum <uint> FTEX_FEATURE_FLAGS
+{
+    FTEX_FEATURE_FLAGS_COMPRESSED    = 0b0000000000000000000000001,
+	FTEX_FEATURE_FLAGS_SRGB = 0b0000000000000000000000010,
+	FTEX_FEATURE_FLAGS_CUBE = 0b0000000000000000000000100,
+	FTEX_FEATURE_FLAGS_NORMAL = 0b0000000000000000000001000,
+	FTEX_FEATURE_FLAGS_STREAMED = 0b1000000000000000000000000,
+};
+
+enum <ushort> FTEX_PIXEL_FORMAT
+{
+    FTEX_PIXEL_FORMAT_B8G8R8A8_UNORM = 0,
+    FTEX_PIXEL_FORMAT_A8_UNORM = 1,
+    FTEX_PIXEL_FORMAT_BC1_UNORM = 2,
+    FTEX_PIXEL_FORMAT_BC2_UNORM = 3,
+    FTEX_PIXEL_FORMAT_BC3_UNORM = 4,
+    FTEX_PIXEL_FORMAT_BC5_UNORM = 5,
+    FTEX_PIXEL_FORMAT_R32_FLOAT = 6,
+    FTEX_PIXEL_FORMAT_D16_UNORM = 7,
+};
+
+typedef enum <byte>
+{
+    FTEX_FILTER_TYPE_MIN_MAG_MIP_POINT = 0,
+    FTEX_FILTER_TYPE_MIN_MAG_LINEAR_MIP_POINT = 1,
+    FTEX_FILTER_TYPE_MIN_MAG_MIP_LINEAR = 2,
+} FTEX_FILTER_TYPE <format = hex>;
+
+typedef enum <ushort>
+{
+    FTEX_ADDRESSING_MODE_CLAMP = 0x000,
+    FTEX_ADDRESSING_MODE_WRAP = 0x111,
+    FTEX_ADDRESSING_MODE_MIRROR = 0x222,
+    FTEX_ADDRESSING_MODE_BORDER = 0x333,
+} FTEX_ADDRESSING_MODE <format = hex>;
+
+struct FtexHeader
+{
+    char Signature[4] <hidden = true>;
+    float Version;
+    FTEX_PIXEL_FORMAT PixelFormat;
+    ushort Height;
+    ushort Width;
+    ushort Depth;
+    byte MipmapCount;
+
+    FTEX_FILTER_TYPE FilterType;
+    FTEX_ADDRESSING_MODE AddressingMode;
+
+    ushort Unknown0 <hidden = true>; Assert(Unknown0 == 1); // Unread by the game.
+
+    ushort Padding0 <hidden = true>; Assert(Padding0 == 0); // Read by the game if endian flipping but not used.
+
+    uint Padding1 <hidden = true>; Assert(Padding1 == 0);
+
+    FTEX_FEATURE_FLAGS FeatureFlags;
+
+    byte FtexsFileCount;
+    byte HighestMipMap;
+
+    ushort Padding2 <hidden = true>; Assert(Padding2 == 0);
+    uint Padding3 <hidden = true>; Assert(Padding3 == 0);
+    uint64 Padding4 <hidden = true>; Assert(Padding4 == 0);
+
+    FSkip(16);
+} Header <bgcolor = C_HEADER>;
+
+struct FtexMipmapDef
+{
+    uint DataOffset;
+    uint UncompressedSize;
+    uint CompressedSize;
+    byte Index;
+    byte FileNumber;
+    ushort ChunkCount;
+} MipmapDefs[Header.MipmapCount] <bgcolor = C_ROOT>;
