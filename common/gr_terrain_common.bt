@@ -52,8 +52,8 @@ struct TerrainCommonDescription
 	
 	uint Unknown; Assert(Unknown == 0);
 	
-	uint MapChunkWidthWS;
 	uint MapChunkHeightWS;
+	uint MapChunkWidthWS;
 
 	ushort ExtraHighSizeWS; Assert(ExtraHighSizeWS == 32);
 	ushort MaxLodLevel; 

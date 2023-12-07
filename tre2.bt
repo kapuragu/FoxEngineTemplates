@@ -3,7 +3,8 @@
 
 typedef struct
 {
-	Assert(parentof(this).Flags == 0); Assert(parentof(this).ParentNodeOffset == 0); Assert(parentof(this).ChildNodeOffset == 0);
+	//Assert(parentof(this).Flags == 0); 
+    Assert(parentof(this).ParentNodeOffset == 0); Assert(parentof(this).ChildNodeOffset == 0);
 
 	local string name = ReadFoxDataString(parentof(this).Name);
 	local uint dataSize = parentof(this).DataSize;
@@ -59,8 +60,8 @@ typedef struct
 			uint64 UnknownA;
 			uint64 UnknownB;
 
-			uint WidthWS;
-			uint HeightWS;
+			uint GridWidth;
+			uint GridHeight;
 			uint CommonDescriptionOffset;
 			float MaxHeightWS;
 			float MinHeightWS;
@@ -87,7 +88,7 @@ typedef struct
 #include "common/FoxData_common.bt"
 
 FoxDataHeader Header;
-Assert(Header.Version == 4);
+//Assert(Header.Version == 4);
 
 FSeek(Header.NodesOffset);
 
