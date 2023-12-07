@@ -14,7 +14,7 @@ typedef struct
 {
 	Assert(parentof(this).Flags == 0xC);
 
-	struct GeoBoundingVolume2
+	struct GeoBoundingVolume2Header
 	{
 		local uint SelfStartPos = FTell();
 		
@@ -24,7 +24,7 @@ typedef struct
 		float GridResolution;
 
 		uint BlockCountX;
-		uint Unknown;
+		uint BlockCountY;
 		uint BlockCountZ;
 
 		uint GridTotalDataSize;
@@ -81,19 +81,20 @@ typedef struct
 		{
 			FSeek(startof(BoundingVolume) + DecalOffsets[i]);
 			
-			struct TerrainDecal
+			struct TerrainDecalDef
 			{
 				uint MaterialIndex; // TerrainDecalPack.materialLinks[MaterialIndex]
 				uint VertexCount;
-				uint Unknown0;
-				float UnknownFloat0;
-
-				Vector4 UnknownVector40;
-
-				float UnknownFloat1;
-				uint Unknown1;
-				float UnknownFloat2;
-				uint Padding1 <hidden = true>; Assert(Padding1 == 0);
+				int RenderingPriority; // TerrainDecal.renderingPriority
+				float GraphParameterMetric; // The vertex path is somehow modified a bit and then this variable is the length of that modified path.
+				float Width; // TerrainDecal.width
+				float TextureRepeatU; // TerrainDecal.textureRepeatU
+				float TextureRepeatV; // TerrainDecal.textureRepeatV
+				float EdgeTransparencyLength; // TerrainDecal.edgeTransparencyLength
+				float StepLength; // TerrainDecal.stepLength
+				uint DrawRejectionLevel; // TerrainDecal.drawRejectionLevel
+				float Transparency; // TerrainDecal.transparency
+				byte IsDisableAlbedo; FSkip(3); // TerrainDecal.isDisableAlbedo
 
 				Vector2 BoundingCellMinMax_X;
 				Vector2 BoundingCellMinMax_Z;

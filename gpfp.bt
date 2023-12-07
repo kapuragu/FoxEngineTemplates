@@ -15,7 +15,7 @@ typedef struct
 {
 	Assert(parentof(this).Flags == 0xC);
 
-	struct GeoBoundingVolume2
+	struct GeoBoundingVolume2Header
 	{
 		local uint SelfStartPos = FTell();
 		
