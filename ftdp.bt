@@ -101,11 +101,7 @@ typedef struct
 
 				Vector4 VertexData[VertexCount] <bgcolor=COLOR_NODE>;
 
-				struct
-				{
-					float BoundingCellExtremum;
-					int UnknownData[3];
-				} UnknownData[4];
+				Vector4 UnknownData[4];
 			} Decal <bgcolor = COLOR_TERRAINDECAL>;
 		}
 	} Decals <bgcolor = COLOR_TERRAINDECALS>;
