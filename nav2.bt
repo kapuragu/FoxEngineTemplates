@@ -72,13 +72,14 @@ enum <ubyte> ENTRY_TYPE_UINT8
 	TYPE_SEGMENT_CHUNK = 4
 };
 
+// FileIndex: 0 for .nav2, 1 for .1.nav2, etc
+// BlockID: For 64x64 map, block coordinate is (101 + BlockID % 64, 101 + BlockID / 64). Same as OBR(B), etc.
 typedef struct
 {
-	byte id;
-	byte a;
-	ubyte b;
-	byte c;
-} BlockCoordinate <read = Str("id: %u", id)>;
+    uint FileIndex : 15;
+    uint BlockID : 16;
+    uint Padding : 1 <hidden = true>; Assert(Padding == 0);
+} BlockCoordinate <optimize = false, read = Str("FileIndex: %u, BlockID: %u", FileIndex, BlockID)>;
 
 struct Header
 {
@@ -89,12 +90,6 @@ struct Header
 	uint entryCount;
 	uint navSystemOffset;
 
-	// index:  0 for .nav2, 1 for .1.nav2, etc
-	// These 3 bytes relate to the tile origin of the .nav2 file
-	// For example, with afgh:
-	// u0a is 128 if the horizontal grid reference is odd
-	// X Origin of .nav2 = (((u0b % 32) * 2) + (u0a / 128) - 32) * 128
-	// Z Origin of .nav2 = (((u0c * 8) + ((u0b - (u0b % 32)) / 32) - 32) * 128
 	BlockCoordinate Coordinate;
 	
 	uint section2Offset;
@@ -136,7 +131,7 @@ struct Manifest
 			ENTRY_TYPE_UINT8 entryType;
 			ushort entrySize;
 			ubyte n4;
-		} subentries[manifestEntryCount];
+		} subentries[manifestEntryCount] <optimize = false>;
 	} manifest[3] <optimize = true>;
 }manifest<bgcolor=COLOR_MANIFEST>;
 
@@ -147,106 +142,96 @@ struct NavWorld
 	local long startPosition = FTell();
 
 	// The subsection offsets are relative to the start of the NavWorld struct.
-	uint VerticesRelativeOffset;
-	Assert(VerticesRelativeOffset == 48);
+	uint VertexBufferOffset;
+	Assert(VertexBufferOffset == 48);
 
-	uint subsection2Offset;
-	uint subsection4Offset;
-
-	// These two are seemingly not read by the exe.
-	uint subsection3Offset;
-	uint u1;
-	Assert(u1 == 0);
-
-	uint u2;
-	Assert(u2 == 0);
+	uint Subsection2Offset;
+	uint EdgesOffset;
 
 	// These two are seemingly not read by the exe.
-	uint subsection5Offset;
-	uint u3;
-	Assert(u3 == 0);
+	uint Subsection3Offset;
+	uint Unknown_u1; Assert(Unknown_u1 == 0);
 
-	uint subsection6Offset;
+	uint Unknown_u2; Assert(Unknown_u2 == 0);
+
+	// These two are seemingly not read by the exe.
+	uint Subsection5Offset;
+
+	uint Unknown_u3; Assert(Unknown_u3 == 0);
+
+	uint Subsection6Offset;
 
 	ushort VertexCount;
-	ushort numEdges;
+	ushort EdgeCount;
 
-	ushort probablyPadding1;
-	ushort probablyPadding2;
-	ushort probablyPadding3;
-	Assert(probablyPadding1 == 0 && probablyPadding2 == 0 && probablyPadding3 == 0 );
+	ushort Padding0;
+	ushort Padding1;
+	ushort Padding2;
+	Assert(Padding0 == 0 && Padding1 == 0 && Padding2 == 0 );
 
-	ushort numSubsection5Entries;
+	ushort Subsection5Count;
 
-	FSeek(startPosition + VerticesRelativeOffset);
+	FSeek(startPosition + VertexBufferOffset);
 	Vertex Vertices [VertexCount] <bgcolor=COLOR_NAVWORLD_SS1>;
 	
-	FSeek(startPosition + subsection2Offset);
-	struct NavWorldSubsection2
+	FSeek(startPosition + Subsection2Offset);
+	struct NavWorldSubsection2Entry
 	{
-		struct NavWorldSubsection2Entry
-		{
-			ushort NavWorldSubsection3Offset;
-			ushort subsection5Index;
-			byte countA;
-			byte countB;
+		ushort Subsection3Offset;
+		ushort Subsection5Index;
+		byte CountA;
+		byte CountB;
+	} Subsection2Entries [VertexCount] <bgcolor=COLOR_NAVWORLD_SS2>;
 
-		} entries[VertexCount] <optimize=false>;
-	} subsection2<bgcolor=COLOR_NAVWORLD_SS2, optimize=false>;
-
-	FSeek(startPosition + subsection3Offset);
-
-	struct NavWorldSubsection3
+	// Not dependent on VertexCount != 0
+	FSeek(startPosition + Subsection3Offset);
+	struct
 	{
-		local int i;
-		local int j;
-		for (i = 0; i < VertexCount; i++) 
 		{
-			FSeek (startPosition + subsection3Offset + (subsection2.entries[i].NavWorldSubsection3Offset * 2));
-
-			struct NavWorldSubsection3Entry
+			local int i;
+			local int j;
+			for (i = 0; i < VertexCount; i++) 
 			{
-				for (j = 0; j < subsection2.entries[i].countA; j++) 
-				{
-					ushort adjacentNode;
-					ushort edgeIndex;
-				}
+				FSeek (startPosition + Subsection3Offset + (Subsection2Entries[i].Subsection3Offset * 2));
 
-				for (j = 0; j < subsection2.entries[i].countB; j++) 
+				struct NavWorldSubsection3Entry
 				{
-					ushort u3;
-				}
-			} entries;
+					for (j = 0; j < Subsection2Entries[i].CountA; j++) 
+					{
+						ushort AdjacentNode;
+						ushort EdgeIndex;
+					}
+
+					for (j = 0; j < Subsection2Entries[i].CountB; j++) 
+					{
+						short Unknown;
+					}
+				} Subsection3Entries <bgcolor=COLOR_NAVWORLD_SS3>;
+			}
 		}
-	} subsection3<bgcolor=COLOR_NAVWORLD_SS3>;
+	} Subsection3Entries;
 
-	FSeek(startPosition + subsection4Offset);
+	FSeek(startPosition + EdgesOffset);
 	struct NavWorldEdge
 	{
-		ushort weight;
-		ushort subsection5Index;
+		ushort Weight;
+		ushort Subsection5Index;
 
-		IndexPair8 u3; // These are indicies into the points array but need to add the number of vertexes in previous "chunks"
-	} edges[numEdges]<bgcolor=COLOR_NAVWORLD_SS4>;
+		IndexPair8 EdgeIndices; // These are indicies into the points array but need to add the number of vertexes in previous "chunks"
+	} Edges[EdgeCount] <bgcolor=COLOR_NAVWORLD_SS4>;
 
-	FSeek(startPosition + subsection5Offset);
-	struct NavWorldSubsection5
+	FSeek(startPosition + Subsection5Offset);
+	struct NavWorldSubsection5Entry
 	{
-		struct NavWorldSubsection5Entry
-		{
-			ushort flags; // probably?
-		} entries[numSubsection5Entries]; // This is the same as the number of "chunks" in the file
-	} subsection5<bgcolor=COLOR_NAVWORLD_SS5>;
+		ushort Flags; // probably?
+	} Subsection5Entries[Subsection5Count] <bgcolor=COLOR_NAVWORLD_SS5>; // This is the same as the number of "chunks" in the file
 
-	FSeek(startPosition + subsection6Offset);
-	struct NavWorldSubsection6
+	FSeek(startPosition + Subsection6Offset);
+	struct NavWorldSubsection6Entry
 	{
-		struct NavWorldSubsection6Entry
-		{
-			// Index into NavmeshChunk subsection 2.
-			ushort navmeshSubsection2Index;
-		} entries[VertexCount];
-	} subsection6<bgcolor=COLOR_NAVWORLD_SS6>;
+		// Index into NavmeshChunk subsection 2.
+		ushort NavmeshChunkSubsection2Index;
+	} Subsection6Entries[VertexCount] <bgcolor=COLOR_NAVWORLD_SS6>;
 };
 
 struct NavmeshChunk
@@ -470,16 +455,12 @@ struct Entry
 	local long startOffset = FTell();
 
 	ENTRY_TYPE entryType; Assert(entryType < 5); 
-	// ushort u1;
-	// Assert(u1 == 0);
 
 	uint nextEntryRelativeOffset;
 	uint payloadRelativeOffset;
 	
 	BlockCoordinate Coordinate;
-	
-	// TODO break if this is true
-	// Assert((n1 & 0x7FFF) < 4);    
+	 
 	switch(entryType)
 	{
 		case NAVWORLD:
@@ -501,7 +482,7 @@ struct Entry
 	};
 
 	FSeek(startOffset + nextEntryRelativeOffset);
-} entry[header.entryCount] <read = Str("%s, id: %u", EnumToString(entryType), Coordinate.id), optimize = false, bgcolor=0x5B1ED8>;
+} entry[header.entryCount] <read = Str("%s, id: %u", EnumToString(entryType), Coordinate.FileIndex), optimize = false, bgcolor=0x5B1ED8>;
 
 if (header.section2Offset)
 {
