@@ -389,7 +389,7 @@ for (eIdx = 0; eIdx < Header.EntryCount; eIdx++)
         }
 		
 		// Offset
-		if (Type == 3 || Type == 23 || Type == 23)
+		if (Type == 3 || Type == 23)
 			float Offset;
 		else
         {
@@ -447,11 +447,6 @@ for (eIdx = 0; eIdx < Header.EntryCount; eIdx++)
 				break;
 			case FRDV_ACTION_TYPE_8:
 				uint Padding[8] <hidden = true>;
-				break;
-			case FRDV_ACTION_TYPE_9:
-				uint PaddingA <hidden = true>; Assert(PaddingA == 0); // Probably the corresponding Axis
-				float WeightB;
-				uint Padding[6] <hidden = true>;
 				break;
 			case FRDV_ACTION_TYPE_9:
 				uint PaddingA <hidden = true>; Assert(PaddingA == 0); // Probably the corresponding Axis
