@@ -34,7 +34,7 @@ struct StringCompositeIndices
 {
     ushort pathIdx;
     ushort stringIdx;
-} stringCompositeEntry [header.hashCount] <bgcolor=0x00FF00>;
+} stringCompositeEntry [header.hashCount] <bgcolor=0x00FF00,read=Str("(%g, %g)", pathIdx>>4, stringIdx)>;
 
 FAlign(16);
 
@@ -55,3 +55,14 @@ struct StringArray
 {
     char str[];
 } stringEntry[header.stringCount] <optimize=false, bgcolor=0x00FFFF>;
+
+local uint i;
+for (i = 1; i < header.hashCount; i++)
+{
+    struct Output
+    {
+        local uint pathIdx = stringCompositeEntry[i].pathIdx>>4;
+        local uint stringIdx = stringCompositeEntry[i].stringIdx;
+        local uint64 _hash = hash[i];
+    } output<read=Str("%s/%s",pathEntry[(pathIdx)].path,stringEntry[stringIdx].str)>;
+}
