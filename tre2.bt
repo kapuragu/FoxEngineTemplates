@@ -60,9 +60,11 @@ typedef struct
 			uint64 UnknownA;
 			uint64 UnknownB;
 
-			uint GridWidth;
-			uint GridHeight;
-			uint CommonDescriptionOffset;
+			uint TotalGridWidth;
+			uint TotalGridHeight;
+
+			uint CommonDescriptionOffset <hidden = true>;
+
 			float MaxHeightWS;
 			float MinHeightWS;
 

@@ -52,10 +52,10 @@ struct TerrainCommonDescription
 	
 	uint Unknown; Assert(Unknown == 0);
 	
-	uint MapChunkHeightWS;
-	uint MapChunkWidthWS;
+	uint LowMapHeight;
+	uint LowMapWidth;
 
-	ushort ExtraHighSizeWS; Assert(ExtraHighSizeWS == 32);
+	ushort ClusterGridSize; Assert(ClusterGridSize == 32);
 	ushort MaxLodLevel; 
 	ushort LodCount;
 };

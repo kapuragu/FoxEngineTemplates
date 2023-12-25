@@ -98,7 +98,7 @@ typedef struct
 
 			uint HeightFormat; Assert(HeightFormat == 1); // Very likely a third copy of heightFormat but I can't confirm that.
 			
-			uint CommonDescriptionOffset;
+			uint CommonDescriptionOffset <hidden = true>;
 
 			FSeek(startof(this) + 0x14 + CommonDescriptionOffset);
 
