@@ -335,14 +335,20 @@ enum <uint> FRDV_LIMIT_AXIS
 	FRDV_LIMIT_AXIS_Z = 2,
 };
 
-enum <uint> FRDV_ACTION_TYPE_14_UNK_ENUM
+enum <uint> FRDV_MULTI_ROT_TYPE
 {
-	FRDV_ACTION_TYPE_14_UNK_ENUM_0 = 0,
-	FRDV_ACTION_TYPE_14_UNK_ENUM_1 = 1,
-	FRDV_ACTION_TYPE_14_UNK_ENUM_2 = 2,
-	FRDV_ACTION_TYPE_14_UNK_ENUM_3 = 3,
-	FRDV_ACTION_TYPE_14_UNK_ENUM_4 = 4,
-	FRDV_ACTION_TYPE_14_UNK_ENUM_5 = 5,
+	FRDV_MULTI_ROT_TYPE_0 = 0,
+	FRDV_MULTI_ROT_TYPE_1 = 1,
+};
+
+enum <uint> FRDV_ROT_ORDER
+{
+	FRDV_ROT_ORDER_XYZ = 0,
+	FRDV_ROT_ORDER_XZY = 1,
+	FRDV_ROT_ORDER_YXZ = 2,
+	FRDV_ROT_ORDER_YZX = 3,
+	FRDV_ROT_ORDER_ZXY = 4,
+	FRDV_ROT_ORDER_ZYX = 5,
 };
 
 struct
@@ -372,7 +378,7 @@ for (eIdx = 0; eIdx < Header.EntryCount; eIdx++)
 		short TargetSkelIndex <read = ReadSkelIndex>;
 		short SourceSkelIndex <read = ReadSkelIndex>;
 		short SourceSkelIndex2 <read = ReadSkelIndex>;
-		short TargetParentIndex <read = ReadSkelIndex>;
+		short TargetParentSkelIndex <read = ReadSkelIndex>;
 		short SourceParentSkelIndex <read = ReadSkelIndex>;
 		short SourceParentSkelIndex2 <read = ReadSkelIndex>;
 
@@ -389,7 +395,7 @@ for (eIdx = 0; eIdx < Header.EntryCount; eIdx++)
         }
 		
 		// Offset
-		if (Type == 3 || Type == 23)
+		if (Type == 3 || Type == 6 || Type == 23)
 			float Offset;
 		else
         {
@@ -446,9 +452,6 @@ for (eIdx = 0; eIdx < Header.EntryCount; eIdx++)
 				uint Padding[8] <hidden = true>;
 				break;
 			case FRDV_ACTION_TYPE_8:
-				uint Padding[8] <hidden = true>;
-				break;
-			case FRDV_ACTION_TYPE_9:
 				uint PaddingA <hidden = true>; Assert(PaddingA == 0); // Probably the corresponding Axis
 				float WeightB;
 				uint Padding[6] <hidden = true>;
@@ -491,8 +494,8 @@ for (eIdx = 0; eIdx < Header.EntryCount; eIdx++)
 				float LimitMaxBDegrees;
 
 				FRDV_LIMIT_AXIS AxisB;
-				char UnknownBool; FSkip(3);
-				FRDV_ACTION_TYPE_14_UNK_ENUM UnknownEnum; // If UnknownBool, use UnknownEnum
+				FRDV_MULTI_ROT_TYPE RotationType;
+				FRDV_ROT_ORDER RotationOrder;
 				break;
 			case FRDV_ACTION_TYPE_19:
 				StrCode32 MaterialNameA;
@@ -570,12 +573,12 @@ for (eIdx = 0; eIdx < Header.EntryCount; eIdx++)
 				break;
 			case FRDV_ACTION_TYPE_16:
 				Vector3 VecA; FSkip(4);
-				Vector4 VecB; // Maybe a Vector4. Unclear. Both look very similar to 17 & 18
+				Vector4 VecB; FSkip(4);
 				break;
 			case FRDV_ACTION_TYPE_17:
 			case FRDV_ACTION_TYPE_18:
 				Vector3 VecA; FSkip(4);
-				Vector4 VecB; // Maybe a Vector4. Unclear.
+				Vector3 VecB; FSkip(4);
 				break;
 			case FRDV_ACTION_TYPE_19:
 			case FRDV_ACTION_TYPE_21:

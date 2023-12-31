@@ -9,14 +9,6 @@ typedef struct
 	ubyte a <fgcolor = 0xaaaaaa>;
 } Pixel <read=Str("#%02x%02x%02x%02x", r, g, b, a)>;
 
-typedef struct
-{
-	float near;
-	float offset;
-	float height;
-	float scale;
-} LodParam <read=Str("(%f, %f, %f, %f)", near, offset, height, scale)>;
-
 struct TerrainCommonDescription
 {
 	struct TerrainCommonTileDesc

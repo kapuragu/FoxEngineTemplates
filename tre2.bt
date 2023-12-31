@@ -15,7 +15,6 @@ typedef struct
 	case "param":
 		struct
 		{
-			LodParam data[dataSize / sizeof(LodParam)];
 		} Param <bgcolor=0x00aaff>;
 		break;
 	case "maxHeight":
