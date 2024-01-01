@@ -44,8 +44,8 @@ struct TerrainCommonDescription
 	
 	uint Unknown; Assert(Unknown == 0);
 	
-	uint LowMapHeight;
-	uint LowMapWidth;
+	uint Height;
+	uint Width;
 
 	ushort ClusterGridSize; Assert(ClusterGridSize == 32);
 	ushort MaxLodLevel; 

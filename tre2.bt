@@ -15,6 +15,18 @@ typedef struct
 	case "param":
 		struct
 		{
+			local uint width = parentof(parentof(this)).Parameter[GetFoxDataNodeParamIndex(parentof(parentof(this)), "width")].Value & 0xffffffe0;
+			local uint height = parentof(parentof(this)).Parameter[GetFoxDataNodeParamIndex(parentof(parentof(this)), "height")].Value & 0xffffffe0;
+			local uint maxLodLevel = parentof(parentof(this)).Parameter[GetFoxDataNodeParamIndex(parentof(parentof(this)), "maxLodLevel")].Value;
+			local uint clusterGridSize = 32;
+
+			local uint clusterWidth = ((width - 1) + clusterGridSize) / clusterGridSize; 
+			local uint clusterHeight = ((height - 1) + clusterGridSize) / clusterGridSize;
+
+			struct
+			{
+				float data[maxLodLevel];
+			} LodParam[clusterWidth * clusterHeight];
 		} Param <bgcolor=0x00aaff>;
 		break;
 	case "maxHeight":
