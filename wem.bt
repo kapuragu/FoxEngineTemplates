@@ -50,7 +50,18 @@ struct FormatChunk
 	ushort blockSize_0;
 	ushort blockSize_1;
 	ushort framing;
-	FSkip(framing); //idk
+    if (chunkSize-12>=2)
+    {
+        ushort unk0;
+        if (chunkSize-12>=6)
+        {
+            uint subtype;  
+        };
+    };
+    uint sampleCount;
+    uint setupPacketOffset;
+    uint firstAudioPacketOffset;
+	FSeek(startof(framing)+2+framing); //idk
 };
 
 while( FTell() < header.chunkSize )

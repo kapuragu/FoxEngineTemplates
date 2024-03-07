@@ -482,43 +482,125 @@ struct Object
 
 			break;
         case Attenuation:
-            /*local int startOfObject = FTell();
-            while (FTell()<startOfObject+objectSize)
+            //caplag IT WORKS
+            enum <byte> AttenCurveType
             {
-                struct AttenPoint
+                AttenCurveTypeNone=-1,
+                AttenCurveTypeUseOutputBus=0,
+                AttenCurveTypeLinear=1,
+                AttenCurveTypeExponentialBase3=2,
+                AttenCurveTypeSineConstantPowerFadeOut=3,
+                AttenCurveTypeExponentialBase141=4,
+                AttenCurveTypeInvertedSCurve=5,
+                AttenCurveTypeConstant=6,
+                AttenCurveTypeSCurve=7,
+                AttenCurveTypeLogarithmicBase141=8,
+                AttenCurveTypeSineConstantPowerFadeIn=9,
+                AttenCurveTypeLogarithmicBase3=10,
+            };
+            local int startOfObject = FTell();
+            ubyte ConeAttenuation;
+            if (ConeAttenuation==1)
+            {
+                    float ConeAttenuationInnerAngle;
+                    float ConeAttenuationOuterAngle;
+                    float ConeAttenuationMaxAttenuation;
+                    float ConeAttenuationLowPassFilter;
+            };
+            ubyte unknown0;
+            AttenCurveType AuxiliarySendVolumesGameDefined;
+            AttenCurveType AuxiliarySendVolumesUserDefined;
+            AttenCurveType LowPassFilter;
+            AttenCurveType Spread;
+            AttenCurveType OutputBusVolume;
+            enum <uint> AttenCurvePointType
+            {
+                AttenCurvePointTypeLogarithmicBase3=0,
+                AttenCurvePointTypeSineConstantPowerFadeIn=1,
+                AttenCurvePointTypeLogarithmicBase141=1,
+                AttenCurvePointTypeSCurve=2,
+                AttenCurvePointTypeLinear=4,
+                AttenCurvePointTypeInvertedSCurve=5,
+                AttenCurvePointTypeExponentialBase141=6,
+                AttenCurvePointTypeSineConstantPowerFadeOut=7,
+                AttenCurvePointTypeExponentialBase3=8,
+                AttenCurvePointTypeConstant=9,
+            };
+            enum <uint> AttenCurvePointTypeInvert
+            {
+                AttenCurvePointTypeInvertExponentialBase3=0,
+                AttenCurvePointTypeInvertSineConstantPowerFadeOut=1,
+                AttenCurvePointTypeInvertExponentialBase141=2,
+                AttenCurvePointTypeInvertInvertedSCurve=3,
+                AttenCurvePointTypeInvertLinear=4,
+                AttenCurvePointTypeInvertSCurve=5,
+                AttenCurvePointTypeInvertLogarithmicBase141=6,
+                AttenCurvePointTypeInvertSineConstantPowerFadeIn=7,
+                AttenCurvePointTypeInvertLogarithmicBase3=8,
+                AttenCurvePointTypeInvertConstant=9,
+            };
+            struct AttenPoint
+            {
+                float pointX;
+                float pointY;
+                AttenCurvePointType pointType;    
+            };
+            struct AttenPointInvert
+            {
+                float pointX;
+                float pointY;
+                AttenCurvePointTypeInvert pointType;    
+            };
+            struct CurveDefinition
+            {
+                enum <byte>
                 {
-                    uint attenType;
-                    float x;
-                    float y;
-                };
-                struct AttenGroup
+                    AttenCurveType0=0,
+                    AttenCurveType2=2,
+                } attenCurveType;
+                byte attenPointCount;
+                if (attenPointCount>0)
                 {
-                    byte groupEntryCount;
-                    if (groupEntryCount<0)
+                    byte unknown;
+                    if (attenCurveType==AttenCurveType0)
                     {
-                        byte unknown20;
-                        byte unknown21;
+                AttenPointInvert attenPoints[attenPointCount];
                     }
-                    if (groupEntryCount>0)
+                    else if (attenCurveType==AttenCurveType2)
                     {
-                        short something;
-                        float xGr;
-                        float yGr;
-                        AttenPoint attenPoints[something-1] <optimize=false>;
-                        uint unknown15;
-                    }
+                    AttenPoint attenPoints[attenPointCount];
+                    };
                 };
-                struct AttenGroupGroup
-                {
-                    byte attencount3;
-                    if (attencount3>0)
-                    {
-                        AttenGroup attenGroups[attencount3] <optimize=false>;
-                        
-                    }
-                };
-                AttenGroupGroup attenGroup1 <optimize=false>;
-            };*/
+            };
+            if (OutputBusVolume>0)
+            {
+                CurveDefinition OutputBusVolumeCurve;
+            };
+            if (AuxiliarySendVolumesGameDefined>0)
+            {
+                CurveDefinition AuxiliarySendVolumesGameDefinedCurve;
+            };
+            if (AuxiliarySendVolumesUserDefined>0)
+            {
+                CurveDefinition AuxiliarySendVolumesUserDefinedCurve;
+            };
+            if (LowPassFilter>0)
+            {
+                CurveDefinition LowPassFilterCurve;
+            };    
+            if (Spread>0)
+            {
+                CurveDefinition SpreadCurve;
+            };
+            ubyte usedRTPCsCount;
+            ubyte end2;
+            struct AttenRTPCCurve
+            {
+                uint RTPCXAxisRTPCName;
+                uint RTPCYAxisType;
+                uint RTPCUnknownHash;
+                CurveDefinition rtpcCurveDefinition;
+            } attenRtpcCurve[usedRTPCsCount] <optimize=false>;
             break;
 	}
 
