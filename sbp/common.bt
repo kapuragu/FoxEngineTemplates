@@ -206,7 +206,7 @@ struct RTPCCurve
     CurveDefinition rtpcCurveDefinition;
 };
 
-struct RTPCCurves
+struct RTPC
 {
     ushort num_of_RTPC_effects;
 	local uint curRTPC_effects;
