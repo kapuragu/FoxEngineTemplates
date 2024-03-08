@@ -60,7 +60,7 @@ struct SoundStructure
 			byte effectIndex;
 			uint effectObjectId;
 			//FSkip(2);
-			ushort unknown;
+			ushort UseShareSets;
 		}; 
 		if (effectsCount > 0)
 			SoundStrctureEffects soundstructure_effects[effectsCount] <optimize=false>;
@@ -365,69 +365,7 @@ struct SoundStructure
 	} states;
 	
 	
-	struct RTPC
-	{
-		ushort num_of_RTPC_effects;
-		local uint curRTPC_effects;
-		for (curRTPC_effects = 0; curRTPC_effects < num_of_RTPC_effects; curRTPC_effects++)
-		{
-			struct RTPC_effect
-			{
-				uint x_axis_game_param_name <comment="Fnv132 Hash">;
-				enum <uint> Y_Axis_Effect_Type
-				{
-					Voice_Volume = 0,
-					Voice_Pitch = 2,
-					Voice_Low_Pass_Filter = 3,
-					// newer effect as of Wwise 2013!
-					Initial_Delay = 6,
-					Priority = 8,
-					Sound_Instance_Limit = 9,
-					// newer effect as of Wwise 2013!
-					Positioning_Type = 10,
-					User_Defined_Auxiliary_Sends_Volume_Zero = 0x0F,
-					User_Defined_Auxiliary_Sends_Volume_One = 0x10,
-					User_Defined_Auxiliary_Sends_Volume_Two = 0x11,
-					User_Defined_Auxiliary_Sends_Volume_Three = 0x12,
-					Game_Defined_Auxiliary_Sends_Volume = 0x13,
-					Output_Bus_Volume = 0x16,
-					Output_Bus_Low_pass_Filter = 0x17,
-					Bypass_Effect_Zero = 0x18,
-					Bypass_Effect_One = 0x19,
-					Bypass_Effect_Two = 0x1A,
-					Bypass_Effect_Three = 0x1B,
-					Bypass_All_Effects = 0x1C,
-					Motion_Volume_Offset = 0x1D,
-					Motion_Low_Pass = 0x1E,
-					// newer effects as of Wwise 2013!
-					HDR_Active_Range = 0x23,
-					Make_Up_Gain = 0x24
-				} y_axis_effecttype;
-				
-				uint curveID;
-				enum <ubyte> AkCurveScaling
-				{
-					AkCurveScaling_None,
-					AkCurveScaling_dB,
-					AkCurveScaling_Log,
-					AkCurveScaling_dBToLin
-				} curve_scaling;
-				
-				ushort num_of_points;
-				local uint curNumPoints;
-				for (curNumPoints = 0; curNumPoints < num_of_points; curNumPoints++)
-				{
-					struct Point
-					{
-						float X_coordinate;
-						float Y_coordinate;
-						Curve_Shape curve_shape;
-					} point <comment="NOTE: these points work differently if the Y axis effect is set to 'Positioning Type'.">;
-				}
-				
-			} rtpc_effect;
-		}
-	} rtpc;
+	RTPCCurves rtpc;
 	// NOTE: we're gonna have a problem here. apparently no read action's performed if CAkBankMgr::BankHasFeedback() returns false...
 	uint bank_feedback_ID <comment="Unknown purpose, it's only used if CAkBankMgr::BankHasFeedback() returns true and this uint is != 0">;
 };

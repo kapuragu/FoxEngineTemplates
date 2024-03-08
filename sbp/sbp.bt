@@ -216,9 +216,11 @@ struct Object
 
 		case ActorMixer: // HWL According to PS3 files. This is ugly.
 			SoundStructure soundstructure;
-			uint childrenCount;
-			uint children[childrenCount];
-
+            if (FTell()<startof(objectId)+objectSize)
+            {
+			    uint childrenCount;
+			    uint children[childrenCount];
+            };
 			break;
 
 		case AudioBus:
@@ -258,7 +260,7 @@ struct Object
 			// HWL i like how these two switch positions compared to
 			// how it is in the SoundStructure you usually have.
 			// what the hell WWise??
-			RTPC rtpc;
+			RTPCCurves rtpc;
 			States states;
 
 			break;
@@ -477,12 +479,12 @@ struct Object
 			Auto_Ducking autoducking_parent <comment="Probably the settings of a parent, given that these don't exist in auxiliary busses">;
 
 			Effects effects;
-			RTPC rtpc;
+			RTPCCurves rtpc;
 			States states;
 
 			break;
         case Attenuation:
-            //caplag IT WORKS
+            //rlc IT WORKS
             enum <byte> AttenCurveType
             {
                 AttenCurveTypeNone=-1,
@@ -513,65 +515,6 @@ struct Object
             AttenCurveType LowPassFilter;
             AttenCurveType Spread;
             AttenCurveType OutputBusVolume;
-            enum <uint> AttenCurvePointType
-            {
-                AttenCurvePointTypeLogarithmicBase3=0,
-                AttenCurvePointTypeSineConstantPowerFadeIn=1,
-                AttenCurvePointTypeLogarithmicBase141=1,
-                AttenCurvePointTypeSCurve=2,
-                AttenCurvePointTypeLinear=4,
-                AttenCurvePointTypeInvertedSCurve=5,
-                AttenCurvePointTypeExponentialBase141=6,
-                AttenCurvePointTypeSineConstantPowerFadeOut=7,
-                AttenCurvePointTypeExponentialBase3=8,
-                AttenCurvePointTypeConstant=9,
-            };
-            enum <uint> AttenCurvePointTypeInvert
-            {
-                AttenCurvePointTypeInvertExponentialBase3=0,
-                AttenCurvePointTypeInvertSineConstantPowerFadeOut=1,
-                AttenCurvePointTypeInvertExponentialBase141=2,
-                AttenCurvePointTypeInvertInvertedSCurve=3,
-                AttenCurvePointTypeInvertLinear=4,
-                AttenCurvePointTypeInvertSCurve=5,
-                AttenCurvePointTypeInvertLogarithmicBase141=6,
-                AttenCurvePointTypeInvertSineConstantPowerFadeIn=7,
-                AttenCurvePointTypeInvertLogarithmicBase3=8,
-                AttenCurvePointTypeInvertConstant=9,
-            };
-            struct AttenPoint
-            {
-                float pointX;
-                float pointY;
-                AttenCurvePointType pointType;    
-            };
-            struct AttenPointInvert
-            {
-                float pointX;
-                float pointY;
-                AttenCurvePointTypeInvert pointType;    
-            };
-            struct CurveDefinition
-            {
-                enum <byte>
-                {
-                    AttenCurveType0=0,
-                    AttenCurveType2=2,
-                } attenCurveType;
-                byte attenPointCount;
-                if (attenPointCount>0)
-                {
-                    byte unknown;
-                    if (attenCurveType==AttenCurveType0)
-                    {
-                AttenPointInvert attenPoints[attenPointCount];
-                    }
-                    else if (attenCurveType==AttenCurveType2)
-                    {
-                    AttenPoint attenPoints[attenPointCount];
-                    };
-                };
-            };
             if (OutputBusVolume>0)
             {
                 CurveDefinition OutputBusVolumeCurve;
@@ -592,15 +535,45 @@ struct Object
             {
                 CurveDefinition SpreadCurve;
             };
-            ubyte usedRTPCsCount;
-            ubyte end2;
-            struct AttenRTPCCurve
+            RTPCCurves rtpc;
+            break;
+        case Effect:
+        case Custom:
+            enum <ushort> EffectPluginId
             {
-                uint RTPCXAxisRTPCName;
-                uint RTPCYAxisType;
-                uint RTPCUnknownHash;
-                CurveDefinition rtpcCurveDefinition;
-            } attenRtpcCurve[usedRTPCsCount] <optimize=false>;
+                AkDelay=106,
+                AkCompressor=108,
+                AkExpander=109,
+                AkMatrixReverb=115,
+                AkFlanger=125,
+                AkGuitarDistortion=126,
+                AkConvolutionReverb=127,
+                AkHarmonizer=138,
+                AkGain=139,
+            };
+            ushort unknownFlags; //3
+            EffectPluginId effectPluginId;
+            ushort effectSettingsLength;
+            ushort unknown3;
+            
+            //effect settings
+            switch (effectPluginId)
+            {
+                case AkDelay:
+                    float DelayTime;
+                    float Feedback;
+                    float WetDryMix;
+                    float OutputLevel;
+                    ubyte EnableFeedback;
+                    ubyte ProcessLFE;
+                    break;
+                default:
+                    FSkip(effectSettingsLength);
+                    break;
+            };
+            
+            ubyte unk0;
+            RTPCCurves rtpc;
             break;
 	}
 
