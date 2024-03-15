@@ -216,11 +216,13 @@ struct Object
 
 		case ActorMixer: // HWL According to PS3 files. This is ugly.
 			SoundStructure soundstructure;
+            /*
             if (FTell()<startof(objectId)+objectSize)
             {
 			    uint childrenCount;
 			    uint children[childrenCount];
             };
+            */
 			break;
 
 		case AudioBus:
@@ -566,6 +568,8 @@ struct Object
                     float Feedback;
                     float WetDryMix;
                     float OutputLevel;
+                    ubyte EnableFeedback;
+                    ubyte ProcessLFE;
                     break;
                 default:
                     FSkip(effectSettingsLength);

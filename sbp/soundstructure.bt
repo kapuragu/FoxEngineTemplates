@@ -45,22 +45,23 @@ struct SoundStructure
 		ubyte effectsCount;
 		if (effectsCount > 0)
 		{
-			enum <byte> BitMask
+			enum <byte> EffectBypassBitMask
 			{
+				BYPASS_NO_EFFECT = 0x00000000,
 				BYPASS_EFFECT_0 = 0x00000001,
 				BYPASS_EFFECT_1 = 0x00000010,
 				BYPASS_EFFECT_2 = 0x00000100,
 				BYPASS_EFFECT_3 = 0x00001000,
 				BYPASS_ALL = 0x00010000
-			} bitmask;
+			} effectBypassBitmask;
 		}
 		
 		struct SoundStrctureEffects
 		{
 			byte effectIndex;
 			uint effectObjectId;
-			//FSkip(2);
-			ushort UseShareSets;
+			ubyte isUseShareSets;
+			ubyte isRender;
 		}; 
 		if (effectsCount > 0)
 			SoundStrctureEffects soundstructure_effects[effectsCount] <optimize=false>;

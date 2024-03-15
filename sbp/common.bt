@@ -136,12 +136,6 @@ struct ArrayGraphPoints
 	Curve_Shape Interp <comment="NOTE: these points work differently if the Y axis effect is set to 'Positioning Type'.">;
 };
 
-struct ArrayGraphPointsInvert
-{
-	float From, To;
-    Curve_ShapeInvert Interp;    
-};
-
 struct CurveDefinition
 {
     enum <ubyte> AkCurveScaling
@@ -156,14 +150,7 @@ struct CurveDefinition
     local uint curNumPoints;
     for (curNumPoints = 0; curNumPoints < num_of_points; curNumPoints++)
     {
-        if (curve_scaling==AkCurveScaling_None)
-        {
-            ArrayGraphPointsInvert curve_shape;
-        }
-        else
-        {
-            ArrayGraphPoints curve_shape;
-        };
+        ArrayGraphPoints curve_shape;
     }
 };
 
