@@ -33,12 +33,12 @@ struct StreamAnimationLip
 					int keyCount <comment="Key count including metadata key zero">;
 					short offsetsToKeys[keyCount] <comment="Offset from keyCount", bgcolor=0x94A6AA>;
 					//vox_player_common.sbp TPP-only: <
-					// if (FTell() % 4 != 0)
-						// FSkip(4 - FTell() % 4);
+					if (FTell() % 4 != 0)
+						FSkip(4 - FTell() % 4);
 					//>
 					
-					ushort unk0 <fgcolor=0xFF0000, bgcolor=0x87E7FF>;
-					ushort unk1 <fgcolor=0x0000FF, bgcolor=0x87E7FF>;
+					ushort defaultPosition <fgcolor=0xFF0000, bgcolor=0x87E7FF>;
+					ushort defaultIntensity <fgcolor=0x0000FF, bgcolor=0x87E7FF>;
 					byte paramsCount <bgcolor=0xB9C199>;
 					FSkip(3);
 					int keyZeroParam0 <bgcolor=0xB9C199>;
@@ -49,13 +49,13 @@ struct StreamAnimationLip
 
 					struct KeyGZ
 					{
-						ushort unk0 <fgcolor=0xFF0000, bgcolor=0x87E7FF>;
-						ushort unk1 <fgcolor=0x0000FF, bgcolor=0x87E7FF>;
-						byte lipGzAnimCount <bgcolor=0xB8F8EB>;
-						byte unknownFloatCount <bgcolor=0xA3D0D1>;
+						ushort position <fgcolor=0xFF0000, bgcolor=0x87E7FF>;
+						ushort intensity <fgcolor=0x0000FF, bgcolor=0x87E7FF>;
+						byte lipAnimCount <bgcolor=0xB8F8EB>;
+						byte strengthCount <bgcolor=0xA3D0D1>;
 						FSkip(2);
-						LipAnimIndex lipAnimIndexGz[lipGzAnimCount] <bgcolor=0xB8F8EB,optimize=false>;
-						float unknownFloat[unknownFloatCount] <bgcolor=0xA3D0D1>;
+                        LipAnimIndex lipAnimIndex[lipAnimCount] <comment="Index of the mouth animation to play", bgcolor=0xB8F8EB>;
+						float strength[strengthCount] <bgcolor=0xA3D0D1>;
 
 					} keyGZ[realKeyCount] <optimize=false>;
 					

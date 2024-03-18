@@ -1,6 +1,6 @@
 LittleEndian();
 
-#define FILE_VERSION_TPP
+//#define FILE_VERSION_TPP
 
 #include "common/common.bt"
 
@@ -58,7 +58,7 @@ struct AnimationHeader
 	uint DataOffset <bgcolor = 0x94A6AA>;
 	
 	uint Padding <hidden = true>; Assert(Padding == 0);
-} AnimationHeaders[Header.AnimationCount] <hidden = true, optimize = true>;
+} AnimationHeaders[Header.AnimationCount] <optimize = true>;
 
 local uint i;
 local uint j;
@@ -79,7 +79,7 @@ for (i = 0; i < Header.AnimationCount; i++)
 			FAlign(4);
 
 			int DataOffset;
-		} FileHeaders[FileCount] <optimize = false, hidden = true, bgcolor = 0x776C7C>;
+		} FileHeaders[FileCount] <optimize = false, bgcolor = 0x776C7C>;
 
 		for (j = 0; j < FileCount; j++)
 		{
@@ -92,8 +92,8 @@ for (i = 0; i < Header.AnimationCount; i++)
 				{
 					struct LsKeyframeHeader
 					{
-						uint KeyframeCount <hidden = true>; // Keyframe count including key zero
-						ushort DataOffsets[KeyframeCount] <hidden = true>;
+						uint KeyframeCount; // Keyframe count including key zero
+						ushort DataOffsets[KeyframeCount];
 
 						// ushort defaultPosition <fgcolor = 0xFF0000, bgcolor = 0x87E7FF>; // Position of a keyframe in the timeline
 						// ushort defaultIntensity <fgcolor = 0x0000FF, bgcolor = 0x87E7FF>; // Always empty?
@@ -135,12 +135,12 @@ for (i = 0; i < Header.AnimationCount; i++)
 				{
 					struct MessageIdUnit
 					{
-						int unknown0;
-						ushort unk0;
-						int unknown1;
-						ushort unk1;
-						ushort unk2;
-						int unknown3 ;
+						int unknown0; Assert(unknown0==1);
+						ushort unk0; Assert(unk0==6);
+						int unknown1; Assert(unknown1==100);
+						ushort unk1; Assert(unk1==0);
+						ushort unk2; Assert(unk2==8);
+						int unknown3; Assert(unknown3==1);
 						string messageId <bgcolor=0x737329>;
 					} MessageIds <bgcolor = 0x58D7E9, optimize=false>;
 				} File;
@@ -150,14 +150,17 @@ for (i = 0; i < Header.AnimationCount; i++)
 				Assert(false);
 			}
 
-			#ifdef FILE_VERSION_TPP
+#ifdef FILE_VERSION_TPP
 			if (FTell() % 8 == 0)
 				FSkip(4);
-			#else
+#else
 			// GZ
-			#endif
+#endif
 			BigEndian();
-			StrCode Name; Assert(Name.hash == AnimationHeaders[i].Name.hash);
+			StrCode Name; 
+#ifdef FILE_VERSION_TPP
+            Assert(Name.hash == AnimationHeaders[i].Name.hash);
+#endif
 			LittleEndian();
 
 			FAlign(16);

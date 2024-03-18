@@ -86,7 +86,7 @@ struct Object
 			break;
 
 		case Sound:
-			SourceInfo sourceinfo;
+			SourceInfo sourceinfo <read=Str("%s %s, id: %u",EnumToString(this.embedOrStream),EnumToString(this.soundType),this.sourceID)>;
 			SoundStructure soundStructure <optimize=false>;
 			break;
 
@@ -207,22 +207,90 @@ struct Object
 		// as of v2.5
 		case SequenceContainer:
 			SoundStructure soundstructure;
+            short NoOfLoops;
+            ubyte unk2;
+            ubyte unk3;
+            short unknown;
+            float transitionDuration;
+            uint unknown2;
+            uint unknown3;
+            ushort avoidRepeatingLastCount;
+            enum <ubyte> ContainerTransitionType
+            {
+                CONTAINER_TRANSITION_NONE=0x0,    
+                CONTAINER_TRANSITION_Xfade_amp=0x1,    
+                CONTAINER_TRANSITION_Xfade_power=0x2,    
+                CONTAINER_TRANSITION_Delay=0x3,    
+                CONTAINER_TRANSITION_Sample_accurate=0x4,    
+                CONTAINER_TRANSITION_Trigger_rate=0x5,    
+            } transitionType;
+            enum <ubyte> ContainerRandomPlayType
+            {
+                CONTAINER_RANDOM_STANDARD=0x0,    
+                CONTAINER_RANDOM_SHUFFLE=0x1,
+            } randomPlayType;
+            enum <ubyte> ContainerPlayType
+            {
+                CONTAINER_RANDOM=0x0,    
+                CONTAINER_SEQUENCE=0x1,
+            } playType;
+            ubyte unknown6;
+            ubyte unknown7;
+            enum <ubyte> ContainerAtEndOfPlaylist
+            {
+                CONTAINER_END_Restart=0x0,
+                CONTAINER_END_Play_in_reverse_order=0x1, 
+            } atEndOfPlaylist;
+            ContainerPlayMode playMode;
+            enum <ubyte> ContainerScopeType
+            {
+                CONTAINER_SCOPE_GAMEOBJECT=0x0,    
+                CONTAINER_SCOPE_GLOBAL=0x1,
+            } scope;
+			uint childrenCount;
+			uint children[childrenCount];
+            ushort childPrioritiesCount;
+            struct ChildPriority{
+                uint childId;
+                int priority;    
+            } childPriority[childPrioritiesCount];
 			break;
 	
 		// as of v2.5
 		case SwitchContainer:
 			SoundStructure soundstructure;
+            uint isStateGroup;
+            uint groupName;
+            uint defaultStateName;
+            ContainerPlayMode playMode;
+			uint childrenCount;
+			uint children[childrenCount];
+            uint stateCount;
+            struct AssignedObjectsToState{
+                uint stateId;
+                uint assignedObjectsCount;   
+                uint assignedObjects[assignedObjectsCount]; 
+            } assignedObjectsToState[stateCount] <optimize=false>;
+			uint childrenCount;
+            struct ChildSwitchProperty
+            {
+                uint childId;
+                ubyte FirstOnly;
+                ubyte ContinueToPlay;
+                short unknown2; //1
+                short unknown3;
+                uint fadeOut;
+                uint fadeIn;
+            } childSwitchProperty[childrenCount];
 			break;
 
 		case ActorMixer: // HWL According to PS3 files. This is ugly.
 			SoundStructure soundstructure;
-            /*
             if (FTell()<startof(objectId)+objectSize)
             {
 			    uint childrenCount;
 			    uint children[childrenCount];
             };
-            */
 			break;
 
 		case AudioBus:
@@ -269,6 +337,8 @@ struct Object
 
 		case BlendContainer:
 			SoundStructure soundstructure;
+			uint childrenCount;
+			uint children[childrenCount];
 			break;
 
 		case DialogueEvent:
@@ -326,6 +396,9 @@ struct Object
 	
 			} dialogueEventObject;
 			break;
+            
+        case MotionFX:
+            break;
 
 		case MusicSegment:
 			SoundStructure soundstructure;
@@ -341,7 +414,7 @@ struct Object
 			uint count;
 			// there's a weird for loop for the count in the integration demo code, apparently there can
 			// be multiple sourceinfo objects??
-			SourceInfo sourceinfo[count];
+			SourceInfo sourceinfo[count] <read=Str("%s %s, id: %u",EnumToString(this.embedOrStream),EnumToString(this.soundType),this.sourceID)>;;
 
 			// i would've preferred to put this in another .bt file, but due to it using the soundstructure
 			// i can't
@@ -543,6 +616,7 @@ struct Object
         case Custom:
             enum <ushort> EffectPluginId
             {
+                AkSilence=101,
                 AkDelay=106,
                 AkCompressor=108,
                 AkExpander=109,
@@ -563,6 +637,11 @@ struct Object
             //effect settings
             switch (effectPluginId)
             {
+                case AkSilence:
+                    float Length;
+                    float LengthMin;
+                    float LengthMax;
+                    break;
                 case AkDelay:
                     float DelayTime;
                     float Feedback;
@@ -570,6 +649,22 @@ struct Object
                     float OutputLevel;
                     ubyte EnableFeedback;
                     ubyte ProcessLFE;
+                    break;
+                case AkConvolutionReverb:
+                    float PreDelay;
+                    float RearDelay;
+                    float FrontRearDelay;
+                    float StereoWidth;
+                    float InputCenterLevel;
+                    float InputLFELevel;
+                    float FrontLevel;
+                    float RearLevel;
+                    float CenterLevel;
+                    float LFELevel;
+                    float DryLevel;
+                    float WetLevel;
+                    short embeddedSoundCount;
+                    uint embeddedSoundId[embeddedSoundCount];
                     break;
                 default:
                     FSkip(effectSettingsLength);
@@ -597,7 +692,7 @@ struct Hierarchy
 	// reused in other structures...
 	for (curObj = 0; curObj < objectCount; ++curObj)
 	{
-		Object object <optimize=false>;
+		Object object <optimize=false, read=Str("%s, id: %u", EnumToString(this.objectType), this.objectId)>;
 	
 		// HWL it's +5 since there always appears to be 5 empty
 		// bytes between every object.

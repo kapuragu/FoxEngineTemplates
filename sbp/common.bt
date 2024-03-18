@@ -132,8 +132,8 @@ enum <byte> SoundStrctureParameterType
 
 struct ArrayGraphPoints
 {
-	float From, To;
-	Curve_Shape Interp <comment="NOTE: these points work differently if the Y axis effect is set to 'Positioning Type'.">;
+	float x, y;
+	Curve_Shape CurveShapeType <comment="NOTE: these points work differently if the Y axis effect is set to 'Positioning Type'.">;
 };
 
 struct CurveDefinition
@@ -201,6 +201,12 @@ struct RTPC
 	{
 		RTPCCurve rtpc_effect;
 	}
+};
+
+enum <ubyte> ContainerPlayMode
+{
+    CONTAINER_PLAY_STEP=0x0,    
+    CONTAINER_PLAY_CONTINUOUS=0x1,
 };
 
 #endif
