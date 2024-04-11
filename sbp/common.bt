@@ -133,7 +133,18 @@ enum <byte> SoundStrctureParameterType
 struct ArrayGraphPoints
 {
 	float x, y;
+    local float yDb = LinearTodB(y);
 	Curve_Shape CurveShapeType <comment="NOTE: these points work differently if the Y axis effect is set to 'Positioning Type'.">;
+};
+
+float LinearTodB(float linear)
+{
+      return -20.0 * Log(1.0 - linear) / Log(10.0);
+};
+
+float dBtoLinear(float db)
+{
+      return -20.0 * Log(1.0 - db) / Log(10.0);
 };
 
 struct CurveDefinition

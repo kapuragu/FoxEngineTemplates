@@ -213,7 +213,7 @@ struct Object
             short unknown;
             float transitionDuration;
             uint unknown2;
-            uint unknown3;
+            float unknown3;
             ushort avoidRepeatingLastCount;
             enum <ubyte> ContainerTransitionType
             {
