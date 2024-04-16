@@ -361,6 +361,14 @@ typedef struct
                 
                 // Demo
                 ExecCommand = 595181585,
+                
+                //DemoxCameraFunctor
+                DemoEvent_DemoxCameraFunctor_SetAperture = 2156061871,
+                DemoEvent_DemoxCameraFunctor_SetFocusDistance = 2078433676,
+                DemoEvent_DemoxCameraFunctor_SetShutterSpeed = 277747306,
+                DemoxCameraFunctor_SetAperture = 1958730416,
+                DemoxCameraFunctor_SetFocusDistance = 3662803786,
+                DemoxCameraFunctor_SetShutterSpeed = 2901997729,
 			} EventName;
 
 			byte TimeSectionCount : 6 <hidden = true>;

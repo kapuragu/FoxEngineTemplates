@@ -49,9 +49,12 @@ struct VariableDataEntry
 	FSkip(4);
 
 	uint offset;
+    
+    local uint returnOffset = FTell();
 	
 	FSeek(offset);
 	VariableDataSubEntry variableDataSubEntries[subEntryCount];
+    FSeek(returnOffset);
 };
 
 struct Fv2Header
@@ -99,7 +102,7 @@ struct Fv2Header
 	//Variable Data
 	FSeek(variableDataSectionOffset);
     if (variableDataSectionCount>0)
-	    VariableDataEntry variableDataEntries[variableDataSectionCount];
+	    VariableDataEntry variableDataEntries[variableDataSectionCount] <optimize=false>;
 	
 	//Material Parameter Data
 	FSeek(materialParameterSectionOffset);
