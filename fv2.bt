@@ -6,10 +6,10 @@ struct BoneModelAttachEntry
 {
 	short fmdlIndex;
 	short frdvIndex;
-	short unkIndex0;
-	short unkIndex1;
+	short unkIndex0; Assert(unkIndex0<0);
+	short unkIndex1; Assert(unkIndex1<0);
 	short simIndex;
-	short unkIndex2;
+	short unkIndex2; Assert(unkIndex2<0);
 };
 
 struct CnpModelAttachEntry 
@@ -18,10 +18,10 @@ struct CnpModelAttachEntry
 	uint emptyStrCode32;
 	short fmdlIndex;
 	short frdvIndex;
-	short unkIndex0;
-	short unkIndex1;
+	short unkIndex0; Assert(unkIndex0<0);
+	short unkIndex1; Assert(unkIndex1<0);
 	short simIndex;
-	short unkIndex2;
+	short unkIndex2; Assert(unkIndex2<0);
 };
 
 struct VariableDataSubEntry 
@@ -42,7 +42,7 @@ struct VariableDataEntry
 	ubyte subEntryCount;
 	ubyte meshGroupCount;
 	ubyte textureSwapCount;
-	ubyte unknown1;
+	ubyte unknown1; Assert(unknown1==0);
 	ubyte boneModelAttachmentCount;
 	ubyte cnpModelAttachmentCount;
 	
@@ -76,7 +76,7 @@ struct Fv2Header
 	byte hideMeshGroupCount;
 	byte showMeshGroupCount;
 	byte textureSwapCount;
-	byte unk0;
+	byte unk0; Assert(unk0==0);
 	byte boneModelAttachmentCount;
 	byte cnpModelAttachmentCount;
 	
@@ -107,10 +107,10 @@ struct Fv2Header
 	//Material Parameter Data
 	FSeek(materialParameterSectionOffset);
     if (materialParameterSectionCount>0)
-	    Vector4 materialParameterEntries[materialParameterSectionCount];
+	    Vector4 materialParameterEntries[materialParameterSectionCount] <optimize=false>;
 	
 	//External File Data
 	FSeek(externalFileSectionOffset);
     if (externalFileSectionCount>0)
-	    PathCode64 externalFileEntries[externalFileSectionCount];
+	    PathCode64 externalFileEntries[externalFileSectionCount] <optimize=false>;
 } Fv2;
