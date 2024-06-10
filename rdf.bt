@@ -61,9 +61,6 @@ if (header.version == 3) // if TPP
 			{
 				uint radioId;
 				//strcode32, found in lua
-
-				// The flags must also somehow define whether the entries are all played 
-				// in order or if it should randomly pick one to play, and more
 			
 				// Byte 0
 				ubyte flag0_1 : 1; // never on
@@ -203,19 +200,33 @@ else if (header.version == 1) // if GZ
 			
 			struct labelParamEntry
 			{
-				ubyte someFlag0;
-				ubyte someFlag1;
-				ushort someShort0;
-				FSkip(2);
-				ushort someShort1;
+				ubyte radioType;
+                //0 - real-time
+                //1 - espionage
+                //2 - optional
+                //3 - game over
+                
+				ubyte u1;
+                //0
+                //1
+                //2
+                //4
+                //5
+                //6
+                //8
+				ushort invalidTime;
+				short padding <hidden=true>; Assert(padding==0);
+				ushort unk2;
 				
-				ubyte someFlag2;
-				ubyte someFlag3;
-				ubyte somelabelClipCountBits4;
+				ubyte u2a : 4;
+				ubyte u2b : 4;
+				ubyte u3a : 4;
+				ubyte u3b : 4;
+				ubyte u4;
 				ubyte voiceClipCount;
-				ubyte someFlag5;
-				ubyte someFlag6;
-				FSkip(2);
+				ubyte repeatStartId;
+				ubyte repeatEndId;
+				short padding <hidden=true>; Assert(padding==0);
 				
 				struct gzVoiceClipEntry
 				{
@@ -223,8 +234,8 @@ else if (header.version == 1) // if GZ
 					uint chara; // .sbp HIRC.dat voice clip list, top entry
 					uint condition; // .sbp HIRC.dat voice clip id
 					ubyte weight;			// Usually 0x64 (looks like wwise probabilty weight)
-					ubyte pauseLengthId;			// Sometimes 0x00, sometimes 0x02, sometimes 0x04
-					FSkip(2);
+					ubyte intervalNextLabelId;			// Sometimes 0x00, sometimes 0x02, sometimes 0x04
+				    short padding <hidden=true>; Assert(padding==0);
 					
 				} gzVoiceClips[voiceClipCount] <optimize=false>;
 				
@@ -232,35 +243,32 @@ else if (header.version == 1) // if GZ
 			
 		} labelNamesAndOffsets <bgcolor=0xBCAF9C>;
 		
-		struct gzSection1
+		struct GzOptionalSets
 		{
 			Assert(header.offsetToGzSection1==FTell(),"Offset to GzSection 1 is wrong!!");
-			ubyte entriesCount;
-			if (entriesCount>0)
+			ubyte optionalSetsCount;
+			if (optionalSetsCount>0)
 			{
-				FSkip(3);
-				struct sec2Entry
+				short padding <hidden=true>; Assert(padding==0);
+				ubyte padding <hidden=true>; Assert(padding==0);
+				struct OptionalSetDef
 				{
-					uint sec2Name;				// Not sure what these are, some sort of radio label sets?
-					uint sec2EntryOffset;		// Local (Section 2 start) offset to Section 3 entry
+					uint optionalSetName;				// Not sure what these are, some sort of radio label sets?
+					uint optionalSetOffset;		// Local (Section 2 start) offset to Section 3 entry
 					
-				} sec2Entries[entriesCount] <optimize=false>;
+				} optionalSetDef[optionalSetsCount] <optimize=false>;
 				
-				struct sec2OffsetSetEntry
+				struct OptionalSet
 				{
-					ushort sec2OffsetEntryCount;
-					FSkip(2);
-					struct sec2OffsetEntry
-					{
-						uint sec2SubEntryOffset;	// Global offset to a Section 1 entry
-						
-					} sec2OffsetEntries[sec2OffsetEntryCount] <optimize=false>;
+					ushort optionalLabelCount;
+				    short padding <hidden=true>; Assert(padding==0);
+					uint optionalRadioLabelOffset[optionalLabelCount] <optimize=false>;
 					
-				} sec2OffsetSetEntries[entriesCount] <optimize=false>;
+				} optionalSet[optionalSetsCount] <optimize=false>;
 				
 			};
 			
-		} someSection2 <bgcolor=0xD9BDC5>;
+		} optionalSets <bgcolor=0xD9BDC5>;
 		
 	}
 };
