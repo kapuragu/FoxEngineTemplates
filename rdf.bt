@@ -207,14 +207,11 @@ else if (header.version == 1) // if GZ
                 //3 - game over
                 
 				ubyte u1;
-                //0
                 //1
                 //2
                 //4
-                //5
-                //6
                 //8
-				ushort invalidTime;
+				ushort invalidTime; //10000 on same stuff that has long invalidtime in tpp
 				short padding <hidden=true>; Assert(padding==0);
 				ushort unk2;
 				
