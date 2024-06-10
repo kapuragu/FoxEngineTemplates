@@ -361,15 +361,9 @@ typedef struct
                 
                 // Demo
                 ExecCommand = 595181585,
-                
-                //DemoxCameraFunctor
-                DemoEvent_DemoxCameraFunctor_SetAperture = 2156061871,
-                DemoEvent_DemoxCameraFunctor_SetFocusDistance = 2078433676,
-                DemoEvent_DemoxCameraFunctor_SetShutterSpeed = 277747306,
-                DemoxCameraFunctor_SetAperture = 1958730416,
-                DemoxCameraFunctor_SetFocusDistance = 3662803786,
-                DemoxCameraFunctor_SetShutterSpeed = 2901997729,
 			} EventName;
+            
+            Printf(Str("%u\n",EventName));
 
 			byte TimeSectionCount : 6 <hidden = true>;
 			enum <byte> TIME_SECTION_FORMAT
@@ -459,10 +453,10 @@ typedef struct
                     Printf(Str("target: %I64u mesh group: %I64u\n",StringParams[0].param.hash,StringParams[1].param.hash));
                 }*/
                 //prp_ hash dump
-                if (EventName==2523762371)
+                /*if (EventName==2523762371)
                 {
                     Printf(Str("%I64u\n",StringParams[0].param.hash));
-                }
+                }*/
             }
 		} Event <read = EnumToString(EventName)>;
 	}

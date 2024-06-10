@@ -12,24 +12,24 @@ struct Header
 	{
 		ubyte dialogueEventCount;
 		
-		ushort labelCount;		
-		// short labelCount;		
-		// if (labelCount<0)
+		ushort radioCount;		
+		// short radioCount;		
+		// if (radioCount<0)
 		// {
 			// BigEndian();
-			// labelCount ?
+			// radioCount ?
 		// }
 		// If one were to make it check for endianness, it would need to check if this signed short is negative
 		// but how does one tun the short value back into a positive short?
-		ushort optionSetCount;
+		ushort optionalGroupSetCount;
 		ushort variationSetCount;
 		
-		ubyte voiceTypeCount;
+		ubyte charaCount;
 	}
 	else if (version == 1)
 	{
 		FSkip(1);
-		ushort labelCount;	
+		ushort radioCount;	
 		uint offsetToGzSection1;
 	}
 	
@@ -37,13 +37,13 @@ struct Header
 
 if (header.version == 3) // if TPP
 {
-	if (header.dialogueEventCount+header.voiceTypeCount > 0)
+	if (header.dialogueEventCount+header.charaCount > 0)
 	{
 		struct tppSection0
 		{
 			uint dialogueEventId[header.dialogueEventCount];	// These values are followed up by 64 02 in the HIRC.dat file in the .sbp
 			// fnv132: dd_ etc
-			uint voiceTypes[header.voiceTypeCount]; // These values are at the start of the lists, between the list entries and the sbpValue0 values
+			uint charas[header.charaCount]; // These values are at the start of the lists, between the list entries and the sbpValue0 values
 			// fnv132:
 			// miller = 3140691722 0A 27 33 BB
 			// ocelot = 469355457 C1 CB F9 1B
@@ -53,60 +53,86 @@ if (header.version == 3) // if TPP
 		} sbpSection <bgcolor=0xBCAF9C>;
 	}
 
-	if (header.labelCount > 0)
+	if (header.radioCount > 0)
 	{
 		struct tppSection1
 		{
-			struct radioLabel
+			struct Radio
 			{
-				uint labelName;
+				uint radioId;
 				//strcode32, found in lua
 
 				// The flags must also somehow define whether the entries are all played 
 				// in order or if it should randomly pick one to play, and more
 			
 				// Byte 0
-				ubyte flag0 : 4; //?
-				ubyte noiseType : 4;
-				// if 0, short real time noise. 
-				// if 2, haves espionage radio noise. 
-				// if 4, optional radio noise, 
-				// if 8, map radio
-				// if 10, mission image radio
+				ubyte flag0_1 : 1; // never on
+				ubyte flag0_2 : 1; // most always on in more than half of cases
+				ubyte flag0_4 : 1; // not on with the rest in 3838406372, Set_s0082_oprg0020, s0082
+				ubyte flag0_8 : 1; // not on with the rest in 3368279276, s0040 and s0240_rtrg5000
+                ubyte flag1_1 : 1; //unused?
+                
+				ubyte radioType : 3;
+                // 0 - real-time
+                // 1 - espionage
+                // 2 - optional
+                // 3 - game over
+                // 4 - map
+                // 5 - mission image
 				
 				// Byte 1
-				ubyte flag2; //?
+                //allow in phase:
+				ubyte isSneak : 1;//SNEAK
+				ubyte isCaution : 1;//CAUTION
+				ubyte isEvasion : 1;//EVASION
+				ubyte isClearing : 1;//CLEARING?
+				ubyte isAlert : 1;//ALERT
+                //RadioParameterTable - TppRadioCommand.RegisterInvalidTimeTable
+				ubyte invalidTimeId : 3;
+                //local invalidTimeTable={0,1,5,10,15,20,25,30,0,0,0,0,0,0,0,0}
+                //id in the table here of the pause time from start of play til next available play
 				
 				// Byte 2
 				//Read bits 1-6 of the byte as the label count:
 				ubyte labelClipCount : 6;
-				ubyte flag52 : 2; // unknown but used bits
+                //priority? labels with lower value will not interrupt and will not use interrupt "huh"
+				ubyte priority : 2; // unknown but used bits
 				
 				// Byte 3
-				ubyte flag6; //something to do with randomization 
+                //all never off
+                ubyte flag2_1 : 1;//never on by itself
+                ubyte flag2_2 : 1;
+                ubyte flag2_4 : 1;
+				ubyte flag2_8 : 1;
+                
+                ubyte step : 1; //play voices one at a time, overrides sequence? if all four are 0 then also true????
+                ubyte repeatLast : 1; //during step sequence mode, after playing last step, repeat using last step
+                ubyte sequence : 1; //play all in order
+				ubyte random : 1; //play random stuff whatever
 				
-				// RadioData_comn1000.rdf 0x709 WHAT THE FUCK it's not padding?
-				ubyte flag8;
-				ubyte flag10;
-				
+                //on repeated play of step mode, with which to start and with which to end
+				ubyte repeatStartId;
+				ubyte repeatEndId;
 				
 				struct voiceClipSubEntry
 				{
 					uint voiceId;	// Sometimes isn't a voice clip id, but a variationSetName; check section 3
 					//fnv321: very often, if not always, is just tolower of the subtitle/msgId: ie abcd1000_101010
 					ubyte dialogueEventIndex;	// Can be 255/invalid
-					ubyte voiceTypeIndex; // Can be 255/invalid
+					ubyte charaIndex; // Can be 255/invalid
 					ubyte IsVariationSet : 4;
-					ubyte pauseLength : 4;
+                    //RadioParameterTable - TppRadioCommand.RegisterIntervalNextLabelTable
+					ubyte intervalNextLabelId : 4; //seems to correlate with pause length?
+                    //local intervalNextLabelTable={400,100,200,300,600,750,900,1100,1500,2e3,2500,3e3,500,4e3,5e3,6e3}
 						
 				} voiceClipSubEntries[labelClipCount] <optimize=false>;
 				
-			} radioLabels[header.labelCount] <optimize=false>;
+			} radioLabels[header.radioCount] <optimize=false>;
 			
 		} labelsSection <bgcolor=0xCBBEB3>;
 	}
 
-	if (header.optionSetCount > 0)
+	if (header.optionalGroupSetCount > 0)
 	{
 		struct tppSection2
 		{
@@ -122,7 +148,7 @@ if (header.version == 3) // if TPP
 				
 				//lua assigns sets to memory, and each label plays in order when the radio button is pressed with no intel radio target picked
 				
-			} optionSets[header.optionSetCount] <optimize=false>;
+			} optionSets[header.optionalGroupSetCount] <optimize=false>;
 			
 		} optionalSection <bgcolor=0xD9BDC5>;
 	}
@@ -138,14 +164,10 @@ if (header.version == 3) // if TPP
 				struct variationVoiceClip
 				{
 					uint sbpVoiceId;
-					
-					ubyte flag0 : 4;
-					ubyte flag1 : 4;
-					ubyte flag2 : 4;
-					ubyte flag3 : 4;
-					ubyte flag6 : 4;
-					ubyte flag7 : 4;
-					
+					ubyte dialogueEventIndex;
+					ubyte charaIndex;
+                    ubyte isVariationSet : 4;
+					ubyte intervalNextLabelId : 4;
 				} variationVoiceClips[variationClipsCount] <optimize=false>;
 				
 				// Here's an example
@@ -168,7 +190,7 @@ if (header.version == 3) // if TPP
 }
 else if (header.version == 1) // if GZ
 {
-	if (header.labelCount>0)
+	if (header.radioCount>0)
 	{
 		struct gzSection0
 		{
@@ -177,7 +199,7 @@ else if (header.version == 1) // if GZ
 				uint labelName;		// StrCode32 hash of label name used by lua, ex "e0010_rtrg0090"
 				uint labelOffset;	// Global
 				
-			} labelOffsets[header.labelCount] <optimize=false>;
+			} labelOffsets[header.radioCount] <optimize=false>;
 			
 			struct labelParamEntry
 			{
@@ -197,16 +219,16 @@ else if (header.version == 1) // if GZ
 				
 				struct gzVoiceClipEntry
 				{
-					uint dialogueEventId;	// .sbp HIRC.dat voice clip list, value before 0x6402
-					uint voiceTypeId;	// .sbp HIRC.dat voice clip list, top entry
-					uint voiceId;		// .sbp HIRC.dat voice clip id
-					ubyte someFlag7;			// Usually 0x64
-					ubyte someFlag8;			// Sometimes 0x00, sometimes 0x02, sometimes 0x04
+					uint dialogueEventObjectId;	// .sbp HIRC.dat voice clip list, value before 0x6402
+					uint chara; // .sbp HIRC.dat voice clip list, top entry
+					uint condition; // .sbp HIRC.dat voice clip id
+					ubyte weight;			// Usually 0x64 (looks like wwise probabilty weight)
+					ubyte pauseLengthId;			// Sometimes 0x00, sometimes 0x02, sometimes 0x04
 					FSkip(2);
 					
 				} gzVoiceClips[voiceClipCount] <optimize=false>;
 				
-			} labelEntries[header.labelCount] <optimize=false>;
+			} labelEntries[header.radioCount] <optimize=false>;
 			
 		} labelNamesAndOffsets <bgcolor=0xBCAF9C>;
 		

@@ -248,12 +248,12 @@ struct Object
                 CONTAINER_SCOPE_GLOBAL=0x1,
             } scope;
 			uint childrenCount;
-			uint children[childrenCount];
+			/*uint children[childrenCount];
             ushort childPrioritiesCount;
             struct ChildPriority{
                 uint childId;
                 int priority;    
-            } childPriority[childPrioritiesCount];
+            } childPriority[childPrioritiesCount];*/
 			break;
 	
 		// as of v2.5
@@ -289,7 +289,7 @@ struct Object
             if (FTell()<startof(objectId)+objectSize)
             {
 			    uint childrenCount;
-			    uint children[childrenCount];
+			    //uint children[childrenCount];
             };
 			break;
 
@@ -614,12 +614,15 @@ struct Object
             break;
         case Effect:
         case Custom:
+            ubyte unknownFlags; //3
+            ubyte unknownFlags2;
             enum <ushort> EffectPluginId
             {
                 AkSilence=101,
                 AkDelay=106,
                 AkCompressor=108,
                 AkExpander=109,
+                AkPeakLimiter=110,
                 AkMatrixReverb=115,
                 AkFlanger=125,
                 AkGuitarDistortion=126,
@@ -627,10 +630,7 @@ struct Object
                 AkHarmonizer=138,
                 AkGain=139,
                 MotionGenerator=405,
-            };
-            ubyte unknownFlags; //3
-            ubyte unknownFlags2;
-            EffectPluginId effectPluginId;
+            } effectPluginId;
             ushort effectSettingsLength;
             ushort unknown3;
             
@@ -663,13 +663,50 @@ struct Object
                     float LFELevel;
                     float DryLevel;
                     float WetLevel;
-                    short embeddedSoundCount;
-                    uint embeddedSoundId[embeddedSoundCount];
+                    break;
+                case AkMatrixReverb:
+                    float PreDelay;
+                    float ReverbTime;
+                    enum <uint> NumberOfDelays
+                    {
+					    Favor_performance=4,
+					    Balance_quality_and_performance=8,
+					    Favor_quality=12,
+						Maximize_quality=16,
+                    } numberOfDelays;
+                    enum <uint> DelayLengthsMode
+                    {
+					    Default_delay_lengths=0,
+					    Custom_delay_lengths=1,
+                    } delayLengthsMode;
+                    float WetLevel;
+                    float DryLevel;
+                    ubyte ProcessLFE;
+                    break;
+                case AkPeakLimiter:
+                    if (unknownFlags2==0)
+                    {
+                        float Threshold;
+                        float Ratio;
+                        float LookAheadTime;
+                        float Release;
+                        float OutputGain;
+                        byte ProcessLFE;
+                        byte ChannelLink;
+                    }
+                    else if (unknownFlags2==16)
+                    {
+                        
+                    };
                     break;
                 default:
                     FSkip(effectSettingsLength);
                     break;
             };
+            
+            //byte embeddedSoundCount;
+            //uint embeddedSoundId[embeddedSoundCount];
+            //RTPC rtpc;
             
             break;
 	}
@@ -772,23 +809,29 @@ struct DataIndex
 		int size;
 	
 	} embeddedWemDefiniton[offsetsSize / 12];
-	// DATA + garbage4bytes only appears if the definitions don't end up with an aligned stream????
-	if (FTell() % 16 != 0)
-		FSkip(16 - (FTell() % 16));
+    
+    char sign[4];
+    uint sizeOfData;
 
-	local int index = 0;
-	local int startOfArray = FTell();
-	struct RiffEmbed
-	{
-		// ok seems to be inconsistent between GZ, TPP and SBP_Tool output as to whether it wants to align te stream
-		// so this might leave the riff files with empty bytes at the start
-		FSkip( (startOfArray+embeddedWemDefiniton[index].offsetToStart) - FTell() );
-	
-		char riffData[embeddedWemDefiniton[index].size];
-	
-		index += 1;
-	
-	} riffEmbed[offsetsSize / 12] <optimize=false>;
+    struct EmbeddedData
+    {
+	    if (FTell() % 16 != 0)
+		    FSkip(16 - (FTell() % 16));
+    
+	    local int index = 0;
+	    local int startOfArray = FTell();
+	    struct RiffEmbed
+	    {
+		    // ok seems to be inconsistent between GZ, TPP and SBP_Tool output as to whether it wants to align te stream
+		    // so this might leave the riff files with empty bytes at the start
+		    FSkip( (startOfArray+embeddedWemDefiniton[index].offsetToStart) - FTell() );
+	    
+		    char riffData[embeddedWemDefiniton[index].size];
+	    
+		    index += 1;
+	    
+	    } riffEmbed[offsetsSize / 12] <optimize=false>;
+    } embeddedData;
 };
 
 // STMG is found only in Init.bnk, and contains useful information about project settings as well as the Switch Groups,
