@@ -104,8 +104,8 @@ if (header.version == 3) // if TPP
                 
                 ubyte step : 1; //play voices one at a time, overrides sequence? if all four are 0 then also true????
                 ubyte repeatLast : 1; //during step sequence mode, after playing last step, repeat using last step
-                ubyte sequence : 1; //play all in order
-				ubyte random : 1; //play random stuff whatever
+                ubyte sequence : 1; //play all in order, can be overriden by step
+				ubyte random : 1; //play random repeatStartId to repeatEndId labels after all have been played in sequence
 				
                 //on repeated play of step mode, with which to start and with which to end
 				ubyte repeatStartId;
@@ -117,7 +117,8 @@ if (header.version == 3) // if TPP
 					//fnv321: very often, if not always, is just tolower of the subtitle/msgId: ie abcd1000_101010
 					ubyte dialogueEventIndex;	// Can be 255/invalid
 					ubyte charaIndex; // Can be 255/invalid
-					ubyte IsVariationSet : 4;
+					ubyte padding : 3 <hidden=true>; Assert(padding==0);
+					ubyte IsVariationSet : 1;
                     //RadioParameterTable - TppRadioCommand.RegisterIntervalNextLabelTable
 					ubyte intervalNextLabelId : 4; //seems to correlate with pause length?
                     //local intervalNextLabelTable={400,100,200,300,600,750,900,1100,1500,2e3,2500,3e3,500,4e3,5e3,6e3}
@@ -213,13 +214,13 @@ else if (header.version == 1) // if GZ
                 //8
 				ushort invalidTime; //10000 on same stuff that has long invalidtime in tpp
 				short padding <hidden=true>; Assert(padding==0);
-				ushort unk2;
+				ushort unk2; //usually 2400 - delay?
 				
 				ubyte u2a : 4;
 				ubyte u2b : 4;
 				ubyte u3a : 4;
 				ubyte u3b : 4;
-				ubyte u4;
+				ubyte priority; //0-64
 				ubyte voiceClipCount;
 				ubyte repeatStartId;
 				ubyte repeatEndId;

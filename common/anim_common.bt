@@ -363,7 +363,7 @@ typedef struct
                 ExecCommand = 595181585,
 			} EventName;
             
-            Printf(Str("%u\n",EventName));
+            //Printf(Str("%u\n",EventName));
 
 			byte TimeSectionCount : 6 <hidden = true>;
 			enum <byte> TIME_SECTION_FORMAT
@@ -457,6 +457,13 @@ typedef struct
                 {
                     Printf(Str("%I64u\n",StringParams[0].param.hash));
                 }*/
+                if (EventName==595181585)
+                {
+                    if (StringParams[0].param.hash==203000540209048) 
+                    {
+                        Printf(Str("%u,%I64u\n",(TimeSections[0].StartFrame/0.5975),StringParams[1].param.hash));
+                    }
+                }
             }
 		} Event <read = EnumToString(EventName)>;
 	}

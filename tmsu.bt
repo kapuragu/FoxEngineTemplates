@@ -1,0 +1,20 @@
+LittleEndian();
+
+struct Header
+{
+	char signature[7];
+	if (signature=="TMSUps3")
+	{
+		BigEndian();
+	}
+	byte version;
+	int offsetToEntries <comment="Offset to entries section">;
+    uint isAntiAirMission;
+    int offsetToStrings;
+    ushort missionCode;
+    byte unkA;
+    byte unkB;
+    int offsetToStringsAgain;
+    int offsetToData;
+	
+} header <bgcolor=0xCAE7B9>;
