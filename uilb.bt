@@ -5,7 +5,14 @@ LittleEndian();
 struct UiLayoutBinaryHeader
 {
     char Signature[4] <hidden=true>;
-    uint Version <hidden=true>; Assert(Version == 0x101);
+    ubyte magic;
+    Assert(magic == 1);    
+    enum <ubyte> Version
+    {
+        GZ=0,
+        TPP=1,
+    } version;
+    ushort padding <hidden=true>;
 
     ushort ModelDataCount;
     ushort AnimDataCount; // sai - (Max: 32)
@@ -214,16 +221,42 @@ if (Header.LayoutDataCount > 0)
     } LayoutData[Header.LayoutDataCount] <optimize = true, bgcolor = 0x745F68>;
 }
 
+if (Header.version==GZ)
+{
+    if (Header.PathCode64sRelativeOffset != -1)
+    {
+	    Assert(FTell() == Header.PathCode64sRelativeOffset);
+        struct StringEntry {
+            uint stringSize <hidden=true>;
+            uint stringRelativeOffset <hidden=true>;
+            local ulong continuePosition = FTell();
+            FSeek(Header.BuffersSectionOffset+stringRelativeOffset);
+            char str[stringSize];
+            FSeek(continuePosition);
+        } stringEntry[Header.PathCode64Count] <optimize=false, bgcolor=0x856ACE, fgcolor=0xFFFFFF>;
+    }
+}
+
 if (Header.StrCode32sRelativeOffset != -1)
 {
 	FSeek(Header.BuffersSectionOffset + Header.StrCode32sRelativeOffset);
-	StrCode32 StrCode32s[Header.StrCode32Count] <bgcolor=0x75A2FA, fgcolor=0xFFFFFF>;
+    if (Header.version==GZ)
+    {
+	    StrCode StrCodes[Header.StrCode32Count] <bgcolor=0x75A2FA, fgcolor=0xFFFFFF>;
+    }
+    else if (Header.version==TPP)
+    {
+	    StrCode32 StrCode32s[Header.StrCode32Count] <bgcolor=0x75A2FA, fgcolor=0xFFFFFF>;
+    }
 }
 
 FAlign(8);
 
-if (Header.PathCode64sRelativeOffset != -1)
+if (Header.version==TPP)
 {
-	Assert(FTell() == Header.BuffersSectionOffset + Header.PathCode64sRelativeOffset);
-	PathCode64 PathCode64s[Header.PathCode64Count] <bgcolor=0x856ACE, fgcolor=0xFFFFFF>;
+    if (Header.PathCode64sRelativeOffset != -1)
+    {
+	    Assert(FTell() == Header.BuffersSectionOffset + Header.PathCode64sRelativeOffset);
+	    PathCode64 PathCode64s[Header.PathCode64Count] <bgcolor=0x856ACE, fgcolor=0xFFFFFF>;
+    }
 }
