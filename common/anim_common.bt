@@ -459,9 +459,13 @@ typedef struct
                 }*/
                 if (EventName==595181585)
                 {
-                    if (StringParams[0].param.hash==203000540209048) 
+                    if (StringParamCount>6)
                     {
-                        Printf(Str("%u,%I64u\n",(TimeSections[0].StartFrame/0.5975),StringParams[1].param.hash));
+                        if (StringParams[5].param.hash==84993817083062) 
+                        {
+                            local float divisor = 0.6-0.00063;
+                            Printf(Str("%f,%I64u\n",(TimeSections[0].StartFrame/divisor),StringParams[1].param.hash));
+                        }
                     }
                 }
             }

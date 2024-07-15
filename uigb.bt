@@ -76,8 +76,13 @@ local uint layoutLinksRead;
 struct Header
 {
     char uigb[4] <hidden=true>;
-    ushort magic <hidden=true>;
-    Assert(magic == 257);    
+    ubyte magic <hidden=true>;
+    Assert(magic == 1);    
+    enum <ubyte> Version
+    {
+        GZ=0,
+        TPP=1,
+    } version;
 
     ushort padding <hidden=true>;
     Assert(padding == 0);
@@ -86,25 +91,44 @@ struct Header
 
     ubyte uilbCount;
     ubyte uigbCount;
-    ubyte n1;                   // Number of o2 entries
-    Assert(n1 == 0);
+    ubyte StrCodeCount;                   // Number of o2 entries
+    if (version==TPP)
+    {
+        Assert(StrCodeCount == 0);
+    }
 
     ubyte section6EntryCount;
 
     ushort PathCode64Count;
-    uint StrCode32Count;
+    if (version==TPP)
+    {
+        uint StrCode32Count;
+    }
 
     int nodeTableOffset;
     int layoutTableOffset;
     int section4Offset;
-    int o2;                    // Relates to fileReferenceCount and section6Offset
-    int section6Offset;         // Only used in GZ? (Nope, it's used in SubtitlesSideshow.uigb)
-//    Assert(section6Offset == -1);
+    if (version==TPP)
+    {
+        int o2;                    // Relates to fileReferenceCount and section6Offset
+        int section6Offset;         // Only used in GZ? (Nope, it's used in SubtitlesSideshow.uigb)
+    //    Assert(section6Offset == -1);
+    }
 
-    int PathCode64sRelativeOffset;       // Offset from BuffersSectionOffset
-    uint StrCode32sRelativeOffset;       // Offset from BuffersSectionOffset 
-    int o4;                     // Offset from BuffersSectionOffset; more hashes (uifs?)
-    Assert(o4 == -1);
+    if (version==GZ)
+    {
+        int StrCodesRelativeOffset;       // Offset from BuffersSectionOffset
+    }
+    else if (version==TPP)
+    {
+        int PathCode64sRelativeOffset;       // Offset from BuffersSectionOffset
+        uint StrCode32sRelativeOffset;       // Offset from BuffersSectionOffset 
+    }
+    int StringsRelativeOffset;                     // Offset from BuffersSectionOffset; more hashes (uifs?)
+    if (version==TPP)
+    {
+        Assert(StringsRelativeOffset == -1);
+    }
 
     int BuffersSectionOffset;
 } header <bgcolor=COLOR1>;
@@ -259,7 +283,7 @@ struct UiEventNode
     uint paramsOffset;
 
     currentPosition = FTell();
-    FSeek(header.BuffersSectionOffset + paramsOffset);
+    FSeek(header.BuffersSectionOffset + paramsOffset); //reads into strcode hashes in GZ, title_25th_demo_in_world
     ubyte params[paramBytes];
     FSeek(currentPosition);
 
@@ -301,7 +325,7 @@ struct UiActionNode
 
     ubyte paramBytes;
     ubyte hashIndicesCount; // Only hash value found so far is ""
-    Assert(hashIndicesCount == 0);
+    //Assert(hashIndicesCount == 0);
 
     // Probably relates to an undiscovered section. Found in exe.
     ubyte o7EntryCount;
@@ -331,9 +355,9 @@ struct UiActionNode
     uint hashIndicesOffset; // Offset from section5
     uint o7;
     uint o8;
-    Assert(o8 == 0);
+    //Assert(o8 == 0); //gets set off in demo_pause GZ and TPP
 
-    uint o9;
+    uint o9;//offset to whatever entry above is a count of
 
     currentPosition = FTell();
     FSeek(outputEdgesOffset);
@@ -408,7 +432,14 @@ struct UiNodeData
     ubyte nodeSzeInBytes;
     UiNodeType type;
 
-    local uint nodeTypeHash = GetStrCode32(nodeTypeHashIndex);
+    if (header.version==GZ)
+    {
+        local uint nodeTypeHash = GetStrCode(nodeTypeHashIndex);
+    }
+    else if (header.version==TPP)
+    {
+        local uint nodeTypeHash = GetStrCode32(nodeTypeHashIndex);
+    }
 
     switch(type)
     {
@@ -433,29 +464,38 @@ struct UiNodeData
     }
 } nodes [header.nodeCount] <bgcolor=COLOR2, optimize=false>;
 
-FSeek(header.layoutTableOffset);
-
-struct UiLayoutData
+if (header.layoutTableOffset>0)
 {
-    ushort hashIndex <comment=GetStrCode32Comment, fgcolor=0xFFFFFF>;
-
-    // Interesting note: these are always 6 apart
-    ushort layoutPathHashIndex <comment=GetPathCode64Comment>;
-
-    // Boolean; sets some flag in the uilb
-    ubyte flag1;
-    Assert(flag1 == 0 || flag1 == 1);
-
-    // Some kind of index, possibly related to an fmdl?
-    ubyte n2;
-
-    // Values found: LMENU (equip_cross.uigb)
-    ushort drawPriorityHashIndex <comment=GetStrCode32Comment>;
-
-    // These are in the exe, but no clue what any of them are.
-    ushort connectionHashIndex <comment=GetStrCode32Comment>;
-    ushort u1 <comment=GetStrCode32Comment>;
-} layouts[header.uilbCount] <optimize = false, bgcolor=COLOR4>;
+    FSeek(header.layoutTableOffset);
+    
+    struct UiLayoutData
+    {
+        ushort hashIndex <comment=GetStrCode32Comment, fgcolor=0xFFFFFF>;
+    
+        // Interesting note: these are always 6 apart
+        ushort layoutPathHashIndex <comment=GetPathCode64Comment>;
+    
+        // Boolean; sets some flag in the uilb
+        ubyte flag1;
+        if (header.version==TPP)
+        {
+            Assert(flag1 == 0 || flag1 == 1);
+        }
+    
+        // Some kind of index, possibly related to an fmdl?
+        ubyte n2;
+    
+        // Values found: LMENU (equip_cross.uigb)
+        ushort drawPriorityHashIndex <comment=GetStrCode32Comment>;
+    
+        // These are in the exe, but no clue what any of them are.
+        if (header.version==TPP)
+        {
+            ushort connectionHashIndex <comment=GetStrCode32Comment>;
+            ushort u1 <comment=GetStrCode32Comment>;
+        }
+    } layouts[header.uilbCount] <optimize = false, bgcolor=COLOR4>;
+}
 
 struct Section2Entry
 {
@@ -466,50 +506,79 @@ struct Section2Entry
 };
 
 /* Relates to external uigb files somehow. */
-struct Section4
+if (header.section4Offset>0)
 {
-    struct Section4Entry
+    FSeek(header.section4Offset);
+    struct Section4
     {
-        ushort hashIndex1;      // Some kind of name associated with this entry.
-        ushort uigbHashIndex;
-
-        ushort n3;
-        ushort nameHashIndex;
-        ubyte n5;
-
-        // TODO: If false, stop reading
-        ubyte b6;
-        Assert(b6 == 0 || b6 == 1);
-
-        ushort hashIndex3;
-        uint n8;
-        uint section2EntryOffset;
-
-        local ulong position = FTell();
-        FSeek(section2EntryOffset);
-        Section2Entry section2Entry;
-        FSeek(position);
-
-        Vector4 v1;
-        Vector4 v2;
-        Vector4 v3;
-        Vector4 v4;
-    } entries[header.uigbCount] <optimize=false>;
-} section4 <bgcolor=COLOR8, fgcolor=0xFFFFFF>;
-
-if (header.StrCode32sRelativeOffset != -1)
-{
-	//Assert(FTell() == header.BuffersSectionOffset + header.StrCode32sRelativeOffset);
-	FSeek(header.BuffersSectionOffset + header.StrCode32sRelativeOffset);
-	StrCode32 StrCode32s[header.StrCode32Count] <bgcolor=0x75A2FA, fgcolor=0xFFFFFF>;
+        struct Section4Entry
+        {
+            ushort hashIndex1;      // Some kind of name associated with this entry.
+            ushort uigbHashIndex;
+    
+            ushort n3;
+            ushort nameHashIndex;
+            ubyte n5;
+    
+            // TODO: If false, stop reading
+            ubyte b6;
+            Assert(b6 == 0 || b6 == 1);
+    
+            ushort hashIndex3;
+            uint n8;
+            uint section2EntryOffset;
+    
+            local ulong position = FTell();
+            FSeek(section2EntryOffset);
+            Section2Entry section2Entry;
+            FSeek(position);
+    
+            Vector4 v1;
+            Vector4 v2;
+            Vector4 v3;
+            Vector4 v4;
+        } entries[header.uigbCount] <optimize=false>;
+    } section4 <bgcolor=COLOR8, fgcolor=0xFFFFFF>;
 }
 
-FAlign(8);
-
-if (header.PathCode64sRelativeOffset != -1)
+if (header.version==GZ)
 {
-	Assert(FTell() == header.BuffersSectionOffset + header.PathCode64sRelativeOffset);
-	PathCode64 PathCode64s[header.PathCode64Count] <bgcolor=0x856ACE, fgcolor=0xFFFFFF>;
+    if (header.StringsRelativeOffset != -1)
+    {
+	    local ushort stringIndex;
+	    for (stringIndex = 0; stringIndex<header.PathCode64Count; stringIndex++)
+	    {
+            struct StringEntry
+            {
+                local string str = GetString(stringIndex);
+            } stringEntry <bgcolor=0x856ACE, fgcolor=0xFFFFFF>;
+	    };
+    }
+
+    FAlign(8);
+    
+    if (header.StrCodesRelativeOffset != -1)
+    {
+	    FSeek(header.BuffersSectionOffset + header.StrCodesRelativeOffset);
+	    StrCode StrCode32s[header.StrCodeCount] <bgcolor=0x75A2FA, fgcolor=0xFFFFFF>;
+    }
+}
+else if (header.version==TPP)
+{
+    if (header.StrCode32sRelativeOffset != -1)
+    {
+	    //Assert(FTell() == header.BuffersSectionOffset + header.StrCode32sRelativeOffset);
+	    FSeek(header.BuffersSectionOffset + header.StrCode32sRelativeOffset);
+	    StrCode32 StrCode32s[header.StrCode32Count] <bgcolor=0x75A2FA, fgcolor=0xFFFFFF>;
+    }
+
+    FAlign(8);
+    
+    if (header.PathCode64sRelativeOffset != -1)
+    {
+	    Assert(FTell() == header.BuffersSectionOffset + header.PathCode64sRelativeOffset);
+	    PathCode64 PathCode64s[header.PathCode64Count] <bgcolor=0x856ACE, fgcolor=0xFFFFFF>;
+    }
 }
 
 /* Get the comment string for a given hash index. */
@@ -605,6 +674,38 @@ string GetNodeTypeComment(ushort hashIndex)
         default:
             return Itoa(hash);
     }
+}
+
+/* Get the hash at a given index. */
+ulong GetStrCode(ushort hashIndex)
+{
+    local uint hashTableOffset = header.BuffersSectionOffset + header.StrCodesRelativeOffset;
+    local ulong currentPosition = FTell();
+
+    FSeek(hashTableOffset + sizeof(ulong) * hashIndex);
+
+    local ulong hash = ReadUInt64();
+    FSeek(currentPosition);
+
+    return hash;
+}
+
+/* Get the string at a given index. */
+string GetString(ushort stringIndex)
+{
+    local ulong currentPosition = FTell();
+    
+    FSeek(header.StringsRelativeOffset + (8 * stringIndex));
+    
+    uint stringSize <hidden=true>;
+    uint stringRelativeOffset <hidden=true>;
+    
+    FSeek(header.BuffersSectionOffset + stringRelativeOffset);
+
+    string retString <hidden=true>;
+    FSeek(currentPosition);
+
+    return retString;
 }
 
 /* Get the hash at a given index. */

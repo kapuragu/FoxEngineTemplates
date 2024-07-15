@@ -24,7 +24,9 @@ struct Entries
 	struct Entry
 	{
 		byte type <comment="Some types pick only one entry in it">;
+        //Printf("type:%x,",type);
 		byte visibility <comment="Hide or show mesh groups">;
+        Printf("visible:%u,",visibility);
 		byte meshCount;
 		byte textureCount;
 		
@@ -33,6 +35,7 @@ struct Entries
 			struct MeshGroups
 			{
 				uint meshGroup <comment="StrCode32 hash (example: MESH_eqhd_a)">;
+                Printf("meshgroup:%x,",meshGroup);
 				
 			} meshGroups[meshCount] <optimize=false, bgcolor=0x7E7F9A>;
 		}
@@ -45,9 +48,10 @@ struct Entries
 				uint textureType <comment="StrCode32 hash (example: BaseTex_SRGB)">;
 				byte texturePathLength;
 				char texturePath[texturePathLength-1] <comment="PC hashes are screwed up.">; // Someone who worked on FPK Tool back in the day might know how to handle them.
-				
+                Printf("materialInstance:%x,textureType:%x,texturePath:%s,\n",materialInstance,textureType,texturePath);
 			} textures[textureCount] <optimize=false, bgcolor=0xEB9486>;
 		}
+        Printf("\n");
 		
 	} entry[header.entryCount] <optimize=false, bgcolor=0x97A7B3>;
 	
