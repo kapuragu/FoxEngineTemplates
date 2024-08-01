@@ -166,6 +166,9 @@ struct AnimKeyframeData(TrackType type, ubyte componentBitSize)
 			case 32:
 				Vector3 Value;
 				break;
+			case 16:
+				VectorAnimH3 Value;
+				break;
 			default:
 				Assert(false);
 				break;
@@ -254,6 +257,7 @@ typedef struct
 	uint UnitOffsets[ChannelCount] <hidden = true>;
 
 	local uint trkIdx;
+    local uint sgmIdx;
 	for (trkIdx = 0; trkIdx < ChannelCount; trkIdx++)
 	{
 		FSeek(startof(this) + UnitOffsets[trkIdx]);
@@ -268,11 +272,18 @@ typedef struct
 				SCALE           = 2236677358,
 				TRANSLATE       = 2739596730,
 				COLOR           = 1662570759,
+                
+                //IK
+                RIG_ROOT        = 3552837520,
 
 				// 
 			} Name;
+            if (HeaderIndex==1)
+            {
+                Printf("%u\n",Name);
+            }
 
-			ubyte SegmentCount;
+			ubyte SegmentCount; sgmIdx = sgmIdx + SegmentCount;
 
 			TrackUnitFlags Flags;
 
