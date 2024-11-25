@@ -372,6 +372,17 @@ typedef struct
                 
                 // Demo
                 ExecCommand = 595181585,
+                DemoStart = 3541589503,
+                DemoEnd = 3534133658,
+                CreateLocator = 2523762371,
+                CreateModel = 3313525351,
+                VisibleModel = 1040836537,
+                VisibleMesh = 1799953944,
+                DeleteLocator = 826863926,
+                DeleteModel = 1968729831,
+                CreateCamera = 2135789169,
+                DeleteCamera = 4099945744,
+                ClipEnd = 708232468,
 			} EventName;
             
             //Printf(Str("%u\n",EventName));
