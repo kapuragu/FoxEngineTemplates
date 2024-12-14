@@ -1,0 +1,155 @@
+#include "common/common.bt"
+
+#define COLOR_HEADER 0x421923
+#define COLOR_NGRAPH 0x8E545E
+#define COLOR_FEDGES 0xC0869F
+
+struct Header
+{
+    char vfx[3];
+    ushort version;
+    ushort nodeCount;
+    ushort edgeCount;
+    
+    uint footerCount;
+    ushort padding <hidden=true>; Assert(padding==0);
+}header <bgcolor=COLOR_HEADER>;
+
+// Fx typedefs
+typedef struct
+{
+    ubyte arraySize;
+    ubyte value[arraySize];
+}FxByte;
+
+typedef struct
+{
+    ubyte arraySize;
+    ubyte value[arraySize];
+}FxBool;
+
+typedef struct
+{
+    ubyte arraySize;
+    ushort value[arraySize];
+}FxUint16;
+
+typedef struct
+{
+    ubyte arraySize;
+    uint value[arraySize];
+}FxUint32;
+
+typedef struct
+{
+    ubyte arraySize;
+    uint64 value[arraySize];
+}FxUint64;
+
+typedef struct
+{
+    ubyte arraySize;
+    float value[arraySize];
+}FxFloat;
+
+typedef struct
+{
+    ubyte arraySize;
+    Vector4 value[arraySize];
+}FxFloat2;
+
+typedef struct
+{
+    ubyte arraySize;
+    Vector4 value[arraySize];
+}FxFloat3;
+
+typedef struct
+{
+    ubyte arraySize;
+    Vector4 value[arraySize];
+}FxFloat4;
+
+typedef struct 
+{
+    ubyte arraySize;
+    struct String{
+        ushort charLength;
+        char value[charLength+1];
+    } fxString[arraySize] <optimize=false>;
+}FxString;
+
+typedef struct
+{
+    FxUint32 allFrame;
+    FxFloat4 boundingBoxOffsetPos;
+    FxFloat4 boundingBoxOffsetSize;
+    FxUint32 boundingBoxType;
+    FxBool debugInfo;
+    FxUint64 effectName;
+    FxUint32 executionPriorityType;
+    FxUint32 fadeInEndFrame;
+    FxUint32 fadeOutStartFrame;
+    FxUint32 playMode;
+    FxUint32 updateType;
+}FxModuleGraph;
+
+typedef struct
+{
+    FxFloat xDD140AE7;
+    FxFloat xD791673F;
+    FxFloat x53C923A7;
+    FxUint32 outputType;
+    FxString x25D54FF0;
+}FxAddPoolVectorNode;
+
+struct NodeGraph
+{
+	local uint nodeIndex;
+	for (nodeIndex = 0; nodeIndex < header.nodeCount; nodeIndex++)
+    {
+        uint64 nodeHash;
+        switch(nodeHash)
+        {
+            case 107577573034530:
+                FxModuleGraph node;
+                break;
+            case 217490886348901:
+                FxAddPoolVectorNode node;
+        }
+    };
+    
+}nodeGraph <bgcolor=COLOR_NGRAPH>;
+
+typedef struct
+{
+    if (header.nodeCount<256)
+    {
+        byte sourceNodeIndex;
+        byte targetNodeIndex;
+    }
+    else if (header.nodeCount>=256)
+    {
+        ushort sourceNodeIndex;
+        ushort targetNodeIndex;
+    };
+    byte sourcePortType;
+    byte sourcePortIndex;
+    byte targetPortType;
+    byte targetPortIndex;
+}FxModuleEdge;
+
+struct Edges
+{
+    FxModuleEdge edges[header.edgeCount];
+}edges <bgcolor=COLOR_FEDGES>;
+
+struct Footer
+{
+    StrCode32 Name;
+    uint footerEdgeCount;
+    struct FooterEdge{
+        ushort sourceNodeIndex;
+        ushort targetNodeIndex;
+    } footerEdge[footerEdgeCount];
+} footer[header.footerCount] <bgcolor=(COLOR_FEDGES/2)>;

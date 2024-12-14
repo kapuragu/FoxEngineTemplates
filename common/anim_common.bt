@@ -485,8 +485,8 @@ typedef struct
                     {
                         if (StringParams[5].param.hash==84993817083062) 
                         {
-                            local float divisor = 0.6-0.00063;
-                            Printf(Str("%f,%I64u\n",(TimeSections[0].StartFrame/divisor),StringParams[1].param.hash));
+                            local float divisor = 0.6*1000/1001;
+                            Printf(Str("%f,%I64u\n",TimeSections[0].StartFrame/divisor,StringParams[1].param.hash));
                         }
                     }
                 }

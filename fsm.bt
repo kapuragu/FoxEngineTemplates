@@ -230,6 +230,17 @@ while (FTell()!=FileSize())
                 
 				// The strings are sometimes fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s
 				EvpData EventSection;
+                if (EventSection.CategoryName==Normal)
+                {
+                    local int eventIndex=0;
+                    for (eventIndex=0; eventIndex<EventSection.UnitCount; eventIndex++)
+                    {
+                        if (EventSection.Event[eventIndex].EventName==ExecCommand)
+                        {
+                            Printf("%I64u,%I64u\n",EventSection.Event[eventIndex].StringParams[EventSection.Event[eventIndex].StringParamCount-2].param.hash,EventSection.Event[eventIndex].StringParams[EventSection.Event[eventIndex].StringParamCount-3].param.hash);
+                        };  
+                    };
+                };
 			};
 
 			if (FTell() % 16 != 0)

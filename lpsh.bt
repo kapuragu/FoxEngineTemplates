@@ -50,7 +50,7 @@ typedef struct
 	local uint numLightProbes = parentof(this).Parameter[GetFoxDataNodeParamIndex(parentof(this), "numLightProbes")].Value;
 
 	// Only in Version 4 files
-	local uint formatType = parentof(this).Parameter[GetFoxDataNodeParamIndex(parentof(this), "formatType")].Value; Assert(formatType == 1);
+	//local uint formatType = parentof(this).Parameter[GetFoxDataNodeParamIndex(parentof(this), "formatType")].Value; Assert(formatType == 1);
 
 	uint Times[numDiv] <hidden = true, optimize = true>;
 
