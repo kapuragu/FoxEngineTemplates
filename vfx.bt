@@ -10,9 +10,8 @@ struct Header
     ushort version;
     ushort nodeCount;
     ushort edgeCount;
-    
-    uint footerCount;
-    ushort padding <hidden=true>; Assert(padding==0);
+    ushort variationCount;
+    uint unknown <hidden=true>; Assert(unknown==0);
 }header <bgcolor=COLOR_HEADER>;
 
 // Fx typedefs
@@ -144,12 +143,12 @@ struct Edges
     FxModuleEdge edges[header.edgeCount];
 }edges <bgcolor=COLOR_FEDGES>;
 
-struct Footer
+struct Variation
 {
-    StrCode32 Name;
-    uint footerEdgeCount;
-    struct FooterEdge{
-        ushort sourceNodeIndex;
+    StrCode32 VariationName;
+    uint nodeSwapCount;
+    struct NodeSwap{
         ushort targetNodeIndex;
-    } footerEdge[footerEdgeCount];
-} footer[header.footerCount] <bgcolor=(COLOR_FEDGES/2)>;
+        ushort newNodeIndex;
+    } nodeSwap[nodeSwapCount];
+} variation[header.variationCount] <bgcolor=(COLOR_FEDGES/2)>;
