@@ -118,13 +118,12 @@ typedef struct
 	uint GEO_NODE_TAGS_EludeToElude : 1;
 } GEO_NODE_TAGS <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
 
-// From the exe we have to place: CHARA and RECOIL. The first could be CHARA. From JinMar's testing, it seems like MGS4_TYPRECOIL could be RECOIL?
 typedef struct
 {
 	uint64 Padding0 : 1 <hidden = true>; Assert(Padding0 == 0);
 	uint64 RECOIL : 1; // (MGS4) TYPRECOIL
 	uint64 CHARA : 1; // (TPP) 0x80000004 CHARA, (MGS4) 0x4 TYPFLOOR
-	uint64 MGS4_SOUND : 1; // Assert(MGS4_SOUND == 0); // (MGS4)
+	uint64 SOUND_MGS4 : 1; // Assert(SOUND_MGS4 == 0); This one triggered on mafr_tnnl001_rbbl001 // (MGS4)
 
 	uint64 PLAYER : 1;
 	uint64 ENEMY : 1;
@@ -132,28 +131,28 @@ typedef struct
 	uint64 MISSILE : 1;
 
 	uint64 BOMB : 1;
-	uint64 MGS4_RADOR : 1 <hidden = true>; Assert(MGS4_RADOR == 0); // (MGS4)
+	uint64 RADOR_MGS4 : 1 <hidden = true>; Assert(RADOR_MGS4 == 0); // (MGS4)
 	uint64 BLOOD : 1;
 	uint64 IK : 1;
 
 	uint64 STAIRWAY : 1;
 	uint64 STOP_EYE : 1;
 	uint64 CLIFF : 1;
-	uint64 MGS4_TYPTHROUGH : 1 <hidden = true>; Assert(MGS4_TYPTHROUGH == 0); // (MGS4)
+	uint64 TYPTHROUGH_MGS4 : 1 <hidden = true>; Assert(TYPTHROUGH_MGS4 == 0); // (MGS4)
 
-	uint64 MGS4_LEAN : 1 <hidden = true>; Assert(MGS4_LEAN == 0); // (MGS4)
+	uint64 LEAN_MGS4 : 1 <hidden = true>; Assert(LEAN_MGS4 == 0); // (MGS4)
 	uint64 DONT_FALL : 1;
 	uint64 CAMERA : 1;
-	uint64 MGS4_SHADOW : 1 <hidden = true>; Assert(MGS4_SHADOW == 0); // (MGS4)
+	uint64 SHADOW_MGS4 : 1 <hidden = true>; Assert(SHADOW_MGS4 == 0); // (MGS4)
 
-	uint64 MGS4_INTRUDE : 1 <hidden = true>; Assert(MGS4_INTRUDE == 0); // (MGS4)
-	uint64 MGS4_ATTACK_GUARD : 1 <hidden = true>; Assert(MGS4_ATTACK_GUARD == 0); // (MGS4)
+	uint64 INTRUDE_MGS4 : 1 <hidden = true>; Assert(INTRUDE_MGS4 == 0); // (MGS4)
+	uint64 ATTACK_GUARD_MGS4 : 1 <hidden = true>; Assert(ATTACK_GUARD_MGS4 == 0); // (MGS4)
 	uint64 CLIFF_FLOOR : 1;
 	uint64 BULLET_MARK : 1;
 
 	uint64 HEIGHT_LIMIT : 1;
-	uint64 MGS4_NO_BEHIND : 1 <hidden = true>; Assert(MGS4_NO_BEHIND == 0); // (MGS4)
-	uint64 MGS4_BEHIND_THROUGH : 1 <hidden = true>; Assert(MGS4_BEHIND_THROUGH == 0); // (MGS4)
+	uint64 NO_BEHIND_MGS4 : 1 <hidden = true>; Assert(NO_BEHIND_MGS4 == 0); // (MGS4)
+	uint64 BEHIND_THROUGH_MGS4 : 1 <hidden = true>; Assert(BEHIND_THROUGH_MGS4 == 0); // (MGS4)
 	uint64 Padding1 : 1 <hidden = true>; Assert(Padding1 == 0);
 
 	uint64 Padding2 : 1 <hidden = true>; Assert(Padding2 == 0);
