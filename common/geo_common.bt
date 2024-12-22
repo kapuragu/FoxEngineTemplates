@@ -121,74 +121,85 @@ typedef struct
 // From the exe we have to place: CHARA and RECOIL. The first could be CHARA. From JinMar's testing, it seems like MGS4_TYPRECOIL could be RECOIL?
 typedef struct
 {
-	uint64 GEO_COL_A_MAYBE_NONE : 1; if (GEO_COL_A_MAYBE_NONE) Printf("GEO_COL_A_MAYBE_NONE set.\n");
-	uint64 GEO_COL_A_MGS4_TYPRECOIL : 1; if (GEO_COL_A_MGS4_TYPRECOIL) Printf("GEO_COL_A_MGS4_TYPRECOIL set.\n");
-	uint64 GEO_COL_A_MGS4_TYPFLOOR : 1; if (GEO_COL_A_MGS4_TYPFLOOR) Printf("GEO_COL_A_MGS4_TYPFLOOR set.\n");
-	uint64 GEO_COL_A_MGS4_SOUND : 1; if (GEO_COL_A_MGS4_SOUND) Printf("GEO_COL_A_MGS4_SOUND set.\n");
+	uint64 Padding0 : 1 <hidden = true>; Assert(Padding0 == 0);
+	uint64 RECOIL : 1; // (MGS4) TYPRECOIL
+	uint64 CHARA : 1; // (TPP) 0x80000004 CHARA, (MGS4) 0x4 TYPFLOOR
+	uint64 MGS4_SOUND : 1; // Assert(MGS4_SOUND == 0); // (MGS4)
 
-	uint64 GEO_COL_A_PLAYER : 1;
-	uint64 GEO_COL_A_ENEMY : 1;
-	uint64 GEO_COL_A_BULLET : 1;
-	uint64 GEO_COL_A_MISSILE : 1;
+	uint64 PLAYER : 1;
+	uint64 ENEMY : 1;
+	uint64 BULLET : 1;
+	uint64 MISSILE : 1;
 
-	uint64 GEO_COL_A_BOMB : 1;
-	uint64 GEO_COL_A_MGS4_RADOR : 1; Assert(GEO_COL_A_MGS4_RADOR == 0);
-	uint64 GEO_COL_A_BLOOD : 1;
-	uint64 GEO_COL_A_IK : 1;
+	uint64 BOMB : 1;
+	uint64 MGS4_RADOR : 1 <hidden = true>; Assert(MGS4_RADOR == 0); // (MGS4)
+	uint64 BLOOD : 1;
+	uint64 IK : 1;
 
-	uint64 GEO_COL_A_STAIRWAY : 1;
-	uint64 GEO_COL_A_STOP_EYE : 1;
-	uint64 GEO_COL_A_CLIFF : 1;
-	uint64 GEO_COL_A_MGS4_TYPTHROUGH : 1; Assert(GEO_COL_A_MGS4_TYPTHROUGH == 0);
+	uint64 STAIRWAY : 1;
+	uint64 STOP_EYE : 1;
+	uint64 CLIFF : 1;
+	uint64 MGS4_TYPTHROUGH : 1 <hidden = true>; Assert(MGS4_TYPTHROUGH == 0); // (MGS4)
 
-	uint64 GEO_COL_A_MGS4_LEAN : 1; Assert(GEO_COL_A_MGS4_LEAN == 0);
-	uint64 GEO_COL_A_DONT_FALL : 1;
-	uint64 GEO_COL_A_CAMERA : 1;
-	uint64 GEO_COL_A_MGS4_SHADOW : 1; Assert(GEO_COL_A_MGS4_SHADOW == 0);
+	uint64 MGS4_LEAN : 1 <hidden = true>; Assert(MGS4_LEAN == 0); // (MGS4)
+	uint64 DONT_FALL : 1;
+	uint64 CAMERA : 1;
+	uint64 MGS4_SHADOW : 1 <hidden = true>; Assert(MGS4_SHADOW == 0); // (MGS4)
 
-	uint64 GEO_COL_A_MGS4_INTRUDE : 1; Assert(GEO_COL_A_MGS4_INTRUDE == 0);
-	uint64 GEO_COL_A_MGS4_ATTACK_GUARD : 1; Assert(GEO_COL_A_MGS4_ATTACK_GUARD == 0);
-	uint64 GEO_COL_A_CLIFF_FLOOR : 1;
-	uint64 GEO_COL_A_BULLET_MARK : 1;
+	uint64 MGS4_INTRUDE : 1 <hidden = true>; Assert(MGS4_INTRUDE == 0); // (MGS4)
+	uint64 MGS4_ATTACK_GUARD : 1 <hidden = true>; Assert(MGS4_ATTACK_GUARD == 0); // (MGS4)
+	uint64 CLIFF_FLOOR : 1;
+	uint64 BULLET_MARK : 1;
 
-	uint64 GEO_COL_A_HEIGHT_LIMIT : 1;
-	uint64 GEO_COL_A_DOUBLE_SLIDE : 1;
-	uint64 GEO_COL_A_WATER_SURFACE : 1;
-	uint64 GEO_COL_A_TARGET_BLOCK : 1;
+	uint64 HEIGHT_LIMIT : 1;
+	uint64 MGS4_NO_BEHIND : 1 <hidden = true>; Assert(MGS4_NO_BEHIND == 0); // (MGS4)
+	uint64 MGS4_BEHIND_THROUGH : 1 <hidden = true>; Assert(MGS4_BEHIND_THROUGH == 0); // (MGS4)
+	uint64 Padding1 : 1 <hidden = true>; Assert(Padding1 == 0);
 
-	uint64 GEO_COL_A_DOG : 1;
-	uint64 GEO_COL_A_NO_EFFECT : 1;
-	uint64 GEO_COL_A_EVENT_PHYSICS : 1;
-	uint64 GEO_COL_A_NO_WALL_MOVE : 1;
+	uint64 Padding2 : 1 <hidden = true>; Assert(Padding2 == 0);
+	uint64 DOUBLE_SIDE : 1;
+	uint64 WATER_SURFACE : 1;
+	uint64 CHARA_Part2 : 1 <hidden = true>; Assert(CHARA == CHARA_Part2);
 
-	uint64 GEO_COL_A_UNKNOWN0 : 1; // NO_BEHIND proceeds HEIGHT_LIMIT in MGS4; possibly that?
-	uint64 GEO_COL_A_UNKNOWN1 : 1; // BEHIND_THROUGH proceeds NO_BEHIND in MGS4; possibly that?
+	uint64 TARGET_BLOCK : 1;
+	uint64 DOG : 1;
+	uint64 Padding3 : 1 <hidden = true>; Assert(Padding3 == 0);
+	uint64 NO_EFFECT : 1;
 
-	uint64 Padding0 : 6 <hidden = true>; Assert(Padding0 == 0, "Extra GEO_COL_A set. Is this SSD?"); //ssdm_brdg001_brdg001.geom
+	uint64 EVENT_PHYSICS : 1;
+	uint64 NO_WALL_MOVE : 1;
+	uint64 MISSILE2 : 1;
+	uint64 Padding4 : 1 <hidden = true>; Assert(Padding4 == 0);
 
-	uint64 GEO_COL_A_UNKNOWN2 : 1; //
+	uint64 TppReserve1 : 1;
+	uint64 TppReserve2 : 1;
+	uint64 TppReserve3 : 1;
+	uint64 TppReserve4 : 1;
 
-	uint64 Padding1 : 7 <hidden = true>; Assert(Padding1 == 0, "Extra GEO_COL_A set. Is this SSD?"); //ssdm_brdg001_brdg001.geom
+	uint64 Padding5 : 1 <hidden = true>; Assert(Padding5 == 0);
+	uint64 Padding6 : 1 <hidden = true>; Assert(Padding6 == 0);
+	uint64 Padding7 : 1 <hidden = true>; Assert(Padding7 == 0);
+	uint64 Padding8 : 1 <hidden = true>; Assert(Padding8 == 0);
 
-	uint64 GEO_COL_A_MISSILE2 : 1;
-	uint64 GEO_COL_A_RIDE_ON_OUTER : 1;
-	uint64 GEO_COL_A_FLAME : 1;
-	uint64 GEO_COL_A_IGNORE_PHYSICS : 1;`
+	uint64 Sahelan : 1;
+	uint64 RIDE_ON_OUTER : 1;
+	uint64 FLAME : 1;
+	uint64 IGNORE_PHYSICS : 1;
 
-	uint64 GEO_COL_A_CLIMB : 1;
-	uint64 GEO_COL_A_HORSE : 1;
-	uint64 GEO_COL_A_VEHICLE : 1;
-	uint64 GEO_COL_A_MARKER : 1;
+	uint64 CLIMB : 1;
+	uint64 HORSE : 1;
+	uint64 VEHICLE : 1;
+	uint64 MARKER : 1;
 
-	uint64 GEO_COL_A_RIDE_ON : 1;
-	uint64 GEO_COL_A_THROUGH_LINE_OF_FIRE : 1;
-	uint64 GEO_COL_A_THROUGH_ITEM_CHECK : 1;
-	uint64 GEO_COL_A_NO_CREEP : 1;
+	uint64 RIDE_ON : 1;
+	uint64 THROUGH_LINE_OF_FIRE : 1;
+	uint64 THROUGH_ITEM_CHECK : 1;
+	uint64 NO_CREEP : 1;
 
-	uint64 GEO_COL_A_NO_FULTON : 1;
-	uint64 GEO_COL_A_FULTON : 1;
-	uint64 GEO_COL_A_ITEM : 1;
-	uint64 GEO_COL_A_BOSS : 1;
+	uint64 NO_FULTON : 1;
+	uint64 FULTON : 1;
+	uint64 ITEM : 1;
+	uint64 BOSS : 1;
 } GEO_COL_A <bgcolor = COLOR_BG_TAGS, fgcolor = COLOR_FG_TAGS>;
 
 enum <uint> GEO_PRIM_TYPE
