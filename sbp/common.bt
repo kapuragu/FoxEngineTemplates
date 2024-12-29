@@ -139,12 +139,36 @@ struct ArrayGraphPoints
 
 float LinearTodB(float linear)
 {
-      return -20.0 * Log(1.0 - linear) / Log(10.0);
+    if (linear>=0)
+    {
+        return dbDecode(linear);
+    }
+    else
+    {
+        return -dbDecode(-linear);
+    };
+};
+
+float dbDecode(float x)
+{
+    return -20.0 * Log(1.0 - x) / Log(10.0);
 };
 
 float dBtoLinear(float db)
 {
-      return -20.0 * Log(1.0 - db) / Log(10.0);
+    if (db>=0)
+    {
+        return dbEncode(x);
+    }
+    else
+    {
+        return -dbEncode(-x);
+    };
+};
+
+float dbEncode(float x)
+{
+    return Exp(Log(10) * ±1.0/20 * x);
 };
 
 struct CurveDefinition
@@ -175,6 +199,7 @@ struct RTPCCurve
     	Voice_Pitch = 2,
     	Voice_Low_Pass_Filter = 3,
     	// newer effect as of Wwise 2013!
+        Duration = 5,
     	Initial_Delay = 6,
     	Priority = 8,
     	Sound_Instance_Limit = 9,

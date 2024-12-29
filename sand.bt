@@ -141,7 +141,7 @@ struct
 			uint Id;
 		} cameraObjectReference <read = Str("Name: %u, Id: %u", Name.hash, Id), optimize = false>;
 	}
-} CameraObjectReferences <bgcolor=0xB9E7CA>;
+} AttributeNameTable <bgcolor=0xB9E7CA>;
 
 // Section #4: Object Track Sets
 
@@ -166,4 +166,4 @@ struct
 			uint shaderOffset; // global offset to shader object
 		} objectTrackSet <read = Str("Name: %u", Name.hash), optimize = false>;
 	}
-} ObjectTrackSets <bgcolor=0x9A7F7E>;
+} TargetNameTable <bgcolor=0x9A7F7E>;

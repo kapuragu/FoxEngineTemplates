@@ -117,7 +117,7 @@ struct Object
 
 			if (action_type == AkActionType_Play || action_type == AkActionType_PlayAndContinue)
 			{
-				ubyte unknown; // sets up some unknown flags again
+				ubyte curveType; // sets up some unknown flags again
 				uint fileID;
 			}
 			// Resume or pause action types
@@ -143,8 +143,8 @@ struct Object
 				// not sure if this is what it actually means
 				enum <ubyte> AbsoluteOrRelative
 				{
-					Relative,
-					Absolute
+					Relative=2,
+					Absolute=1
 				} absoluteorrelative;
 				float valueSetting;
 			}
@@ -212,8 +212,8 @@ struct Object
             ubyte unk3;
             short unknown;
             float transitionDuration;
-            uint unknown2;
-            float unknown3;
+            float transitionDuration_randomMin;
+            float transitionDuration_randomMax;
             ushort avoidRepeatingLastCount;
             enum <ubyte> ContainerTransitionType
             {
