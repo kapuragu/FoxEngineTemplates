@@ -175,8 +175,8 @@ enum <ushort> ParamName
     LocalReflectionSettings_rayStepScale=2307,
     LocalReflectionSettings_rayCount=2308,
     LocalReflectionSettings_shaderType=2309,
-    LocalReflectionSettings_specularColorScale=2310,
-    LocalReflectionSettings_u5=2311,
+    LocalReflectionSettings_fade=2310,
+    LocalReflectionSettings_mask=2311,
     
     //GenerativeClouds
     GenerativeClouds_gcEnable=2561,
