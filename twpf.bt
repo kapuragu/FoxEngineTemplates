@@ -166,8 +166,8 @@ enum <ushort> ParamName
     //WeatherParameters
     WeatherParameters_raininess=1793,//1793 Float - rain strength (RAINY always 1, in gntn RAINY is 0.5 and POURING is 1, other weathers 0)
     WeatherParameters_windSpeed=1794,
-    WeatherParameters_sandstormIntensity=1795,
-    WeatherParameters_sandstormPeriodScale=1796,
+    WeatherParameters_speedTurbulentRate=1795,
+    WeatherParameters_speedTurbulentCycle=1796,
     
     //LocalReflectionSettings
     LocalReflectionSettings_effectScale=2305,
