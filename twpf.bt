@@ -127,8 +127,12 @@ enum <ushort> ParamName
     
     //ColorCorrection
     ColorCorrection_colorScale=1025,
+    ColorCorrection_startSlope=1027,
+    ColorCorrection_endSlope=1028,
     ColorCorrection_textureLUT=1030,
     ColorCorrection_colorScale2=1032,
+    ColorCorrection_startSlope2=1033,
+    ColorCorrection_endSlope2=1034,
     ColorCorrection_filterLUT=1035,
     
     //WeatherParameters
@@ -253,9 +257,9 @@ struct WeatherParameterGroup
 							break;
 					}
 				} weatherParamCurveKey[numCurveValues] <optimize=false>;
-			} weatherParamCurve[numFogCurves] <read=weatherType, optimize=false>;
+			} weatherParamCurve[curveCount] <read=EnumToString(weatherType), optimize=false>;
 		} weatherParamTag[entryCount] <name=GetTag, read=GetTag, optimize=false>;
-	} WeatherParameterTagGroup[entryCount] <optimize=false>;
+	} WeatherParameterTagGroup[entryCount] <read=Str("%s, %s", EnumToString(type), EnumToString(name)), optimize=false>;
 } weatherParamGroup[offsets.totalWeatherParamGroupCount] <bgcolor=0x533717, optimize=false>;
 
 string GetTag(WeatherParameterTag &entry)
