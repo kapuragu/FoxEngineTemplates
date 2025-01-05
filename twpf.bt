@@ -177,26 +177,28 @@ struct Header
 {
     char format[7];
     byte version;
-    int magicNumber1;
+    int headerSize; Assert(headerSize==FTell());
+} header <bgcolor=0x6741DA>;
 
-    Assert(magicNumber1 == 12);
-
-    int section1EntryCount;
+struct Offsets
+{
+    int totalWeatherParamGroupCount;
     int tagCount;
 
-    int section1EntryOffsets[section1EntryCount - 1];
-    ushort fogSettingsEntryCount;
-    ushort magicNumber2;
-    Assert(magicNumber2 == 1);
+    int weatherParamGroupsOffsets[totalWeatherParamGroupCount - 1];
+    ushort firstWeatherParamGroupCount;
+    ushort firstGroupType;
+    Assert(firstGroupType == 1);
 
-    uint fogSettingsEntryOffsets[fogSettingsEntryCount];
-} header <bgcolor=0x6741DA>;
+    uint firstWeatherParamGroupOffsets[firstWeatherParamGroupCount];
+} offsets <fgcolor=0x6741DA>;
 
 typedef struct
 {
 	ubyte entryCount <hidden=true>;
 	ColorMode valueType;    
-	ushort parameterEnum;
+	ubyte parameterType;
+    ubyte groupType;
 		
 	uint entryOffsets[entryCount] <hidden=true>;
 		
@@ -254,7 +256,13 @@ string GetTag(WeatherParameterTag &entry)
 // Defines fog strength curves.
 struct WeatherParameterTagGroups
 {
-    WeatherParameterTagGroup weatherParamTagGroup[header.fogSettingsEntryCount] <bgcolor=0xBAB366, optimize=false>;
+    WeatherParameterTagGroup weatherParamTagGroup[offsets.firstWeatherParamGroupCount] <bgcolor=0xBAB366, optimize=false>;
+	
+    local uint i;
+	for(i = 0; i < offsets.firstWeatherParamGroupCount; i++)
+    {
+        Assert(weatherParamTagGroup[i].groupType==offsets.firstGroupType);
+    };
 } weatherParamTagGroups;
 
 struct WeatherParameterGroups
@@ -267,18 +275,23 @@ struct WeatherParameterGroups
         // Yep, across TPP files, this seems to hold
         // What confuses me though is that there are often two entries of value 2
         // Maybe this should be taken as a uint and you merely extract the count from it
-        ushort maybeAnEnum;
+        ushort groupType;
     
         uint entryOffsets[entryCount] <hidden=true>;
     
         // Each entry is linked to a parameter (e.g., shadowRange) and contains curves for tags
         WeatherParameterTagGroup weatherParamTagGroup[entryCount] <optimize=false>;
-    } weatherParamGroup[header.section1EntryCount - 1] <bgcolor=0x533717, optimize=false>;
+	    local uint i;
+	    for(i = 0; i < entryCount; i++)
+        {
+            Assert(weatherParamTagGroup.groupType==groupType);
+        };
+    } weatherParamGroup[offsets.totalWeatherParamGroupCount - 1] <bgcolor=0x533717, optimize=false>;
 } weatherParamGroups;
 
 struct Tag{
-    char tagName[];
-} tag[header.tagCount] <read=tagName,optimize=false>;
+    char tagName[]; //rlc sometimes header count is more than there are actual strings here!
+} tag[offsets.tagCount] <read=tagName,optimize=false>;
 
 // NOTE
 // The footer names are called "tags"

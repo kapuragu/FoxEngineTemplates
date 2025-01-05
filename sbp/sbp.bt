@@ -108,11 +108,16 @@ struct Object
 			}
 
 			// AkPropBundle<RANGED_MODIFIERS<AkPropValue>_>::SetInitialParams() 
-			ubyte propsCount;
-			if (propsCount > 0)
+			ubyte randomizerCount;
+			if (randomizerCount > 0)
 			{
-				ubyte unknowns[propsCount];
-				uint64 unknown64s[propsCount];
+				EventParameterType randomizerType[randomizerCount]; //randomized parameter type
+			    struct EventRandomizerMinMax
+			    {
+				    //SoundStrctureParameterType Parameter;
+				    uint min;
+				    uint max;
+			    } randomizerminmax[randomizerCount];
 			}
 
 			if (action_type == AkActionType_Play || action_type == AkActionType_PlayAndContinue)
@@ -624,6 +629,7 @@ struct Object
                 AkExpander=109,
                 AkPeakLimiter=110,
                 AkMatrixReverb=115,
+                SoundSeed_Air_SoundSeed_Wind=119,
                 AkFlanger=125,
                 AkGuitarDistortion=126,
                 AkConvolutionReverb=127,
@@ -682,6 +688,9 @@ struct Object
                     float WetLevel;
                     float DryLevel;
                     ubyte ProcessLFE;
+                    break;
+                case SoundSeed_Air_SoundSeed_Wind:
+                    FSkip(effectSettingsLength);
                     break;
                 case AkPeakLimiter:
                     if (unknownFlags2==0)

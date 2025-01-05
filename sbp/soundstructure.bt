@@ -214,6 +214,8 @@ struct SoundStructure
 					{
 						float rr_horizontal;
 						float rr_vertical;
+                        local float rr_horizontal_real = rr_horizontal / 25.0;
+                        local float rr_vertical_real = rr_vertical / 25.0;
 					} random_range_of_path;
 				}
 			}

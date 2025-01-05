@@ -3,6 +3,7 @@
 enum <byte> ObjectSettingsType
 {
 	VoiceVolume=0,
+    VoicePitch=2,
 	VoiceLowPassFilter=3,
     BusVolume=4,
 };

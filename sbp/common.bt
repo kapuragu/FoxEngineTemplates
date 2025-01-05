@@ -139,6 +139,14 @@ struct ArrayGraphPoints
 
 float LinearTodB(float linear)
 {
+    if (linear==1.0)
+    {
+        return 200.0;  
+    }
+    else if (linear==-1.0)
+    {
+        return -200.0;  
+    };
     if (linear>=0)
     {
         return dbDecode(linear);
