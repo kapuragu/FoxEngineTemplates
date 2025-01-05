@@ -216,13 +216,12 @@ struct WeatherParameterGroup
 		struct WeatherParameterTag
         {
 			uint tagOffset <fgcolor=0xFFFFFF, hidden=true>;
-			ubyte numFogCurves <hidden=true>;
+			ubyte curveCount <hidden=true>;
 			ushort tagIndex <hidden=true>;
 	
-			ubyte padding <hidden=true>;
-			Assert(padding == 0);
+			ubyte padding <hidden=true>; Assert(padding == 0);
 	
-			uint fogCurveOffsets[numFogCurves] <optimize=false, hidden=true>;
+			uint curveOffsets[curveCount] <optimize=false, hidden=true>;
 			
 			struct WeatherParameterCurve
             {
