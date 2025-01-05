@@ -20,7 +20,9 @@ enum <ushort> WeatherParamGroupName
     TppAtmosphere_TppSky=2,
     GrPluginSettings=3,
     ColorCorrection=4,
+    LineSSAOParameters=5,
     WeatherParameters=7,
+    LocalReflectionSettings=9,
     GenerativeClouds=10,
 };
 
@@ -31,10 +33,12 @@ enum <ushort> ParamName
     TppGlobalVolumetricFog_color=258,
     TppGlobalVolumetricFog_luminance=260,
     
+    TppGlobalVolumetricFog_nearDistance=262,
+    
     TppGlobalVolumetricFog_skyAlbedo=264,
     TppGlobalVolumetricFog_rayleighScattering=265,
     TppGlobalVolumetricFog_mieScattering=266,
-    
+    TppGlobalVolumetricFog_falloff=267,
     TppGlobalVolumetricFog_mieAnisotropy=268,
     TppGlobalVolumetricFog_exposureOffset0=269,
     TppGlobalVolumetricFog_exposureOffset0_Ev=270,
@@ -44,14 +48,16 @@ enum <ushort> ParamName
     TppGlobalVolumetricFog_exposureOffset2_Ev=274,
     TppGlobalVolumetricFog_power=275,
     TppGlobalVolumetricFog_fogDirLightGain=276,
-    
+    TppGlobalVolumetricFog_density_noise0_ratio=277,
+    TppGlobalVolumetricFog_density_envelope0_add=278,
     // TppAtmosphere
     TppAtmosphere_daySkyAmbientScale=514, //0 in avatar_space and low in volginride, 0.5 in nonsunny
     TppAtmosphere_starLight=516,
-    
+    TppAtmosphere_cloudiness=517,
     TppAtmosphere_skyColorSunScale=518,
     TppAtmosphere_skyLightSunScale=519,
     
+    TppAtmosphere_shadowMaskSpecular=521,
     TppAtmosphere_shadowRange=522,
     TppAtmosphere_shadowRangeExtra=523,
     TppAtmosphere_hiResShadowRange=524,
@@ -86,6 +92,7 @@ enum <ushort> ParamName
             
     TppAtmosphere_starLuminanceScale=576,
     TppAtmosphere_skyLightSunScaleOcean=577,
+    TppAtmosphere_influenceOfFogMin=578,
 
     //TppSky
     TppSky_diffusion=641,
@@ -111,9 +118,10 @@ enum <ushort> ParamName
     //GrPluginSettings
     GrPluginSettings_minExposure=769,
     GrPluginSettings_maxExposure=770,
-            
-    GrPluginSettings_bloomSize=775,
+    GrPluginSettings_exposureCompensation=772,
     
+    GrPluginSettings_bloomSize=775,
+    GrPluginSettings_shutterSpeed=776,
     GrPluginSettings_keyValue=777,
     
     GrPluginSettings_addExpComp0=782,
@@ -124,21 +132,52 @@ enum <ushort> ParamName
     GrPluginSettings_addExpComp2_Ev=787,
     GrPluginSettings_bloomBrightnessExtraction=788,
     GrPluginSettings_bloomWeight=789,
+    GrPluginSettings_ghostStrength=790,
+    GrPluginSettings_ghostScreenScale=791,
     
     //ColorCorrection
     ColorCorrection_colorScale=1025,
     ColorCorrection_startSlope=1027,
     ColorCorrection_endSlope=1028,
-    ColorCorrection_textureLUT=1030,
+    ColorCorrection_lut=1030,
+    ColorCorrection_exposureThreshold=1031,
     ColorCorrection_colorScale2=1032,
     ColorCorrection_startSlope2=1033,
     ColorCorrection_endSlope2=1034,
-    ColorCorrection_filterLUT=1035,
+    ColorCorrection_lut2=1035,
+    ColorCorrection_exposureThreshold2=1036,
+    
+    //LineSSAOParameters
+    LineSSAOParameters_innerRadius=1281,
+    LineSSAOParameters_outerRadius=1282,
+    LineSSAOParameters_maxDistanceInner=1283,
+    LineSSAOParameters_maxDistanceOuter=1284,
+    
+    LineSSAOParameters_blurRadius=1286,
+    LineSSAOParameters_falloffStart=1287,
+    LineSSAOParameters_falloffRange=1288,
+    LineSSAOParameters_gainonStart=1289,
+    LineSSAOParameters_gainonRange=1290,
+    LineSSAOParameters_contrastLow=1291,
+    LineSSAOParameters_contrastHigh=1292,
+    LineSSAOParameters_maxDistanceThresholdInner=1293,
+    LineSSAOParameters_maxDistanceThresholdOuter=1294,
     
     //WeatherParameters
-    //1793 Float - rain strength (RAINY always 1, in gntn RAINY is 0.5 and POURING is 1, other weathers 0)
+    WeatherParameters_raininess=1793,//1793 Float - rain strength (RAINY always 1, in gntn RAINY is 0.5 and POURING is 1, other weathers 0)
     WeatherParameters_windSpeed=1794,
-        
+    WeatherParameters_sandstormIntensity=1795,
+    WeatherParameters_sandstormPeriodScale=1796,
+    
+    //LocalReflectionSettings
+    LocalReflectionSettings_effectScale=2305,
+    LocalReflectionSettings_roughnessBias=2306,
+    LocalReflectionSettings_rayStepScale=2307,
+    LocalReflectionSettings_rayCount=2308,
+    LocalReflectionSettings_shaderType=2309,
+    LocalReflectionSettings_specularColorScale=2310,
+    LocalReflectionSettings_u5=2311,
+    
     //GenerativeClouds
     GenerativeClouds_gcEnable=2561,
     GenerativeClouds_gcDensity=2562,
