@@ -22,6 +22,7 @@ enum <ushort> WeatherParamGroupName
     ColorCorrection=4,
     LineSSAOParameters=5,
     WeatherParameters=7,
+    NoiseEnvelopeGenerator=8,
     LocalReflectionSettings=9,
     GenerativeClouds=10,
 };
@@ -169,6 +170,11 @@ enum <ushort> ParamName
     WeatherParameters_speedTurbulentRate=1795,
     WeatherParameters_speedTurbulentCycle=1796,
     
+    //NoiseEnvelopeGenerator
+    NoiseEnvelopeGenerator_envelopeAttackTime=2049,
+    NoiseEnvelopeGenerator_envelopeDecayTime=2050,
+    NoiseEnvelopeGenerator_noiseRate=2051,
+        
     //LocalReflectionSettings
     LocalReflectionSettings_effectScale=2305,
     LocalReflectionSettings_roughnessBias=2306,
