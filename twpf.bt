@@ -32,10 +32,11 @@ enum <ushort> ParamName
     //TppGlobalVolumetricFog
     TppGlobalVolumetricFog_density=257,
     TppGlobalVolumetricFog_color=258,
+    TppGlobalVolumetricFog_GZ_albedo=259,//only other color after color
     TppGlobalVolumetricFog_luminance=260,
-    
+    TppGlobalVolumetricFog_GZ_height=261,//135 in pouring, like gntn_nightRain_sky
     TppGlobalVolumetricFog_nearDistance=262,
-    
+    TppGlobalVolumetricFog_GZ_bottom=263,//0 except ombs which is -10 in e20015_sky
     TppGlobalVolumetricFog_skyAlbedo=264,
     TppGlobalVolumetricFog_rayleighScattering=265,
     TppGlobalVolumetricFog_mieScattering=266,
@@ -52,12 +53,14 @@ enum <ushort> ParamName
     TppGlobalVolumetricFog_density_noise0_ratio=277,
     TppGlobalVolumetricFog_density_envelope0_add=278,
     // TppAtmosphere
+    TppAtmosphere_GZ_mieAnisotropy=513,//twpfs go from 0.2 at night to 1 in day, datasets do 0.8 and ofCloudySky 0.2
     TppAtmosphere_daySkyAmbientScale=514, //0 in avatar_space and low in volginride, 0.5 in nonsunny
+    TppAtmosphere_GZ_multiScatteringOrder=515,
     TppAtmosphere_starLight=516,
     TppAtmosphere_cloudiness=517,
     TppAtmosphere_skyColorSunScale=518,
     TppAtmosphere_skyLightSunScale=519,
-    
+    //520 0 at most times, 7 at midnight cloudy, 4.5 at midnight rainy, 0 in title
     TppAtmosphere_shadowMaskSpecular=521,
     TppAtmosphere_shadowRange=522,
     TppAtmosphere_shadowRangeExtra=523,
@@ -119,6 +122,7 @@ enum <ushort> ParamName
     //GrPluginSettings
     GrPluginSettings_minExposure=769,
     GrPluginSettings_maxExposure=770,
+    
     GrPluginSettings_exposureCompensation=772,
     
     GrPluginSettings_bloomSize=775,
@@ -153,7 +157,7 @@ enum <ushort> ParamName
     LineSSAOParameters_outerRadius=1282,
     LineSSAOParameters_maxDistanceInner=1283,
     LineSSAOParameters_maxDistanceOuter=1284,
-    
+    LineSSAOParameters_GZ_contrast=1285,
     LineSSAOParameters_blurRadius=1286,
     LineSSAOParameters_falloffStart=1287,
     LineSSAOParameters_falloffRange=1288,
@@ -301,11 +305,33 @@ struct WeatherParameterGroup
 							Assert(false);
 							break;
 					}
-				} weatherParamCurveKey[numCurveValues] <optimize=false>;
+				} weatherParamCurveKey[numCurveValues] <read=ReadKey(this), optimize=false>;
 			} weatherParamCurve[curveCount] <read=EnumToString(weatherType), optimize=false>;
 		} weatherParamTag[entryCount] <name=GetTag, read=GetTag, optimize=false>;
 	} WeatherParameterTagGroup[entryCount] <read=Str("%s, %s", EnumToString(type), EnumToString(name)), optimize=false>;
-} weatherParamGroup[offsets.totalWeatherParamGroupCount] <bgcolor=0x533717, optimize=false>;
+} weatherParamGroup[offsets.totalWeatherParamGroupCount] <read=EnumToString(groupName), bgcolor=0x533717, optimize=false>;
+
+string ReadKey(WeatherParameterCurveKey &key)
+{
+    local string str=Str("%s, ", ReadUInt24HTimeTwpf(key.time));
+	switch(parentof(parentof(parentof(key))).type)
+	{
+		case Float:
+			str+=Str("%g", key.value);
+			break;
+		case RGB:
+			str+=Str("(%g, %g, %g)", key.value.r, key.value.g, key.value.b);
+			break;
+		case Path:
+			str+=Str("%I64u", key.value.hash);
+			break;
+		case String:
+			str+=Str("%I64u", key.value.hash);
+			break;
+		}
+    return str;
+};
+
 
 string GetTag(WeatherParameterTag &entry)
 {
@@ -313,7 +339,7 @@ string GetTag(WeatherParameterTag &entry)
     string tag = ReadString(entry.tagOffset);
     FSeek(position);
     return tag;
-}
+};
 
 struct Tag
 {
