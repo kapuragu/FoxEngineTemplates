@@ -236,12 +236,12 @@ struct Header
     int headerSize; Assert(headerSize==FTell());
 } header <bgcolor=0x6741DA>;
 
-struct Offsets
+struct WeatherParameterGroups
 {
     int totalWeatherParamGroupCount;
-    int tagCount;
+    //int tagCount;//rlc THERE IS NO TAG COUNT
 
-    int weatherParamGroupsOffsets[totalWeatherParamGroupCount - 1];
+    int weatherParamGroupsOffsets[totalWeatherParamGroupCount];
     //rlc guess first position is assumed to be here
 } offsets <bgcolor=0xBAB366>;
 
@@ -341,11 +341,17 @@ string GetTag(WeatherParameterTag &entry)
     return tag;
 };
 
-struct Tag
-{
-    char tagName[]; //rlc sometimes header count is more than there are actual strings here!
-} tag[offsets.tagCount] <read=tagName,optimize=false>;
-
 // NOTE
 // The footer names are called "tags"
 // And are called like: WeatherManager.RequestTag("sortie_space", 0 )
+
+struct Tags
+{
+    while(FTell()<FileSize())
+    {
+        struct Tag
+        {
+            char tagName[];
+        } tag;
+    };
+}tags;
