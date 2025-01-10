@@ -31,6 +31,8 @@ string ResolveHashFunc32(StrCode32& hash)
 	case 1139911476: return "StepDown";
 	case 2317903572: return "LadderUp";
 	case 3049138984: return "LadderDown";
+    //3451056519
+    //504469101
 	default: return "";
 	}
 }
@@ -40,8 +42,8 @@ string ResolveHashFunc32(StrCode32& hash)
 struct Header 
 {
     char sign[4];
-    short unk0;
-    short unk1;
+    short unk0; Assert(unk0==1,"header unk0 isn't 1!");
+    short unk1; Assert(unk1==1,"header unk1 isn't 1!");
     uint offsetToData;
 } header <bgcolor=SpringGreen, hidden=true>;
 
@@ -52,7 +54,7 @@ struct Data
     StrCode DefaultEdgeActionName; //???
 
     uint actionCount <hidden=true>;
-    int unknown0 <hidden=true>; Assert(unknown0==24,"unknown0 isn't 24!!! Where is the bomb?!!!");
+    int offsetToActions <hidden=true>;
     uint actionNameOffset <hidden=true>;
     uint dataSize <hidden=true>;
     
@@ -77,10 +79,10 @@ struct Data
 
             StrCode edgeActionName; //Not always empty! Ex: gntn_common.nta. But what kinda name???
 
-            short unk0; //These unknowns scare me the most
-            short unk1 <hidden=true>; Assert(unk1==0,"unk1 isn't 0!");
-            short unk2 <hidden=true>; Assert(unk2==0,"unk2 isn't 0!!");
-            short unk3 <hidden=true>; Assert(unk3==0,"unk3 isn't 0!!!");
+            short unk0; //These unknowns scare me the most. Can be -1, 1, 32, 1153
+            Printf("\n%u, %u = %g", waypoint[0].waypointAction.hash, waypoint[1].waypointAction.hash, unk0);
+            short padding0 <hidden=true>; Assert(padding0==0,"padding0 isn't 0!");
+            int padding1 <hidden=true>; Assert(padding1==0,"padding1 isn't 0!!");
         } action <bgcolor=OldLavender, optimize=false>;
     };
 } data<bgcolor=ElectricBlue>;
