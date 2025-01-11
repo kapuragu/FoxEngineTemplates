@@ -39,50 +39,57 @@ string ResolveHashFunc32(StrCode32& hash)
 
 #define FOX_DATA_HASH_RESOLVE_FUNC ResolveHashFunc
 
-struct Header 
+struct NtaHeader 
 {
-    char sign[4];
-    short unk0; Assert(unk0==1,"header unk0 isn't 1!");
-    short unk1; Assert(unk1==1,"header unk1 isn't 1!");
-    uint offsetToData;
-} header <bgcolor=SpringGreen, hidden=true>;
+    char Signature[4];
+    ushort Version; Assert(Version == 1);
+    ushort WorldCount;
+    uint WorldsOffset;
+} Header <bgcolor=SpringGreen, hidden=true>;
 
-FSeek(header.offsetToData);
+local uint offset = Header.WorldsOffset;
 
-struct Data
+local uint i = 0;
+local uint j;
+local uint rewindPos;
+for (i = 0; i < Header.WorldCount; i++)
 {
-    StrCode DefaultEdgeActionName; //???
+    FSeek(offset);
 
-    uint actionCount <hidden=true>;
-    int offsetToActions <hidden=true>;
-    uint actionNameOffset <hidden=true>;
-    uint dataSize <hidden=true>;
-    
-    local int i <hidden=true>;
-    local uint pos <hidden=true>;
-    for (i = 0; i < actionCount; i++)
+    struct NtaWorld
     {
-        struct GkTacticalAction
+        StrCode Name; // Main Nav world name is just ""
+
+        uint ActionCount <hidden=true>;
+        uint ActionsOffset <hidden=true>;
+        uint ActionNameOffset <hidden=true>;
+        uint NextOffset <hidden=true>;
+        
+        FSeek(offset + ActionsOffset);
+        for (j = 0; j < ActionCount; j++)
         {
-            pos = FTell();
-            FSeek(header.offsetToData + actionNameOffset + i * sizeof(StrCode));
-
-            StrCode actionName <bgcolor=VioletBlueCrayola>; //Entry name?
-
-            FSeek(pos);
-
-            struct GkTacticalActionWaypoint
+            struct GkTacticalAction
             {
-                Vector3 position <fgcolor=PaleCerulean>;
-                StrCode32 waypointAction;
-            } waypoint[2];
+                rewindPos = FTell();
+                FSeek(offset + ActionNameOffset + j * sizeof(StrCode));
+                StrCode ActionName <bgcolor=VioletBlueCrayola>;
+                FSeek(rewindPos);
 
-            StrCode edgeActionName; //Not always empty! Ex: gntn_common.nta. But what kinda name???
+                struct GkTacticalActionWaypoint
+                {
+                    Vector3 Position <fgcolor=PaleCerulean>;
+                    StrCode32 WaypointAction;
+                } Waypoints[2];
 
-            short unk0; //These unknowns scare me the most. Can be -1, 1, 32, 1153
-            Printf("\n%u, %u = %g", waypoint[0].waypointAction.hash, waypoint[1].waypointAction.hash, unk0);
-            short padding0 <hidden=true>; Assert(padding0==0,"padding0 isn't 0!");
-            int padding1 <hidden=true>; Assert(padding1==0,"padding1 isn't 0!!");
-        } action <bgcolor=OldLavender, optimize=false>;
-    };
-} data<bgcolor=ElectricBlue>;
+                StrCode UnknownName; // Possibly GkTacticalAction.userId
+
+                short Attribute;
+                
+                ushort Padding0 <hidden=true>; Assert(Padding0 == 0);
+                uint Padding1 <hidden=true>; Assert(Padding1 == 0);
+            } Action <bgcolor=OldLavender, optimize=false>;
+        };
+
+        offset += NextOffset;
+    } World <bgcolor=ElectricBlue>;
+}
