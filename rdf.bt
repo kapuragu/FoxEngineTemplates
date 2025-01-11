@@ -12,24 +12,24 @@ struct Header
 	{
 		ubyte dialogueEventCount;
 		
-		ushort radioCount;		
-		// short radioCount;		
-		// if (radioCount<0)
+		ushort groupCount;		
+		// short groupCount;		
+		// if (groupCount<0)
 		// {
 			// BigEndian();
-			// radioCount ?
+			// groupCount ?
 		// }
 		// If one were to make it check for endianness, it would need to check if this signed short is negative
 		// but how does one tun the short value back into a positive short?
-		ushort optionalGroupSetCount;
-		ushort variationSetCount;
+		ushort groupSetCount;
+		ushort labelGroupCount;
 		
 		ubyte charaCount;
 	}
 	else if (version == 1)
 	{
 		FSkip(1);
-		ushort radioCount;	
+		ushort groupCount;	
 		uint offsetToGzSection1;
 	}
 	
@@ -44,37 +44,38 @@ enum <ubyte> RadioType {
     mission_image=4,
 };
 
-//RadioParameterTable - TppRadioCommand.RegisterInvalidTimeTable
-//local invalidTimeTable={0,1,5,10,15,20,25,30,0,0,0,0,0,0,0,0}
-//id in the table here of the pause time from start of play til next available play
-enum <ubyte> InvalidTimeType {
-    Zero=0,
-    One=1,
-    Five=2,
-    Ten=3,
-    Fifteen=4,
-    Twenty=5,
-    TwentyFive=6,
-    Thirty=7,
+enum <ubyte> PhaseType {
+    Sneak=0x1,
+    Caution=0x2,
+    Evasion=0x4,
+    Clearing=0x8,
+    Alert=0x10,
 };
 
-enum <ubyte> IntervalNextLabelType {
-    FourHundred=0,
-    OneHundred=1,
-    TwoHundred=2,
-    ThreeHundred=3,
-    SixHundred=4,
-    SevenHundredFifty=5,
-    NineHundred=6,
-    OneThousandHundred=7,
-    OneThousandFiveHundred=8,
-    TwoThousand=9,
-    TwoThousandFiveHundred=10,
-    ThreeThousand=11,
-    FiveHundred=12,
-    FourThousand=13,
-    FiveThousand=14,
-    SixThousand=15
+string ReadPhase(PhaseType &phase)
+{
+    local string str="";
+    if (phase&Sneak)
+    {
+        str+="Sneak, ";
+    };
+    if (phase&Caution)
+    {
+        str+="Caution, ";
+    };
+    if (phase&Evasion)
+    {
+        str+="Evasion, ";
+    };
+    if (phase&Clearing)
+    {
+        str+="Clearing, ";
+    };
+    if (phase&Alert)
+    {
+        str+="Alert";
+    };
+	return str;
 };
 
 if (header.version == 3) // if TPP
@@ -96,13 +97,31 @@ if (header.version == 3) // if TPP
 		ubyte IsVariationSet : 1;
 		ubyte padding : 3 <hidden=true>; Assert(padding==0);
 		//RadioParameterTable - TppRadioCommand.RegisterIntervalNextLabelTable
-		IntervalNextLabelType intervalNextLabelId : 4; //seems to correlate with pause length?
+		
+        enum <ubyte> IntervalNextLabelType {
+            Interval_400=0,
+            Interval_100=1,
+            Interval_200=2,
+            Interval_300=3,
+            Interval_600=4,
+            Interval_750=5,
+            Interval_900=6,
+            Interval_1100=7,
+            Interval_1500=8,
+            Interval_2000=9,
+            Interval_2500=10,
+            Interval_3000=11,
+            Interval_500=12,
+            Interval_4000=13,
+            Interval_5000=14,
+            Interval_6000=15
+        } intervalNextLabelId : 4; //seems to correlate with pause length?
 		//local intervalNextLabelTable={400,100,200,300,600,750,900,1100,1500,2e3,2500,3e3,500,4e3,5e3,6e3}
 							
-	} VoiceDef <read = Str("%u",condition)>;
+	} LabelPart <read = Str("%u",condition)>;
 
-	struct Radio{
-		uint radioId; //strcode32, found in lua, ex "f1000_rtrg1010"
+	struct RadioGroup2{
+		uint name; //strcode32, found in lua, ex "f1000_rtrg1010"
 				
 		// Byte 0
 		ubyte flag0_1 : 1; Assert(flag0_1==0); // never on
@@ -110,57 +129,82 @@ if (header.version == 3) // if TPP
 		ubyte flag0_4 : 1; // not on with the rest in 3838406372, Set_s0082_oprg0020, s0082
 		ubyte flag0_8 : 1; // not on with the rest in 3368279276, s0040 and s0240_rtrg5000
 		ubyte flag1_1 : 1; Assert(flag1_1==0); //unused?
-					
+				
+        //tpp::gm::radio::RadioGroup2::GetRadioType	
 		RadioType radioType : 3;
 					
 		// Byte 1
 		//allow to play in phase:
-		ubyte isSneak : 1;//SNEAK
-		ubyte isCaution : 1;//CAUTION
-		ubyte isEvasion : 1;//EVASION
-		ubyte isClearing : 1;//CLEARING?
-		ubyte isAlert : 1;//ALERT
+        //tpp::gm::radio::RadioGroup2::GetPhase
+        PhaseType phase : 5 <read=ReadPhase>;
 
-		InvalidTimeType invalidTimeId : 3;
+        // tpp::gm::radio::RadioGroup2::GetInvalidTime
+        //RadioParameterTable - TppRadioCommand.RegisterInvalidTimeTable
+        //local invalidTimeTable={0,1,5,10,15,20,25,30,0,0,0,0,0,0,0,0}
+        //id in the table here of the pause time from start of play til next available play
+        enum <ubyte> InvalidTimeType {
+            Invalid_0=0,
+            Invalid_1=1,
+            Invalid_5=2,
+            Invalid_10=3,
+            Invalid_15=4,
+            Invalid_20=5,
+            Invalid_25=6,
+            Invalid_30=7,
+        } invalidTimeId : 3;
 					
 		// Byte 2
 		//Read bits 1-6 of the byte as the label count:
-		ubyte labelClipCount : 6 <hidden=true>;
+        //tpp::gm::radio::RadioGroup2::GetCalledLabelCount
+		ubyte labelPartCount : 6 <hidden=true>; 
 		//priority? labels with lower value will not interrupt and will not use interrupt "huh"
-		ubyte priority : 2;
+		ubyte unknown : 2;
 					
 		// Byte 3
 		//all never off
-		ubyte flag2_1 : 1;//never on by itself
-		ubyte flag2_2 : 1;
-		ubyte flag2_4 : 1;
-		ubyte flag2_8 : 1;
+        //tpp::gm::radio::RadioGroupSet2::GetMostPriority
+		
+        enum <byte> PriorityType {
+            Prio_0=0,
+            Prio_30=1,
+            Prio_40=2,
+            Prio_50=3,
+            Prio_60=4,
+            Prio_70=5,
+            Prio_80=6,
+            Prio_90=7,
+            Prio_98=8,
+            Prio_255=9,
+            Prio_55=10,
+        } priority : 4; Assert(priority<=10);
 					
-		ubyte step : 1; //play voices one at a time, overrides sequence? if all four are 0 then also true????
-		ubyte repeatLast : 1; //during step sequence mode, after playing last step, repeat using last step
-		ubyte sequence : 1; //play all in order, can be overriden by step
-		ubyte random : 1; //play random repeatStartId to repeatEndId labels after all have been played in sequence
+		enum <ubyte> PlayType{
+            PlayType_Step=1, //play voices one at a time, overrides sequence? if all four are 0 then also true????
+		    PlayType_RepeatLast=2, //during step sequence mode, after playing last step, repeat using last step
+		    PlayType_PlayAll=4, //tpp::gm::radio::RadioGroup2::GetCalledLabelCount - if not on, only 1 label will play
+		    PlayType_RandomUnknown=8, //play random repeatStartId to repeatEndId labels after all have been played in sequence
+        } playType : 4;
 					
 		//on repeated play of step mode, with which to start and with which to end
 		ubyte repeatStartId;
 		ubyte repeatEndId;
 					
-		VoiceDef voiceDef[labelClipCount] <optimize=false>;
+		LabelPart labelPart[labelPartCount] <optimize=false>;
 					
-	} radio[header.radioCount] <bgcolor=0xCBBEB3, optimize=false, read=Str("%u",radioId)>;
+	} group2[header.groupCount] <bgcolor=0xCBBEB3, optimize=false, read=Str("%u",name)>;
 
-	struct OptionalSet{
-		uint optionalSetName;
+	struct RadioGroupSet2{
+		uint name;
 		ubyte labelsCount <hidden=true>;
 		uint labelName[labelsCount] <optimize=false>;
 		//lua assigns sets to memory, and each label plays in order when the radio button is pressed with no intel radio target picked
-	} optionalSet[header.optionalGroupSetCount] <bgcolor=0xD9BDC5, optimize=false, read=Str("%u",optionalSetName)>;
+	} groupSet[header.groupSetCount] <bgcolor=0xD9BDC5, optimize=false, read=Str("%u",name)>;
 
-	struct VariationSet
+	struct RadioLabelGroup2
 	{
-		uint variationSetName;
+		uint name;
 		ubyte variationClipsCount <hidden=true>;
-		VoiceDef variationVoiceClips[variationClipsCount] <optimize=false>;
+		LabelPart labelPart[variationClipsCount] <optimize=false>;
 		// Here's an example
 					
 		// RadioData_comn1000.rdf
@@ -173,7 +217,7 @@ if (header.version == 3) // if TPP
 		// sbpVoiceId CC DF 48 49 - No enemy forces in pursuit. Mission complete.
 					
 		// The label randomly picks one of the variation sets
-	} variationSet[header.variationSetCount] <optimize=false, bgcolor=0xE8C7DE, read=Str("%u",variationSetName)>;
+	} labelGroup2[header.labelGroupCount] <optimize=false, bgcolor=0xE8C7DE, read=Str("%u",name)>;
 
 }
 else if (header.version == 1) // if GZ
@@ -182,7 +226,7 @@ else if (header.version == 1) // if GZ
 	struct RadioHead{
 		uint labelName;		// StrCode32 hash of label name used by lua, ex "e0010_rtrg0090"
 		uint labelOffset;	// Global
-	} radioHead[header.radioCount] <optimize=false, hidden=true, fgcolor=0xBCAF9C>;
+	} radioHead[header.groupCount] <optimize=false, hidden=true, fgcolor=0xBCAF9C>;
 				
 	local int radioIndex <hidden=true>;
 	radioIndex=-1;
@@ -225,7 +269,7 @@ else if (header.version == 1) // if GZ
 		thisIndex=radioIndex+1;
 		radioIndex++;
 
-	} radioBody[header.radioCount] <optimize=false, bgcolor=0xBCAF9C, read=Str("%u",radioHead[thisIndex].labelName)>;
+	} radioBody[header.groupCount] <optimize=false, bgcolor=0xBCAF9C, read=Str("%u",radioHead[thisIndex].labelName)>;
 			
 	Assert(header.offsetToGzSection1==FTell(),"Offset to GzSection 1 is wrong!!");
 

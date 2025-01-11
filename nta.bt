@@ -83,7 +83,19 @@ for (i = 0; i < Header.WorldCount; i++)
 
                 StrCode userId;
 
-                short Attribute;
+                struct Attribute{
+                    ushort Human : 1;
+                    ushort Vehicle : 1;
+                    ushort Large : 1;
+                    ushort HumanHighCost : 1;
+                    ushort HumanCombat : 1;
+                    ushort Horse : 1;
+                    ushort WalkerGear : 1;
+                    ushort Dog : 1;
+                    ushort Animal : 1;
+                    ushort Event : 1;
+                    ushort Child : 1;
+                } attribute;
                 
                 ushort Padding0 <hidden=true>; Assert(Padding0 == 0);
                 uint Padding1 <hidden=true>; Assert(Padding1 == 0);
