@@ -78,7 +78,7 @@ for (i = 0; i < Header.WorldCount; i++)
                 struct GkTacticalActionWaypoint
                 {
                     Vector3 Position <fgcolor=PaleCerulean>;
-                    StrCode32 ActionName;
+                    StrCode32 EdgeActionName;
                 } Waypoints[2];
 
                 StrCode userId;
