@@ -78,10 +78,10 @@ for (i = 0; i < Header.WorldCount; i++)
                 struct GkTacticalActionWaypoint
                 {
                     Vector3 Position <fgcolor=PaleCerulean>;
-                    StrCode32 WaypointAction;
+                    StrCode32 ActionName;
                 } Waypoints[2];
 
-                StrCode UnknownName; // Possibly GkTacticalAction.userId
+                StrCode userId;
 
                 short Attribute;
                 
