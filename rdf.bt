@@ -30,7 +30,7 @@ struct Header
 	{
 		FSkip(1);
 		ushort groupCount;	
-		uint offsetToGzSection1;
+		uint offsetToGroupSets;
 	}
 	
 } header <bgcolor=0x69626D, hidden=true>;
@@ -78,6 +78,26 @@ string ReadPhase(PhaseType &phase)
 	return str;
 };
 
+enum <ubyte> PlayType{
+    //InitPlayIndex if label count!=1 (something) else 0
+    PlayType_StepRandom=0,
+    //play voices one at a time
+    PlayType_StepRandomNoRepeatLast=1,
+    //during step sequence mode, after playing last step, repeat using last step
+    PlayType_StepSequenceThenRepeatLast=2,
+    //InitPlayIndex if label count<2 (something)
+    PlayType_StepRandomCanRepeatLast=3,
+    //tpp::gm::radio::RadioGroup2::GetCalledLabelCount - if ==0x4, use real label count, if !=0x4, only 1 label will play
+    //tpp::gm::radio::RadioGroup2::GetCurrentLabelIndex - if ==0x4, use first label index as current
+    //play all parts in sequence at once, most common one
+    PlayType_Sequence=4,
+    //play step, in sequence? used lots in 2 or 1-long groups so hard to confirm
+    PlayType_StepSequence=5,
+    PlayType_6,//gz 162692253 e0010_rtrg0710
+    PlayType_7,
+    PlayType_StepThenRepeatIds=8, //play step sequence then random repeatStartId to repeatEndId
+};
+
 if (header.version == 3) // if TPP
 {
 	uint dialogueEventId[header.dialogueEventCount] <bgcolor=0xBCAF9C>; // The name of the Dynamic Dialogue event
@@ -94,7 +114,7 @@ if (header.version == 3) // if TPP
 		//fnv321: very often, if not always, is just tolower of the subtitle/msgId: ie abcd1000_101010
 		ubyte dialogueEventIndex <read=Str("%u",dialogueEventId[this])>;	// Can be 255/invalid
 		ubyte charaIndex <read=Str("%u",charas[this])>; // Can be 255/invalid
-		ubyte IsVariationSet : 1;
+		ubyte isLabelGroup : 1;
 		ubyte padding : 3 <hidden=true>; Assert(padding==0);
 		//RadioParameterTable - TppRadioCommand.RegisterIntervalNextLabelTable
 		
@@ -121,14 +141,17 @@ if (header.version == 3) // if TPP
 	} LabelPart <read = Str("%u",condition)>;
 
 	struct RadioGroup2{
+        //tpp::gm::radio::RadioGroup2::GetName
 		uint name; //strcode32, found in lua, ex "f1000_rtrg1010"
 				
 		// Byte 0
-		ubyte flag0_1 : 1; Assert(flag0_1==0); // never on
-		ubyte flag0_2 : 1; // most always on in more than half of cases
-		ubyte flag0_4 : 1; // not on with the rest in 3838406372, Set_s0082_oprg0020, s0082
-		ubyte flag0_8 : 1; // not on with the rest in 3368279276, s0040 and s0240_rtrg5000
-		ubyte flag1_1 : 1; Assert(flag1_1==0); //unused?
+        //tpp::gm::radio::impl::RadioManagerImpl::IsRadioGroupStopValid
+		ubyte FLAGS_1 : 1; Assert(FLAGS_1==0); // never on
+		ubyte FLAGS_2 : 1; // most always on in more than half of cases
+		ubyte FLAGS_4 : 1; // not on with the rest in 3838406372, Set_s0082_oprg0020, s0082 //related to IsSuitableForPhase
+		ubyte FLAGS_8 : 1; // not on with the rest in 3368279276, s0040 and s0240_rtrg5000
+        
+		ubyte FLAGS_10 : 1 <hidden=true>; Assert(FLAGS_10==0); //unused? not checked for in the exe, but is part of the mask
 				
         //tpp::gm::radio::RadioGroup2::GetRadioType	
 		RadioType radioType : 3;
@@ -155,15 +178,14 @@ if (header.version == 3) // if TPP
 					
 		// Byte 2
 		//Read bits 1-6 of the byte as the label count:
+        //tpp::gm::radio::RadioGroup2::GetLabelCount
         //tpp::gm::radio::RadioGroup2::GetCalledLabelCount
 		ubyte labelPartCount : 6 <hidden=true>; 
 		//priority? labels with lower value will not interrupt and will not use interrupt "huh"
 		ubyte unknown : 2;
 					
 		// Byte 3
-		//all never off
-        //tpp::gm::radio::RadioGroupSet2::GetMostPriority
-		
+        //tpp::gm::radio::RadioGroup2::GetPriorityIndex
         enum <byte> PriorityType {
             Prio_0=0,
             Prio_30=1,
@@ -178,17 +200,13 @@ if (header.version == 3) // if TPP
             Prio_55=10,
         } priority : 4; Assert(priority<=10);
 					
-		enum <ubyte> PlayType{
-            PlayType_Step=1, //play voices one at a time, overrides sequence? if all four are 0 then also true????
-		    PlayType_RepeatLast=2, //during step sequence mode, after playing last step, repeat using last step
-		    PlayType_PlayAll=4, //tpp::gm::radio::RadioGroup2::GetCalledLabelCount - if not on, only 1 label will play
-		    PlayType_RandomUnknown=8, //play random repeatStartId to repeatEndId labels after all have been played in sequence
-        } playType : 4;
+        PlayType playType : 4; Printf("\n%u, %u",name,playType); Assert(playType<=PlayType_StepSequence||playType==PlayType_StepThenRepeatIds);
 					
 		//on repeated play of step mode, with which to start and with which to end
 		ubyte repeatStartId;
 		ubyte repeatEndId;
-					
+		
+        //tpp::gm::radio::RadioGroup2::GetLabelPartAddres
 		LabelPart labelPart[labelPartCount] <optimize=false>;
 					
 	} group2[header.groupCount] <bgcolor=0xCBBEB3, optimize=false, read=Str("%u",name)>;
@@ -223,39 +241,44 @@ if (header.version == 3) // if TPP
 else if (header.version == 1) // if GZ
 {
 
-	struct RadioHead{
-		uint labelName;		// StrCode32 hash of label name used by lua, ex "e0010_rtrg0090"
-		uint labelOffset;	// Global
-	} radioHead[header.groupCount] <optimize=false, hidden=true, fgcolor=0xBCAF9C>;
+	struct RadioGroupDef{
+		uint name;		// StrCode32 hash of label name used by lua, ex "e0010_rtrg0090"
+		uint offset;	// Global
+	} groupDef[header.groupCount] <optimize=false, hidden=true, fgcolor=0xBCAF9C>;
 				
 	local int radioIndex <hidden=true>;
 	radioIndex=-1;
-	struct RadioBody{
+	struct RadioGroup{
 		RadioType radioType;
 		//0 - real-time
 		//1 - espionage
 		//2 - optional
 		//3 - game over
 					
-		ubyte u1;
+		PlayType playType : 4;
 		//1
 		//2
 		//4
 		//8
+        ubyte playTypeBytes : 4 <hidden=true>; Assert(playTypeBytes==0);
+        
 		ushort invalidTime; //10000 on same stuff that has long invalidtime in tpp
 		short padding <hidden=true>; Assert(padding==0);
 		ushort unk2; //usually 2400 - delay?
 					
-		ubyte u2;
-		ubyte u3;
+		ubyte u2a : 4;
+		ubyte u2b : 4;
+        
+		PhaseType phaseType : 5 <read=ReadPhase>;
+        ubyte phaseTypeBytes : 3 <hidden=true>; Assert(phaseTypeBytes==0);
 
 		ubyte priority; //0-64
-		ubyte voiceClipCount <hidden=true>;
+		ubyte labelPartCount <hidden=true>;
 		ubyte repeatStartId;
 		ubyte repeatEndId;
 		short padding <hidden=true>; Assert(padding==0);
 					
-		struct GzVoice{
+		struct RadioLabelPart{
 			uint dialogueEvent;	// .sbp HIRC.dat voice clip list, value before 0x6402
 			uint chara; // .sbp HIRC.dat voice clip list, top entry
 			uint condition; // .sbp HIRC.dat voice clip id
@@ -263,34 +286,35 @@ else if (header.version == 1) // if GZ
 			ubyte intervalNextLabelId;			// Sometimes 0x00, sometimes 0x02, sometimes 0x04
 			short padding <hidden=true>; Assert(padding==0);
 						
-		} gzVoice[voiceClipCount] <optimize=false, read=Str("%u",condition)>;
+		} labelPart[labelPartCount] <optimize=false, read=Str("%u",condition)>;
 
 		local int thisIndex <hidden=true>;
 		thisIndex=radioIndex+1;
 		radioIndex++;
 
-	} radioBody[header.groupCount] <optimize=false, bgcolor=0xBCAF9C, read=Str("%u",radioHead[thisIndex].labelName)>;
+	} group[header.groupCount] <optimize=false, bgcolor=0xBCAF9C, read=Str("%u",groupDef[thisIndex].name)>;
 			
-	Assert(header.offsetToGzSection1==FTell(),"Offset to GzSection 1 is wrong!!");
+	Assert(header.offsetToGroupSets==FTell(),"Offset to GzSection 1 is wrong!!");
 
-	ubyte optionalSetsCount;
+	ubyte groupSetCount;
 
 	short padding <hidden=true>; Assert(padding==0);
 	ubyte padding <hidden=true>; Assert(padding==0);
+    
 	radioIndex=-1;
-	struct OptionalSetHead{
-		uint optionalSetName;				// Not sure what these are, some sort of radio label sets?
-		uint optionalSetOffset;		// Local (Section 2 start) offset to Section 3 entry
-	} optionalSetHead[optionalSetsCount] <optimize=false, hidden=true, fgcolor=0xD9BDC5>;
+	struct RadioGroupSetDef{
+		uint name;				// Not sure what these are, some sort of radio label sets?
+		uint offset;		// offsetToGroupSets + this offset to group set
+	} groupSetDef[groupSetCount] <optimize=false, hidden=true, fgcolor=0xD9BDC5>;
 					
-	struct OptionalSetGz{
-		ushort optionalLabelCount <hidden=true>;
+	struct RadioGroupSet{
+		ushort setGroupCount <hidden=true>;
 		short padding <hidden=true>; Assert(padding==0);
-		uint optionalRadioLabelOffset[optionalLabelCount] <optimize=false>;
+		uint setGroupOffset[setGroupCount] <optimize=false>;
 		local int thisIndex <hidden=true>;
 		thisIndex=radioIndex+1;
 		radioIndex++;		
-	} optionalSet[optionalSetsCount] <optimize=false, bgcolor=0xD9BDC5, read=Str("%u",optionalSetHead[thisIndex].optionalSetName)>;
+	} groupSet[groupSetCount] <optimize=false, bgcolor=0xD9BDC5, read=Str("%u",groupSetDef[thisIndex].name)>;
 
 };
 
