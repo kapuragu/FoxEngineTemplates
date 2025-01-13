@@ -264,9 +264,13 @@ else if (header.version == 1) // if GZ
         
 		ushort invalidTime; //10000 on same stuff that has long invalidtime in tpp
 		short padding <hidden=true>; Assert(padding==0);
-		ushort unk2; //usually 2400 - delay?
+		ushort unk2; //always 2400, some kinda time?
+        Assert(unk2==2400);
 					
-		ubyte u2a : 4;
+		ubyte FLAGS_1 : 1; //Assert(FLAGS_1==0);
+		ubyte FLAGS_2 : 1;
+		ubyte FLAGS_4 : 1; //related to IsSuitableForPhase
+		ubyte FLAGS_8 : 1;
 		ubyte u2b : 4;
         
 		PhaseType phaseType : 5 <read=ReadPhase>;
