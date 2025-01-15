@@ -55,7 +55,7 @@ enum <ushort> ParamName
     // TppAtmosphere
     TppAtmosphere_GZ_mieAnisotropy=513,//twpfs go from 0.2 at night to 1 in day, datasets do 0.8 and ofCloudySky 0.2
     TppAtmosphere_daySkyAmbientScale=514, //0 in avatar_space and low in volginride, 0.5 in nonsunny
-    TppAtmosphere_GZ_multiScatteringOrder=515,
+    TppAtmosphere_nightSkyAmbientScale=515,
     TppAtmosphere_starLight=516,
     TppAtmosphere_cloudiness=517,
     TppAtmosphere_skyColorSunScale=518,
@@ -122,7 +122,7 @@ enum <ushort> ParamName
     //GrPluginSettings
     GrPluginSettings_minExposure=769,
     GrPluginSettings_maxExposure=770,
-    
+    //771 key value in gz?
     GrPluginSettings_exposureCompensation=772,
     
     GrPluginSettings_bloomSize=775,
@@ -245,6 +245,9 @@ struct WeatherParameterGroups
     //rlc guess first position is assumed to be here
 } offsets <bgcolor=0xBAB366>;
 
+local int tagCount <hidden=true>;
+tagCount=0;
+
 struct WeatherParameterGroup
 {
 	ushort entryCount <hidden=true>;
@@ -270,7 +273,7 @@ struct WeatherParameterGroup
         {
 			uint tagOffset <fgcolor=0xFFFFFF, hidden=true>;
 			ubyte curveCount <hidden=true>;
-			ushort tagIndex <hidden=true>;
+			ushort tagIndex <hidden=true>; if (tagIndex>tagCount) {tagCount=tagIndex+1;}
 	
 			ubyte padding <hidden=true>; Assert(padding == 0);
 	
@@ -347,11 +350,8 @@ string GetTag(WeatherParameterTag &entry)
 
 struct Tags
 {
-    while(FTell()<FileSize())
-    {
         struct Tag
         {
             char tagName[];
-        } tag;
-    };
+        } tag[tagCount] <optimize=false>;
 }tags;
