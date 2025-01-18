@@ -273,7 +273,7 @@ struct WeatherParameterGroup
         {
 			uint tagOffset <fgcolor=0xFFFFFF, hidden=true>;
 			ubyte curveCount <hidden=true>;
-			ushort tagIndex <hidden=true>; if (tagIndex>tagCount) {tagCount=tagIndex+1;}
+			ushort tagIndex <hidden=true>; if (tagIndex>=tagCount) {tagCount=tagIndex+1;}
 	
 			ubyte padding <hidden=true>; Assert(padding == 0);
 	
