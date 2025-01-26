@@ -1,6 +1,7 @@
 // SPCH - TppSpeechData
 // By RLC - inspired by other FOX templates by the researchers of Modders' Heaven!
 // https://metalgearmodding.fandom.com/wiki/SPCH
+#include "common/common.bt"
 LittleEndian();
 
 struct Header
@@ -15,23 +16,18 @@ struct Header
     FSkip(8 * header.labelCount);    // 8 bytes of padding per label entry. Was it ever used? Who knows!
 } header <bgcolor=0x5B507A>;         // coolor
 
-struct Section
+struct SpeechSequence
 {
-    struct labelEntries
+    uint labelName;  // StrCode32 hash of the label's name, used by .lua and .frt.
+    uint dialogueEvent;      // FNV132, Dynamic Dialogue event name 
+    uint speechPartCount; // Number of voice clip entries in this label.
+    struct SpeechPart
     {
-        uint labelNameHash;  // StrCode32 hash of the label's name, used by .lua and .frt.
-        uint sbpListId;      // Voice clips list id. .sbp stuff.
-        uint voiceClipCount; // Number of voice clip entries in this label.
-        struct voiceClipSubEntry
-        {
-            uint speakerNameHash;     // StrCode32 of the speaker's voice type.
-            uint sbpVoiceClipId;      // Voice clip id. .sbp stuff.
-            uint animationNameHash;   // StrCode32 hashes of an animation to do.
-            float beforePauseSeconds; // [pause before the line is said] [says line] It's always been empty, just a guess.
-            float afterPauseSeconds;  // [says line] [pause this long before next line is said]
+        uint characterName;     // StrCode32, speaker's voice type.
+        uint condition;      // FNV132, "condition" state group's state name for the sound 
+        uint animationAct;   // StrCode32 hashes of an animation to do.
+        FSkip(4);
+        float afterPauseSeconds;  // [says line] [pause this long before next line is said]
 			
-        } subEntries[voiceClipCount] <optimize=false>;
-		
-    } entries[header.labelCount] <optimize=false>;
-	
-} section <bgcolor=0x5B618A>;
+    } speechParts[speechPartCount] <optimize=false>;
+} speechSequence[header.labelCount] <optimize=false,bgcolor=0x5B618A>;
