@@ -63,35 +63,35 @@ string ResolveHashFunc(StrCode32& hash)
 
 enum <uint> FxLocatorHeaderFlags
 {
-	FX_LOCATOR_HEADER_FLAGS_0		= 0x1,
-	FX_LOCATOR_HEADER_FLAGS_1		= 0x2,
-	FX_LOCATOR_HEADER_FLAGS_SOMEINT = 0x4, //s10010_s03_FxLocators.vfxlb
-	FX_LOCATOR_HEADER_FLAGS_3 		= 0x8,
+	FX_LOCATOR_HEADER_FLAGS_MEMALLOC		= 0x1, //blockMemoryAllocation
+	FX_LOCATOR_HEADER_FLAGS_CREATE_ON_INIT  = 0x2, //createOnInitialize
+	FX_LOCATOR_HEADER_FLAGS_RANDOM_SEED     = 0x4, //enableUserRandomSeed userRandomSeed s10010_s03_FxLocators.vfxlb
+	FX_LOCATOR_HEADER_FLAGS_SHAPE_KEEP      = 0x8, //shapeKeep
 
-	FX_LOCATOR_HEADER_FLAGS_INSTANCE_NAME		   = 0x10,
-	FX_LOCATOR_HEADER_FLAGS_VARIATION_NAME   = 0x20,
-	FX_LOCATOR_HEADER_FLAGS_PARAMETERS = 0x40,
-	FX_LOCATOR_HEADER_FLAGS_CHILDREN   = 0x80,
+	FX_LOCATOR_HEADER_FLAGS_INSTANCE_NAME   = 0x10, //effectInstanceName
+	FX_LOCATOR_HEADER_FLAGS_VARIATION_NAME  = 0x20, //variationName
+	FX_LOCATOR_HEADER_FLAGS_PARAMETERS      = 0x40, //dynamicProperties
+	FX_LOCATOR_HEADER_FLAGS_CHILDREN        = 0x80,
 
-	FX_LOCATOR_HEADER_FLAGS_NO_SCALE				= 0x100,
-	FX_LOCATOR_HEADER_FLAGS_NO_ROT	 				= 0x200,
-	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2				= 0x400,
-	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_SCALE	    = 0x800,
-	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_ROT		= 0x1000, //twice in s10130_area02_FxLocators.vfxlb on locator, many times in mafr_flowStation_FxLocators.vfxlb, in locators
+	FX_LOCATOR_HEADER_FLAGS_NO_SCALE            = 0x100,
+	FX_LOCATOR_HEADER_FLAGS_NO_ROT              = 0x200,
+	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2          = 0x400,
+	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_SCALE = 0x800,
+	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_ROT   = 0x1000, //twice in s10130_area02_FxLocators.vfxlb on locator, many times in mafr_flowStation_FxLocators.vfxlb, in locators
 
-	FX_LOCATOR_HEADER_FLAGS_D			= 0x2000,
-	FX_LOCATOR_HEADER_FLAGS_E			= 0x4000,
-	FX_LOCATOR_HEADER_FLAGS_F			= 0x8000,
+	FX_LOCATOR_HEADER_FLAGS_ENABLE  = 0x2000,
+	FX_LOCATOR_HEADER_FLAGS_SELECT  = 0x4000,
+	FX_LOCATOR_HEADER_FLAGS_INHERIT = 0x8000,
 };
 
 enum <uint> FxLocatorParamType
 {
-	FX_LOCATOR_PARAM_TYPE_SHARED_BOOL = 0,
+	FX_LOCATOR_PARAM_TYPE_BOOL = 0,
 	FX_LOCATOR_PARAM_TYPE_FLOAT = 1,
 	FX_LOCATOR_PARAM_TYPE_BYTE = 3,
-	FX_LOCATOR_PARAM_TYPE_INT = 4, // Possibly int?
-	FX_LOCATOR_PARAM_TYPE_UINT = 5, // Possibly uint?
-	FX_LOCATOR_PARAM_TYPE_STRING = 6, // Possibly uint?
+	FX_LOCATOR_PARAM_TYPE_INT = 4,
+	FX_LOCATOR_PARAM_TYPE_UINT = 5,
+	FX_LOCATOR_PARAM_TYPE_STRING = 6,
 };
 
 typedef struct 
@@ -119,7 +119,7 @@ typedef struct
 	
 	if (Flags & FX_LOCATOR_HEADER_FLAGS_INSTANCE_NAME)
     {
-		StrCode32 effectInstanceName <read=ResolveHashFunc(this)>; // StrCode32 hash of TppDataUtility handle
+		StrCode32 effectInstanceName; // StrCode32 hash of TppDataUtility handle
     }
 
 	if (Flags & FX_LOCATOR_HEADER_FLAGS_VARIATION_NAME)
@@ -159,7 +159,7 @@ typedef struct
 			
 				switch (dynamicPropertyDesc[pmIdx].Type)
 				{
-				case FX_LOCATOR_PARAM_TYPE_SHARED_BOOL:
+				case FX_LOCATOR_PARAM_TYPE_BOOL:
 					uint dynamicPropertyValue <bgcolor = COLOR_MS_ONG>; // The encoded bool is ((dynamicPropertyValue >> BitIndex) != 0).
 					break;
 				case FX_LOCATOR_PARAM_TYPE_FLOAT:
@@ -184,9 +184,9 @@ typedef struct
 		};
 	}
 	
-	if (Flags & FX_LOCATOR_HEADER_FLAGS_SOMEINT) //s10010_s03_FxLocators.vfxlb
+	if (Flags & FX_LOCATOR_HEADER_FLAGS_RANDOM_SEED) //s10010_s03_FxLocators.vfxlb
     {
-		int SomeInt;
+		int userRandomSeed;
     }
 
 } FxLocatorCommonHeader;
