@@ -584,7 +584,15 @@ else if (header.version==TPP)
 /* Get the comment string for a given hash index. */
 string GetNodeTypeComment(ushort hashIndex)
 {
-    local uint hash = GetStrCode32(hashIndex);
+    local uint hash;
+    if (header.version==GZ)
+    {
+        hash = (uint)GetStrCode(hashIndex);
+    }
+    else if (header.version==TPP)
+    {
+        hash = GetStrCode32(hashIndex);
+    }
     switch(hash)
     {
         case StrCode32_UiEventNode:
@@ -761,7 +769,15 @@ string GetStrCode32Comment(ushort hashIndex)
         return "";
     }
 
-    local uint hash = GetStrCode32(hashIndex);
+    local uint hash;
+    if (header.version==GZ)
+    {
+        hash = (uint)GetStrCode(hashIndex);
+    }
+    else if (header.version==TPP)
+    {
+        hash = GetStrCode32(hashIndex);
+    }
     return Itoa(hash);
 }
 
