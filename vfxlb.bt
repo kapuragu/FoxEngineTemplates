@@ -57,6 +57,7 @@ string ResolveHashFunc(StrCode32& hash)
 	case 191059317: return "Color";
 	case 2639047403: return "AROUND_CAMERA";
 	case 3473199461: return "GENERATION_8";
+    case 473978412: return "GENERATION_7";
 	default: return Str("%u",hash.hash);
 	}
 }
