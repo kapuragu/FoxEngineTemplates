@@ -65,7 +65,7 @@ string ResolveHashFunc(StrCode32& hash)
 enum <uint> FxLocatorHeaderFlags
 {
 	FX_LOCATOR_HEADER_FLAGS_BLOCK_MEMORY_ALLOCATION		= 0x1, //blockMemoryAllocation
-	FX_LOCATOR_HEADER_FLAGS_CREATE_ON_INITIALIZE  = 0x2, //createOnInitialize
+	FX_LOCATOR_HEADER_FLAGS_804179602  = 0x2,
 	FX_LOCATOR_HEADER_FLAGS_USER_RANDOM_SEED     = 0x4, //enableUserRandomSeed userRandomSeed s10010_s03_FxLocators.vfxlb
 	FX_LOCATOR_HEADER_FLAGS_SHAPE_KEEP      = 0x8, //shapeKeep
 
