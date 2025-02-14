@@ -64,9 +64,9 @@ string ResolveHashFunc(StrCode32& hash)
 
 enum <uint> FxLocatorHeaderFlags
 {
-	FX_LOCATOR_HEADER_FLAGS_MEMALLOC		= 0x1, //blockMemoryAllocation
-	FX_LOCATOR_HEADER_FLAGS_CREATE_ON_INIT  = 0x2, //createOnInitialize
-	FX_LOCATOR_HEADER_FLAGS_RANDOM_SEED     = 0x4, //enableUserRandomSeed userRandomSeed s10010_s03_FxLocators.vfxlb
+	FX_LOCATOR_HEADER_FLAGS_BLOCK_MEMORY_ALLOCATION		= 0x1, //blockMemoryAllocation
+	FX_LOCATOR_HEADER_FLAGS_CREATE_ON_INITIALIZE  = 0x2, //createOnInitialize
+	FX_LOCATOR_HEADER_FLAGS_USER_RANDOM_SEED     = 0x4, //enableUserRandomSeed userRandomSeed s10010_s03_FxLocators.vfxlb
 	FX_LOCATOR_HEADER_FLAGS_SHAPE_KEEP      = 0x8, //shapeKeep
 
 	FX_LOCATOR_HEADER_FLAGS_INSTANCE_NAME   = 0x10, //effectInstanceName
@@ -74,15 +74,13 @@ enum <uint> FxLocatorHeaderFlags
 	FX_LOCATOR_HEADER_FLAGS_PARAMETERS      = 0x40, //dynamicProperties
 	FX_LOCATOR_HEADER_FLAGS_CHILDREN        = 0x80,
 
-	FX_LOCATOR_HEADER_FLAGS_NO_SCALE            = 0x100,
-	FX_LOCATOR_HEADER_FLAGS_NO_ROT              = 0x200,
-	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2          = 0x400,
-	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_SCALE = 0x800,
-	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_ROT   = 0x1000, //twice in s10130_area02_FxLocators.vfxlb on locator, many times in mafr_flowStation_FxLocators.vfxlb, in locators
+	FX_LOCATOR_HEADER_FLAGS_WORLD_TRANSFORM_NO_SCALE            = 0x100,
+	FX_LOCATOR_HEADER_FLAGS_WORLD_TRANSFORM_NO_ROT              = 0x200,
+	FX_LOCATOR_HEADER_FLAGS_USE_LOCAL_TRANSFORM          = 0x400,
+	FX_LOCATOR_HEADER_FLAGS_LOCAL_TRANSFORM_NO_SCALE = 0x800,
+	FX_LOCATOR_HEADER_FLAGS_LOCAL_TRANSFORM_NO_ROT   = 0x1000, //twice in s10130_area02_FxLocators.vfxlb on locator, many times in mafr_flowStation_FxLocators.vfxlb, in locators
 
 	FX_LOCATOR_HEADER_FLAGS_ENABLE  = 0x2000,
-	FX_LOCATOR_HEADER_FLAGS_SELECT  = 0x4000,
-	FX_LOCATOR_HEADER_FLAGS_INHERIT = 0x8000,
 };
 
 enum <uint> FxLocatorParamType
@@ -103,19 +101,19 @@ typedef struct
 
 	uint Padding <hidden=true>; Assert(Padding == 0);
 	
-	if (!(Flags & FX_LOCATOR_HEADER_FLAGS_NO_SCALE))
-		Vector3 Scale;
-	if (!(Flags & FX_LOCATOR_HEADER_FLAGS_NO_ROT))
-		Quaternion Rotation;
-	Vector3 Translation;
+	if (!(Flags & FX_LOCATOR_HEADER_FLAGS_WORLD_TRANSFORM_NO_SCALE))
+		Vector3 WorldScale;
+	if (!(Flags & FX_LOCATOR_HEADER_FLAGS_WORLD_TRANSFORM_NO_ROT))
+		Quaternion WorldRotation;
+	Vector3 WorldTranslation;
 
-	if (Flags & FX_LOCATOR_HEADER_FLAGS_TRANSFORM2)
+	if (Flags & FX_LOCATOR_HEADER_FLAGS_USE_LOCAL_TRANSFORM)
 	{
-		if (!(Flags & FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_SCALE))
-			Vector3 Scale2;
-		if (!(Flags & FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_ROT))
-			Quaternion Rotation2;
-		Vector3 Translation2;
+		if (!(Flags & FX_LOCATOR_HEADER_FLAGS_LOCAL_TRANSFORM_NO_SCALE))
+			Vector3 LocalScale;
+		if (!(Flags & FX_LOCATOR_HEADER_FLAGS_LOCAL_TRANSFORM_NO_ROT))
+			Quaternion LocalRotation;
+		Vector3 LocalTranslation;
 	}
 	
 	if (Flags & FX_LOCATOR_HEADER_FLAGS_INSTANCE_NAME)
@@ -185,7 +183,7 @@ typedef struct
 		};
 	}
 	
-	if (Flags & FX_LOCATOR_HEADER_FLAGS_RANDOM_SEED) //s10010_s03_FxLocators.vfxlb
+	if (Flags & FX_LOCATOR_HEADER_FLAGS_USER_RANDOM_SEED) //s10010_s03_FxLocators.vfxlb
     {
 		int userRandomSeed;
     }
