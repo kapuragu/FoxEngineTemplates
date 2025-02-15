@@ -51,6 +51,7 @@ string ResolveHashFunc(StrCode32& hash)
 	case 3320933874: return "areaRadiusSize";
 	case 3545218756: return "areaLevelThreshold";
 	case 3862311135: return "vfxInstanceName";
+	case 804179602: return "enableImmediateUpdate";
     //String value
 	case 4250587280: return "SEND_CHILD_MATRIX";
 	case 2304335147: return "TPP_WEATHER_CONTROL";
