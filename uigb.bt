@@ -71,6 +71,23 @@ LittleEndian();
 #define INVALID_INDEX 65535
 #define INVALID_OFFSET 4294967295
 
+/* bruteforced */
+#define StrCode32_size 2189895956
+#define StrCode32_PopupEvCallNode 1402779846
+#define StrCode32_MbLogViewerEvNode 1463586027
+#define StrCode32_MbTitleEvNode 1548172620
+#define StrCode32_MbConstrainTopActNode 1640419221
+#define StrCode32_FailTelopEvNode 1794595086
+#define StrCode32_LoadingTipsEvNode 2068898648
+#define StrCode32_TelopStartTitleEvCallNode 2209625524
+#define StrCode32_GamePauseMenuActNode 2322539195
+#define StrCode32_MbDvcManageEvNode 3289094937
+#define StrCode32_MbCommonKeyHelpEvNode 3650117291
+#define StrCode32_TppEndingEvNode 3718746465
+#define StrCode32_TypingLogActNode 376885743
+#define StrCode32_QuarkT_class_tpp_gm_hostage_impl_AiSetImpl__GetCreator 4206653302
+#define StrCode32_MbTopMenuSelectorEvNode 4218853920
+
 local uint layoutLinksRead;
 
 struct Header
@@ -679,6 +696,36 @@ string GetNodeTypeComment(ushort hashIndex)
             return "UiActAnimationNode";
         case StrCode32_MbCommonPopupActNode:
             return "MbCommonPopupActNode";
+        case StrCode32_size:
+            return "size";
+        case StrCode32_PopupEvCallNode:
+            return "PopupEvCallNode";
+        case StrCode32_MbLogViewerEvNode:
+            return "MbLogViewerEvNode";
+        case StrCode32_MbTitleEvNode:
+            return "MbTitleEvNode";
+        case StrCode32_MbConstrainTopActNode:
+            return "MbConstrainTopActNode";
+        case StrCode32_FailTelopEvNode:
+            return "FailTelopEvNode";
+        case StrCode32_LoadingTipsEvNode:
+            return "LoadingTipsEvNode";
+        case StrCode32_TelopStartTitleEvCallNode:
+            return "TelopStartTitleEvCallNode";
+        case StrCode32_GamePauseMenuActNode:
+            return "GamePauseMenuActNode";
+        case StrCode32_MbDvcManageEvNode:
+            return "MbDvcManageEvNode";
+        case StrCode32_MbCommonKeyHelpEvNode:
+            return "MbCommonKeyHelpEvNode";
+        case StrCode32_TppEndingEvNode:
+            return "TppEndingEvNode";
+        case StrCode32_TypingLogActNode:
+            return "TypingLogActNode";
+        case StrCode32_QuarkT_class_tpp_gm_hostage_impl_AiSetImpl__GetCreator:
+            return "QuarkT<class_tpp::gm::hostage::impl::AiSetImpl>::GetCreator";
+        case StrCode32_MbTopMenuSelectorEvNode:
+            return "MbTopMenuSelectorEvNode";
         default:
             return Itoa(hash);
     }
