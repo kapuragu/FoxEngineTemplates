@@ -11,18 +11,6 @@
 
 #include "common/common.bt"
 
-string ResolveHashFunc(StrCode& hash)
-{
-	switch (hash.hash)
-	{
-	case 221776209274273: return "StepOn";
-	case 74196699949876: return "StepDown";
-	case 188057460958932: return "LadderUp";
-	case 263911609609000: return "LadderDown";
-	default: return "";
-	}
-}
-
 string ResolveHashFunc32(StrCode32& hash)
 {
 	switch (hash.hash)
@@ -31,13 +19,16 @@ string ResolveHashFunc32(StrCode32& hash)
 	case 1139911476: return "StepDown";
 	case 2317903572: return "LadderUp";
 	case 3049138984: return "LadderDown";
-    //3451056519
-    //504469101
-	default: return "";
+	case 3451056519: return "Door";
+	case 504469101: return "StepFence";
+	case 0: return "0";
+	case 3205930904: return "";
+	case 504835594: return "SubstanceVowelCourseStepFence";
+	default:
+        Printf(Str("\n%u",hash.hash));
+        return "Unknown";
 	}
 }
-
-#define FOX_DATA_HASH_RESOLVE_FUNC ResolveHashFunc
 
 struct NtaHeader 
 {
@@ -78,8 +69,8 @@ for (i = 0; i < Header.WorldCount; i++)
                 struct GkTacticalActionWaypoint
                 {
                     Vector3 Position <fgcolor=PaleCerulean>;
-                    StrCode32 EdgeActionName;
-                } Waypoints[2];
+                    StrCode32 EdgeActionName <read=ResolveHashFunc32>; local string test <hidden=true>; test = ResolveHashFunc32(EdgeActionName);
+                } Waypoints[2] <optimize=false>;
 
                 StrCode userId;
 

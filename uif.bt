@@ -125,9 +125,18 @@ struct UiModelNodeBase
 		Vector3 RotationEuler; 
 		float UnknownRotationEulerW; Assert(UnknownRotationEulerW == 1);
 	}
-
-	Vector3 Translate;
-	float UnknownTranslateW; Assert(UnknownTranslateW == 0);
+    
+    if (Header.version==GZ)
+    {
+        float unknownGZ;
+        float unknownGZ2;
+	    Vector3 Translate;
+    }
+    else if (Header.version==TPP)
+    {
+	    Vector3 Translate;
+	    float UnknownTranslateW; Assert(UnknownTranslateW == 0);
+    };
 
 	Vector4 Color;
 };
@@ -135,11 +144,6 @@ struct UiModelNodeBase
 struct UiModelNode
 {
 	UiModelNodeBase Base;
-    
-    if (Header.version==GZ)
-    {
-        float unknown;
-    };
     
 	short UnknownSecondaryNameStrCode32Index; // Probably a name; no exe hits. Examples: "mb" (UI_mb_cmn_pop_cmn_body)
 	short PaletteColorNameStrCode32Index;            // Examples: "cmn-mb-txt-base"
