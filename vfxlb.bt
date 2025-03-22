@@ -14,37 +14,84 @@ BitfieldRightToLeft();
 
 #include "common/common.bt"
 
+string ResolveHashFunc(StrCode32& hash)
+{
+	switch (hash.hash)
+	{
+    //propertyName
+	case 3623321169: return "setupType";
+	case 1232604508: return "updateType";
+	case 323058276: return "enableWeatherControl";
+	case 1944870491: return "sunny";
+	case 404938703: return "cloudy";
+	case 2870733460: return "rainy";
+	case 3049692060: return "sandstorm";
+	case 3493002759: return "foggy";
+	case 1116760736: return "sunnyDelayTime";
+	case 2273136830: return "cloudyDelayTime";
+	case 1027940819: return "rainyThreshold";
+	case 3219757566: return "rainyDelayTime";
+	case 3874602120: return "sandstormThreshold";
+	case 3110818177: return "sandstormDelayTime";
+	case 243931463: return "foggyThreshold";
+	case 1310568117: return "foggyDelayTime";
+	case 2776657607: return "enableTimeZone";
+	case 1447609528: return "onTimeHour";
+	case 136132538: return "onTimeMinute";
+	case 1651073893: return "offTimeHour";
+	case 905616978: return "offTimeMinute";
+	case 2631961385: return "enableSendWeatherFadeValue";
+	case 1455572283: return "sendWeatherFadeValueName";
+	case 790129130: return "enableAroundCamera";
+	case 322058693: return "aroundCameraEffectiveLength";
+	case 1064339835: return "aroundCameraInverse";
+	case 1290022858: return "effectiveLength";
+	case 2159627008: return "generationType";
+	case 1283436193: return "enableAreaQuadCulling";
+	case 3320933874: return "areaRadiusSize";
+	case 3545218756: return "areaLevelThreshold";
+	case 3862311135: return "vfxInstanceName";
+	case 804179602: return "enableImmediateUpdate";
+    //String value
+	case 4250587280: return "SEND_CHILD_MATRIX";
+	case 2304335147: return "TPP_WEATHER_CONTROL";
+	case 191059317: return "Color";
+	case 2639047403: return "AROUND_CAMERA";
+	case 3473199461: return "GENERATION_8";
+    case 473978412: return "GENERATION_7";
+	default: return Str("%u",hash.hash);
+	}
+}
+
 enum <uint> FxLocatorHeaderFlags
 {
-	FX_LOCATOR_HEADER_FLAGS_0		= 0x1,
-	FX_LOCATOR_HEADER_FLAGS_1		= 0x2,
-	FX_LOCATOR_HEADER_FLAGS_SOMEINT = 0x4, //s10010_s03_FxLocators.vfxlb
-	FX_LOCATOR_HEADER_FLAGS_3 		= 0x8,
+	FX_LOCATOR_HEADER_FLAGS_BLOCK_MEMORY_ALLOCATION		= 0x1, //blockMemoryAllocation
+	FX_LOCATOR_HEADER_FLAGS_804179602  = 0x2,
+	FX_LOCATOR_HEADER_FLAGS_USER_RANDOM_SEED     = 0x4, //enableUserRandomSeed userRandomSeed s10010_s03_FxLocators.vfxlb
+	FX_LOCATOR_HEADER_FLAGS_SHAPE_KEEP      = 0x8, //shapeKeep
 
-	FX_LOCATOR_HEADER_FLAGS_ID		   = 0x10,
-	FX_LOCATOR_HEADER_FLAGS_SOMEHASH   = 0x20,
-	FX_LOCATOR_HEADER_FLAGS_PARAMETERS = 0x40,
-	FX_LOCATOR_HEADER_FLAGS_CHILDREN   = 0x80,
+	FX_LOCATOR_HEADER_FLAGS_INSTANCE_NAME   = 0x10, //effectInstanceName
+	FX_LOCATOR_HEADER_FLAGS_VARIATION_NAME  = 0x20, //variationName
+	FX_LOCATOR_HEADER_FLAGS_PARAMETERS      = 0x40, //dynamicProperties
+	FX_LOCATOR_HEADER_FLAGS_CHILDREN        = 0x80,
 
-	FX_LOCATOR_HEADER_FLAGS_NO_SCALE				= 0x100,
-	FX_LOCATOR_HEADER_FLAGS_NO_ROT	 				= 0x200,
-	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2				= 0x400,
-	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_SCALE	    = 0x800,
-	FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_ROT		= 0x1000, //twice in s10130_area02_FxLocators.vfxlb on locator, many times in mafr_flowStation_FxLocators.vfxlb, in locators
+	FX_LOCATOR_HEADER_FLAGS_WORLD_TRANSFORM_NO_SCALE            = 0x100,
+	FX_LOCATOR_HEADER_FLAGS_WORLD_TRANSFORM_NO_ROT              = 0x200,
+	FX_LOCATOR_HEADER_FLAGS_USE_LOCAL_TRANSFORM          = 0x400,
+	FX_LOCATOR_HEADER_FLAGS_LOCAL_TRANSFORM_NO_SCALE = 0x800,
+	FX_LOCATOR_HEADER_FLAGS_LOCAL_TRANSFORM_NO_ROT   = 0x1000, //twice in s10130_area02_FxLocators.vfxlb on locator, many times in mafr_flowStation_FxLocators.vfxlb, in locators
 
-	FX_LOCATOR_HEADER_FLAGS_D			= 0x2000,
-	FX_LOCATOR_HEADER_FLAGS_E			= 0x4000,
-	FX_LOCATOR_HEADER_FLAGS_F			= 0x8000,
+	FX_LOCATOR_HEADER_FLAGS_ENABLE  = 0x2000,
 };
 
 enum <uint> FxLocatorParamType
 {
-	FX_LOCATOR_PARAM_TYPE_SHARED_BOOL = 0,
+	FX_LOCATOR_PARAM_TYPE_BOOL = 0,
 	FX_LOCATOR_PARAM_TYPE_FLOAT = 1,
 	FX_LOCATOR_PARAM_TYPE_BYTE = 3,
-	FX_LOCATOR_PARAM_TYPE_UNKNOWN32BIT_0 = 4, // Possibly int?
-	FX_LOCATOR_PARAM_TYPE_UNKNOWN32BIT_1 = 5, // Possibly uint?
-	FX_LOCATOR_PARAM_TYPE_HASH = 6, // Possibly uint?
+	FX_LOCATOR_PARAM_TYPE_INT = 4,
+	FX_LOCATOR_PARAM_TYPE_UINT = 5,
+	FX_LOCATOR_PARAM_TYPE_STRING = 6,
 };
 
 typedef struct 
@@ -55,26 +102,30 @@ typedef struct
 
 	uint Padding <hidden=true>; Assert(Padding == 0);
 	
-	if (!(Flags & FX_LOCATOR_HEADER_FLAGS_NO_SCALE))
-		Vector3 Scale;
-	if (!(Flags & FX_LOCATOR_HEADER_FLAGS_NO_ROT))
-		Quaternion Rotation;
-	Vector3 Translation;
+	if (!(Flags & FX_LOCATOR_HEADER_FLAGS_WORLD_TRANSFORM_NO_SCALE))
+		Vector3 WorldScale;
+	if (!(Flags & FX_LOCATOR_HEADER_FLAGS_WORLD_TRANSFORM_NO_ROT))
+		Quaternion WorldRotation;
+	Vector3 WorldTranslation;
 
-	if (Flags & FX_LOCATOR_HEADER_FLAGS_TRANSFORM2)
+	if (Flags & FX_LOCATOR_HEADER_FLAGS_USE_LOCAL_TRANSFORM)
 	{
-		if (!(Flags & FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_SCALE))
-			Vector3 Scale2;
-		if (!(Flags & FX_LOCATOR_HEADER_FLAGS_TRANSFORM2_NO_ROT))
-			Quaternion Rotation2;
-		Vector3 Translation2;
+		if (!(Flags & FX_LOCATOR_HEADER_FLAGS_LOCAL_TRANSFORM_NO_SCALE))
+			Vector3 LocalScale;
+		if (!(Flags & FX_LOCATOR_HEADER_FLAGS_LOCAL_TRANSFORM_NO_ROT))
+			Quaternion LocalRotation;
+		Vector3 LocalTranslation;
 	}
 	
-	if (Flags & FX_LOCATOR_HEADER_FLAGS_ID)
-		StrCode32 TppDataUtilityHandleName; // StrCode32 hash of TppDataUtility handle
+	if (Flags & FX_LOCATOR_HEADER_FLAGS_INSTANCE_NAME)
+    {
+		StrCode32 effectInstanceName; // StrCode32 hash of TppDataUtility handle
+    }
 
-	if (Flags & FX_LOCATOR_HEADER_FLAGS_SOMEHASH)
-		StrCode32 SomeHash;
+	if (Flags & FX_LOCATOR_HEADER_FLAGS_VARIATION_NAME)
+	{
+		StrCode32 variationName;
+	}
 
 	if (Flags & FX_LOCATOR_HEADER_FLAGS_CHILDREN)
 	{
@@ -84,10 +135,10 @@ typedef struct
 
 	if (Flags & FX_LOCATOR_HEADER_FLAGS_PARAMETERS)
 	{
-		uint ParameterCount <hidden = true>;
+		uint dynamicPropertyCount <hidden = true>;
 
 		// Notable ones: 804179602, 3612282275, or 1594808049
-		StrCode32 ParameterName[ParameterCount];
+		StrCode32 dynamicPropertyName[dynamicPropertyCount] <read=ResolveHashFunc(this)>;
 		
 		struct FxVfxInstanceParameterDesc
 		{
@@ -96,35 +147,35 @@ typedef struct
 
 			FxLocatorParamType Type : 8;
 			uint Offset : 16;
-		} ParameterDesc[ParameterCount] <optimize = false, bgcolor = COLOR_MS_RED>; //hidden = true>;
+		} dynamicPropertyDesc[dynamicPropertyCount] <optimize = false, bgcolor = COLOR_MS_RED>; //hidden = true>;
 
 		local uint pmIdx <hidden=true>;
-		for (pmIdx = 0; pmIdx < ParameterCount; pmIdx++)
+		for (pmIdx = 0; pmIdx < dynamicPropertyCount; pmIdx++)
 		{
-			if (ParameterName[pmIdx].hash == 3612282275 || ParameterName[pmIdx].hash == 1594808049)
+			if (dynamicPropertyName[pmIdx].hash == 3612282275 || dynamicPropertyName[pmIdx].hash == 1594808049)
 				Assert(false, "There's some sort of weirdness. Take a look at mgsvtpp.exe!141b3d9b7.");
 
-			FSeek(startof(this) + ParameterDesc[pmIdx].Offset);
+			FSeek(startof(this) + dynamicPropertyDesc[pmIdx].Offset);
 			
-				switch (ParameterDesc[pmIdx].Type)
+				switch (dynamicPropertyDesc[pmIdx].Type)
 				{
-				case FX_LOCATOR_PARAM_TYPE_SHARED_BOOL:
-					uint Param <bgcolor = COLOR_MS_ONG>; // The encoded bool is ((Param >> BitIndex) != 0).
+				case FX_LOCATOR_PARAM_TYPE_BOOL:
+					uint dynamicPropertyValue <bgcolor = COLOR_MS_ONG>; // The encoded bool is ((dynamicPropertyValue >> BitIndex) != 0).
 					break;
 				case FX_LOCATOR_PARAM_TYPE_FLOAT:
-					float Param;
+					float dynamicPropertyValue;
 					break;
 				case FX_LOCATOR_PARAM_TYPE_BYTE:
-					ubyte Param;
+					ubyte dynamicPropertyValue;
 					break;
-				case FX_LOCATOR_PARAM_TYPE_UNKNOWN32BIT_0:
-					uint Param; Assert(false);
+				case FX_LOCATOR_PARAM_TYPE_INT:
+					int dynamicPropertyValue;
 					break;
-				case FX_LOCATOR_PARAM_TYPE_UNKNOWN32BIT_1:
-					uint Param; Assert(false);
+				case FX_LOCATOR_PARAM_TYPE_UINT:
+					uint dynamicPropertyValue;
 					break;
-				case FX_LOCATOR_PARAM_TYPE_HASH:
-					StrCode32 Param;
+				case FX_LOCATOR_PARAM_TYPE_STRING:
+					StrCode32 dynamicPropertyValue <read=ResolveHashFunc(this)>;
 					break;
 				default:
 					Assert(false);
@@ -133,8 +184,11 @@ typedef struct
 		};
 	}
 	
-	if (Flags & FX_LOCATOR_HEADER_FLAGS_SOMEINT) //s10010_s03_FxLocators.vfxlb
-		int SomeInt;
+	if (Flags & FX_LOCATOR_HEADER_FLAGS_USER_RANDOM_SEED) //s10010_s03_FxLocators.vfxlb
+    {
+		int userRandomSeed;
+    }
+
 } FxLocatorCommonHeader;
 
 struct FxLocatorBinaryHeader
@@ -171,48 +225,3 @@ if (Header.GroupCount > 0)
 		FxLocatorCommonHeader LocatorGroup <bgcolor = COLOR_MS_BLU>;
 	};
 }
-
-//Assert(FTell() == FileSize(), "Failed to reach EoF.");
-
-//1 0001 - Exclude Scale
-//2 0010 - Exclude Rotation
-//4 0100 - Include second transform
-//8 1000 - Hide something in the second transform?
-/* enum <uint> TransformType
-{
-	FXLB_TTYPE_SRT=0,
-	FXLB_TTYPE_RT=1,
-	FXLB_TTYPE_ST=2,
-	FXLB_TTYPE_T=3,
-	FXLB_TTYPE_SRTSRT=4, // second transform is definitely an offset, same elsewhere
-	FXLB_TTYPE_SRTT=12,	// \s10130\s10130_area_fpkd\Assets\tpp\level\location\mafr\block_large\lab\s10130_area_FxLocators
-	FXLB_TTYPE_RTRT=13,	// s10280_d14_FxLocators
-	FXLB_TTYPE_TT=15,	// \s10070\s10070_d01_fpkd\Assets\tpp\level\mission2\story\s10150\s10070_d01_FxLocators
-};
-
-enum <uint> ParamType
-{
-	FXLB_PTYPE_ID=1,//s10020_d01_FxLocators.vfxlb, hash of argument of TppDataUtility.CreateEffectFromId/DestroyEffectFromId, ex FxLocator_fx_tpp_flrdia03_s1
-	FXLB_PTYPE_SOMEHASH=2,//cypr_s_stage_02_FxLocators.vfxlb ???
-	FXLB_PTYPE_SUBENTRIES=4,//afgh_130_147_FxLocators.vfxlb ???
-	FXLB_PTYPE_ARRAY=8,//group s10010_l01_FxLocators.vfxlb, hash of argument of TppDataUtility.SetVisibleEffectFromGroupId, ex FxLocatorGroup_fx_tpp_dstwhtviw01_s2VD
-}; */
-/* 	uint flags0 : 4; //I think mafr_145_124_FxLocators.vfxlb gets affected by this when it's 14, 8 doesn't affect it or 2
-	ParamType paramsFlags : 4 <comment="Bitfield of four types of param sets">;
-	TransformType transformType : 4 <comment="Enum of transform set type">;
-	uint flags3 : 4; if (flags3!=2&&flags3!=0&&flags3!=3) {Printf("@%d Flags3 isn't 2 or 0 or 3!! It's %d\n",FTell(),flags3);} //2 in locators, 0 in groups, 3 twice in s10130_area02_FxLocators.vfxlb on locator, many times in mafr_flowStation_FxLocators.vfxlb
-	uint param4 : 4 <hidden=true>; if (param4!=0) {Printf("@%d param4 isn't 0!! It's %d\n",FTell(),param4);}
-	uint param5 : 4 <hidden=true>; if (param5!=0) {Printf("@%d param4 isn't 0!! It's %d\n",FTell(),param5);}
-	uint param6 : 4 <hidden=true>; if (param6!=0) {Printf("@%d param4 isn't 0!! It's %d\n",FTell(),param6);}
-	uint param7 : 4 <hidden=true>; if (param4!=0) {Printf("@%d param4 isn't 0!! It's %d\n",FTell(),param7);} */
-/* typedef struct
-{
-	uint flags0 : 4 <hidden=true>; if (flags0!=0) {Printf("@%d flags0 isn't 0!! It's %d\n",FTell(),flags0);}
-	uint flags1 : 4 <hidden=true>; if (flags1!=0) {Printf("@%d flags1 isn't 0!! It's %d\n",FTell(),flags1);}
-	uint flags2 : 4;
-	uint flags3 : 4 <hidden=true>; if (flags3!=0) {Printf("@%d flags3 isn't 0!! It's %d\n",FTell(),flags3);}
-	uint flags4 : 4;
-	uint flags5 : 4;
-	uint flags6 : 4;
-	uint flags7 : 4 <hidden=true>; if (flags7!=0) {Printf("@%d flags7 isn't 0!! It's %d\n",FTell(),flags7);}
-} FxLocatorExtraParametersFlags; */

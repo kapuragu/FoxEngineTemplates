@@ -7,7 +7,7 @@ typedef struct
 	half g;
 	half b;
 	half skyVisibility;
-} ShCoefficients <read = Str("(%s, %s, %s, %s)", Readhalf(r), Readhalf(g), Readhalf(b), Readhalf(skyVisibility))>;
+} ShCoefficients <read = Str("(%s, %s, %s, %s)", ReadHalf(r), ReadHalf(g), ReadHalf(b), ReadHalf(skyVisibility))>;
 
 typedef struct(int selfIndex)
 {

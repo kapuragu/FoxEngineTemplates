@@ -41,7 +41,7 @@ enum <ubyte> RadioType {
     optional=2,
     game_over=3,
     map=4,
-    mission_image=4,
+    mission_image=5,
 };
 
 enum <ubyte> PhaseType {
