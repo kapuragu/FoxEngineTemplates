@@ -85,7 +85,6 @@ LittleEndian();
 #define StrCode32_MbCommonKeyHelpEvNode 3650117291
 #define StrCode32_TppEndingEvNode 3718746465
 #define StrCode32_TypingLogActNode 376885743
-#define StrCode32_QuarkT_class_tpp_gm_hostage_impl_AiSetImpl__GetCreator 4206653302
 #define StrCode32_MbTopMenuSelectorEvNode 4218853920
 
 local uint layoutLinksRead;
@@ -722,8 +721,6 @@ string GetNodeTypeComment(ushort hashIndex)
             return "TppEndingEvNode";
         case StrCode32_TypingLogActNode:
             return "TypingLogActNode";
-        case StrCode32_QuarkT_class_tpp_gm_hostage_impl_AiSetImpl__GetCreator:
-            return "QuarkT<class_tpp::gm::hostage::impl::AiSetImpl>::GetCreator";
         case StrCode32_MbTopMenuSelectorEvNode:
             return "MbTopMenuSelectorEvNode";
         default:
