@@ -153,24 +153,46 @@ typedef struct
 	uint64 Padding3 <hidden = true>; Assert(Padding3 == 0);
 } FmdlMeshGroupDef <optimize = false, bgcolor = COLOR_FmdlMeshGroupDef>;
 
+/*
+enum <uint> TEMP_FINAL_BLENDSTATE
+{
+	TEMP_FINAL_BLENDSTATE_None,
+	TEMP_FINAL_BLENDSTATE_AlphaBlend,
+	TEMP_FINAL_BLENDSTATE_Add,
+	TEMP_FINAL_BLENDSTATE_Sub,
+	TEMP_FINAL_BLENDSTATE_Mul,
+	TEMP_FINAL_BLENDSTATE_Min,
+	TEMP_FINAL_BLENDSTATE_Max,
+	TEMP_FINAL_BLENDSTATE_PreMultiplied-AlphaBlend,
+	TEMP_FINAL_BLENDSTATE_PreMultiplied-Add,
+	TEMP_FINAL_BLENDSTATE_Unknown
+};
+*/
+
 struct FMDL_MESH_DEF_FLAGS
 {
+	// POLY
+	// ModelDecal::Create@14024e656, & 0x6d0 (TODO_USE_DEPTHBIAS, TODO_PD, TODO_PB_01, C, A)
+
 	// BYTE 0
 	// =========
 
-	// 143bc6adc, & 0xF
-	uint UnknownOffset : 4;
+	// ModelPacketRenderControlBase::GetRenderState@14023d0f9, & 0xF
+	uint TODO_DEPTHBIAS_OR_BLENDMODE : 4;
 
-	// 143bc6ad2, & 0x10, some value = (UseUnknownOffset ? UnknownOffset + 1 : 0);
-    uint UseUnknownOffset : 1;
+	// ModelPacketRenderControlBase::GetRenderState@14023d0f9, & 0x10, some value = (UseUnknownOffset ? UnknownOffset + 1 : 0);
+	// DrawModelArrayMultiObject@14023966b
+    uint TODO_USE_DEPTHBIAS : 1;
 
-	// 143bc6af2
-	uint NoBackfaceCulling : 1; // ! >> 5
-	uint I : 1; // ! >> 6
+	// ModelPacketRenderControlBase::GetRenderState@14023d0c7, >> 5
+	uint TODO_CULLING : 1; 
 
-	// 143bc6aab, >> 7
+	// ModelPacketRenderControlBase::GetRenderState@14023d0e5, >> 6
+	uint TODO_DEPTHTESTMODE : 1;                 
+
+	// ModelPacketRenderControlBase::GetRenderState@14023d0d2, >> 7
 	// 14025b2a3, set in code
-	uint G : 1;
+	uint TODO_ALPHATESTMODE_01 : 1;
 
 	// BYTE 1
 	// =========
@@ -178,6 +200,7 @@ struct FMDL_MESH_DEF_FLAGS
 	// 14025b2a3 sets it in code
 	uint NoShadow : 1; 
 
+	// SEE: ModelDecal::Create above
     uint C : 1;
 
 	// 14026c5c0, >> 10
@@ -188,19 +211,19 @@ struct FMDL_MESH_DEF_FLAGS
 	// 14026c5c6, >> 13
     uint B : 1;
 
-	// 143bc6abd, >> 14
-	uint J : 1; // Related to byte 0 stuff
+	// ModelPacketRenderControlBase::GetRenderState@14023d0d2, >> 14
+	uint TODO_ALPHATESTMODE_2 : 1;
 
-	// 14025b6e8, >> 0xF
+	// DrawModelArrayMultiObject@1402398fc, >> 0xF
     uint L: 1;
 
 	// BYTE 3
 	// =========
 
-	// 14025b42e, >> 0x10 & 0xF
+	// DrawModelArrayMultiObject@140239648, >> 0x10 & 0xF
     uint D : 4;
 
-	// 14025b6ff & 0x7f00000
+	// DrawModelArrayMultiObject@140239912, & 0x7f00000
 	uint M : 7;
 };
 

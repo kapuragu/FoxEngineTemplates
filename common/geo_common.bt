@@ -203,30 +203,33 @@ typedef struct
 
 enum <uint> GEO_PRIM_TYPE
 {
-	GEO_PRIM_TYPE_SPHERE = 0,		// Entry size: 0x30 // Sphere not actually confirmed in any way except that it lines up with the others in the exe enum GeoShapeType
-	GEO_PRIM_TYPE_UNKNOWN1 = 1,		// Entry size: 0x30
-	GEO_PRIM_TYPE_QUAD = 2,			// Entry size: 0xA
-	GEO_PRIM_TYPE_BOX = 3,			// Entry size: 0x60
-	GEO_PRIM_TYPE_AABB = 4,			// Entry size: 0x20
-	GEO_PRIM_TYPE_UNKNOWN5 = 5,		// Entry size: 0x80
-	GEO_PRIM_TYPE_UNKNOWN6 = 6,		// Entry size: 0
-	GEO_PRIM_TYPE_UNKNOWN7 = 7,		// Entry size: 0
-	GEO_PRIM_TYPE_PATH = 8,			// Entry size: 0x8
-	GEO_PRIM_TYPE_UNKNOWN9 = 6,		// Entry size: 0
-	GEO_PRIM_TYPE_UNKNOWN10 = 7,	// Entry size: 0
-	GEO_PRIM_TYPE_AREA_PATH = 11,	// Entry size: 0x10
+	GEO_PRIM_TYPE_DOT = 0,			// Multi-entry (zero means only one allowed) size: 0x30
+	GEO_PRIM_TYPE_LINE = 1,			// Multi-entry (zero means only one allowed) size: 0x30
+	GEO_PRIM_TYPE_POLY = 2,			// Multi-entry (zero means only one allowed) size: 0xA
+	GEO_PRIM_TYPE_BOX = 3,			// Multi-entry (zero means only one allowed) size: 0x60
+	GEO_PRIM_TYPE_AABB = 4,			// Multi-entry (zero means only one allowed) size: 0x20
+	GEO_PRIM_TYPE_REFERENCE = 5,	// Multi-entry (zero means only one allowed) size: 0x80
+	GEO_PRIM_TYPE_UNKNOWN6 = 6,		// Multi-entry (zero means only one allowed) size: 0
+	GEO_PRIM_TYPE_PYRAMID = 7,		// Multi-entry (zero means only one allowed) size: 0
+	GEO_PRIM_TYPE_PATH = 8,			// Multi-entry (zero means only one allowed) size: 0x8
+	GEO_PRIM_TYPE_UNKNOWN9 = 6,		// Multi-entry (zero means only one allowed) size: 0
+	GEO_PRIM_TYPE_UNKNOWN10 = 7,	// Multi-entry (zero means only one allowed) size: 0
+	GEO_PRIM_TYPE_AREA_PATH = 11,	// Multi-entry (zero means only one allowed) size: 0x10
 };
 
 typedef enum <uint>
 {
-	GEO_SHAPE_FLAGS_UNKNOWN6 = 0x1,				// Found in TRAP.
-	GEO_SHAPE_FLAGS_UNKNOWN4 = 0x4,				// Found in GPFP.
+	GEO_SHAPE_FLAGS_UNKNOWN6 = 0x1,				// Tpp_main_win64.exe!141a3b26d, Found in TRAP.
+	GEO_SHAPE_FLAGS_UNKNOWN9 = 0x2,				// Tpp_main_win64.exe!141a3b26d
+	GEO_SHAPE_FLAGS_UNKNOWN4 = 0x4,				// Tpp_main_win64.exe!141a3b26d, Found in GPFP.
+
 	GEO_SHAPE_FLAGS_NO_CHILD = 0x20,			// mgsvtpp.exe!141bdc498 // info & 0x200
 	GEO_SHAPE_FLAGS_UNKNOWN1 = 0x200,			// mgsvtpp.exe!141bdc863, 141bd8041 // info >> 0xd, info & 0x2000
 	GEO_SHAPE_FLAGS_USE_FMDL_VERTICES = 0x800,	// mgsvtpp.exe!141bd7e30 // info & 0x8000
 	GEO_SHAPE_FLAGS_HAS_CHILD = 0x2000,			// mgsvtpp.exe!141bdc7a7 // info >> 0x11
 	GEO_SHAPE_FLAGS_UNKNOWN7 = 0x4000,			// ????????????????????? // info >> 0x12
-	GEO_SHAPE_FLAGS_UNKNOWN2 = 0x8000,			// mgsvtpp.exe!141bdc830 // info >> 0x13
+	GEO_SHAPE_FLAGS_UNKNOWN2 = 0x8000,			// mgsvtpp.exe!141bdc830, Tpp_main_win64.exe!141a3b26d // info >> 0x13
+	GEO_SHAPE_FLAGS_UNKNOWN2 = 0x20000,			// Tpp_main_win64.exe!141a3b26d // info >> 0x15
 	GEO_SHAPE_FLAGS_UNKNOWN5 = 0x80000,			// Found in GPFP and TRAP. // mgsvtpp.exe!141bdc830
 } GEO_SHAPE_FLAGS <read = ReadGEO_SHAPE_FLAGS>;
 string ReadGEO_SHAPE_FLAGS(GEO_SHAPE_FLAGS flags)
@@ -349,7 +352,7 @@ typedef struct
 		byte AuxMaterialIndex : 7 <read = ( (byte)((0x80 & ((byte)this << 1)) | this) )>;
 		BitfieldEnablePadding();
 	} Info;
-} GeoPrimQuad <read = Str("%d, %d, %d, %d", this.IndexA, this.IndexB, this.IndexC, this.IndexD)>; // Name taken from PES RTTI
+} GeoPrimPoly <read = Str("%d, %d, %d, %d", this.IndexA, this.IndexB, this.IndexC, this.IndexD)>; // Name taken from PES RTTI
 
 typedef struct
 {

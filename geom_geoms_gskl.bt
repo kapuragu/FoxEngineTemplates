@@ -21,8 +21,8 @@ typedef struct
 	case GEO_PRIM_TYPE_AABB:
 		GeoPrimAabb Prim[Header.PrimCount] <optimize = true>;
 		break;
-	case GEO_PRIM_TYPE_QUAD:
-		GeoPrimQuad Prim[Header.PrimCount] <optimize = true>;
+	case GEO_PRIM_TYPE_POLY:
+		GeoPrimPoly Prim[Header.PrimCount] <optimize = true>;
 		break;
 	default:
         Assert(false, "Unknown GEO_PRIM_TYPE type detected!");
@@ -81,14 +81,12 @@ struct GeoBlock  // Name taken from PES RTTI
 {
 	byte IsFinalEntry;
 
-	byte ShapesTotalSizeInEntries; // Includes the "null terminator" entry
-	ushort ShapeDataSize;
+	byte TotalShapeCount; // Includes the "null terminator" entry
+	ushort TotalDataSize; // From first header to end of vertex buffer
 	
-	short LastHeaderOffsetMaybe;
-	short Padding0; Assert(Padding0 == 0);
+	ushort HeaderDataSize; ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
 	
-	short FirstHeaderOffsetMaybe;
-	short Padding1; Assert(Padding1 == 0);
+	ushort HeadersOffset; ushort Padding1 <hidden = true>; Assert(Padding1 == 0);
 	
 	uint VertexBufferOffset;
 
