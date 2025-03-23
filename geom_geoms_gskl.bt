@@ -81,28 +81,28 @@ struct GeoBlock  // Name taken from PES RTTI
 {
 	byte IsFinalEntry;
 
-	byte TotalShapeCount; // Includes the "null terminator" entry
-	ushort TotalDataSize; // From first header to end of vertex buffer
+	byte HeaderCount;
+	ushort HeadersDataSize; // From first header to end of vertex buffer
 	
-	ushort HeaderDataSize; ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
-	
-	ushort HeadersOffset; ushort Padding1 <hidden = true>; Assert(Padding1 == 0);
+	// Neither of these values are used and both can and will overflow if the file is big enough. My guess is they kept them for backwards compatibility so the create function still increments them, but it hits limits.
+	ushort VertexBufferOffset_Unused; ushort Padding0 <hidden = true>; Assert(Padding0 == 0); // In cases where FMDL buffer is used, this value is just a sort of default; points to right after material buffer 
+																							  // Hypothesis: the creator still dutifully calculates offsets that incorporate all the GeoBlocks and material buffer but usually the code is supposed to update it to the position after all the GeomHeaders but that's never called for groups that only use FMDL data
+	ushort HeadersOffset_Unused; ushort Padding1 <hidden = true>; Assert(Padding1 == 0);
 	
 	uint VertexBufferOffset;
-
-	uint RootAABBHeaderOffset; // Confirmed via PES executable; always points to AABB GeoShape
+	uint HeadersOffset;
 
 	uint NextSectionOffset;
 	
 	GEO_COL_A Tags;
 	
-	FSeek(startof(this) + RootAABBHeaderOffset);
+	FSeek(startof(this) + HeadersOffset);
 
 	// I'm going to have to stare at this for longer to understand what the heck is going on here.
 	struct
 	{
 		local uint64 ptrs[6];
-		ptrs[0] = startof(parentof(this)) + RootAABBHeaderOffset;
+		ptrs[0] = startof(parentof(this)) + HeadersOffset;
 		local uint j = 1;
 		local uint j_minusOne;
 		local int iteratorIndex = 0;
