@@ -228,8 +228,8 @@ typedef enum <uint>
 	GEO_SHAPE_FLAGS_USE_FMDL_VERTICES = 0x800,	// mgsvtpp.exe!141bd7e30 // info & 0x8000
 	GEO_SHAPE_FLAGS_HAS_CHILD = 0x2000,			// mgsvtpp.exe!141bdc7a7 // info >> 0x11
 	GEO_SHAPE_FLAGS_UNKNOWN7 = 0x4000,			// ????????????????????? // info >> 0x12
-	GEO_SHAPE_FLAGS_UNKNOWN2 = 0x8000,			// mgsvtpp.exe!141bdc830, Tpp_main_win64.exe!141a3b26d // info >> 0x13
-	GEO_SHAPE_FLAGS_UNKNOWN3 = 0x20000,			// Tpp_main_win64.exe!141a3b26d // info >> 0x15
+	GEO_SHAPE_FLAGS_HAS_REFERENCE = 0x8000,		// mgsvtpp.exe!141bdc830, Tpp_main_win64.exe!141a3b26d, 141a45f50 // info >> 0x13, runtime-only, adds 0x40-byte payload
+	GEO_SHAPE_FLAGS_UNKNOWN3 = 0x20000,			// Tpp_main_win64.exe!141a3b26d // info >> 0x15, adds some sort of 0x20-byte payload
 	GEO_SHAPE_FLAGS_UNKNOWN5 = 0x80000,			// Found in GPFP and TRAP. // mgsvtpp.exe!141bdc830
 } GEO_SHAPE_FLAGS <read = ReadGEO_SHAPE_FLAGS>;
 string ReadGEO_SHAPE_FLAGS(GEO_SHAPE_FLAGS flags)
