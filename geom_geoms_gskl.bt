@@ -117,10 +117,9 @@ struct GeoBlock  // Name taken from PES RTTI
 			iteratorIndex_minusOne = iteratorIndex - 1;
 
 			FSeek(ptr + 4);
-			local uint nextOffset = ReadUInt();
-			if (nextOffset != 0) // if (Shape.Header.NextHeaderOffset != 0)
+			if (ReadUInt() != 0) // if (Shape.Header.NextHeaderOffset != 0)
 			{
-				ptrs[j - 1] = ptr + nextOffset * 16; // Shape.Header.NextHeaderOffset
+				ptrs[j - 1] = ptr + ReadUInt() * 16; // Shape.Header.NextHeaderOffset
 
 				j_minusOne = j;
 				iteratorIndex_minusOne = iteratorIndex;
