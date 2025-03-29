@@ -224,7 +224,7 @@ typedef enum <uint>
 	GEO_SHAPE_FLAGS_UNKNOWN4 = 0x4,				// Tpp_main_win64.exe!141a3b26d, Found in GPFP.
 
 	GEO_SHAPE_FLAGS_NO_CHILD = 0x20,			// mgsvtpp.exe!141bdc498 // info & 0x200
-	GEO_SHAPE_FLAGS_UNKNOWN1 = 0x200,			// mgsvtpp.exe!141bdc863, 141bd8041 // info >> 0xd, info & 0x2000
+	GEO_SHAPE_FLAGS_DOUBLE_SIDED = 0x200,		// Tpp_main_win64.exe141a05b40
 	GEO_SHAPE_FLAGS_USE_FMDL_VERTICES = 0x800,	// mgsvtpp.exe!141bd7e30 // info & 0x8000
 	GEO_SHAPE_FLAGS_HAS_CHILD = 0x2000,			// mgsvtpp.exe!141bdc7a7 // info >> 0x11
 	GEO_SHAPE_FLAGS_UNKNOWN7 = 0x4000,			// ????????????????????? // info >> 0x12
@@ -253,12 +253,10 @@ struct GeoGeomHeader
 {
 	GEO_PRIM_TYPE Type : 4 <bgcolor=0x0080ff>;
 
-	GEO_SHAPE_FLAGS Flags : 20 <bgcolor=0x0080ff>; Assert((Flags & ~(GEO_SHAPE_FLAGS_UNKNOWN1 | GEO_SHAPE_FLAGS_UNKNOWN7 | GEO_SHAPE_FLAGS_HAS_CHILD | GEO_SHAPE_FLAGS_USE_FMDL_VERTICES)) == 0); // mgsvtpp.exe!141bdc492
-	//Assert(((Flags & GEO_SHAPE_FLAGS_UNKNOWN1) != 0) == ((Flags & GEO_SHAPE_FLAGS_UNKNOWN7) != 0));
-	if ((Flags & GEO_SHAPE_FLAGS_UNKNOWN1) != 0)
-		Printf("GeoGeomHeader with GEO_SHAPE_FLAGS_UNKNOWN1 & 7 at %Lu.\n", startof(this));
-	// if ((Flags & GEO_SHAPE_FLAGS_UNKNOWN7) != 0)
-	// 	Printf("GeoGeomHeader with GEO_SHAPE_FLAGS_UNKNOWN7 at %Lu.\n", startof(this));
+	GEO_SHAPE_FLAGS Flags : 20 <bgcolor=0x0080ff>; Assert((Flags & ~(GEO_SHAPE_FLAGS_DOUBLE_SIDED | GEO_SHAPE_FLAGS_UNKNOWN7 | GEO_SHAPE_FLAGS_HAS_CHILD | GEO_SHAPE_FLAGS_USE_FMDL_VERTICES)) == 0); // mgsvtpp.exe!141bdc492
+	//Assert(((Flags & GEO_SHAPE_FLAGS_DOUBLE_SIDED) != 0) == ((Flags & GEO_SHAPE_FLAGS_UNKNOWN7) != 0));
+	if ((Flags & GEO_SHAPE_FLAGS_UNKNOWN7) != 0)
+		Printf("GeoGeomHeader with GEO_SHAPE_FLAGS_UNKNOWN7 at %Lu.\n", startof(this));
 
 	uint PrimCount : 8 <bgcolor=0x0080ff>;
 
