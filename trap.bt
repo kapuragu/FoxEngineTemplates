@@ -25,8 +25,8 @@ typedef struct
 			case GEO_PRIM_TYPE_BOX:
 				GeoPrimBox Prim[Header.PrimCount] <optimize = true>;
 				break;
-			case GEO_PRIM_TYPE_AREA_PATH:
-				GeoPrimAreaPath Prim[Header.PrimCount] <optimize = true>;
+			case GEO_PRIM_TYPE_FREE_AREA:
+				GeoPrimFreeArea Prim[Header.PrimCount] <optimize = true>;
 				break;
 			default:
 				Assert(false, "Unknown GEO_PRIM_TYPE type detected!");

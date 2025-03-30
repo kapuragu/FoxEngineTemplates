@@ -123,7 +123,7 @@ typedef struct
 	uint64 Padding0 : 1 <hidden = true>; Assert(Padding0 == 0);
 	uint64 RECOIL : 1; // (MGS4) TYPRECOIL
 	uint64 CHARA : 1; // (TPP) 0x80000004 CHARA, (MGS4) 0x4 TYPFLOOR
-	uint64 SOUND_MGS4 : 1; // Assert(SOUND_MGS4 == 0); This one triggered on mafr_tnnl001_rbbl001 // (MGS4)
+	uint64 SOUND : 1;
 
 	uint64 PLAYER : 1;
 	uint64 ENEMY : 1;
@@ -212,9 +212,9 @@ enum <uint> GEO_PRIM_TYPE
 	GEO_PRIM_TYPE_UNKNOWN6 = 6,		// Multi-entry (zero means only one allowed) size: 0
 	GEO_PRIM_TYPE_PYRAMID = 7,		// Multi-entry (zero means only one allowed) size: 0
 	GEO_PRIM_TYPE_PATH = 8,			// Multi-entry (zero means only one allowed) size: 0x8
-	GEO_PRIM_TYPE_UNKNOWN9 = 6,		// Multi-entry (zero means only one allowed) size: 0
-	GEO_PRIM_TYPE_UNKNOWN10 = 7,	// Multi-entry (zero means only one allowed) size: 0
-	GEO_PRIM_TYPE_AREA_PATH = 11,	// Multi-entry (zero means only one allowed) size: 0x10
+	GEO_PRIM_TYPE_UNKNOWN9 = 9,		// Multi-entry (zero means only one allowed) size: 0
+	GEO_PRIM_TYPE_UNKNOWN10 = 10,	// Multi-entry (zero means only one allowed) size: 0
+	GEO_PRIM_TYPE_FREE_AREA = 11,	// Multi-entry (zero means only one allowed) size: 0x10
 };
 
 typedef enum <uint>
@@ -223,13 +223,15 @@ typedef enum <uint>
 	GEO_SHAPE_FLAGS_UNKNOWN9 = 0x2,				// Tpp_main_win64.exe!141a3b26d
 	GEO_SHAPE_FLAGS_UNKNOWN4 = 0x4,				// Tpp_main_win64.exe!141a3b26d, Found in GPFP.
 
-	GEO_SHAPE_FLAGS_NO_CHILD = 0x20,			// mgsvtpp.exe!141bdc498 // info & 0x200
+	GEO_SHAPE_FLAGS_IS_INSERTED_CHILD = 0x10,	// Tpp_main_win64.exe!141a3b1bc // info << 8
+	GEO_SHAPE_FLAGS_DISABLED = 0x20,			// mgsvtpp.exe!141bdc498 // info & 0x200
 	GEO_SHAPE_FLAGS_DOUBLE_SIDED = 0x200,		// Tpp_main_win64.exe141a05b40
 	GEO_SHAPE_FLAGS_USE_FMDL_VERTICES = 0x800,	// mgsvtpp.exe!141bd7e30 // info & 0x8000
+	GEO_SHAPE_FLAGS_UNKNOWN10 = 0x1000,			// Tpp_main_win64.exe!141a4b3a2 // info & 0x10000
 	GEO_SHAPE_FLAGS_HAS_CHILD = 0x2000,			// mgsvtpp.exe!141bdc7a7 // info >> 0x11
 	GEO_SHAPE_FLAGS_UNKNOWN7 = 0x4000,			// ????????????????????? // info >> 0x12
-	GEO_SHAPE_FLAGS_HAS_REFERENCE = 0x8000,		// mgsvtpp.exe!141bdc830, Tpp_main_win64.exe!141a3b26d, 141a45f50 // info >> 0x13, runtime-only, adds 0x40-byte payload
-	GEO_SHAPE_FLAGS_UNKNOWN3 = 0x20000,			// Tpp_main_win64.exe!141a3b26d // info >> 0x15, adds some sort of 0x20-byte payload
+	GEO_SHAPE_FLAGS_HAS_REF_MATRIX = 0x8000,	// mgsvtpp.exe!141bdc830, Tpp_main_win64.exe!141a3b26d, 141a45f50 // info >> 0x13, runtime-only, adds 0x40-byte payload
+	GEO_SHAPE_FLAGS_UNKNOWN3 = 0x20000,			// Tpp_main_win64.exe!141a3b26d, Tpp_main_win64.exe!141a4b370 // info >> 0x15, & 0x200000 adds some sort of 0x20-byte payload
 	GEO_SHAPE_FLAGS_UNKNOWN5 = 0x80000,			// Found in GPFP and TRAP. // mgsvtpp.exe!141bdc830
 } GEO_SHAPE_FLAGS <read = ReadGEO_SHAPE_FLAGS>;
 string ReadGEO_SHAPE_FLAGS(GEO_SHAPE_FLAGS flags)
@@ -385,7 +387,7 @@ typedef struct
 	// FSeek(startof(this) + VertexDataOffset);
 	
 	// WideVector3 Vertices[VertexCount] <optimize = true>;
-} GeoPrimAreaPath;
+} GeoPrimFreeArea;
 
 struct GeoVertexHeader // Name taken from PES RTTI
 {
