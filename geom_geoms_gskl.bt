@@ -186,7 +186,7 @@ struct GeoBoundingVolume
 
 	uint NextSectionOffset;
 
-	Vector3 GridSize;
+	Vector3 CellSize;
 	
 	uint CellCountX;
 	uint CellCountY;
