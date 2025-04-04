@@ -240,7 +240,7 @@ struct UiModelMesh
 			short TypeHashIndex;
 			// Index into the textures list
 			short NamePathCode64Index;
-		} textureParams[TextureParamCount];
+		} textureParams[TextureParamCount] <read=Str("%u, %u",TypeHashIndex,NamePathCode64Index)>;
 	}
 
 	if (MaterialParamsOffset != -1)

@@ -65,7 +65,7 @@ else
 		uint Section2Offset;
 		uint Section3Offset;
 		ushort NodeCount;
-		ushort Section23UnknownCount;
+		ushort NoteCount;
 		
         local ulong resumePos = FTell();
 		FSeek(RailNodeDataOffset);
@@ -79,19 +79,19 @@ else
 		} Segments[NodeCount] <bgcolor=0x8ADEF3, optimize=false>; 
 		
 		FSeek(Section2Offset);
-		struct Section2Entry
+		struct RailNote
 		{
 			float UnknownFloat1;
 			ushort UnknownShort1;
 			ubyte UnknownByte0;
 			ubyte UnknownByte1;
-		} Section2Entries[Section23UnknownCount] <bgcolor=0x00AAFF, optimize=true>;
+		} railNote[NoteCount] <bgcolor=0x00AAFF, optimize=true>;
 		
 		FSeek(Section3Offset);
-		struct Section3Entry
+		struct Extensions
 		{
 			float unknown0;
-		} Section3Entries[Section23UnknownCount/2] <bgcolor=0xB3A797, optimize=true>;
+		} extensions[NoteCount/2] <bgcolor=0xB3A797, optimize=true>;
 		
 		FSeek(resumePos);
 	
