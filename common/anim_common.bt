@@ -335,7 +335,7 @@ typedef struct
 		vo = 1455888052,
 	} CategoryName;
 
-	ushort UnitCount <hidden = true>;
+	short UnitCount <hidden = true>;
 
 	ushort ExtraSectionOffset;
 
@@ -525,7 +525,9 @@ typedef struct
 {
 	uint Version <hidden = true>;
 
-	uint Count <hidden = true>;
+	short Count <hidden = true>;
+
+	ushort Unknown; Assert(Unknown == 0);
 
 	uint EntryOffsets[Count] <hidden = true>;
 

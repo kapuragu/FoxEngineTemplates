@@ -78,22 +78,17 @@ enum <uint> UI_MODEL_NODE_BLEND
 struct UI_MODEL_NODE_FLAGS
 {
 	uint UI_MODEL_NODE_FLAGS_USE_PALETTE : 1;
-
 	UI_MODEL_NODE_BLEND UI_MODEL_NODE_FLAGS_BLEND_MODE : 2 <read = EnumToString(this)>;
+	uint UI_MODEL_NODE_FLAGS_AAAA : 1; // DefaultCulling
 
-	uint UI_MODEL_NODE_FLAGS_AAAA : 1;
-
-	uint UI_MODEL_NODE_FLAGS_BAAA : 1;
-
-	uint UI_MODEL_NODE_FLAGS_BBAA : 1;
-
-	uint UI_MODEL_NODE_FLAGS_BBBA : 1;
-
-	uint UI_MODEL_NODE_FLAGS_BCAA : 1;
+	uint UI_MODEL_NODE_FLAGS_BILLBOARD : 1;
+	uint UI_MODEL_NODE_FLAGS_ENABLE_SCALE_INHERITANCE : 1;
+	uint UI_MODEL_NODE_FLAGS_BILLBOARD_LIMITS : 1;
+	uint UI_MODEL_NODE_FLAGS_ENABLE_ROTATION_INHERITANCE : 1;
 
 	uint UI_MODEL_NODE_FLAGS_ROTATION_TYPE_QUAT : 1;
-	uint UI_MODEL_NODE_FLAGS_USE_PALETTE_SUB_A : 1;
-	uint UI_MODEL_NODE_FLAGS_USE_PALETTE_SUB_B : 1;
+	uint UI_MODEL_NODE_FLAGS_DISABLE_COLOR_INHERITANCE : 1;
+	uint UI_MODEL_NODE_FLAGS_DISABLE_ALPHA_INHERITANCE : 1;
 
 	uint UI_MODEL_NODE_FLAGS_U1 : 5;
 
@@ -101,7 +96,7 @@ struct UI_MODEL_NODE_FLAGS
 
 	uint UI_MODEL_NODE_FLAGS_U2 : 7;
 
-	uint UI_MODEL_NODE_FLAGS_NO_USE_UI_ANIM: 1;
+	uint UI_MODEL_NODE_FLAGS_NO_USE_VERTEX_ANIM: 1;
 	uint UI_MODEL_NODE_FLAGS_NO_USE_SHADER_ANIM : 1;
 };
 
@@ -109,7 +104,7 @@ struct UiModelNodeBase
 {
 	short NameStrCode32Index;
 
-	hfloat Priority;
+	short Priority;
 
 	UI_MODEL_NODE_FLAGS Flags;
 
@@ -139,30 +134,9 @@ struct UiModelNodeBase
     };
 
 	Vector4 Color;
-};
-
-struct UiModelNode
-{
-	UiModelNodeBase Base;
     
 	short UnknownSecondaryNameStrCode32Index; // Probably a name; no exe hits. Examples: "mb" (UI_mb_cmn_pop_cmn_body)
-	short PaletteColorNameStrCode32Index;            // Examples: "cmn-mb-txt-base"
-    
-
-	/*if (flags != 0)
-	{
-		Vector4 v1;
-		Vector4 v2;
-		Vector4 scale2;
-		ushort hashIndex2;          // Examples: "sys", "cmn", "mb"
-		ushort fontNameHashIndex;   // Examples: "cmn-mb-sys-M"
-
-		ubyte f3;
-		ubyte f3a;
-		short n4;
-		short o5;
-		short n6;
-	}*/
+	short PaletteColorNameStrCode32Index;     // Examples: "cmn-mb-txt-base"
 };
 
 struct UiModelDummy
@@ -171,12 +145,12 @@ struct UiModelDummy
 
 struct UiModelNull
 {
-	UiModelNode Base;
+	UiModelNodeBase Base;
 };
 
 struct UiModelMesh
 {
-	UiModelNull Base;
+	UiModelNodeBase Base;
 
 	ushort VertexCountA;
 
@@ -191,20 +165,20 @@ struct UiModelMesh
 	int AttributeIndicesRelativeOffsetB;
 
 	short SubEntry0Count;
-	short SubEntry1Count;
+	short SubEntry1Count; // Assert(SubEntry1Count == 0);
 	int SubEntry0Offset;
 	int SubEntry1Offset;
 
 	short MaterialInstanceNameStrCode32Index;
-	short MaterialTypeNameStrCodeIndex;
+	short ShaderTechniqueNameStrCodeIndex;
 	short TextureParamCount;
 	short MaterialParamCount;
 	int TextureParamsOffset;
 	int MaterialParamsOffset;
 
-	int UnknownOffsetBBBA;
+	int BillboardLimitsOffset;
 	
-	local long position = FTell();
+	local long rewindPos = FTell();
 
 	if (SubEntry0Count != 0)
 	{
@@ -240,7 +214,7 @@ struct UiModelMesh
 			short TypeHashIndex;
 			// Index into the textures list
 			short NamePathCode64Index;
-		} textureParams[TextureParamCount] <read=Str("%u, %u",TypeHashIndex,NamePathCode64Index)>;
+		} TextureParams[TextureParamCount];
 	}
 
 	if (MaterialParamsOffset != -1)
@@ -258,12 +232,20 @@ struct UiModelMesh
 		} MaterialParams[MaterialParamCount] <optimize = false>;
 	}
 
-	FSeek(position);
+	if (Base.Flags.UI_MODEL_NODE_FLAGS_BILLBOARD_LIMITS != 0 && (BillboardLimitsOffset != -1 && BillboardLimitsOffset != 0))
+	{
+		FSeek(BillboardLimitsOffset);
+
+		float billboardMin;
+		float billboardMax;
+	}
+
+	FSeek(rewindPos);
 };
 
 struct UiModelText
 {
-	UiModelNull Base;
+	UiModelNodeBase Base;
 
 	// if (base.Flags != 0)
 	// {
@@ -287,7 +269,7 @@ struct UiModelText
 
 struct UiModelStencil
 {
-	UiModelNull Base;
+	UiModelNodeBase Base;
 
 	ushort n3;
 	ushort n4;
@@ -329,7 +311,7 @@ struct UiModelNodeHeader
 	UI_MODEL_NODE_TYPE Type;
 	uint DataOffset;
 	
-	local long position = FTell();
+	local long rewindPos = FTell();
 
 	FSeek(DataOffset);
 
@@ -358,7 +340,7 @@ struct UiModelNodeHeader
 		break;
 	}
 
-	FSeek(position);
+	FSeek(rewindPos);
 } Nodes[Header.NodeCount] <read = EnumToString(this.Type), bgcolor = COLOR_SECTION_1, optimize = false>;
 
 FSeek(Header.BuffersSectionOffset);
