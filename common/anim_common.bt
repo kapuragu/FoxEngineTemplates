@@ -543,7 +543,7 @@ typedef struct
 
 		EvpData Data;
 	}
-} EvpGroup <bgcolor = 0x00C000>;
+} EvpHeader <bgcolor = 0x00C000>;
 
 
 typedef enum <ubyte>

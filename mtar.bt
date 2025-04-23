@@ -206,7 +206,7 @@ if (Header.Flags & MTAR_FLAGS_NEW)
 			{
 				FSeek(FileHeaders[flIdx].MotionEventsOffset);
 
-				EvpGroup MotionEvents;
+				EvpHeader MotionEvents;
 			}
 		} File <bgcolor = COLOR_SECTION_1>;
 	}

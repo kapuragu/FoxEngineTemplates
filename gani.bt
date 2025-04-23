@@ -36,6 +36,7 @@ string ResolveHashFunc(StrCode32& hash)
 	case 2447659851: return "SKL_LIST";
 	case 3187573380: return "LOCATOR";
 	case 2036377104: return "GLOBALSRT";
+	case 2053459263: return "FRAGMENT"; 
 
 	// Parameter names
 	case 2570203771: return "TARGET_NAME";
@@ -74,6 +75,7 @@ struct GANI
 	case "CAMERA":
 	case "MOTION":
 	case "UNIT":
+	case "FRAGMENT":
 		TrackHeader Tracks;
 		break;
 	case "MTP_LIST":
@@ -83,17 +85,10 @@ struct GANI
 		break;
 	case "EVP":
 		// Node.Flags == 3
-		EvpGroup MotionEvents;
+		EvpHeader MotionEvents;
 		break;
 	default:
 		{
-			switch (parentof(this).Name.Hash.hash)
-			{
-			case 2053459263:
-				TrackHeader Tracks;
-				break;
-			}
-
 			// Each keyframed shader property is a child node of SHADER with the name of the property 
 			if (parentof(this).ParentNodeOffset != 0)
 			{
