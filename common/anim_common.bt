@@ -240,9 +240,9 @@ local int disableTrackData = false;
 
 typedef struct
 {
-	uint ChannelCount;
+	uint UnitCount;
 
-	uint TrackCount;
+	uint SegmentCount;
 	
 	ushort HeaderIndex; // Used in SAND. In GANI, 0 for FK, 1 for IK
 
@@ -252,13 +252,13 @@ typedef struct
 
 	uint FrameCount;
 
-	uint Unknown1;
+	uint TimeBase;
 
-	uint UnitOffsets[ChannelCount] <hidden = true>;
+	uint UnitOffsets[UnitCount] <hidden = true>;
 
 	local uint trkIdx;
     local uint sgmIdx;
-	for (trkIdx = 0; trkIdx < ChannelCount; trkIdx++)
+	for (trkIdx = 0; trkIdx < UnitCount; trkIdx++)
 	{
 		FSeek(startof(this) + UnitOffsets[trkIdx]);
 
@@ -275,6 +275,11 @@ typedef struct
                 
                 //IK
                 RIG_ROOT        = 3552837520,
+
+				// MTAR
+				TensionController = 2275904709,
+				TensionShift = 2003538961,
+				TensionRate = 853304191,
 
 				// 
 			} Name;

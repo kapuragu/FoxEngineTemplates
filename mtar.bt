@@ -25,16 +25,9 @@ struct MtarHeader
 
 	ushort ShaderNodeCount; // Shows up in "_facial" - seems to be the number of SHADER nodes per animation
 
-	ushort Unknown1; // Shows up in "_facial" normall (always?) as 0x1
+	ushort ShaderTrackCount; // Shows up in "_facial" - normally (always?) as 0x1
 
-	enum <ushort> MTAR_UNKNOWN_FLAGS
-    {
-        MTAR_UNKNOWN_FLAGS_UNKNOWN_0x1 = 0x1,
-        MTAR_UNKNOWN_FLAGS_UNKNOWN_0x2 = 0x2,
-        MTAR_UNKNOWN_FLAGS_UNKNOWN_0x4 = 0x4,
-        MTAR_UNKNOWN_FLAGS_UNKNOWN_0x8 = 0x8,
-        MTAR_UNKNOWN_FLAGS_UNKNOWN_0x10 = 0x10,
-    } UnknownFlags; Assert((UnknownFlags & ~(MTAR_UNKNOWN_FLAGS_UNKNOWN_0x1 | MTAR_UNKNOWN_FLAGS_UNKNOWN_0x2 | MTAR_UNKNOWN_FLAGS_UNKNOWN_0x4 | MTAR_UNKNOWN_FLAGS_UNKNOWN_0x8 | MTAR_UNKNOWN_FLAGS_UNKNOWN_0x10)) == 0);
+	ushort MotionPointTrackCount;
 
 	enum <ushort> MTAR_FLAGS
 	{
@@ -51,15 +44,17 @@ struct MtarHeader
 struct MtarFileHeader
 {
     PathCode64 Path; //Assert(((Path.hash >> 52) == (0xFC50 >> 4)) || ((Path.hash >> 52) == (0x4CB0 >> 4))); // Just confirming that these files are all GANIs by checking the extension
-    uint DataOffset;
-    ushort DataSize;
+    uint TracksOffset;
+    ushort TracksDataSize <read = (this << 4)>;
 
     if (Header.Flags & MTAR_FLAGS_NEW)
     {
-	    ushort FkDataOffset;
-	    uint FkDataSize;
+	    ushort MotionPointTracksOffset <read = (this << 4)>;
+	    ushort MotionPointTracksDataSize <read = (this << 4)>;
+		ushort ShaderTracksOffset <read = (this << 4)>; Assert(ShaderTracksOffset == 0);
         
         uint Padding0 <hidden = true>; Assert(Padding0 == 0);
+
 	    uint MotionEventsOffset;
 
 	    uint Padding1 <hidden = true>; Assert(Padding1 == 0);
@@ -137,11 +132,11 @@ if (Header.Flags & MTAR_FLAGS_NEW)
 	local uint flIdx;
 	for (flIdx = 0; flIdx < Header.FileCount; flIdx++)
 	{
-		FSeek(FileHeaders[flIdx].DataOffset);
+		FSeek(FileHeaders[flIdx].TracksOffset);
 
 		struct Gani2File
 		{
-			struct Gani2TrackHeader
+			struct TrackMiniHeader
 			{
 				uint FrameCount;
 
@@ -174,7 +169,7 @@ if (Header.Flags & MTAR_FLAGS_NEW)
 					uint ComponentBitSize : 8;
 
 					uint DataOffset : 24;
-				} SegmentHeaders[CommonInfo.LayoutTrack.TrackCount];
+				} SegmentHeaders[CommonInfo.LayoutTrack.SegmentCount];
 
 				FSkip(16);
 				local uint tkIdx;
@@ -200,11 +195,11 @@ if (Header.Flags & MTAR_FLAGS_NEW)
 			FAlign(16);
 
 
-			if (FileHeaders[flIdx].FkDataOffset != 0)
+			if (FileHeaders[flIdx].MotionPointTracksOffset != 0)
 			{
-				FSeek(startof(this) + FileHeaders[flIdx].FkDataOffset * 0x10);
+				FSeek(startof(this) + FileHeaders[flIdx].MotionPointTracksOffset * 0x10);
 
-				TrackHeader FkTracks;
+				TrackHeader MotionPointTracks;
 			}
 
 			if (FileHeaders[flIdx].MotionEventsOffset != 0)
@@ -221,13 +216,13 @@ else
 	local uint flIdx;
 	for (flIdx = 0; flIdx < Header.FileCount; flIdx++)
 	{
-		FSeek(FileHeaders[flIdx].DataOffset);
+		FSeek(FileHeaders[flIdx].TracksOffset);
 
 		struct GaniFile
 		{
 			FoxDataHeader Header<bgcolor = COLOR_HEADER>;
 
-			FSeek(FileHeaders[flIdx].DataOffset + Header.NodesOffset);
+			FSeek(FileHeaders[flIdx].TracksOffset + Header.NodesOffset);
 
 			FoxDataNodes Nodes;
 		} File <bgcolor = COLOR_SECTION_1>;

@@ -23,14 +23,17 @@ string ResolveHashFunc(StrCode32& hash)
 	case 1889896775: return "SKEL";
 	case 2454300086: return "MESH_EVENT";
 	case 143688520: return "MOTION";
+	case 3337172921: return "UNIT";
 	case 2215748180: return "MODEL";
 	case 3736262940: return "SKELINFO";
 	case 917055795: return "MTPINFO";
 	case 2846912397: return "MTEV";
 	case 494270195: return "MTP";
+	case 371357229: return "EVP";
 	case 2250865118: return "SHADER";
 	case 3937479969: return "MTP_LIST";
 	case 4042487769: return "MTP_PARENT_LIST";
+	case 2447659851: return "SKL_LIST";
 	case 3187573380: return "LOCATOR";
 	case 2036377104: return "GLOBALSRT";
 
@@ -38,6 +41,11 @@ string ResolveHashFunc(StrCode32& hash)
 	case 2570203771: return "TARGET_NAME";
 	case 3426329078: return "SLOPE_DIR";
 	case 35201703: return "SLOPE_ANGLE";
+
+	// Shader nodes
+	case 1097923221: return "TENSION_CHEEKL";
+	case 890100143: return "TENSION_CHEEKR";
+	case 2155534022: return "TENSION_NECK";
 
 	default: return "";
 	}
@@ -64,29 +72,25 @@ struct GANI
 	case "SKEL":
 	case "MTP":
 	case "CAMERA":
-		TrackHeader Tracks;
-		break;
 	case "MOTION":
+	case "UNIT":
 		TrackHeader Tracks;
 		break;
 	case "MTP_LIST":
 	case "MTP_PARENT_LIST":
-		StringList MTPList <bgcolor = 0xF38ADE>;
+	case "SKL_LIST":
+		StringList List <bgcolor = 0xF38ADE>;
+		break;
+	case "EVP":
+		// Node.Flags == 3
+		EvpGroup MotionEvents;
 		break;
 	default:
 		{
 			switch (parentof(this).Name.Hash.hash)
 			{
-			case 2447659851:
-				StringList BoneList <bgcolor = 0xF38ADE>;
-				break;
 			case 2053459263:
-			case 3337172921:
 				TrackHeader Tracks;
-				break;
-			case 371357229:
-				// Node.Flags == 3
-				EvpGroup MotionEvents;
 				break;
 			}
 
