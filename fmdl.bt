@@ -131,7 +131,7 @@ typedef struct
 	_NameIndex NameIndex;
 	FMDL_MESH_GROUP_HEADER_FLAGS Flags; Assert(Flags.B == 0);
 	short ParentIndex;
-	short Unknown0; // Assert(Unknown0 == -1); // Not read by the game.
+	short VectorsIndex; // used for type A
 } FmdlMeshGroupHeader <optimize = false, bgcolor = COLOR_FmdlMeshGroupHeader>;
 
 typedef struct
@@ -235,10 +235,10 @@ typedef struct
 	ushort MaterialInstanceIndex;
 	ushort BoneGroupIndex;
 
-	ushort BufferLayoutDescIndex; // Unconfirmed.
+	ushort DataLayoutIndex;
 
 	ushort VertexCount;
-	ushort VerticesStartIndex; Assert(VerticesStartIndex == 0); // Unconfirmed.
+	ushort VerticesStartIndex;
 
 	ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
 

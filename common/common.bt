@@ -60,18 +60,27 @@ typedef struct
 
 typedef struct
 {
-	half x;
-	half y;
-	half z;
-} VectorH3 <read = Str("(%s, %s, %s)", ReadHalf(x), ReadHalf(y), ReadHalf(z))>;
+	float x;
+	float y;
+	float z;
+	uint Padding <hidden = true>; Assert(Padding == 0);
+} Vector3W <read = Str("(%g, %g, %g)", x, y, z)>;
 
 typedef struct
 {
 	float x;
 	float y;
 	float z;
-	uint Padding <hidden = true>; Assert(Padding == 0);
-} WideVector3 <read = Str("(%g, %g, %g)", x, y, z)>;
+	short x_offset;
+	short z_offset;
+} WideVector3 <read = Str("(%g, %g, %g, %d, %d)", x, y, z, x_offset, z_offset)>;
+
+typedef struct
+{
+	half x;
+	half y;
+	half z;
+} VectorH3 <read = Str("(%s, %s, %s)", ReadHalf(x), ReadHalf(y), ReadHalf(z))>;
 
 typedef struct
 {

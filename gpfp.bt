@@ -19,8 +19,8 @@ typedef struct
 	{
 		local uint SelfStartPos = FTell();
 		
-		WideVector3 BoundingBoxCorner;
-		WideVector3 BoundingBoxExtents;
+		Vector3W BoundingBoxCorner;
+		Vector3W BoundingBoxExtents;
 
 		float GridResolution;
 

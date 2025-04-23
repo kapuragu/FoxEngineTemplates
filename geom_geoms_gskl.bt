@@ -51,7 +51,7 @@ typedef struct
 	// 		// mgsvtpp.exe!141bd7e9c
 	// 		if ((Header.Flags & GEO_SHAPE_FLAGS_USE_FMDL_VERTEX_DATA) == 0)
 	// 		{
-	// 			WideVector3 VertexData[VertexHeader.VertexCount] <optimize = true>;
+	// 			Vector3W VertexData[VertexHeader.VertexCount] <optimize = true>;
 
 	// 			// origin = VertexData[VertexHeader.OriginIndex]
 	// 			// A: VertexData[VertexHeader.VerticesIndexOffset + IndexSet.Offset0] + origin
@@ -61,10 +61,10 @@ typedef struct
 	// 		}
 	// 		else if (VertexHeader.VertexDataOffset == 0 && false /* FMDL vertex pointer is null*/)
 	// 		{
-	// 			// A: WideVector3(0, -10000, 0, 0)
-	// 			// B: WideVector3(0, -10000, 1, 0)
-	// 			// C: WideVector3(1, -10000, 1, 0)
-	// 			// D: WideVector3(1, -10000, 0, 0)
+	// 			// A: Vector3W(0, -10000, 0, 0)
+	// 			// B: Vector3W(0, -10000, 1, 0)
+	// 			// C: Vector3W(1, -10000, 1, 0)
+	// 			// D: Vector3W(1, -10000, 0, 0)
 	// 		}
 	// 		else
 	// 		{

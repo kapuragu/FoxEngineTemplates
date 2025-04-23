@@ -366,8 +366,8 @@ typedef struct
 
 typedef struct
 {
-	WideVector3 BoundingBoxRadii <bgcolor=0xDBC48F, comment="Width/2, Height/2, Depth/2">;
-	WideVector3 BoundingBoxCenter <bgcolor=0xDBC48F>;
+	Vector3W BoundingBoxRadii <bgcolor=0xDBC48F, comment="Width/2, Height/2, Depth/2">;
+	Vector3W BoundingBoxCenter <bgcolor=0xDBC48F>;
 } GeoPrimAabb; // Name taken from PES RTTI
 
 typedef struct
@@ -386,7 +386,7 @@ typedef struct
 
 	// FSeek(startof(this) + VertexDataOffset);
 	
-	// WideVector3 Vertices[VertexCount] <optimize = true>;
+	// Vector3W Vertices[VertexCount] <optimize = true>;
 } GeoPrimFreeArea;
 
 struct GeoVertexHeader // Name taken from PES RTTI

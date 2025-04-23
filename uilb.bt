@@ -106,7 +106,7 @@ if (Header.ModelDataCount > 0)
 
         int Priority;
 
-        WideVector3 Scale;
+        Vector3W Scale;
         Quaternion RotationQuaternion;
         Vector4 Translate;
         Vector4 Color;
@@ -206,7 +206,7 @@ if (Header.LayoutDataCount > 0)
 
         int Priority;
 
-        WideVector3 Scale;
+        Vector3W Scale;
         Quaternion RotationQuaterion;
         Vector4 Translate;
         Vector4 Color;

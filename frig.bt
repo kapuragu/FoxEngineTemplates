@@ -56,7 +56,7 @@ typedef struct
 	case RIG_UNIT_TYPE_UNKNOWN_6: // Can't say this one for certain but shares fox::anim::RigArmDef::GetSkelIndex
         FSkip(16);
 
-        WideVector3 ChainPlaneNormal;
+        Vector3W ChainPlaneNormal;
 
 		short SkelIndexA;
 		short SkelIndexB;
@@ -68,7 +68,7 @@ typedef struct
 	case RIG_UNIT_TYPE_ARM:
         FSkip(16);
 
-        WideVector3 ChainPlaneNormal;
+        Vector3W ChainPlaneNormal;
 
 		short ChainIndexA;
 		short ChainIndexB;
@@ -83,7 +83,7 @@ typedef struct
 	case RIG_UNIT_TYPE_TWO_BONE:
         FSkip(16);
 
-        WideVector3 ChainPlaneNormal;
+        Vector3W ChainPlaneNormal;
 
 		short ChainIndexA;
 		short ChainIndexB;
