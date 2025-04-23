@@ -12,7 +12,7 @@ struct Header
     ushort edgeCount;
     ushort variationCount;
     uint unknown <hidden=true>; Assert(unknown==0);
-}header <bgcolor=COLOR_HEADER>;
+}header <bgcolor = COLOR_HEADER>;
 
 // Fx typedefs
 typedef struct
@@ -118,7 +118,7 @@ struct NodeGraph
         }
     };
     
-}nodeGraph <bgcolor=COLOR_NGRAPH>;
+}nodeGraph <bgcolor = COLOR_NGRAPH>;
 
 typedef struct
 {
@@ -141,7 +141,7 @@ typedef struct
 struct Edges
 {
     FxModuleEdge edges[header.edgeCount];
-}edges <bgcolor=COLOR_FEDGES>;
+}edges <bgcolor = COLOR_FEDGES>;
 
 struct Variation
 {
@@ -151,4 +151,4 @@ struct Variation
         ushort targetNodeIndex;
         ushort newNodeIndex;
     } nodeSwap[nodeSwapCount];
-} variation[header.variationCount] <bgcolor=(COLOR_FEDGES/2)>;
+} variation[header.variationCount] <bgcolor = (COLOR_FEDGES/2)>;

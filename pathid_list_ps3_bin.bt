@@ -22,11 +22,11 @@ struct Header
     uint stringCount;
     
     uint ver1;
-} header <bgcolor=0x000000>;
+} header <bgcolor = 0x000000>;
 
 FAlign(16);
 
-uint64 hash [header.hashCount] <bgcolor=0xFF0000>;
+uint64 hash [header.hashCount] <bgcolor = 0xFF0000>;
 
 FAlign(16);
 
@@ -34,27 +34,27 @@ struct StringCompositeIndices
 {
     ushort pathIdx;
     ushort stringIdx;
-} stringCompositeEntry [header.hashCount] <bgcolor=0x00FF00,read=Str("(%g, %g)", pathIdx>>4, stringIdx)>;
+} stringCompositeEntry [header.hashCount] <bgcolor = 0x00FF00,read=Str("(%g, %g)", pathIdx>>4, stringIdx)>;
 
 FAlign(16);
 
-uint pathOffset [header.pathCount]<bgcolor=0x0000FF>;
+uint pathOffset [header.pathCount]<bgcolor = 0x0000FF>;
 
 FAlign(16);
 
-uint stringOffset [header.stringCount] <bgcolor=0xFF00FF>;
+uint stringOffset [header.stringCount] <bgcolor = 0xFF00FF>;
 
 FAlign(16);
 
 struct PathArray
 {
     char path[];
-} pathEntry[header.pathCount] <optimize=false, bgcolor=0x00FFFF>;
+} pathEntry[header.pathCount] <optimize=false, bgcolor = 0x00FFFF>;
 
 struct StringArray
 {
     char str[];
-} stringEntry[header.stringCount] <optimize=false, bgcolor=0x00FFFF>;
+} stringEntry[header.stringCount] <optimize=false, bgcolor = 0x00FFFF>;
 
 local uint i;
 for (i = 1; i < header.hashCount; i++)

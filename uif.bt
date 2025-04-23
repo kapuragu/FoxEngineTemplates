@@ -55,7 +55,7 @@ struct UiModelFileHeader
 	    int IndicesRelativeOffset;
 	    int StrCodesRelativeOffset;   // From footer; StrCode hashes used for meshes (examples: fox_2d_Basic_LyBL)
     };
-} Header <bgcolor=COLOR_HEADER>;
+} Header <bgcolor = COLOR_HEADER>;
 
 enum <ushort> UI_MODEL_NODE_TYPE
 {
@@ -372,7 +372,7 @@ if (Header.version==TPP)
     {
         //Assert(FTell() == Header.BuffersSectionOffset + Header.StrCode32sRelativeOffset);
         FSeek(Header.BuffersSectionOffset + Header.StrCode32sRelativeOffset);
-        StrCode32 StrCode32s[Header.StrCode32Count] <bgcolor=COLOR_STRCODE32, fgcolor=0xFFFFFF>;
+        StrCode32 StrCode32s[Header.StrCode32Count] <bgcolor = COLOR_STRCODE32, fgcolor = 0xFFFFFF>;
     }
 };
     
@@ -391,14 +391,14 @@ if (Header.version==GZ)
             FSeek(Header.BuffersSectionOffset+stringRelativeOffset);
             char str[stringSize];
             FSeek(continuePosition);
-        } stringEntry[Header.PathCode64Count] <optimize=false, bgcolor=COLOR_STRCODE32, fgcolor=0xFFFFFF>;
+        } stringEntry[Header.PathCode64Count] <optimize=false, bgcolor = COLOR_STRCODE32, fgcolor = 0xFFFFFF>;
     }
     
     if (Header.StrCode32sRelativeOffset != -1)
     {
         //Assert(FTell() == Header.BuffersSectionOffset + Header.StrCode32sRelativeOffset);
         FSeek(Header.BuffersSectionOffset + Header.StrCode32sRelativeOffset);
-        StrCode StrCodes[Header.StrCode32Count] <bgcolor=COLOR_STRCODE32, fgcolor=0xFFFFFF>;
+        StrCode StrCodes[Header.StrCode32Count] <bgcolor = COLOR_STRCODE32, fgcolor = 0xFFFFFF>;
     }
 }
 
@@ -410,12 +410,12 @@ if (Header.version==TPP)
     {
         Assert(FTell() == Header.BuffersSectionOffset + Header.StrCodesRelativeOffset);
         while (FTell() < (Header.BuffersSectionOffset + Header.PathCode64sRelativeOffset) && ReadUInt64() != 0)
-	        StrCode StrCodes <bgcolor=0x866A66, fgcolor=0xFFFFFF>;
+	        StrCode StrCodes <bgcolor = 0x866A66, fgcolor = 0xFFFFFF>;
     }
 
     if (Header.PathCode64sRelativeOffset != -1)
     {
 	    Assert(FTell() == Header.BuffersSectionOffset + Header.PathCode64sRelativeOffset);
-	    PathCode64 PathCode64s[Header.PathCode64Count] <bgcolor=COLOR_STRCODE32, fgcolor=0xFFFFFF>;
+	    PathCode64 PathCode64s[Header.PathCode64Count] <bgcolor = COLOR_STRCODE32, fgcolor = 0xFFFFFF>;
     }
 }

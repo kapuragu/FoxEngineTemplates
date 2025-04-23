@@ -115,7 +115,7 @@ struct Header
 	ushort n8; // Almost certainly padding (set to 0)
 
 	hfloat vals[8]; // Unconvinced these are hfloats, but can't figure out what this is
-} header <bgcolor=COLOR_HEADER>;
+} header <bgcolor = COLOR_HEADER>;
 
 struct Manifest
 {
@@ -133,7 +133,7 @@ struct Manifest
 			ubyte n4;
 		} subentries[manifestEntryCount] <optimize = false>;
 	} manifest[3] <optimize = true>;
-}manifest<bgcolor=COLOR_MANIFEST>;
+}manifest<bgcolor = COLOR_MANIFEST>;
 
 FSeek(header.endOfHeaderOffset);
 
@@ -172,7 +172,7 @@ struct NavWorld
 	ushort Subsection5Count;
 
 	FSeek(startPosition + VertexBufferOffset);
-	Vertex Vertices [VertexCount] <bgcolor=COLOR_NAVWORLD_SS1>;
+	Vertex Vertices [VertexCount] <bgcolor = COLOR_NAVWORLD_SS1>;
 	
 	FSeek(startPosition + Subsection2Offset);
 	struct NavWorldSubsection2Entry
@@ -181,7 +181,7 @@ struct NavWorld
 		ushort Subsection5Index;
 		byte CountA;
 		byte CountB;
-	} Subsection2Entries [VertexCount] <bgcolor=COLOR_NAVWORLD_SS2>;
+	} Subsection2Entries [VertexCount] <bgcolor = COLOR_NAVWORLD_SS2>;
 
 	// Not dependent on VertexCount != 0
 	FSeek(startPosition + Subsection3Offset);
@@ -206,7 +206,7 @@ struct NavWorld
 					{
 						short Unknown;
 					}
-				} Subsection3Entries <bgcolor=COLOR_NAVWORLD_SS3>;
+				} Subsection3Entries <bgcolor = COLOR_NAVWORLD_SS3>;
 			}
 		}
 	} Subsection3Entries;
@@ -218,20 +218,20 @@ struct NavWorld
 		ushort Subsection5Index;
 
 		IndexPair8 EdgeIndices; // These are indicies into the points array but need to add the number of vertexes in previous "chunks"
-	} Edges[EdgeCount] <bgcolor=COLOR_NAVWORLD_SS4>;
+	} Edges[EdgeCount] <bgcolor = COLOR_NAVWORLD_SS4>;
 
 	FSeek(startPosition + Subsection5Offset);
 	struct NavWorldSubsection5Entry
 	{
 		ushort Flags; // probably?
-	} Subsection5Entries[Subsection5Count] <bgcolor=COLOR_NAVWORLD_SS5>; // This is the same as the number of "chunks" in the file
+	} Subsection5Entries[Subsection5Count] <bgcolor = COLOR_NAVWORLD_SS5>; // This is the same as the number of "chunks" in the file
 
 	FSeek(startPosition + Subsection6Offset);
 	struct NavWorldSubsection6Entry
 	{
 		// Index into NavmeshChunk subsection 2.
 		ushort NavmeshChunkSubsection2Index;
-	} Subsection6Entries[VertexCount] <bgcolor=COLOR_NAVWORLD_SS6>;
+	} Subsection6Entries[VertexCount] <bgcolor = COLOR_NAVWORLD_SS6>;
 };
 
 struct NavmeshChunk
@@ -259,11 +259,11 @@ struct NavmeshChunk
 
 	FSeek(startPosition + subsection1Offset);
 
-	Vertex vertices[numVertices]<bgcolor=COLOR_NAVMESHCHUNK_SS1>;
+	Vertex vertices[numVertices]<bgcolor = COLOR_NAVMESHCHUNK_SS1>;
 
 	FSeek(startPosition + subsection2Offset);
 
-	uint faceOffsets[numFaces]<bgcolor=COLOR_NAVMESHCHUNK_SS2>;
+	uint faceOffsets[numFaces]<bgcolor = COLOR_NAVMESHCHUNK_SS2>;
 
 	FSeek(startPosition + subsection3Offset);
 
@@ -293,7 +293,7 @@ struct NavmeshChunk
 				}
 			} entries;
 		}
-	} faces<bgcolor=COLOR_NAVMESHCHUNK_SS3>;
+	} faces<bgcolor = COLOR_NAVMESHCHUNK_SS3>;
 };
 
 struct SegmentChunk
@@ -315,7 +315,7 @@ struct SegmentChunk
 			Vertex a;
 			Vertex b;
 		} entries[entryCount];
-	} subsection1<bgcolor=COLOR_SEGMENTCHUNK_SS1>;
+	} subsection1<bgcolor = COLOR_SEGMENTCHUNK_SS1>;
 
 	FSeek(startPosition + subsection2Offset);
 	struct SegmentChunkSubsection2
@@ -331,7 +331,7 @@ struct SegmentChunk
 			byte u7; // faces * 3 ?
 			byte edges;
 		} entries[entryCount];
-	} subsection1<bgcolor=COLOR_SEGMENTCHUNK_SS2>;
+	} subsection1<bgcolor = COLOR_SEGMENTCHUNK_SS2>;
 };
 
 struct NavWorldSegmentGraph
@@ -358,7 +358,7 @@ struct NavWorldSegmentGraph
 		{
 			Vertex position;
 		} entries[subsection1EntryCount];
-	} subsection1<bgcolor=COLOR_SEGMENTGRAPH_SS1>;
+	} subsection1<bgcolor = COLOR_SEGMENTGRAPH_SS1>;
 
 	FSeek(startPosition + subsection2Offset);
 	struct NavWorldSegmentGraphSubsection2
@@ -374,7 +374,7 @@ struct NavWorldSegmentGraph
 			byte offGroupEdges;
 			byte offMeshEdges;
 		} entries[subsection1EntryCount];
-	} subsection2<bgcolor=COLOR_SEGMENTGRAPH_SS2>;
+	} subsection2<bgcolor = COLOR_SEGMENTGRAPH_SS2>;
 
 	if (subsection3Offset != totalSize)
 	{
@@ -446,7 +446,7 @@ struct NavWorldSegmentGraph
 					}
 				} entries;
 			}
-		}subsection3<bgcolor=COLOR_SEGMENTGRAPH_SS3>;
+		}subsection3<bgcolor = COLOR_SEGMENTGRAPH_SS3>;
 	}
 };
 
@@ -465,24 +465,24 @@ struct Entry
 	{
 		case NAVWORLD:
 			FSeek(startOffset + payloadRelativeOffset);
-			NavWorld world <bgcolor=COLOR_NAVWORLD>;
+			NavWorld world <bgcolor = COLOR_NAVWORLD>;
 			break;
 		case NAVMESH_CHUNK:
 			FSeek(startOffset + payloadRelativeOffset);
-			NavmeshChunk chunk <bgcolor=COLOR_NAVMESHCHUNK>;
+			NavmeshChunk chunk <bgcolor = COLOR_NAVMESHCHUNK>;
 			break;
 		case NAVWORLD_SEGMENT_GRAPH:
 			FSeek(startOffset + payloadRelativeOffset);
-			NavWorldSegmentGraph navWorldSegmentGraph <bgcolor=COLOR_SEGMENTGRAPH>;
+			NavWorldSegmentGraph navWorldSegmentGraph <bgcolor = COLOR_SEGMENTGRAPH>;
 			break;
 		case SEGMENT_CHUNK:
 			FSeek(startOffset + payloadRelativeOffset);
-			SegmentChunk segmentChunk <bgcolor=COLOR_SEGMENTCHUNK>;
+			SegmentChunk segmentChunk <bgcolor = COLOR_SEGMENTCHUNK>;
 			break;
 	};
 
 	FSeek(startOffset + nextEntryRelativeOffset);
-} entry[header.entryCount] <read = Str("%s, id: %u", EnumToString(entryType), Coordinate.FileIndex), optimize = false, bgcolor=0x5B1ED8>;
+} entry[header.entryCount] <read = Str("%s, id: %u", EnumToString(entryType), Coordinate.FileIndex), optimize = false, bgcolor = 0x5B1ED8>;
 
 if (header.section2Offset)
 {
@@ -561,7 +561,7 @@ if (header.section2Offset)
 			} subsection5Entries;
 
 			// TODO: Subsection 6?
-		} section2Entry <bgcolor=COLOR_SECTION2>;
+		} section2Entry <bgcolor = COLOR_SECTION2>;
 
 		FSeek(startOffset + section2Entry.nextEntryRelativeOffset);
 		remainingEntries--;
@@ -598,7 +598,7 @@ if (header.navSystemOffset != 0)
 				ubyte u2;
 				ubyte u3;
 			} entries[n1*u3];
-		} subsection1<bgcolor=COLOR_NAVSYSTEM_SS1>;
+		} subsection1<bgcolor = COLOR_NAVSYSTEM_SS1>;
 
 		struct NavSystemSubsection2 {
 			local int i;
@@ -613,8 +613,8 @@ if (header.navSystemOffset != 0)
 					} entries;
 				}
 			}
-		} subsection2<bgcolor=COLOR_NAVSYSTEM_SS2>;
+		} subsection2<bgcolor = COLOR_NAVSYSTEM_SS2>;
 
 
-	} navSystem <bgcolor=COLOR_NAVSYSTEM>;
+	} navSystem <bgcolor = COLOR_NAVSYSTEM>;
 }

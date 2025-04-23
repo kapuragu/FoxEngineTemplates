@@ -52,17 +52,6 @@ string ResolveHashFunc(StrCode32& hash)
 	}
 }
 
-struct FoxDataString;
-struct StringList
-{
-	uint EntryCount <hidden = true>;
-	local int64 strIdx;
-	for (strIdx = 0; strIdx < EntryCount; strIdx++)
-	{
-		FoxDataString Entry <optimize = true>;
-	}
-};
-
 struct GANI
 {
 	switch (ResolveHashFunc(parentof(this).Name.Hash))

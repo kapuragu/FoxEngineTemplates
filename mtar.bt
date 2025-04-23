@@ -19,15 +19,15 @@ struct MtarHeader
 
 	uint FileCount;
 	
-	ushort TrackCount; // Same as FRIG's RigUnit count
+	ushort UnitCount; // Same as FRIG's RigUnit count
 
 	ushort SegmentCount; // Same as FRIG's count
 
 	ushort ShaderNodeCount; // Shows up in "_facial" - seems to be the number of SHADER nodes per animation
 
-	ushort ShaderTrackCount; // Shows up in "_facial" - normally (always?) as 0x1
+	ushort ShaderUnitCount; // Shows up in "_facial" - normally (always?) as 0x1
 
-	ushort MotionPointTrackCount;
+	ushort MotionPointUnitCount;
 
 	enum <ushort> MTAR_FLAGS
 	{
@@ -160,7 +160,7 @@ if (Header.Flags & MTAR_FLAGS_NEW)
 					} Param <read = Str("%s = %f", EnumToString(Name), Value)>;
 				}
 
-				TrackUnitFlags UnitFlags[Header.TrackCount];
+				TrackUnitFlags UnitFlags[Header.UnitCount];
 
 				FAlign(4);
 
@@ -175,7 +175,7 @@ if (Header.Flags & MTAR_FLAGS_NEW)
 				local uint tkIdx;
 				local uint rlSgIdx;
 				local uint sgIdx = 0;
-				for (tkIdx = 0; tkIdx < Header.TrackCount; tkIdx++)
+				for (tkIdx = 0; tkIdx < Header.UnitCount; tkIdx++)
 				{
 					struct Gani2TrackUnit
 					{

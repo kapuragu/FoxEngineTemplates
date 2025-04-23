@@ -33,7 +33,7 @@ struct Header
 		uint offsetToGroupSets;
 	}
 	
-} header <bgcolor=0x69626D, hidden=true>;
+} header <bgcolor = 0x69626D, hidden=true>;
 
 enum <ubyte> RadioType {
     real_time=0,
@@ -100,9 +100,9 @@ enum <ubyte> PlayType{
 
 if (header.version == 3) // if TPP
 {
-	uint dialogueEventId[header.dialogueEventCount] <bgcolor=0xBCAF9C>; // The name of the Dynamic Dialogue event
+	uint dialogueEventId[header.dialogueEventCount] <bgcolor = 0xBCAF9C>; // The name of the Dynamic Dialogue event
 				// fnv132: dd_ etc
-	uint charas[header.charaCount] <bgcolor=0xBCAF9C>; //The state name of the "chara" state group in the Dynamic Dialogue event
+	uint charas[header.charaCount] <bgcolor = 0xBCAF9C>; //The state name of the "chara" state group in the Dynamic Dialogue event
 				// fnv132:
 				// miller = 3140691722 0A 27 33 BB
 				// ocelot = 469355457 C1 CB F9 1B
@@ -209,14 +209,14 @@ if (header.version == 3) // if TPP
         //tpp::gm::radio::RadioGroup2::GetLabelPartAddres
 		LabelPart labelPart[labelPartCount] <optimize=false>;
 					
-	} group2[header.groupCount] <bgcolor=0xCBBEB3, optimize=false, read=Str("%u",name)>;
+	} group2[header.groupCount] <bgcolor = 0xCBBEB3, optimize=false, read=Str("%u",name)>;
 
 	struct RadioGroupSet2{
 		uint name;
 		ubyte labelsCount <hidden=true>;
 		uint labelName[labelsCount] <optimize=false>;
 		//lua assigns sets to memory, and each label plays in order when the radio button is pressed with no intel radio target picked
-	} groupSet[header.groupSetCount] <bgcolor=0xD9BDC5, optimize=false, read=Str("%u",name)>;
+	} groupSet[header.groupSetCount] <bgcolor = 0xD9BDC5, optimize=false, read=Str("%u",name)>;
 
 	struct RadioLabelGroup2
 	{
@@ -235,7 +235,7 @@ if (header.version == 3) // if TPP
 		// sbpVoiceId CC DF 48 49 - No enemy forces in pursuit. Mission complete.
 					
 		// The label randomly picks one of the variation sets
-	} labelGroup2[header.labelGroupCount] <optimize=false, bgcolor=0xE8C7DE, read=Str("%u",name)>;
+	} labelGroup2[header.labelGroupCount] <optimize=false, bgcolor = 0xE8C7DE, read=Str("%u",name)>;
 
 }
 else if (header.version == 1) // if GZ
@@ -244,7 +244,7 @@ else if (header.version == 1) // if GZ
 	struct RadioGroupDef{
 		uint name;		// StrCode32 hash of label name used by lua, ex "e0010_rtrg0090"
 		uint offset;	// Global
-	} groupDef[header.groupCount] <optimize=false, hidden=true, fgcolor=0xBCAF9C>;
+	} groupDef[header.groupCount] <optimize=false, hidden=true, fgcolor = 0xBCAF9C>;
 				
 	local int radioIndex <hidden=true>;
 	radioIndex=-1;
@@ -296,7 +296,7 @@ else if (header.version == 1) // if GZ
 		thisIndex=radioIndex+1;
 		radioIndex++;
 
-	} group[header.groupCount] <optimize=false, bgcolor=0xBCAF9C, read=Str("%u",groupDef[thisIndex].name)>;
+	} group[header.groupCount] <optimize=false, bgcolor = 0xBCAF9C, read=Str("%u",groupDef[thisIndex].name)>;
 			
 	Assert(header.offsetToGroupSets==FTell(),"Offset to GzSection 1 is wrong!!");
 
@@ -309,7 +309,7 @@ else if (header.version == 1) // if GZ
 	struct RadioGroupSetDef{
 		uint name;				// Not sure what these are, some sort of radio label sets?
 		uint offset;		// offsetToGroupSets + this offset to group set
-	} groupSetDef[groupSetCount] <optimize=false, hidden=true, fgcolor=0xD9BDC5>;
+	} groupSetDef[groupSetCount] <optimize=false, hidden=true, fgcolor = 0xD9BDC5>;
 					
 	struct RadioGroupSet{
 		ushort setGroupCount <hidden=true>;
@@ -318,7 +318,7 @@ else if (header.version == 1) // if GZ
 		local int thisIndex <hidden=true>;
 		thisIndex=radioIndex+1;
 		radioIndex++;		
-	} groupSet[groupSetCount] <optimize=false, bgcolor=0xD9BDC5, read=Str("%u",groupSetDef[thisIndex].name)>;
+	} groupSet[groupSetCount] <optimize=false, bgcolor = 0xD9BDC5, read=Str("%u",groupSetDef[thisIndex].name)>;
 
 };
 

@@ -40,7 +40,7 @@ struct
 		BigEndian();
 	}
 	ushort RailsCount;
-} Header <bgcolor=0x8694EB>;
+} Header <bgcolor = 0x8694EB>;
 
 if ( FileSize() == ( FTell() + (Header.RailsCount * 4) ) )
 {
@@ -48,7 +48,7 @@ if ( FileSize() == ( FTell() + (Header.RailsCount * 4) ) )
 	{
 		StrCode32 RailHash;
 
-	} RailIDs[Header.RailsCount] <bgcolor=0xB9E7CA, optimize=true>;
+	} RailIDs[Header.RailsCount] <bgcolor = 0xB9E7CA, optimize=true>;
 }
 else
 {
@@ -76,7 +76,7 @@ else
 			Float3 Position; float ArcLength; // Length of Hermite
 			Float3 Tangent; float TangentLength; // TangentLength == length(Tangent) == sqrt(Tangent.x^2 + Tangent.y^2 + Tangent.z^2)
             Printf("%f, %f\n", -Tangent.x, Tangent.z);
-		} Vertices[VertexCount] <bgcolor=0x8ADEF3, optimize=false>; 
+		} Vertices[VertexCount] <bgcolor = 0x8ADEF3, optimize=false>; 
 		
 		FSeek(NotesOffset);
 		struct RailNote
@@ -85,11 +85,11 @@ else
 			ushort UnknownShort1;
 			ubyte UnknownByte0;
 			ubyte UnknownByte1;
-		} Notes[NoteCount] <bgcolor=0x00AAFF, optimize=true>;
+		} Notes[NoteCount] <bgcolor = 0x00AAFF, optimize=true>;
 		
 		FSeek(ExtensionsOffset);
-		uint Extensions[NoteCount/2] <bgcolor=0xB3A797, optimize=true>;
+		uint Extensions[NoteCount/2] <bgcolor = 0xB3A797, optimize=true>;
 		
 		FSeek(resumePos);
-	} rail[Header.RailsCount] <bgcolor=0x7DE39E, optimize=false>;
+	} rail[Header.RailsCount] <bgcolor = 0x7DE39E, optimize=false>;
 }

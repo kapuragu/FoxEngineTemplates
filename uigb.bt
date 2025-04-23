@@ -147,7 +147,7 @@ struct Header
     }
 
     int BuffersSectionOffset;
-} header <bgcolor=COLOR1>;
+} header <bgcolor = COLOR1>;
 
 enum <ubyte> UiActionNodeKind
 {
@@ -261,7 +261,7 @@ struct UiPhaseNode
     local uint currentPosition = FTell();
 
     FSeek(edgesOffset);
-    UiEdgeData inputEdge[edgeCount] <bgcolor=COLOR7>;
+    UiEdgeData inputEdge[edgeCount] <bgcolor = COLOR7>;
     FSeek(currentPosition);
 
     // Not read?
@@ -279,7 +279,7 @@ struct UiEventNode
     local uint currentPosition = FTell();
 
     FSeek(outputEdgesOffset);
-    UiEdgeData inputEdges[outputEdgeCount] <bgcolor=COLOR7>;
+    UiEdgeData inputEdges[outputEdgeCount] <bgcolor = COLOR7>;
     FSeek(currentPosition);
 
     ubyte layoutLinkCount;
@@ -328,7 +328,7 @@ struct UiActionNode
     local uint currentPosition = FTell();
 
     FSeek(outputEdgesOffset);
-    UiEdgeData inputEdges[outputEdgeCount] <bgcolor=COLOR7>;
+    UiEdgeData inputEdges[outputEdgeCount] <bgcolor = COLOR7>;
     FSeek(currentPosition);
 
     ubyte layoutLinkCount;
@@ -377,7 +377,7 @@ struct UiActionNode
 
     currentPosition = FTell();
     FSeek(outputEdgesOffset);
-    UiOutputEdgeData outputEdges[outputEdgeCount] <bgcolor=COLOR7>;
+    UiOutputEdgeData outputEdges[outputEdgeCount] <bgcolor = COLOR7>;
     FSeek(currentPosition);
 };
 
@@ -391,7 +391,7 @@ struct UiOperationNode
     local uint currentPosition = FTell();
 
     FSeek(outputEdgesOffset);
-    UiEdgeData inputEdges[outputEdgeCount] <bgcolor=COLOR7>;
+    UiEdgeData inputEdges[outputEdgeCount] <bgcolor = COLOR7>;
     FSeek(currentPosition);
 
     ubyte layoutLinkCount;
@@ -442,7 +442,7 @@ enum <ubyte> UiNodeType
 
 struct UiNodeData
 {
-    ushort nodeTypeHashIndex <comment=GetNodeTypeComment, fgcolor=0xFFFFFF>;
+    ushort nodeTypeHashIndex <comment=GetNodeTypeComment, fgcolor = 0xFFFFFF>;
     ushort nodeNameHashIndex <comment=GetStrCode32Comment>;
 
     ubyte nodeSzeInBytes;
@@ -478,7 +478,7 @@ struct UiNodeData
             Printf("Unrecognized node type: %u\n", nodeTypeHash);
             Assert(false);
     }
-} nodes [header.nodeCount] <bgcolor=COLOR2, optimize=false>;
+} nodes [header.nodeCount] <bgcolor = COLOR2, optimize=false>;
 
 if (header.layoutTableOffset>0)
 {
@@ -486,7 +486,7 @@ if (header.layoutTableOffset>0)
     
     struct UiLayoutData
     {
-        ushort hashIndex <comment=GetStrCode32Comment, fgcolor=0xFFFFFF>;
+        ushort hashIndex <comment=GetStrCode32Comment, fgcolor = 0xFFFFFF>;
     
         // Interesting note: these are always 6 apart
         ushort layoutPathHashIndex <comment=GetPathCode64Comment>;
@@ -510,7 +510,7 @@ if (header.layoutTableOffset>0)
             ushort connectionHashIndex <comment=GetStrCode32Comment>;
             ushort u1 <comment=GetStrCode32Comment>;
         }
-    } layouts[header.uilbCount] <optimize = false, bgcolor=COLOR4>;
+    } layouts[header.uilbCount] <optimize = false, bgcolor = COLOR4>;
 }
 
 struct Section2Entry
@@ -554,7 +554,7 @@ if (header.section4Offset>0)
             Vector4 v3;
             Vector4 v4;
         } entries[header.uigbCount] <optimize=false>;
-    } section4 <bgcolor=COLOR8, fgcolor=0xFFFFFF>;
+    } section4 <bgcolor = COLOR8, fgcolor = 0xFFFFFF>;
 }
 
 if (header.version==GZ)
@@ -567,7 +567,7 @@ if (header.version==GZ)
             struct StringEntry
             {
                 local string str = GetString(stringIndex);
-            } stringEntry <bgcolor=0x856ACE, fgcolor=0xFFFFFF>;
+            } stringEntry <bgcolor = 0x856ACE, fgcolor = 0xFFFFFF>;
 	    };
     }
 
@@ -576,7 +576,7 @@ if (header.version==GZ)
     if (header.StrCodesRelativeOffset != -1)
     {
 	    FSeek(header.BuffersSectionOffset + header.StrCodesRelativeOffset);
-	    StrCode StrCode32s[header.StrCodeCount] <bgcolor=0x75A2FA, fgcolor=0xFFFFFF>;
+	    StrCode StrCode32s[header.StrCodeCount] <bgcolor = 0x75A2FA, fgcolor = 0xFFFFFF>;
     }
 }
 else if (header.version==TPP)
@@ -585,7 +585,7 @@ else if (header.version==TPP)
     {
 	    //Assert(FTell() == header.BuffersSectionOffset + header.StrCode32sRelativeOffset);
 	    FSeek(header.BuffersSectionOffset + header.StrCode32sRelativeOffset);
-	    StrCode32 StrCode32s[header.StrCode32Count] <bgcolor=0x75A2FA, fgcolor=0xFFFFFF>;
+	    StrCode32 StrCode32s[header.StrCode32Count] <bgcolor = 0x75A2FA, fgcolor = 0xFFFFFF>;
     }
 
     FAlign(8);
@@ -593,7 +593,7 @@ else if (header.version==TPP)
     if (header.PathCode64sRelativeOffset != -1)
     {
 	    Assert(FTell() == header.BuffersSectionOffset + header.PathCode64sRelativeOffset);
-	    PathCode64 PathCode64s[header.PathCode64Count] <bgcolor=0x856ACE, fgcolor=0xFFFFFF>;
+	    PathCode64 PathCode64s[header.PathCode64Count] <bgcolor = 0x856ACE, fgcolor = 0xFFFFFF>;
     }
 }
 

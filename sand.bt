@@ -38,9 +38,14 @@ string ResolveHashFunc(StrCode32& hash)
 struct Header
 {
 	uint Version; // June 23rd, 2014 
-    if (Version==372703500) { BigEndian();BitfieldRightToLeft();}
+    if (Version==372703500)
+	{ 
+		BigEndian();
+		BitfieldRightToLeft();
+	}
+
 	uint FileSize; Assert(FileSize == FileSize());
-	uint sectionParamCount; Assert(sectionParamCount==4); // Four sections always
+	uint sectionParamCount; Assert(sectionParamCount == 4);
 	uint objectCount;
 		
 	struct SectionParams
@@ -49,9 +54,9 @@ struct Header
 		uint sectionEntriesCount; // Always same as objectCount, amount of Section 2 entry offsets
 		uint sectionStartOffset; // Offset to section start, from the start of the line
 		uint sectionSize;
-	} sectionParams[sectionParamCount] <fgcolor=0x8694EB>; // ROOT Section Params
+	} sectionParams[sectionParamCount] <fgcolor = 0x8694EB>; // ROOT Section Params
 	
-} header <bgcolor=0xB3A797>;
+} header <bgcolor = 0xB3A797>;
 
 // Section #1: Track Offsets
 
@@ -59,12 +64,7 @@ struct Header
 
 FSeek(startof(header.sectionParams[0]) + header.sectionParams[0].sectionStartOffset);
 
-struct
-{
-	local int64 trkIdx;
-	for (trkIdx = 0; trkIdx < header.sectionParams[0].sectionEntriesCount; trkIdx++)
-		uint TracksOffset <optimize = true>; // Global offsets to nodes' tracks
-} TracksOffsets <bgcolor=0x8694EB>;
+uint TrackOffsets[header.sectionParams[0].sectionEntriesCount] <bgcolor = 0x8694EB>;
 
 // Section #2: Node tree
 
@@ -81,24 +81,15 @@ struct SAND
 	case "CameraParam":
 	case "SI Frame":
 	case "SKEL":
-	case "Unknown":
+	case "FRAGMENT":
     case "MOTION":
 	case "GLOBALSRT":
 	case "MTP":
-		Printf("%u\n", FTell());
 		TrackHeader Tracks;
 		break;
 	case "MTP_LIST":
 	case "MTP_PARENT_LIST":
-		struct ObjectMTPList
-		{
-			uint EntryCount <hidden = true>;
-			local int64 mtpLstIdx;
-			for (mtpLstIdx = 0; mtpLstIdx < EntryCount; mtpLstIdx++)
-			{
-				FoxDataString Entry <optimize = true>;
-			}
-		} List <bgcolor = 0xF38ADE>;
+		StringList List <bgcolor = 0xF38ADE>;
 		break;
 	default:
 		{
@@ -106,7 +97,6 @@ struct SAND
 			{
 				if (ReadUInt(startof(parentof(this)) + parentof(this).ParentNodeOffset) == 2250865118 /*SHADER*/)
 				{
-		            Printf("%u\n", FTell());
 					TrackHeader Tracks;
 				}
 			}
@@ -130,18 +120,11 @@ FoxDataNodes Nodes;
 
 FSeek(startof(header.sectionParams[2]) + header.sectionParams[2].sectionStartOffset);
 
-struct
+struct SandHashTable
 {
-	local int64 cmIdx;
-	for (cmIdx = 0; cmIdx < header.sectionParams[2].sectionEntriesCount; cmIdx++)
-	{
-		struct CameraObjectReference
-		{
-			StrCode32 Name; // Hash of the object name, sometimes CameraParam or SI Frame.
-			uint Id;
-		} cameraObjectReference <read = Str("Name: %u, Id: %u", Name.hash, Id), optimize = false>;
-	}
-} AttributeNameTable <bgcolor=0xB9E7CA>;
+	StrCode32 Name; // Hash of the object name, sometimes CameraParam or SI Frame.
+	uint TrackId;
+} HashTable[header.sectionParams[2].sectionEntriesCount] <bgcolor = 0xB9E7CA>;
 
 // Section #4: Object Track Sets
 
@@ -150,20 +133,12 @@ struct
 
 FSeek(startof(header.sectionParams[3]) + header.sectionParams[3].sectionStartOffset);
 
-struct
+struct SandTargetNameTable
 {
-	local int64 moIdx;
-	for (moIdx = 0; moIdx < header.sectionParams[3].sectionEntriesCount; moIdx++)
-	{
-        //header indices (+shader offset) of a named actor, -1 if n/a
-		struct ObjectTrackSet
-		{
-			StrCode32 Name; // Hash of the object name from fox2, ie HM_sna0_main0_def
-			short headerIndex_Move;
-			short headerIndex_Skel;
-			short headerIndex_Unknown; if (headerIndex_Unknown>0) { Printf(Str("headerIndex_Unknown: %d", headerIndex_Unknown)); } // 2053459263 type node
-			short headerIndex_Mtp;
-			uint shaderOffset; // global offset to shader object
-		} objectTrackSet <read = Str("Name: %u", Name.hash), optimize = false>;
-	}
-} TargetNameTable <bgcolor=0x9A7F7E>;
+	StrCode32 Name;
+	short MoveTrackId;
+	short SkelTrackId;
+	short FragmentTrackId;
+	short MotionPointTrackId;
+	uint ShaderOffset; // global offset to shader object
+} TargetNameTable[header.sectionParams[3].sectionEntriesCount] <optimize = false, read = Str("Name: %u", Name.hash), bgcolor = 0x9A7F7E>;

@@ -32,7 +32,7 @@ string ResolveHashFunc(StrCode32& hash)
 	case 4042487769: return "MTP_PARENT_LIST";
 	case 3187573380: return "LOCATOR";
 	case 2036377104: return "GLOBALSRT";
-	case 2053459263: return "Unknown";
+	case 2053459263: return "FRAGMENT";
 
 	// Parameter names
 	case 2570203771: return "TARGET_NAME";
@@ -52,7 +52,7 @@ struct SAND
 	case "CameraParam":
 	case "SI Frame":
 	case "SKEL":
-	case "Unknown":
+	case "FRAGMENT":
 	case "MOTION":
 	case "GLOBALSRT":
 	case "MTP":
@@ -60,15 +60,7 @@ struct SAND
 		break;
 	case "MTP_LIST":
 	case "MTP_PARENT_LIST":
-		struct ObjectMTPList
-		{
-			uint EntryCount <hidden = true>;
-			local int64 mtpLstIdx;
-			for (mtpLstIdx = 0; mtpLstIdx < EntryCount; mtpLstIdx++)
-			{
-				FoxDataString Entry <optimize = true>;
-			}
-		} List <bgcolor = 0xF38ADE>;
+		StringList List <bgcolor = 0xF38ADE>;
 		break;
 	default:
 		{
@@ -138,69 +130,75 @@ while (FTell()!=FileSize())
 
 		struct Header
 		{
-			char packetType[4]; if (packetType=="OMED" || packetType==" SYS" || packetType==" DNS" || packetType==" DNE") { BigEndian();BitfieldRightToLeft(); };
+			char packetType[4]; 
+			if (packetType == "OMED" || packetType == " SYS" || packetType == " DNS" || packetType == " DNE")
+			{ 
+				BigEndian();
+				BitfieldRightToLeft();
+			};
+
 			uint packetSize;
 			double packetStartTime;
-		} header <bgcolor=0x800000>;
+		} header <bgcolor = 0x800000>;
 
-		if (header.packetType=="SYS " || header.packetType==" SYS")
+		if (header.packetType == "SYS " || header.packetType == " SYS")
 		{
         }
-		else if (header.packetType=="DEMO" || header.packetType=="OMED")
+		else if (header.packetType == "DEMO" || header.packetType == "OMED")
 		{
-			DemoPacketHeader demoPacketHeader <bgcolor=0x800080>;
+			DemoPacketHeader demoPacketHeader <bgcolor = 0x800080>;
 
-			if (demoPacketHeader.demoPacketType==DEMO_PACKET_TYPE_SEGMENTS)
+			if (demoPacketHeader.demoPacketType == DEMO_PACKET_TYPE_SEGMENTS)
             {
 				struct DataSegmentSection
                 {
-					int segmentOffset[demoPacketHeader.segmentCount] <bgcolor=0x008000, comment="Offsets start from demoPacketHeader">;
+					int segmentOffset[demoPacketHeader.segmentCount] <bgcolor = 0x008000, comment = "Offsets start from demoPacketHeader">;
                     //if (segmentOffset[205]>0) {Printf("\n\n\n%u\n\n\n\n",FTell());}
 					if (demoPacketHeader.flags & DEMO_PACKET_FLAGS_ROOTPOS)
                     {
-						Vector3 rootPos <bgcolor=0xC08000, comment="World translation root of the demo chunk. Thanks to Ventos to pointing it out!">;
+						Vector3 rootPos <bgcolor = 0xC08000, comment = "World translation root of the demo chunk.">;
 					};
-					ushort segmentFlags[demoPacketHeader.segmentCount] <bgcolor=0x0080C0, comment="Might have something to do with what kinda data is in the Motions">;
+
+					ushort segmentFlags[demoPacketHeader.segmentCount] <bgcolor = 0x0080C0, comment = "Might have something to do with what kinda data is in the Motions">;
                     struct DataSegments
                     {
-					    local uint segId=0;
-                        local uint nextOffset=0;
-                        local uint nextIndex=0;
+					    local uint segId = 0;
+                        local uint nextOffset = 0;
+                        local uint nextIndex = 0;
 					    struct DataSegment{
                             //Endianness difference shows that these are indeed stored as shorts
                             //However their content seems to be a stream of values that can even be floats
                             //Or even floats with single bytes between them
-                            if (segmentOffset[segId]>0)
+                            if (segmentOffset[segId] > 0)
                             {
-						        FSeek(startof(demoPacketHeader)+segmentOffset[segId]);
-						        if (segId<demoPacketHeader.segmentCount-1)
+						        FSeek(startof(demoPacketHeader) + segmentOffset[segId]);
+						        if (segId<demoPacketHeader.segmentCount - 1)
                                 {
-                                    nextIndex=segId+1;
-                                    nextOffset=segmentOffset[nextIndex];
-                                    if (nextOffset==0){
-                                        while(nextIndex<demoPacketHeader.segmentCount & nextOffset==0 & nextIndex<demoPacketHeader.segmentCount-1)
+                                    nextIndex = segId + 1;
+                                    nextOffset = segmentOffset[nextIndex];
+                                    if (nextOffset == 0){
+                                        while(nextIndex<demoPacketHeader.segmentCount & nextOffset==0 && nextIndex < demoPacketHeader.segmentCount - 1)
                                         {
                                             nextIndex++;
-                                            nextOffset=segmentOffset[nextIndex];
+                                            nextOffset = segmentOffset[nextIndex];
                                         }
-                                        while (FTell()<startof(demoPacketHeader)+nextOffset)
+                                        while (FTell() < startof(demoPacketHeader) + nextOffset)
                                         {
                                             ushort motion;
                                         }
                                     }
                                     else
                                     {
-                                        while (FTell()<startof(demoPacketHeader)+nextOffset)
+                                        while (FTell() < startof(demoPacketHeader) + nextOffset)
                                         {
                                             ushort motion;
                                         }    
                                     }
 						        }
 						        else{
-							        if ((demoPacketHeader.offsetToEvents>0) 
-                                    & (demoPacketHeader.offsetToEvents<header.packetSize))
+							        if ((demoPacketHeader.offsetToEvents > 0) && (demoPacketHeader.offsetToEvents < header.packetSize))
                                     {
-								        while ( (FTell() - startOfPacket) < demoPacketHeader.offsetToEvents+0x10 )
+								        while ( (FTell() - startOfPacket) < demoPacketHeader.offsetToEvents + 0x10 )
                                         {
 									        ushort motion;
 								        }
@@ -215,15 +213,14 @@ while (FTell()!=FileSize())
 						        }
                             }
 						    segId++;
-					    } segment[demoPacketHeader.segmentCount] <optimize=false, bgcolor=0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
+					    } segment[demoPacketHeader.segmentCount] <optimize=false, bgcolor = 0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
                     } segments;
-				} segmentSection <optimize=false, bgcolor=0x008000>;
+				} segmentSection <optimize=false, bgcolor = 0x008000>;
 			};
             
-            if (((demoPacketHeader.demoPacketType==DEMO_PACKET_TYPE_EVENTS) 
-            || (demoPacketHeader.offsetToEvents>0)) & (demoPacketHeader.offsetToEvents<header.packetSize))
+            if (((demoPacketHeader.demoPacketType == DEMO_PACKET_TYPE_EVENTS) || (demoPacketHeader.offsetToEvents > 0)) && (demoPacketHeader.offsetToEvents < header.packetSize))
 			{
-                if (demoPacketHeader.offsetToEvents>0)
+                if (demoPacketHeader.offsetToEvents > 0)
                 {
 				    FSeek(startof(demoPacketHeader) + demoPacketHeader.offsetToEvents);
                 }
@@ -232,12 +229,12 @@ while (FTell()!=FileSize())
 				EvpData EventSection;
                 if (EventSection.CategoryName==Normal)
                 {
-                    local int eventIndex=0;
-                    for (eventIndex=0; eventIndex<EventSection.UnitCount; eventIndex++)
+                    local int eventIndex = 0;
+                    for (eventIndex = 0; eventIndex < EventSection.UnitCount; eventIndex++)
                     {
-                        if (EventSection.Event[eventIndex].EventName==ExecCommand)
+                        if (EventSection.Event[eventIndex].EventName == ExecCommand)
                         {
-                            Printf("%I64u,%I64u\n",EventSection.Event[eventIndex].StringParams[EventSection.Event[eventIndex].StringParamCount-2].param.hash,EventSection.Event[eventIndex].StringParams[EventSection.Event[eventIndex].StringParamCount-3].param.hash);
+                            Printf("%I64u,%I64u\n", EventSection.Event[eventIndex].StringParams[EventSection.Event[eventIndex].StringParamCount-2].param.hash, EventSection.Event[eventIndex].StringParams[EventSection.Event[eventIndex].StringParamCount-3].param.hash);
                         };  
                     };
                 };
@@ -249,15 +246,15 @@ while (FTell()!=FileSize())
 			}
 
 			// GZ only. Since GZ has no .sand files, it uses this instead. Usually the first chunk, after SYS if that exists.
-			if (demoPacketHeader.demoPacketType==DEMO_PACKET_TYPE_NODES)
+			if (demoPacketHeader.demoPacketType == DEMO_PACKET_TYPE_NODES)
 			{
-				FoxDataNodes Nodes <bgcolor=0x0CC0C0>;
+				FoxDataNodes Nodes <bgcolor = 0x0CC0C0>;
 			}
 			
 		}
-		else if (header.packetType=="SND " || header.packetType==" DNS")
+		else if (header.packetType == "SND " || header.packetType == " DNS")
 		{
-			if (passedSoundPacket==0)
+			if (passedSoundPacket == 0)
 			{
 				passedSoundPacket = 1; // There's probably a better way to tell that it's the first SND chunk to parse this section.
 				struct SoundData
@@ -270,7 +267,7 @@ while (FTell()!=FileSize())
 						FSkip(16 - (FTell() % 16));
 					}
 					
-				} soundData <bgcolor=0xC04040>;
+				} soundData <bgcolor = 0xC04040>;
 			}
 			
 			struct RiffSection
@@ -278,20 +275,20 @@ while (FTell()!=FileSize())
 				// I mean, do I reverse .wem files here or what?
 				char riffData[(startOfPacket+header.packetSize)-FTell()];
 				
-			} riffSection <bgcolor=0xF08040>;
+			} riffSection <bgcolor = 0xF08040>;
 			
 		}
-		else if (header.packetType=="END " || header.packetType==" DNE")
+		else if (header.packetType == "END " || header.packetType== " DNE")
 		{
 			FSkip(FileSize()-FTell()); // Sometimes there's tons of null lines after the END
 		}
 		else
 		{
-			Assert(2+2==5, "Unknown Chunk Type!!!"); // In case something goes very very wrong
+			Assert(2+2 == 5, "Unknown Chunk Type!!!"); // In case something goes very very wrong
 		}
 
-		if (header.packetType!="END " && header.packetType!=" DNE")
-			FSeek(startof(header.packetType)+header.packetSize);
+		if (header.packetType != "END " && header.packetType != " DNE")
+			FSeek(startof(header.packetType) +h eader.packetSize);
 		
 	} packet;
 }

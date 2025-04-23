@@ -15,14 +15,14 @@ struct
 	ushort EntryCount;
 
 	uint EntryOffset; Assert(EntryOffset==12);
-} Header <hidden = true, bgcolor=0xCAE7B9>;
+} Header <hidden = true, bgcolor = 0xCAE7B9>;
 
 local uint i;
 for (i = 0; i < Header.EntryCount; i++)
 {
     struct
     {
-	    Vector3 Position <bgcolor=0xEB9486>;
+	    Vector3 Position <bgcolor = 0xEB9486>;
     
         struct
         {
@@ -44,7 +44,7 @@ for (i = 0; i < Header.EntryCount; i++)
         ushort PresumptiveisCheckFulton : 1; // The first spot I checked was the corner of a cargo crate. It's likely for CoverPoints that can literally disappear.
         ushort Unknown1 : 1 <hidden = true>; Assert(Unknown1 == 0); // 0x1000; mgsvtpp.exe!145256e37
         ushort Padding1 : 3 <hidden = true>; Assert(Padding1 == 0);
-    } CoverPoint <bgcolor=0xF3DE8A>;
+    } CoverPoint <bgcolor = 0xF3DE8A>;
 }
 
 Assert(FTell() == FileSize(), "Failed to reach EoF.");

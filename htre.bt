@@ -25,7 +25,7 @@ typedef struct
 			struct
 			{
 				float data[dataSize / sizeof(float)];
-			} HeightMap <bgcolor=0x99aacc>;
+			} HeightMap <bgcolor = 0x99aacc>;
 		}
 		else
 		{
@@ -34,7 +34,7 @@ typedef struct
 			struct
 			{
 				Pixel data[dataSize / sizeof(Pixel)];
-			} WeightMap <bgcolor=0x111199>;
+			} WeightMap <bgcolor = 0x111199>;
 		}
 		break;
 	case "comboTexture":
@@ -43,7 +43,7 @@ typedef struct
 		struct
 		{
 			Pixel data[dataSize / sizeof(Pixel)];
-		} ComboTexture <bgcolor=0x111199>;
+		} ComboTexture <bgcolor = 0x111199>;
 		break;
 	case "editParam":
 		Assert(Header.Version == 3 ? (flags == 0) : (flags == 3));
@@ -53,7 +53,7 @@ typedef struct
 
 		struct
 		{
-		} LodParameter <bgcolor=0x00aaff>;
+		} LodParameter <bgcolor = 0x00aaff>;
 		break;
 	case "maxHeight":
 		Assert(Header.Version == 3 ? (flags == 0) : (flags == 4));
@@ -61,7 +61,7 @@ typedef struct
 		struct
 		{
 			float data[dataSize / sizeof(float)];
-		} MaxHeight <bgcolor=0xff00aa>;
+		} MaxHeight <bgcolor = 0xff00aa>;
 		break;
 	case "minHeight":
 		Assert(Header.Version == 3 ? (flags == 0) : (flags == 3));
@@ -69,7 +69,7 @@ typedef struct
 		struct
 		{
 			float data[dataSize / sizeof(float)];
-		} MinHeight <bgcolor=0xaaff00>;
+		} MinHeight <bgcolor = 0xaaff00>;
 		break;
 	case "materialIds":
 		Assert(Header.Version == 3 ? (flags == 0) : (flags == 5));
@@ -77,7 +77,7 @@ typedef struct
 		struct
 		{
 			Pixel data[dataSize / sizeof(Pixel)];
-		} MaterialIds <bgcolor=0x991111>;
+		} MaterialIds <bgcolor = 0x991111>;
 		break;
 	case "configrationIds":
 		Assert(Header.Version == 3 ? (flags == 0) : (flags == 6));
@@ -85,7 +85,7 @@ typedef struct
 		struct
 		{
 			uint data[dataSize / sizeof(uint)];
-		} ConfigrationIds <bgcolor=0x119911>;
+		} ConfigrationIds <bgcolor = 0x119911>;
 		break;
 	case "patchDescription":
 		Assert(Header.Version == 4 && flags == 9);
@@ -104,7 +104,7 @@ typedef struct
 			TerrainCommonDescription CommonDescription;
 
 			FAlign(16);
-		} PatchDescription <bgcolor=0x999900>;
+		} PatchDescription <bgcolor = 0x999900>;
 		break;
 	default:
 		Assert(false, "Unknown node");

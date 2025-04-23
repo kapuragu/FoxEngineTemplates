@@ -14,11 +14,11 @@ string ReadTuple(TupleAddr &t)
 
 typedef struct
 {
-    int hash0<bgcolor=cBlack, fgcolor=cWhite>;
+    int hash0<bgcolor = cBlack, fgcolor = cWhite>;
     int unkn[4];
-    int hash1<bgcolor=cBlack, fgcolor=cWhite>;
+    int hash1<bgcolor = cBlack, fgcolor = cWhite>;
     int dat[12];
-}TestSubEntry<bgcolor=cPurple>;
+}TestSubEntry<bgcolor = cPurple>;
 
 typedef struct
 {
@@ -82,11 +82,11 @@ do
         if(b[t] < 10)
         {
             FSeek(bac);
-            EntryHeader header<bgcolor=cLtRed, optimize=false>;
+            EntryHeader header<bgcolor = cLtRed, optimize=false>;
             Printf("\nEntry[%d].pos = %d", e, bac);
     
             if(e > 0)
-                Layer layer<bgcolor=cLtGreen, optimize=false>;
+                Layer layer<bgcolor = cLtGreen, optimize=false>;
 
             ++e;
         }

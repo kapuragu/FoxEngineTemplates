@@ -68,7 +68,7 @@ struct SoundStructure
 	} effects;
 	
 	uint outputBusId;
-	uint parentObjectId <bgcolor=0xDED272>;
+	uint parentObjectId <bgcolor = 0xDED272>;
 	
 	// for printing to console
 	Printf("Parent ID: %u\n", parentObjectId);

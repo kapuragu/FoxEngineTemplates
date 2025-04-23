@@ -545,6 +545,17 @@ typedef struct
 	}
 } EvpHeader <bgcolor = 0x00C000>;
 
+struct FoxDataString;
+struct StringList
+{
+	uint EntryCount <hidden = true>;
+	local int64 strIdx;
+	for (strIdx = 0; strIdx < EntryCount; strIdx++)
+	{
+		FoxDataString Entry <optimize = true>;
+	}
+};
+
 
 typedef enum <ubyte>
 {

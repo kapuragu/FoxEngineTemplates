@@ -14,7 +14,7 @@ struct Header
     }
     ushort labelCount;
     FSkip(8 * header.labelCount);    // 8 bytes of padding per label entry. Was it ever used? Who knows!
-} header <bgcolor=0x5B507A>;         // coolor
+} header <bgcolor = 0x5B507A>;         // coolor
 
 struct SpeechSequence
 {
@@ -30,4 +30,4 @@ struct SpeechSequence
         float afterPauseSeconds;  // [says line] [pause this long before next line is said]
 			
     } speechParts[speechPartCount] <optimize=false>;
-} speechSequence[header.labelCount] <optimize=false,bgcolor=0x5B618A>;
+} speechSequence[header.labelCount] <optimize=false,bgcolor = 0x5B618A>;

@@ -17,7 +17,7 @@ struct Header
 {
     char header[7]; // ENDSwin, similar header chars to fova, same creator?
     byte version;
-} header <bgcolor=C_H>;
+} header <bgcolor = C_H>;
 
 local int pos = FTell();
 
@@ -34,7 +34,7 @@ struct Section0
         uint unknown1;
     }array0[count0];
     FSeek(pos);
-} section0 <bgcolor=C_0>;
+} section0 <bgcolor = C_0>;
 
 struct Section1
 {
@@ -48,7 +48,7 @@ struct Section1
         uint unknown1;
     }array1[count1];
     FSeek(pos);
-} section1 <bgcolor=C_1>;
+} section1 <bgcolor = C_1>;
 
 struct Section2
 {
@@ -67,7 +67,7 @@ struct Section2
         int unknown3;
     }array2[count2];
     FSeek(pos);
-} section2 <bgcolor=C_2>;
+} section2 <bgcolor = C_2>;
 
 struct Section3
 {
@@ -84,7 +84,7 @@ struct Section3
         int unknown3;
     }array3[count3];
     FSeek(pos);
-} section3 <bgcolor=C_3>;
+} section3 <bgcolor = C_3>;
 
 struct Section4
 {
@@ -103,7 +103,7 @@ struct Section4
         int unknown3;
     }array4[count4];
     FSeek(pos);
-} section4 <bgcolor=C_4>;
+} section4 <bgcolor = C_4>;
 
 struct Section5
 {
@@ -119,7 +119,7 @@ struct Section5
         int unknown2;
     }array5[count5];
     FSeek(pos);
-} section5 <bgcolor=C_5>;
+} section5 <bgcolor = C_5>;
 
 struct Section6
 {
@@ -136,7 +136,7 @@ struct Section6
         int unknown4;
     }array6[count6];
     FSeek(pos);
-} section6 <bgcolor=C_6>;
+} section6 <bgcolor = C_6>;
 
 struct Section7
 {
@@ -153,7 +153,7 @@ struct Section7
         int unknown4;
     }array7[count7];
     FSeek(pos);
-} section7 <bgcolor=C_7>;
+} section7 <bgcolor = C_7>;
 
 struct Section8
 {
@@ -166,7 +166,7 @@ struct Section8
         byte u0; byte u1; byte u2; byte u3;
     }array8[count8];
     FSeek(pos);
-} section8 <bgcolor=C_8>;
+} section8 <bgcolor = C_8>;
 
 struct Section9
 {
@@ -178,4 +178,4 @@ struct Section9
         int unknown;
     }array9[2];
     FSeek(pos);
-} section9 <bgcolor=C_9>;
+} section9 <bgcolor = C_9>;

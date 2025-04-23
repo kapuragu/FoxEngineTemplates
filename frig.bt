@@ -131,7 +131,7 @@ typedef struct
 	uint RigIndex;
 
 	StrCode32 Name; Assert(Name.hash >> 0x10 != 0);
-} Bone <read = Str("id: %u, name: %u", RigIndex, Name.hash), bgcolor=cLtRed>;
+} Bone <read = Str("id: %u, name: %u", RigIndex, Name.hash), bgcolor = cLtRed>;
 
 struct RigFileHeader
 {

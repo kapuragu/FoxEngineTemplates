@@ -137,7 +137,7 @@ struct DecisionTree
 				{
 					ushort uldx, uCount;
 				} children;
-				uint audioNodeID <bgcolor=0xDD0000>;
+				uint audioNodeID <bgcolor = 0xDD0000>;
 			} nodeu4;
 			ushort weight, probability;
 		} decisiontreenodes[decisionTreeArgument1 / 12];

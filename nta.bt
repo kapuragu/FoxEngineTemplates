@@ -36,7 +36,7 @@ struct NtaHeader
     ushort Version; Assert(Version == 1);
     ushort WorldCount;
     uint WorldsOffset;
-} Header <bgcolor=SpringGreen, hidden=true>;
+} Header <bgcolor = SpringGreen, hidden=true>;
 
 local uint offset = Header.WorldsOffset;
 
@@ -63,12 +63,12 @@ for (i = 0; i < Header.WorldCount; i++)
             {
                 rewindPos = FTell();
                 FSeek(offset + ActionNameOffset + j * sizeof(StrCode));
-                StrCode ActionName <bgcolor=VioletBlueCrayola>;
+                StrCode ActionName <bgcolor = VioletBlueCrayola>;
                 FSeek(rewindPos);
 
                 struct GkTacticalActionWaypoint
                 {
-                    Vector3 Position <fgcolor=PaleCerulean>;
+                    Vector3 Position <fgcolor = PaleCerulean>;
                     StrCode32 EdgeActionName <read=ResolveHashFunc32>; local string test <hidden=true>; test = ResolveHashFunc32(EdgeActionName);
                 } Waypoints[2] <optimize=false>;
 
@@ -90,9 +90,9 @@ for (i = 0; i < Header.WorldCount; i++)
                 
                 ushort Padding0 <hidden=true>; Assert(Padding0 == 0);
                 uint Padding1 <hidden=true>; Assert(Padding1 == 0);
-            } Action <bgcolor=OldLavender, optimize=false>;
+            } Action <bgcolor = OldLavender, optimize=false>;
         };
 
         offset += NextOffset;
-    } World <bgcolor=ElectricBlue>;
+    } World <bgcolor = ElectricBlue>;
 }

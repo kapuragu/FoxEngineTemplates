@@ -253,14 +253,14 @@ string ReadGEO_SHAPE_FLAGS(GEO_SHAPE_FLAGS flags)
 
 struct GeoGeomHeader
 {
-	GEO_PRIM_TYPE Type : 4 <bgcolor=0x0080ff>;
+	GEO_PRIM_TYPE Type : 4 <bgcolor = 0x0080ff>;
 
-	GEO_SHAPE_FLAGS Flags : 20 <bgcolor=0x0080ff>; Assert((Flags & ~(GEO_SHAPE_FLAGS_DOUBLE_SIDED | GEO_SHAPE_FLAGS_UNKNOWN7 | GEO_SHAPE_FLAGS_HAS_CHILD | GEO_SHAPE_FLAGS_USE_FMDL_VERTICES)) == 0); // mgsvtpp.exe!141bdc492
+	GEO_SHAPE_FLAGS Flags : 20 <bgcolor = 0x0080ff>; Assert((Flags & ~(GEO_SHAPE_FLAGS_DOUBLE_SIDED | GEO_SHAPE_FLAGS_UNKNOWN7 | GEO_SHAPE_FLAGS_HAS_CHILD | GEO_SHAPE_FLAGS_USE_FMDL_VERTICES)) == 0); // mgsvtpp.exe!141bdc492
 	//Assert(((Flags & GEO_SHAPE_FLAGS_DOUBLE_SIDED) != 0) == ((Flags & GEO_SHAPE_FLAGS_UNKNOWN7) != 0));
 	if ((Flags & GEO_SHAPE_FLAGS_UNKNOWN7) != 0)
 		Printf("GeoGeomHeader with GEO_SHAPE_FLAGS_UNKNOWN7 at %Lu.\n", startof(this));
 
-	uint PrimCount : 8 <bgcolor=0x0080ff>;
+	uint PrimCount : 8 <bgcolor = 0x0080ff>;
 
 	// Each of these offsets are in terms of the number of lines, so scale them by 16, aka shift by 4 bits.
 	// To check if the VertexBufferOffset goes anywhere, it checks if (VertexBufferOffset & 0x0fffffff) == 0.
@@ -285,11 +285,11 @@ struct GeoGeomHeader
 
 struct GeoPathGeomHeader
 {
-	GEO_PRIM_TYPE Type : 4 <bgcolor=0x0080ff>;
+	GEO_PRIM_TYPE Type : 4 <bgcolor = 0x0080ff>;
 
-	GEO_SHAPE_FLAGS Flags : 20 <bgcolor=0x0080ff>; Assert(Flags == (GEO_SHAPE_FLAGS_UNKNOWN4 | GEO_SHAPE_FLAGS_UNKNOWN5));
+	GEO_SHAPE_FLAGS Flags : 20 <bgcolor = 0x0080ff>; Assert(Flags == (GEO_SHAPE_FLAGS_UNKNOWN4 | GEO_SHAPE_FLAGS_UNKNOWN5));
 
-	uint PrimCount : 8 <bgcolor=0x0080ff>;
+	uint PrimCount : 8 <bgcolor = 0x0080ff>;
 
 	// Each of these offsets are in terms of the number of lines, so scale them by 16, aka shift by 4 bits.
 	// To check if the VertexBufferOffset goes anywhere, it checks if (VertexBufferOffset & 0x0fffffff) == 0.
@@ -311,11 +311,11 @@ struct GeoPathGeomHeader
 
 struct GeoTrapGeomHeader
 {
-	GEO_PRIM_TYPE Type : 4 <bgcolor=0x0080ff>;
+	GEO_PRIM_TYPE Type : 4 <bgcolor = 0x0080ff>;
 
-	GEO_SHAPE_FLAGS Flags : 20 <bgcolor=0x0080ff>; Assert(Flags == (GEO_SHAPE_FLAGS_UNKNOWN5 | GEO_SHAPE_FLAGS_UNKNOWN6));
+	GEO_SHAPE_FLAGS Flags : 20 <bgcolor = 0x0080ff>; Assert(Flags == (GEO_SHAPE_FLAGS_UNKNOWN5 | GEO_SHAPE_FLAGS_UNKNOWN6));
 
-	uint PrimCount : 8 <bgcolor=0x0080ff>;
+	uint PrimCount : 8 <bgcolor = 0x0080ff>;
 
 	// Each of these offsets are in terms of the number of lines, so scale them by 16, aka shift by 4 bits.
 	// To check if the VertexBufferOffset goes anywhere, it checks if (VertexBufferOffset & 0x0fffffff) == 0.
@@ -366,8 +366,8 @@ typedef struct
 
 typedef struct
 {
-	Vector3W BoundingBoxRadii <bgcolor=0xDBC48F, comment="Width/2, Height/2, Depth/2">;
-	Vector3W BoundingBoxCenter <bgcolor=0xDBC48F>;
+	Vector3W BoundingBoxRadii <bgcolor = 0xDBC48F, comment="Width/2, Height/2, Depth/2">;
+	Vector3W BoundingBoxCenter <bgcolor = 0xDBC48F>;
 } GeoPrimAabb; // Name taken from PES RTTI
 
 typedef struct

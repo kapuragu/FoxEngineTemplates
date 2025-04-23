@@ -48,7 +48,7 @@ struct SourceInfo
 {
 	uint pluginID <comment="Unknown purpose">; // pluginID according to the integration demo
 	ObjectSoundEmbedOrStream embedOrStream;
-	uint sourceID <fgcolor=0x00FF00>;
+	uint sourceID <fgcolor = 0x00FF00>;
 	uint uFileID <comment="If streamed, same as sourceID. If embedded, the soundBankId.">;
 
 	local uint pluginIDFlag15 = pluginID & 0xF;
@@ -75,7 +75,7 @@ struct SourceInfo
 
 	// if i'm not mistaken, this is checked at the end of CAkBankMgr::LoadSource()
 	if (pluginIDFlag15 == 5 || pluginIDFlag15 == 2) // from the integration demo
-		uint bankSourceDataSize <fgcolor=0x00BBBB>; // sets the m_uSize to this uint in the AkBankSourceData object
+		uint bankSourceDataSize <fgcolor = 0x00BBBB>; // sets the m_uSize to this uint in the AkBankSourceData object
 };
 
 enum <byte> Boolean

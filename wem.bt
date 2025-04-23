@@ -28,7 +28,7 @@ struct ListSubChunk
 	char subChunkType[4];
 	uint subChunkSize;
 	uint unknownCount;
-	char embeddedFileNameMarker[] <bgcolor=DarkOrange>;
+	char embeddedFileNameMarker[] <bgcolor = DarkOrange>;
 };
 
 struct ListChunk

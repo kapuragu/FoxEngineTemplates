@@ -96,7 +96,7 @@ enum <uint> FxLocatorParamType
 
 typedef struct 
 {
-	PathCode64 VfxFile <fgcolor=0x000007>;
+	PathCode64 VfxFile <fgcolor = 0x000007>;
 
 	FxLocatorHeaderFlags Flags; Assert(Flags < 0x10000);
 

@@ -15,7 +15,7 @@ struct Header
 	int entryCount;
 	int seven <comment="Seven">; Assert(seven==7);
 	
-} header <bgcolor=0xCAE7B9>;
+} header <bgcolor = 0xCAE7B9>;
 
 struct Entries
 {
@@ -37,7 +37,7 @@ struct Entries
 				uint meshGroup <comment="StrCode32 hash (example: MESH_eqhd_a)">;
                 Printf("meshgroup:%x,",meshGroup);
 				
-			} meshGroups[meshCount] <optimize=false, bgcolor=0x7E7F9A>;
+			} meshGroups[meshCount] <optimize=false, bgcolor = 0x7E7F9A>;
 		}
 		
 		if (textureCount>0)
@@ -49,11 +49,11 @@ struct Entries
 				byte texturePathLength;
 				char texturePath[texturePathLength-1] <comment="PC hashes are screwed up.">; // Someone who worked on FPK Tool back in the day might know how to handle them.
                 Printf("materialInstance:%x,textureType:%x,texturePath:%s,\n",materialInstance,textureType,texturePath);
-			} textures[textureCount] <optimize=false, bgcolor=0xEB9486>;
+			} textures[textureCount] <optimize=false, bgcolor = 0xEB9486>;
 		}
         Printf("\n");
 		
-	} entry[header.entryCount] <optimize=false, bgcolor=0x97A7B3>;
+	} entry[header.entryCount] <optimize=false, bgcolor = 0x97A7B3>;
 	
 } entries;
 

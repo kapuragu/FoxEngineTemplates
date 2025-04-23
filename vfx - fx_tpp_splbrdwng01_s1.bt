@@ -143,7 +143,7 @@ typedef struct
     FxUint32 playMode;
 
     FxUint32 updateType;
-}FxModuleGraph<bgcolor=cLtRed>;
+}FxModuleGraph<bgcolor = cLtRed>;
 
 typedef struct
 {
@@ -176,14 +176,14 @@ typedef struct
     FxUint32 randomGatherType;
 
     FxString receiveName;
-}FxIntervalProbabilityEmitNode<bgcolor=cLtGray>;
+}FxIntervalProbabilityEmitNode<bgcolor = cLtGray>;
 
 typedef struct
 {
     uint64 hash;
 
     FxUint32 lifeFrame;
-}FxConstLifeNode<bgcolor=cLtBlue>;
+}FxConstLifeNode<bgcolor = cLtBlue>;
 
 typedef struct
 {
@@ -224,7 +224,7 @@ typedef struct
     FxUint32 sortMode;
 
     FxFloat sortOffset;
-}FxPlaneRotShapeNode<bgcolor=cSilver>;
+}FxPlaneRotShapeNode<bgcolor = cSilver>;
 
 typedef struct
 {
@@ -280,7 +280,7 @@ typedef struct
     FxFloat4 vector;
 
     FxUint32 vectorType;
-}FxConstVectorNode<bgcolor=cLtGreen>;
+}FxConstVectorNode<bgcolor = cLtGreen>;
 
 typedef struct
 {
@@ -301,12 +301,12 @@ typedef struct
 {
     uint64 hash;
     FxFloat4 color;
-}FxColorVectorNode<bgcolor=cLtAqua>;
+}FxColorVectorNode<bgcolor = cLtAqua>;
 
 typedef struct
 {
     uint64 hash;
-}FxUniformVelocityVectorNode<bgcolor=cWhite>;
+}FxUniformVelocityVectorNode<bgcolor = cWhite>;
 
 typedef struct
 {
@@ -380,7 +380,7 @@ typedef struct
     FxBool textureAnimeRandomStart;
 
     FxString textureFile;
-}FxLightInfluenceMaterialNode<bgcolor=cLtYellow>;
+}FxLightInfluenceMaterialNode<bgcolor = cLtYellow>;
 
 typedef struct
 {
@@ -397,7 +397,7 @@ typedef struct
     FxBool maskZ;
 
     FxFloat startScale;
-}FxTimeScaleVectorNode<bgcolor=0xFF43FF>;
+}FxTimeScaleVectorNode<bgcolor = 0xFF43FF>;
 
 typedef struct
 {    
@@ -414,7 +414,7 @@ typedef struct
     FxUint32 randomGatherSeedValue;
 
     FxUint32 randomGatherType;
-}FxUVMapRandomVectorNode<bgcolor=0x243085>;
+}FxUVMapRandomVectorNode<bgcolor = 0x243085>;
 
 typedef struct
 {
@@ -456,12 +456,12 @@ typedef struct
     FxUint32 vectorType;
 
     FxBool xySquere; 
-}FxRandomVectorNode<bgcolor=cSilver>;
+}FxRandomVectorNode<bgcolor = cSilver>;
 
 typedef struct
 {
     uint64 hash;
-}FxUniformVelocityTimeVectorNode<bgcolor=cDkPurple>;
+}FxUniformVelocityTimeVectorNode<bgcolor = cDkPurple>;
 
 typedef struct
 {
@@ -472,7 +472,7 @@ typedef struct
     FxUint32 method;
 
     FxFloat scale;
-}FxDragTimeVectorNode<bgcolor=cYellow>;
+}FxDragTimeVectorNode<bgcolor = cYellow>;
 
 typedef struct
 {
@@ -487,7 +487,7 @@ typedef struct
     FxBool secondMaskY;
 
     FxBool secondMaskZ; 
-}FxMultiplyVectorNode<bgcolor=cDkAqua>;
+}FxMultiplyVectorNode<bgcolor = cDkAqua>;
 
 typedef struct
 {
@@ -502,7 +502,7 @@ typedef struct
     FxBool secondMaskY;
 
     FxBool secondMaskZ; 
-}FxCompositionVectorNode<bgcolor=cGreen>;
+}FxCompositionVectorNode<bgcolor = cGreen>;
 
 typedef struct
 {

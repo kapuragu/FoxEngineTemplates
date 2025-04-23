@@ -81,7 +81,7 @@ struct Auto_Ducking
 	{
 		struct Bus
 		{
-			uint audio_bus_ID <bgcolor=0xEE82EE>;
+			uint audio_bus_ID <bgcolor = 0xEE82EE>;
 			float volume;
 			uint fade_out_ms <comment="Milliseconds">;
 			uint fade_in_ms <comment="Milliseconds">;

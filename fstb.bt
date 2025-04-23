@@ -32,7 +32,7 @@ struct
     uint PackCommonFpkCount <hidden = true>;
     
     uint PackCommonFpkOffset[PackCommonFpkCount] <read = GetOffsetString>;
-} Header <bgcolor=0xFCFCFC>;
+} Header <bgcolor = 0xFCFCFC>;
 
 typedef struct
 {
@@ -120,11 +120,11 @@ struct BlockDefinition
 
 typedef struct 
 {
-    uint EntryCount <hidden = true, bgcolor = 0x2A2B04, fgcolor=0xFCFCFC>;
+    uint EntryCount <hidden = true, bgcolor = 0x2A2B04, fgcolor = 0xFCFCFC>;
 
     if (EntryCount != 0)
     {
-        uint Offsets[EntryCount] <hidden = true, bgcolor = 0x2A2B04, fgcolor=0xFCFCFC>;
+        uint Offsets[EntryCount] <hidden = true, bgcolor = 0x2A2B04, fgcolor = 0xFCFCFC>;
         
         local uint blkIdx;
         for (blkIdx = 0; blkIdx < EntryCount; blkIdx++)

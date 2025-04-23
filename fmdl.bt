@@ -436,7 +436,7 @@ struct FmdlHeader
 	uint FeaturesDataSize;
 	uint BuffersDataOffset;
 	uint BuffersDataSize;
-} Header <bgcolor=COLOR_Header>;
+} Header <bgcolor = COLOR_Header>;
 
 FSeek(Header.FileDescOffset);
 

@@ -115,7 +115,7 @@ typedef struct
 				    {
 				        Vector3 Position;
 				        GEO_NODE_TAGS Tags;
-				    } Points [highestNodeIndex + 1] <bgcolor=COLOR_NODE>;
+				    } Points [highestNodeIndex + 1] <bgcolor = COLOR_NODE>;
 				}
 			} Shape <bgcolor = COLOR_GEOSHAPE>;
 		}

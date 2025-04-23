@@ -17,4 +17,4 @@ struct Header
     int offsetToStringsAgain;
     int offsetToData;
 	
-} header <bgcolor=0xCAE7B9>;
+} header <bgcolor = 0xCAE7B9>;

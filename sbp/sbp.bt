@@ -66,9 +66,9 @@ struct BankHeader
 
 struct Object
 {
-	ObjectType objectType <bgcolor=0xffab00>;
+	ObjectType objectType <bgcolor = 0xffab00>;
 	int objectSize;
-	uint objectId <comment="FNV132 hash", bgcolor=0xabff00>;
+	uint objectId <comment="FNV132 hash", bgcolor = 0xabff00>;
 
 	// HWL for printing useful info at the console
 	printType(objectType);
@@ -95,7 +95,7 @@ struct Object
 			ActionType action_type;
 
 			printActionType(action_type);
-			uint id_of_game_obj_referenced_above <comment="This is zero if there is no game object." , bgcolor=0xD8C5EA>;
+			uint id_of_game_obj_referenced_above <comment="This is zero if there is no game object." , bgcolor = 0xD8C5EA>;
 			// Always zero, according to the wiki
 			ubyte unknown;
 			ubyte additional_params;
@@ -199,7 +199,7 @@ struct Object
 			local int i;
 			for (i = 0; i < num_event_actions; ++i)
 			{
-				uint event_action_ID <bgcolor=0x66D1FF>;
+				uint event_action_ID <bgcolor = 0x66D1FF>;
 	
 				Printf("Event #");
 				Printf("%u", i);
@@ -299,7 +299,7 @@ struct Object
 			break;
 
 		case AudioBus:
-			uint parentObjectId <bgcolor=0xDED272>;
+			uint parentObjectId <bgcolor = 0xDED272>;
 
 			AudioBus_Parameters audiobus_parameters;
 
@@ -477,8 +477,8 @@ struct Object
 						AkMusicTrackRanSeqType_Normal,
 						AkMusicTrackRanSeqType_Random,
 						AkMusicTrackRanSeqType_Sequence
-					} random_seq_type <fgcolor=0xFF0000>;
-					uint musicTrackLookAheadTime <fgcolor=0xFF0000>; // later gets converted to samples, but first it is multiplied
+					} random_seq_type <fgcolor = 0xFF0000>;
+					uint musicTrackLookAheadTime <fgcolor = 0xFF0000>; // later gets converted to samples, but first it is multiplied
 																	// by CAkMusicRenderer::StreamingLookAheadRatio() 
 				}
 			} tracks;
@@ -522,7 +522,7 @@ struct Object
 			break;
 
 		case AuxillaryBus:
-			uint parentObjectId <bgcolor=0xDED272>;
+			uint parentObjectId <bgcolor = 0xDED272>;
 	
 			AudioBus_Parameters audiobus_parameters;
 
@@ -966,7 +966,7 @@ struct SoundBankHeader
 
 if (has_soundbankheader == 1)
 {
-	SoundBankHeader soundBankHeader <bgcolor=soundBankHeader_color>;
+	SoundBankHeader soundBankHeader <bgcolor = soundBankHeader_color>;
 
 	if (FTell() % 16 != 0)
 	FSkip(16 - (FTell() % 16));
@@ -982,19 +982,19 @@ struct Section0 {
 	switch (sign)
 	{
 		case "BKHD":
-			BankHeader bankHeader <bgcolor=BankHeader_color, comment="Bank Header">;
+			BankHeader bankHeader <bgcolor = BankHeader_color, comment="Bank Header">;
 			break;
 		case "HIRC":
-			Hierarchy hierarchy <bgcolor=Hierarchy_color, comment="Object Hierarchy">;
+			Hierarchy hierarchy <bgcolor = Hierarchy_color, comment="Object Hierarchy">;
 			break;
 		case "STID":
-			StreamId streamId <bgcolor=StreamId_color, comment="Stream Ids">;
+			StreamId streamId <bgcolor = StreamId_color, comment="Stream Ids">;
 			break;
 		case "DIDX":
-			DataIndex dataIndex <bgcolor=DataIndex_color, comment="Embedded .wem sounds">;
+			DataIndex dataIndex <bgcolor = DataIndex_color, comment="Embedded .wem sounds">;
 			break;
 		case "STMG":
-			STMG_struct stmg <bgcolor=STMG_color, comment="Found only in Init.bnk">;
+			STMG_struct stmg <bgcolor = STMG_color, comment="Found only in Init.bnk">;
 			break;
 		case "ENVS":
             uint length;
@@ -1032,7 +1032,7 @@ struct Sections
 		endOfStp = soundBankHeader.sectionDefinition[currentSection].sectionSize;
 		struct Section2
 		{
-			StreamedPackage streamedPackage <bgcolor=StreamId_color, comment="Streamed .wem sounds">;
+			StreamedPackage streamedPackage <bgcolor = StreamId_color, comment="Streamed .wem sounds">;
 
 		} section2;
 	};

@@ -340,7 +340,7 @@ struct EventTable
 
 struct Header
 {
-    char ROUT[4] <bgcolor=0xFCE7A3, hidden=true>;
+    char ROUT[4] <bgcolor = 0xFCE7A3, hidden=true>;
     ushort version; if (version==768) {BigEndian();}
     ushort routeCount;
     uint routeIdsOffset;
@@ -348,7 +348,7 @@ struct Header
     uint routeNodesOffset;
     uint routeEventTablesOffset;
     uint routeEventsOffset;
-} header <bgcolor=0x85C426>;
+} header <bgcolor = 0x85C426>;
 
 local int routeIndex = 0;
 
@@ -356,7 +356,7 @@ struct Route
 {
 	//Get route id first for Jump to Template Variable
 	FSeek(header.routeIdsOffset + ( routeIndex * sizeof(uint) ) );
-	uint routeId <bgcolor=0x8F9032>;
+	uint routeId <bgcolor = 0x8F9032>;
 	//Offset to the start of current route definitions
     local int routeDefinitionsPosition = header.routeDefinitionsOffset + ( routeIndex * sizeof(RouteDefinitions) );
 	FSeek(routeDefinitionsPosition);
@@ -378,7 +378,7 @@ struct Route
 		eventIndex+=eventTable.eventNodeCount;
 		nodeIndex++;
 		FSeek(routeDefinitionsPosition + routeDefinitions.eventTableOffset + (nodeIndex * sizeof(EventTable))); //Reset to next start position, sizeof EventTable
-	} node[routeDefinitions.nodeCount] <bgcolor=0x01062F, optimize=false>;
+	} node[routeDefinitions.nodeCount] <bgcolor = 0x01062F, optimize=false>;
 	routeIndex++;
 	FSeek(header.routeIdsOffset + ( routeIndex * sizeof(uint) ) ); //Reset to next start position so Jump to Template Variable works on hashes
-} route[header.routeCount] <bgcolor=0x413A55, fgcolor=0xFFFFFF, optimize=false>;
+} route[header.routeCount] <bgcolor = 0x413A55, fgcolor = 0xFFFFFF, optimize=false>;

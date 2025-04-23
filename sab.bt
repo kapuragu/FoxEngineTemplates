@@ -104,13 +104,13 @@ for (i = 0; i < Header.AnimationCount; i++)
 						// FAlign(2);
 						// #endif
 
-						// uint ParamsCount <hidden = true, bgcolor=0xB9C199>; Assert(ParamsCount == 3);
+						// uint ParamsCount <hidden = true, bgcolor = 0xB9C199>; Assert(ParamsCount == 3);
 
 						// uint Params[ParamsCount] <bgcolor = 0xB9C199>; 
 						// Assert(Params[0] == 0);
 						// Assert(Params[1] == KeyframeHeader.KeyframeCount - 1); //inaccurate in vox_ene_common_ru?
 						// Assert(Params[2] == 1 || Params[2] == 2); // Most of the time 1, rarely 2 (vox_0100e chico-paz)
-					} KeyframeHeader <bgcolor=0x94A6AA>;
+					} KeyframeHeader <bgcolor = 0x94A6AA>;
 
 					for (k = 0; k < KeyframeHeader.KeyframeCount; k++)
 					{
@@ -118,13 +118,13 @@ for (i = 0; i < Header.AnimationCount; i++)
 
 						struct LsKeyframe
 						{
-							ushort position <comment="Position of a keyframe in the timeline.", fgcolor=0xFF0000, bgcolor=0x87E7FF>;
-							ushort intensity <comment="Duration or intensity?", fgcolor=0x0000FF, bgcolor=0x87E7FF>;
-							byte lipAnimCount <bgcolor=0xB8F8EB>;
-							byte strengthCount <comment="GZ doesn't have this, but TPP absolutely requires it!", bgcolor=0xA3D0D1>;
+							ushort position <comment="Position of a keyframe in the timeline.", fgcolor = 0xFF0000, bgcolor = 0x87E7FF>;
+							ushort intensity <comment="Duration or intensity?", fgcolor = 0x0000FF, bgcolor = 0x87E7FF>;
+							byte lipAnimCount <bgcolor = 0xB8F8EB>;
+							byte strengthCount <comment="GZ doesn't have this, but TPP absolutely requires it!", bgcolor = 0xA3D0D1>;
 							ushort padding <hidden = true>; Assert(padding == 0);
-							LipAnimIndex lipAnimIndex[lipAnimCount] <comment="Index of the mouth animation to play", bgcolor=0xB8F8EB>;
-							float strength[strengthCount] <bgcolor=0xA3D0D1>;
+							LipAnimIndex lipAnimIndex[lipAnimCount] <comment="Index of the mouth animation to play", bgcolor = 0xB8F8EB>;
+							float strength[strengthCount] <bgcolor = 0xA3D0D1>;
 						} Keyframes <optimize = false>;
 					}
 				} File;
@@ -141,7 +141,7 @@ for (i = 0; i < Header.AnimationCount; i++)
 						ushort unk1; Assert(unk1==0);
 						ushort unk2; Assert(unk2==8);
 						int unknown3; Assert(unknown3==1);
-						string messageId <bgcolor=0x737329>;
+						string messageId <bgcolor = 0x737329>;
 					} MessageIds <bgcolor = 0x58D7E9, optimize=false>;
 				} File;
 			}

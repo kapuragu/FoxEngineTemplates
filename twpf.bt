@@ -234,7 +234,7 @@ struct Header
     char format[7];
     byte version;
     int headerSize; Assert(headerSize==FTell());
-} header <bgcolor=0x6741DA>;
+} header <bgcolor = 0x6741DA>;
 
 struct WeatherParameterGroups
 {
@@ -243,7 +243,7 @@ struct WeatherParameterGroups
 
     int weatherParamGroupsOffsets[totalWeatherParamGroupCount];
     //rlc guess first position is assumed to be here
-} offsets <bgcolor=0xBAB366>;
+} offsets <bgcolor = 0xBAB366>;
 
 local int tagCount <hidden=true>;
 tagCount=0;
@@ -271,7 +271,7 @@ struct WeatherParameterGroup
 			
 		struct WeatherParameterTag
         {
-			uint tagOffset <fgcolor=0xFFFFFF, hidden=true>;
+			uint tagOffset <fgcolor = 0xFFFFFF, hidden=true>;
 			ubyte curveCount <hidden=true>;
 			ushort tagIndex <hidden=true>; if (tagIndex>=tagCount) {tagCount=tagIndex+1;}
 	
@@ -312,7 +312,7 @@ struct WeatherParameterGroup
 			} weatherParamCurve[curveCount] <read=EnumToString(weatherType), optimize=false>;
 		} weatherParamTag[entryCount] <name=GetTag, read=GetTag, optimize=false>;
 	} WeatherParameterTagGroup[entryCount] <read=Str("%s, %s", EnumToString(type), EnumToString(name)), optimize=false>;
-} weatherParamGroup[offsets.totalWeatherParamGroupCount] <read=EnumToString(groupName), bgcolor=0x533717, optimize=false>;
+} weatherParamGroup[offsets.totalWeatherParamGroupCount] <read=EnumToString(groupName), bgcolor = 0x533717, optimize=false>;
 
 string ReadKey(WeatherParameterCurveKey &key)
 {

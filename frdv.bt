@@ -360,7 +360,7 @@ struct
 		BigEndian();
 
 	uint EntryCount;
-} Header <hidden = true, bgcolor=CyberGrape>;
+} Header <hidden = true, bgcolor = CyberGrape>;
 
 FAlign(16);
 
