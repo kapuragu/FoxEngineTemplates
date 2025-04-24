@@ -114,7 +114,7 @@ for (i = 0; i < Header.GraphCount; i++)
                             ubyte MemPaddingA <hidden = true>; Assert(MemPaddingA == 0xA7);
                             ushort MemPaddingB <hidden = true>; Assert(MemPaddingB == 0xA7A7);
 
-                            AnimParam1aryString Tag;
+                            AnimParamBinaryString Tag;
                         } LinkDesc[LinkDescCount] <optimize = false, bgcolor = C_UNIT>;
                         FSeek(rewindPos3);
                     }
