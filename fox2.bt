@@ -1,0 +1,103 @@
+#define COLOR_MS_BLU 0xFBB700
+#define COLOR_MS_RED 0x3F00D0
+#define COLOR_MS_PRP 0xFB00B7
+#define COLOR_MS_ONG 0x00B7FB
+
+#include "common/common.bt"
+
+struct DataSetFile2Header
+{
+	uint Unknown0; Assert(Unknown0 == 2020565746);
+	uint Unknown1; Assert(Unknown1 == 53);
+
+    int EntityCount;
+    int StringTableOffset;
+
+    int EntitiesOffset;
+} Header <bgcolor = COLOR_MS_BLU, hidden = true>;
+
+FSeek(32);
+
+struct EntityDef
+{
+    ushort HeaderSize;
+    uint ClassId;
+    uint Signature <read = ("ent ")>; Assert(Signature == 0x00746E65);
+    uint64 Address;
+    uint64 Id;
+    ushort Version;
+    StrCode ClassName;
+    ushort StaticPropertyCount;
+    ushort DynamicPropertyCount;
+
+    uint StaticPropertiesOffset;
+
+    uint DynamicPropertiesOffset;
+
+    uint NextEntityOffset;
+};
+
+struct PropertyDef
+{
+    StrCode Name;
+    
+    byte DataType;
+    byte ContainerType;
+
+    ushort ArraySize;
+
+    ushort PayloadOffset;
+    ushort NextPropertyOffset;
+};
+
+if (Header.EntityCount > 0 && Header.EntitiesOffset > 0)
+{
+    FSeek(Header.EntitiesOffset);
+
+    local uint i <hidden=true>;
+    local uint j <hidden=true>;
+    for (i = 0; i < Header.EntityCount; i++)
+    {
+        struct
+        {
+            EntityDef Entity <bgcolor = COLOR_MS_ONG>;
+
+            FSeek(startof(Entity) + Entity.StaticPropertiesOffset);
+            for (j = 0; j < Entity.StaticPropertyCount; j++)
+            {
+                PropertyDef StaticProperty <bgcolor = COLOR_MS_BLU>;
+
+                FSeek(startof(StaticProperty) + StaticProperty.NextPropertyOffset);
+            }
+
+            FSeek(startof(Entity) + Entity.DynamicPropertiesOffset);
+            for (j = 0; j < Entity.DynamicPropertyCount; j++)
+            {
+                PropertyDef DynamicProperty <bgcolor = COLOR_MS_PRP>;
+
+                FSeek(startof(DynamicProperty) + DynamicProperty.NextPropertyOffset);
+            }
+
+            FSeek(startof(Entity) + Entity.NextEntityOffset);
+        } Entity;
+    }
+}
+
+if (Header.StringTableOffset > 0)
+{
+    FSeek(Header.StringTableOffset);
+
+    struct
+    {
+        do
+        {
+            struct DataSetString
+            {
+                StrCode Hash;
+                int Length;
+                if (Length > 0)
+                    char Data[Length] <bgcolor = COLOR_MS_RED>;
+            } String <read = (Length > 0 ? this.Data : "")>;
+        } while (String.Hash.hash != 0 && String.Length != 0);
+    } StringTable;
+}
