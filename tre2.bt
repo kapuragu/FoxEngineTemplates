@@ -26,7 +26,7 @@ typedef struct
 			struct
 			{
 				float data[maxLodLevel];
-			} LodParam[clusterWidth * clusterHeight];
+			} LodParam[clusterWidth * clusterHeight] <optimize = true>;
 		} Param <bgcolor = 0x00aaff>;
 		break;
 	case "maxHeight":
@@ -74,7 +74,7 @@ typedef struct
 			uint TotalGridWidth;
 			uint TotalGridHeight;
 
-			uint CommonDescriptionOffset <hidden = true>;
+			uint PatchOffset <hidden = true>;
 
 			float MaxHeightWS;
 			float MinHeightWS;
@@ -84,12 +84,12 @@ typedef struct
 
 			FAlign(16);
 
-			FSeek(startof(this) + 0x18 + CommonDescriptionOffset);
+			FSeek(startof(this) + 0x18 + PatchOffset);
 
-			TerrainCommonDescription CommonDescription;
+			_Patch Patch;
 
 			FAlign(16);
-		} LayoutDescription <bgcolor = 0x999900>;
+		} BaseLayoutDescription <bgcolor = 0x999900>;
 		break;
 	default:
 		Assert(false, "Unknown node");

@@ -9,37 +9,41 @@ typedef struct
 	ubyte a <fgcolor = 0xaaaaaa>;
 } Pixel <read=Str("#%02x%02x%02x%02x", r, g, b, a)>;
 
-struct TerrainCommonDescription
+struct _HeightMap
 {
-	struct TerrainCommonTileDesc
-	{
-		uint HeightFormat; Assert(HeightFormat == 1 || HeightFormat == 4); // 1 for PC, 4 for PS3
+	uint HeightFormat; Assert(HeightFormat == 1 || HeightFormat == 4); // 1 for PC, 4 for PS3
 
-		float MaxHeightWS;
-		float MinHeightWS;
+	float MaxHeightWS;
+	float MinHeightWS;
 
-		uint HeightMapOffset; // selfpos + HeightMapOffset points to start of heightMap
-		uint HeightMapSize; // guess: heightMap size in bytes
-		uint ComboFormat; // 6 for PC, 7 for PS3. But PC won't read the file if greater than 6.
-	} CommonTileDesc;
+	uint HeightMapOffset; // selfpos + HeightMapOffset points to start of heightMap
+	uint HeightMapSize; // guess: heightMap size in bytes
+};
 
+struct _PatchConfiguration
+{	
+	uint64 BaseOffset; Assert(BaseOffset == 0); // Probably added to all the other offsets below
+
+	uint MaterialIdsOffset; // selfpos + MaterialIdsOffset points to start of materialIds
+
+	uint ConfigrationIdsOffset; // selfpos + ConfigrationIdsOffset points to start of configrationIds
+
+	uint MaxHeightOffset; // selfpos + MaxHeightOffset points to start of maxHeight
+	uint MinHeightOffset; // selfpos + MaxHeightOffset points to start of minHeight
+
+	uint ParamOffset; // selfpos + ParamOffset points to start of param
+};
+
+struct _Patch
+{
+	_HeightMap HeightMap;
+
+	uint ComboFormat; // 6 for PC, 7 for PS3. But PC won't read the file if greater than 6.
 	uint ComboTextureOffset; // selfpos + ComboTextureOffset points to start of comboTexture
 	uint ComboTextureSize; // guess: comboTexture size in bytes
-
-	struct TerrainMatMapOffsets
-	{	
-		uint64 BaseOffset; Assert(BaseOffset == 0); // Probably added to all the other offsets below
-
-		uint MaterialIdsOffset; // selfpos + MaterialIdsOffset points to start of materialIds
-
-		uint ConfigrationIdsOffset; // selfpos + ConfigrationIdsOffset points to start of configrationIds
-
-		uint MaxHeightOffset; // selfpos + MaxHeightOffset points to start of maxHeight
-		uint MinHeightOffset; // selfpos + MaxHeightOffset points to start of minHeight
-
-		uint ParamOffset; // selfpos + ParamOffset points to start of param
-	} MatMapOffsets;
 	
+	_PatchConfiguration PatchConfiguration;
+
 	FAlign(8);
 	
 	uint Unknown; Assert(Unknown == 0);

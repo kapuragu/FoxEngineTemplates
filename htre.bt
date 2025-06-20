@@ -97,11 +97,11 @@ typedef struct
 
 			uint HeightFormat; Assert(HeightFormat == 1); // Very likely a third copy of heightFormat but I can't confirm that.
 			
-			uint CommonDescriptionOffset <hidden = true>;
+			uint PatchOffset <hidden = true>;
 
-			FSeek(startof(this) + 0x14 + CommonDescriptionOffset);
+			FSeek(startof(this) + 0x14 + PatchOffset);
 
-			TerrainCommonDescription CommonDescription;
+			_Patch Patch;
 
 			FAlign(16);
 		} PatchDescription <bgcolor = 0x999900>;
