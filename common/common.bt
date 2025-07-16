@@ -158,6 +158,11 @@ typedef struct
 	Vector3 translation;
 } Transform;
 
+typedef struct
+{
+	byte Data[16];
+} MD5;
+
 void FAlign(int alignment)
 {
 	local long alignmentRequired = FTell() % alignment;

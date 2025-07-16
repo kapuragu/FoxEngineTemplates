@@ -1,0 +1,38 @@
+#define COLOR_MS_BLU 0xFBB700
+#define COLOR_MS_RED 0x3F00D0
+#define COLOR_MS_PRP 0xFB00B7
+#define COLOR_MS_ONG 0x00B7FB
+
+#include "common/common.bt"
+
+struct PackFileHeader
+{
+    char Signature[10];
+    uint FileSize;
+    FAlign(16);
+
+    FSkip(16);
+
+    uint Unknown0;
+    uint FileCount;
+    uint ReferenceCount;
+
+    FAlign(16);
+// } Header <bgcolor = COLOR_MS_BLU, hidden = true>;
+} Header <bgcolor = COLOR_MS_BLU>;
+
+typedef struct
+{
+    uint64 Offset;
+    uint64 Length;
+} PackFileString <read = ReadString(Offset, Length)>;
+
+struct PackFileEntry
+{
+    uint64 DataOffset;
+    uint64 DataSize;
+    PackFileString Path;
+    MD5 DataHash;
+} Files[Header.FileCount] <read = ReadString(Path.Offset, Path.Length)>;
+
+PackFileString References[Header.ReferenceCount];
