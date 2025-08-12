@@ -137,8 +137,8 @@ struct Object
 			}
 			else if (action_type == AkActionType_SetState || action_type == AkActionType_SetSwitch)
 			{
-				uint state_switch_group_ID;
-				uint target_switch_state_ID;
+				uint state_switch_group_ID; Printf("HASH-stateGroup=%u\n",state_switch_group_ID);
+				uint target_switch_state_ID; Printf("HASH-state=%u\n",target_switch_state_ID);
 			}
 			// set pitch and set volume, based on my own observations
 			else if (action_type == AkActionType_SetPitch_M || action_type == AkActionType_SetPitch_O ||
@@ -624,6 +624,7 @@ struct Object
             enum <ushort> EffectPluginId
             {
                 AkSilence=101,
+                AkTone=102,
                 AkDelay=106,
                 AkCompressor=108,
                 AkExpander=109,
@@ -647,6 +648,46 @@ struct Object
                     float Length;
                     float LengthMin;
                     float LengthMax;
+                    break;
+                case AkTone:
+                    float Gain;
+                    float Frequency;
+                    float Stop_frequency;
+                    float RandMin;
+                    float RandMax;
+                    ubyte Sweep_Frequency;
+                    enum <uint> LinearOrLogarithmic
+                    {
+                        Linear_=0,
+                        Logarithmic=1,
+                    } linearOrLogarithmic;
+                    float SweepFrequencyRandMin;
+                    float SweepFrequencyRandMax;
+                    enum <uint> Waveform
+                    {
+                        Sine=0,
+                        Triangular=1,
+                        Square=2,
+                        Sawtooth=3,
+                        White_noise=4,
+                        Pink_noise=5,
+                    } waveform;
+                    enum <uint> FixedDurationOrEnvelope
+                    {
+                        Fixed_duration=0,
+                        Envelope=1,
+                    } fixedDurationOrEnvelope;
+                    float Fixed_duration;
+                    float Attack;
+                    float Decay;
+                    float Sustain;
+                    float Sustain_level;
+                    float Release;
+                    enum <uint> Channel
+                    {
+                        Mono=4,
+                        LFE=8,
+                    }channel;
                     break;
                 case AkDelay:
                     float DelayTime;
