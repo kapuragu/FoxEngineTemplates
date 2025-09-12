@@ -83,17 +83,16 @@ typedef struct
 
 struct Header
 {
-	uint magic;
-
-	uint fileSize;
-	uint endOfHeaderOffset;
+	uint Signature;
+	uint FileSize;
+	uint FirstSectionOffset;
 	uint entryCount;
-	uint navSystemOffset;
 
+	uint navSystemOffset;
 	BlockCoordinate Coordinate;
-	
 	uint section2Offset;
 	uint Padding0; Assert(Padding0 == 0); // Unknown, often 0
+
 	Vector3 Origin;
 
 	uint section3Offset; // No idea what this section is, but this is definitely an offset (often 0)
@@ -114,8 +113,10 @@ struct Header
 	ubyte section2EntryCount;
 	ushort n8; // Almost certainly padding (set to 0)
 
-	hfloat vals[8]; // Unconvinced these are hfloats, but can't figure out what this is
+	// hfloat vals[8]; // Unconvinced these are hfloats, but can't figure out what this is
 } header <bgcolor = COLOR_HEADER>;
+
+FSeek(header.manifestOffset);
 
 struct Manifest
 {
@@ -135,7 +136,7 @@ struct Manifest
 	} manifest[3] <optimize = true>;
 }manifest<bgcolor = COLOR_MANIFEST>;
 
-FSeek(header.endOfHeaderOffset);
+FSeek(header.FirstSectionOffset);
 
 struct NavWorld
 {
