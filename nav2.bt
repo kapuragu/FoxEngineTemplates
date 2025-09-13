@@ -29,10 +29,9 @@ LittleEndian();
 
 #define COLOR_SECTION2 0x6083FF
 
-#define COLOR_NAVSYSTEM 0x894E00
-#define COLOR_NAVSYSTEM_SS1 0xB58536
-#define COLOR_NAVSYSTEM_SS2 0xE6AA89
-#define COLOR_NAVSYSTEM_SS3 0xA080AC
+#define COLOR_SEARCHSPACE 0x894E00
+#define COLOR_SEARCHSPACE_BUCKETDESC 0xB58536
+#define COLOR_SEARCHSPACE_BUCKET 0xE6AA89
 
 typedef ubyte TWENTYFOURBITUINT[3] <read=TWENTYFOURBITUINTRead>;
 
@@ -54,6 +53,13 @@ struct IndexPair8
 {
 	ubyte from;
 	ubyte to;
+};
+
+enum <byte> NAV2_FEATURE_FLAGS
+{
+	A = 1 << 0,
+	B = 1 << 1,
+	C = 1 << 2,
 };
 
 enum <uint> ENTRY_TYPE
@@ -79,7 +85,7 @@ typedef struct
     uint FileIndex : 15;
     uint BlockID : 16;
     uint Padding : 1 <hidden = true>; Assert(Padding == 0);
-} BlockCoordinate <optimize = false, read = Str("FileIndex: %u, BlockID: %u", FileIndex, BlockID)>;
+} FileUid <optimize = false, read = Str("FileIndex: %u, BlockID: %u", FileIndex, BlockID)>;
 
 struct Header
 {
@@ -87,15 +93,15 @@ struct Header
 	uint FileSize;
 	uint FirstSectionOffset;
 	uint entryCount;
-
-	uint navSystemOffset;
-	BlockCoordinate Coordinate;
+	
+	uint SearchSpaceOffset;
+	FileUid Coordinate;
 	uint section2Offset;
 	uint Padding0; Assert(Padding0 == 0); // Unknown, often 0
 
 	Vector3 Origin;
 
-	uint section3Offset; // No idea what this section is, but this is definitely an offset (often 0)
+	uint ConnectTileInfosOffset;
 	uint u1b; // Haven't seen this used, but possibly an offset too
 	uint manifestOffset;
 	uint manifestSize;
@@ -109,9 +115,9 @@ struct Header
 
 	ushort u1h; // Unknown, often 127 (possibly a divisor for Vector4 values?)
 
-	ubyte n7; // Unknown, often 1
+	NAV2_FEATURE_FLAGS FeatureFlags;
 	ubyte section2EntryCount;
-	ushort n8; // Almost certainly padding (set to 0)
+	ushort n8; // Can be 0xFF - 141af52cc
 
 	// hfloat vals[8]; // Unconvinced these are hfloats, but can't figure out what this is
 } header <bgcolor = COLOR_HEADER>;
@@ -126,7 +132,7 @@ struct Manifest
 
 		struct ManifestSubEntry
 		{
-			BlockCoordinate Coordinate;
+			FileUid Coordinate;
 
 			uint payloadOffset;
 			ENTRY_TYPE_UINT8 entryType;
@@ -460,7 +466,7 @@ struct Entry
 	uint nextEntryRelativeOffset;
 	uint payloadRelativeOffset;
 	
-	BlockCoordinate Coordinate;
+	FileUid Coordinate;
 	 
 	switch(entryType)
 	{
@@ -569,53 +575,118 @@ if (header.section2Offset)
 	} while(remainingEntries != 0);
 }
 
-if (header.navSystemOffset != 0)
+if (header.SearchSpaceOffset != 0)
 {
-	FSeek(header.navSystemOffset);
-	local long startPosition = FTell();
-	struct NavSystem
+	FSeek(header.SearchSpaceOffset);
+	struct SearchSpace
 	{
-		local long startOffset = FTell();
+		local long selfOffset = startof(this);
 
-		Vector4 u1;
-		uint n1;
-		uint n2;
-		uint u3;
-		uint chunkSize;
-		uint n5;
-		uint subsection1Offset;
-		Assert(subsection1Offset == 48);
+		Vector3 Position; 
+		ushort RangeY;
+		ushort Padding0 <hidden = true>; Assert(Padding0 == 0); // Assumed to be padding
 
-		uint subsection2Offset;
-		uint subsection3Offset;
+		uint BlockCountX;
+		uint BlockCountY;
+		uint BlockCountZ;
+		uint BlockSizeXZ;
 
-		FSeek(startOffset + subsection1Offset);
-		struct NavSystemSubsection1
+		uint BlockSizeY;
+		uint BucketDescsOffset; Assert(BucketDescsOffset == 48);
+
+		uint BucketEntriesOffset;
+		uint NextSectionOffset;
+
+		FSeek(selfOffset + BucketDescsOffset);
+		struct SearchBucketDesc
 		{
-			struct NavSystemSubsection1Entry
-			{
-				uint section2relativeOffset;
-				ushort entryCount;
-				ubyte u2;
-				ubyte u3;
-			} entries[n1*u3];
-		} subsection1<bgcolor = COLOR_NAVSYSTEM_SS1>;
+			uint StartOffset;
+			ushort Count;
+			ubyte u2_MinY; // fox::nav::SearchSpace::GetBucketActualRangeY
+			ubyte u3_MaxY; // ""
+		} BucketDescs[BlockCountX * BlockCountY * BlockCountZ] < bgcolor = COLOR_SEARCHSPACE_BUCKETDESC>;
 
-		struct NavSystemSubsection2 {
+		Assert(FTell() == selfOffset + BucketEntriesOffset);
+
+		struct {
 			local int i;
 			local int j;
-			for (i = 0; i < n1*u3; i++) {
-				FSeek(startOffset + subsection1Offset + (i * sizeof(NavSystemSubsection1Entry)) + subsection1.entries[i].section2relativeOffset);
-				for (j = 0; j < subsection1.entries[i].entryCount; j++) {
-					struct NavSystemSubsection2Entry {
-						BlockCoordinate Coordindate; // groupid
-						uint count;
-						ushort vals[count];
-					} entries;
+			for (i = 0; i < BlockCountX * BlockCountY * BlockCountZ; i++) {
+				FSeek(startof(BucketDescs[i]) + BucketDescs[i].StartOffset);
+
+				for (j = 0; j < BucketDescs[i].Count; j++) {
+					struct SearchBucketEntry
+					{
+						FileUid Uid; // Is this a full Uid?
+						uint IndexCount;
+						ushort Indices[IndexCount]; // SegmentChunks apparently
+					} BucketEntry;
 				}
 			}
-		} subsection2<bgcolor = COLOR_NAVSYSTEM_SS2>;
+		} BucketEntries <bgcolor = COLOR_SEARCHSPACE_BUCKET>;
 
+        FAlign(16);
+		Assert(FTell() == selfOffset + NextSectionOffset);
 
-	} navSystem <bgcolor = COLOR_NAVSYSTEM>;
+	} _SearchSpace <bgcolor = COLOR_SEARCHSPACE>;
+}
+
+if (header.ConnectTileInfosOffset != 0)
+{
+	FSeek(header.ConnectTileInfosOffset);
+
+	// See fox::nav::service::WorldService::ResolveConnectTileInfosWithName
+	struct ConnectTileInfosHeader
+	{
+		local long selfOffset = startof(this);
+		
+		ushort GroupsOffset_Indices;
+		ushort InfosOffset_Indices;
+		ushort NodesOffset_Indices;
+		ushort GroupCount;
+
+		struct ConnectTileInfoNodeDesc
+		{
+			ushort A;
+			ushort B;
+		};
+
+		struct ConnectTileInfoDesc
+		{
+			ushort DataChunkIndex;
+			ushort Count : 5 <hidden = true>;
+			ushort StartOffset_Indices : 11 <hidden = true>;
+
+			FSeek(selfOffset + (2 * NodesOffset_Indices) + (4 * StartOffset_Indices)); // 4 == sizeof(this)
+			for (k = 0; k < Count; k++)
+			{
+				ConnectTileInfoNodeDesc Node;
+			}
+		};
+
+		struct ConnectTileInfoGroupDesc
+		{
+			StrCode32 Name;
+			ushort Count : 5 <hidden = true>;
+			ushort StartOffset_Indices : 11 <hidden = true>;
+
+			FSeek(selfOffset + (2 * InfosOffset_Indices) + (4 * StartOffset_Indices)); // 4 == sizeof(this)
+			for (j = 0; j < Count; j++)
+			{
+				ConnectTileInfoDesc Info;
+			}
+		};
+
+		FSeek(selfOffset + 2 * GroupsOffset_Indices);
+		struct
+		{
+			local int i;
+			local int j;
+			local int k;
+			for (i = 0; i < GroupCount; i++)
+			{
+				ConnectTileInfoGroupDesc Group;
+			}
+		} Groups;
+	} _ConnectTileInfosContainer;
 }
