@@ -148,10 +148,12 @@ struct EventExtensions_Hovering
 	FSkip(sizeof(uint) * 3);
 };
 
-enum<int> Side
+enum<int> HeliDoorFlags
 {
-	LEFT=0,
-	RIGHT=1,
+	CLOSE_LEFT=0,
+	OPEN_LEFT=1,
+	CLOSE_RIGHT=2,
+	OPEN_RIGHT=3,
 };
 
 struct EventExtensions_Normal
@@ -162,10 +164,14 @@ struct EventExtensions_Normal
 	int unknown3;
 	if (flags!=0||unknown1!=0||speed!=0||unknown3!=0)
 		Printf("\nparam6: %u\nparam7: %u\nparam8: %u\nparam9: %u",flags,unknown1,speed,unknown3);
-	if (flags & 512)
-		local Side doorOpenSide = RIGHT;
-	else if (flags & 1024)
-		local Side doorOpenSide = LEFT;
+	if (flags & 1)
+		local HeliDoorFlags heliDoorFlags1 = CLOSE_LEFT;
+	if (flags & 2)
+		local HeliDoorFlags heliDoorFlags3 = OPEN_LEFT;
+	if (flags & 4)
+		local HeliDoorFlags heliDoorFlags2 = CLOSE_RIGHT;
+    if (flags & 8)
+		local HeliDoorFlags heliDoorFlags4 = OPEN_RIGHT;
 	//There's more flags, but no idea.
 };
 
