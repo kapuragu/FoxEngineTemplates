@@ -97,7 +97,7 @@ struct Header
 	uint SearchSpaceOffset;
 	FileUid Coordinate;
 	uint section2Offset;
-	uint Padding0; Assert(Padding0 == 0); // Unknown, often 0
+	uint u1a; // 141af67bf
 
 	Vector3 Origin;
 
