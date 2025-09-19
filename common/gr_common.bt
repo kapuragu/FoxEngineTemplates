@@ -1,0 +1,19 @@
+#ifndef GR_COMMON_BT
+#define GR_COMMON_BT
+
+#include "common/common.bt"
+
+// Only used for OBR(B)
+typedef struct
+{
+    float YPosition;
+    short XPosition <read = Str("%f", (float)this / 0xFF)>;
+    short ZPosition <read = Str("%f", (float)this / 0xFF)>;
+    QuaternionH Rotation;
+    ushort BlockIndex;
+    ubyte PluginIndex; // Index of ObjBrush dataset entity's pluginHandle list entry
+    ubyte NormalizedScale <read = Str("%f", (float)this / 0xFF)>; // scale = lerp(minScale, maxScale, (float)NormalizedScale / 0xFF) found in DataSet plugin definition
+    uint GlobalIndex;
+} DataUnit <read = Str("plugin: %d, block: %d, globalIndex: %d", PluginIndex, BlockIndex, GlobalIndex)>;
+
+#endif

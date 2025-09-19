@@ -1,4 +1,5 @@
 #include "common/common.bt"
+#include "common/gr_common.bt"
 
 typedef struct
 {
@@ -7,17 +8,7 @@ typedef struct
 	local uint numObjects = parentof(this).Parameter[GetFoxDataNodeParamIndex(parentof(this), "numObjects")].Value;
     local uint flags = parentof(this).Parameter[GetFoxDataNodeParamIndex(parentof(this), "flags")].Value; Assert(flags == 1);
 
-	struct Object
-	{
-		float YPositionFWS;
-		short XPositionEFOS;
-		short ZPositionEFOS;
-		QuaternionH Rotation;
-		ushort BlockIndex;
-		ubyte PluginBrushIndex; // Index of ObjBrush dataset entity's pluginHandle list entry
-		ubyte NormalizedScale; // scale = lerp(minScale, maxScale, (float)NormalizedScale / 0xFF) found in DataSet plugin definition
-		uint GlobalObjectIndex;
-	} Objects[numObjects] <read = Str("plugin: %d, block: %d, globalIndex: %d", PluginBrushIndex, BlockIndex, GlobalObjectIndex), bgcolor = 0x8CAF5A>;
+	DataUnit Objects[numObjects] <bgcolor = 0x8CAF5A>;
 } ObjectBrushBlock;
 
 #define FOX_DATA_PAYLOAD ObjectBrushBlock
