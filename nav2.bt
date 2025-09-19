@@ -628,8 +628,8 @@ if (Header.ConnectTileInfosOffset != 0)
 		struct ConnectTileInfoDesc
 		{
 			ushort DataChunkId;
-			ushort Count : 5;// <hidden = true>;
-			ushort StartOffset : 11;// <hidden = true>;
+			ushort Count : 5;
+			ushort StartOffset : 11;
 
 			local int k;
 			for (k = 0; k < Count; k++)
@@ -642,8 +642,8 @@ if (Header.ConnectTileInfosOffset != 0)
 		struct ConnectTileInfoGroupDesc
 		{
 			StrCode32 Name;
-			ushort Count : 5;// <hidden = true>;
-			ushort StartOffset : 11;// <hidden = true>;
+			ushort Count : 5;
+			ushort StartOffset : 11;
 
 			local int j;
 			for (j = 0; j < Count; j++)
