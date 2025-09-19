@@ -3,31 +3,31 @@ LittleEndian();
 #include "common/common.bt"
 
 #define COLOR_HEADER 0xBED655
-#define COLOR_MANIFEST 0xD9FCAC
+#define COLOR_CHUNKDESC 0xD9FCAC
 
-#define COLOR_NAVWORLD 0x4F54F0
-#define COLOR_NAVWORLD_SS1 0x5F63F1
-#define COLOR_NAVWORLD_SS2 0x6F73F2
-#define COLOR_NAVWORLD_SS3 0x7F82F4
-#define COLOR_NAVWORLD_SS4 0x8F92F5
-#define COLOR_NAVWORLD_SS5 0x9FA1F6
-#define COLOR_NAVWORLD_SS6 0xAFB1F8
+#define COLOR_NAVIGATIONGRAPH 0x4F54F0
+#define COLOR_NAVIGATIONGRAPH_VERTICES 0x5F63F1
+#define COLOR_NAVIGATIONGRAPH_NODES 0x6F73F2
+#define COLOR_NAVIGATIONGRAPH_SS3 0x7F82F4
+#define COLOR_NAVIGATIONGRAPH_SS4 0x8F92F5
+#define COLOR_NAVIGATIONGRAPH_SS5 0x9FA1F6
+#define COLOR_NAVIGATIONGRAPH_SS6 0xAFB1F8
 
 #define COLOR_NAVMESHCHUNK 0xEBC05B
 #define COLOR_NAVMESHCHUNK_SS1 0xECC569
 #define COLOR_NAVMESHCHUNK_SS2 0xEECB78
 #define COLOR_NAVMESHCHUNK_SS3 0xF0D187
 
-#define COLOR_SEGMENTCHUNK 0xB844B7
-#define COLOR_SEGMENTCHUNK_SS1 0xC979A3
-#define COLOR_SEGMENTCHUNK_SS2 0xE3B9AD
-
 #define COLOR_SEGMENTGRAPH 0x3DC59B
-#define COLOR_SEGMENTGRAPH_SS1 0x4ECAA4
-#define COLOR_SEGMENTGRAPH_SS2 0x60CFAD
+#define COLOR_SEGMENTGRAPH_VERTICES 0x4ECAA4
+#define COLOR_SEGMENTGRAPH_NODES 0x60CFAD
 #define COLOR_SEGMENTGRAPH_SS3 0x71D4B6
 
-#define COLOR_SECTION2 0x6083FF
+#define COLOR_SEGMENTCHUNK 0xB844B7
+#define COLOR_SEGMENTCHUNK_BOUNDS 0xC979A3
+#define COLOR_SEGMENTCHUNK_SEGMENTS 0xE3B9AD
+
+#define COLOR_ISLANDGRAPH 0x6083FF
 
 #define COLOR_SEARCHSPACE 0x894E00
 #define COLOR_SEARCHSPACE_BUCKETDESC 0xB58536
@@ -43,12 +43,6 @@ string TWENTYFOURBITUINTRead( TWENTYFOURBITUINT n )
 	return s;
 }
 
-typedef struct {
-	ushort x;
-	ushort y;
-	ushort z;
-} Vertex <read = Str("%f, %f, %f", (float)x / header.XDivisor, (float)y / header.YDivisor, (float)z / header.ZDivisor)>;
-
 struct IndexPair8
 {
 	ubyte from;
@@ -60,196 +54,204 @@ enum <byte> NAV2_FEATURE_FLAGS
 	A = 1 << 0,
 	B = 1 << 1,
 	C = 1 << 2,
+	D = 1 << 7,
 };
 
-enum <uint> ENTRY_TYPE
+enum <uint> CHUNK_TYPE
 {
-	NAVWORLD = 0,
-	NAVMESH_CHUNK = 1,
-	NAVWORLD_SEGMENT_GRAPH = 3,
-	SEGMENT_CHUNK = 4
+	CHUNK_TYPE_NAVIGATION_GRAPH = 0,
+	CHUNK_TYPE_NAVMESH_CHUNK = 1,
+	CHUNK_TYPE_SEGMENT_GRAPH = 3,
+	CHUNK_TYPE_SEGMENT_CHUNK = 4
 };
 
-enum <ubyte> ENTRY_TYPE_UINT8
+enum <ubyte> CHUNK_TYPE_UINT8
 {
-	TYPE_NAVWORLD = 0,
-	TYPE_NAVMESH_CHUNK = 1,
-	TYPE_NAVWORLD_SEGMENT_GRAPH = 3,
-	TYPE_SEGMENT_CHUNK = 4
+	CHUNK_TYPE_NAVIGATION_GRAPH_UINT8 = 0,
+	CHUNK_TYPE_NAVMESH_CHUNK_UINT8 = 1,
+	CHUNK_TYPE_SEGMENT_GRAPH_UINT8 = 3,
+	CHUNK_TYPE_SEGMENT_CHUNK_UINT8 = 4
 };
 
-// FileIndex: 0 for .nav2, 1 for .1.nav2, etc
-// BlockID: For 64x64 map, block coordinate is (101 + BlockID % 64, 101 + BlockID / 64). Same as OBR(B), etc.
 typedef struct
 {
-    uint FileIndex : 15;
-    uint BlockID : 16;
-    uint Padding : 1 <hidden = true>; Assert(Padding == 0);
-} FileUid <optimize = false, read = Str("FileIndex: %u, BlockID: %u", FileIndex, BlockID)>;
-
-struct Header
+	ushort x;
+	ushort y;
+	ushort z;
+} FixedDenominator3 <read = ReadFixedDenominator3String>;
+string ReadFixedDenominator3String(FixedDenominator3& fixed)
 {
-	uint Signature;
+    return Str("%f, %f, %f", (float)fixed.x / Header.Denominator.x, (float)fixed.y / Header.Denominator.x, (float)fixed.z / Header.Denominator.x);
+}
+
+typedef struct
+{
+	FixedDenominator3 Min;
+	FixedDenominator3 Max;
+} BoundingDesc <read = Str("Min: (%s), Max: (%s)", ReadFixedDenominator3String(Min), ReadFixedDenominator3String(Max))>;
+
+typedef struct
+{
+    uint Index : 15;
+    uint TileId : 16; //Top two bits are special - (+ 0x4000) is for reserved, (+ 0x8000) is for dynamic
+    uint Padding : 1 <hidden = true>; Assert(Padding == 0);
+} FileUid <optimize = false, read = Str("Index: %u, TileId: %u", Index, TileId)>;
+
+typedef struct
+{
+    uint Index : 15;
+    uint TileId : 16; //Top two bits are special - (+ 0x4000) is for reserved, (+ 0x8000) is for dynamic
+    uint Padding : 1 <hidden = true>; Assert(Padding == 0);
+} ChunkUid <optimize = false, read = Str("Index: %u, TileId: %u", Index, TileId)>;
+
+// 141af60e3 - need to be super careful here
+// 141af9250
+
+struct FileHeader
+{
+	uint Version; Assert(Version == 201403241 || Version == 201403242);
 	uint FileSize;
-	uint FirstSectionOffset;
-	uint entryCount;
+	uint ChunksOffset;
+	uint ChunkCount;
 	
 	uint SearchSpaceOffset;
-	FileUid Coordinate;
-	uint section2Offset;
-	uint u1a; // 141af67bf
+	FileUid _FileUid; // 141b16b8a
+	uint IslandGraphsOffset;
+	uint Unknown_CrossingTileLinkRelated; Assert(Unknown_CrossingTileLinkRelated == 0); // 141af67bf
 
 	Vector3 Origin;
 
 	uint ConnectTileInfosOffset;
-	uint u1b; // Haven't seen this used, but possibly an offset too
-	uint manifestOffset;
-	uint manifestSize;
+	uint Padding0 <hidden = true>; Assert(Padding0 == 0);
+	uint ChunkDescsOffset;
+	uint ChunkDescsDataSize;
 	
-	uint u1c; Assert(u1c == 0); // Unknown, often 0
-	uint u1d; Assert(u1d == 0); // Unknown, often 0
+	uint Padding1 <hidden = true>; Assert(Padding1 == 0);
+	uint Padding2 <hidden = true>; Assert(Padding2 == 0); 
 
-	ushort XDivisor;
-	ushort YDivisor;
-	ushort ZDivisor;
+	FixedDenominator3 Denominator;
+	ushort WeightDenominator; // Unknown, often 127 (possibly a divisor for Vector4 values?) - weight denominator
 
-	ushort u1h; // Unknown, often 127 (possibly a divisor for Vector4 values?)
+	NAV2_FEATURE_FLAGS FeatureFlags; // 141b16b8a
+	ubyte IslandGraphCount;
+	byte Pre2014_UnknownIndex; Assert(Pre2014_UnknownIndex == 0); // Patched at runtime to be 0xFF if old file version - 141af52cc
+	byte Padding3 <hidden = true>; Assert(Padding3 == 0); 
+} Header <bgcolor = COLOR_HEADER>;
 
-	NAV2_FEATURE_FLAGS FeatureFlags;
-	ubyte section2EntryCount;
-	ushort n8; // Can be 0xFF - 141af52cc
-
-	// hfloat vals[8]; // Unconvinced these are hfloats, but can't figure out what this is
-} header <bgcolor = COLOR_HEADER>;
-
-FSeek(header.manifestOffset);
-
-struct Manifest
+FSeek(Header.ChunkDescsOffset);	
+struct
 {
-	uint manifestEntryCount;
+	uint EntryCount;
 
-	struct ManifestEntry {
-
-		struct ManifestSubEntry
+	struct 
+	{
+		struct ChunkDesc
 		{
-			FileUid Coordinate;
+			ChunkUid _ChunkUid;
 
-			uint payloadOffset;
-			ENTRY_TYPE_UINT8 entryType;
-			ushort entrySize;
-			ubyte n4;
-		} subentries[manifestEntryCount] <optimize = false>;
-	} manifest[3] <optimize = true>;
-}manifest<bgcolor = COLOR_MANIFEST>;
+			uint DataOffset;
+			CHUNK_TYPE_UINT8 Type;
+			ushort DataSize;
+			ubyte Unknown; Assert(Unknown == 0 || Unknown == 1);
+		} Descs[EntryCount] <read = EnumToString(Type), optimize = false>;
+	} TypedChunkDescs[3] <optimize = false>;
+} ChunkDescs <bgcolor = COLOR_CHUNKDESC>;
 
-FSeek(header.FirstSectionOffset);
-
-struct NavWorld
+FSeek(Header.ChunksOffset);
+struct NavigationGraphChunkHeader
 {
-	local long startPosition = FTell();
+	uint VerticesOffset;
 
-	// The subsection offsets are relative to the start of the NavWorld struct.
-	uint VertexBufferOffset;
-	Assert(VertexBufferOffset == 48);
-
-	uint Subsection2Offset;
+	uint NodesOffset;
 	uint EdgesOffset;
 
-	// These two are seemingly not read by the exe.
 	uint Subsection3Offset;
-	uint Unknown_u1; Assert(Unknown_u1 == 0);
 
-	uint Unknown_u2; Assert(Unknown_u2 == 0);
+	uint Padding0; Assert(Padding0 == 0);
+	uint Padding1; Assert(Padding1 == 0);
 
-	// These two are seemingly not read by the exe.
-	uint Subsection5Offset;
+	uint AttributesOffset;
 
-	uint Unknown_u3; Assert(Unknown_u3 == 0);
+	uint Padding2; Assert(Padding2 == 0);
 
-	uint Subsection6Offset;
+	uint NavmeshIndicesOffset; // Related to vertices - 141b1f44e
 
-	ushort VertexCount;
+	ushort NodeCount;
 	ushort EdgeCount;
 
-	ushort Padding0;
-	ushort Padding1;
-	ushort Padding2;
-	Assert(Padding0 == 0 && Padding1 == 0 && Padding2 == 0 );
+	uint Padding3; Assert(Padding3 == 0);
+	ushort Padding4; Assert(Padding4 == 0);
 
-	ushort Subsection5Count;
+	ushort AttributeCount; // Maybe segment count?
 
-	FSeek(startPosition + VertexBufferOffset);
-	Vertex Vertices [VertexCount] <bgcolor = COLOR_NAVWORLD_SS1>;
+	FSeek(startof(this) + VerticesOffset);
+	FixedDenominator3 Vertices [NodeCount] <bgcolor = COLOR_NAVIGATIONGRAPH_VERTICES>;
 	
-	FSeek(startPosition + Subsection2Offset);
-	struct NavWorldSubsection2Entry
+	FSeek(startof(this) + NodesOffset);
+	struct NavigationGraphNodeDesc06
 	{
-		ushort Subsection3Offset;
-		ushort Subsection5Index;
-		byte CountA;
+		ushort AttributeIndex; // Maybe segment index?
+		ushort SegmentIndex : 12; // 141ae373d
+		ushort Unknown : 4;
+		byte CountA : 3;
+		byte Kind : 3; // NavigationGraphKind
+		byte Padding : 2; // Assert(Padding == 0);
 		byte CountB;
-	} Subsection2Entries [VertexCount] <bgcolor = COLOR_NAVWORLD_SS2>;
+	} Nodes [NodeCount] <bgcolor = COLOR_NAVIGATIONGRAPH_NODES>;
 
-	// Not dependent on VertexCount != 0
-	FSeek(startPosition + Subsection3Offset);
+	// Links - ResolveNavmeshTileLink06
+	FSeek(startof(this) + Subsection3Offset); // SegmentIndex
 	struct
 	{
 		{
 			local int i;
 			local int j;
-			for (i = 0; i < VertexCount; i++) 
+			for (i = 0; i < NodeCount; i++) 
 			{
-				FSeek (startPosition + Subsection3Offset + (Subsection2Entries[i].Subsection3Offset * 2));
+				FSeek (startof(parentof(this)) + Subsection3Offset + (Nodes[i].SegmentIndex * 2));
 
 				struct NavWorldSubsection3Entry
 				{
-					for (j = 0; j < Subsection2Entries[i].CountA; j++) 
+					for (j = 0; j < Nodes[i].CountA; j++) 
 					{
 						ushort AdjacentNode;
 						ushort EdgeIndex;
 					}
 
-					for (j = 0; j < Subsection2Entries[i].CountB; j++) 
+					for (j = 0; j < Nodes[i].CountB; j++) 
 					{
 						short Unknown;
 					}
-				} Subsection3Entries <bgcolor = COLOR_NAVWORLD_SS3>;
+				} Subsection3Entries <bgcolor = COLOR_NAVIGATIONGRAPH_SS3>;
 			}
 		}
 	} Subsection3Entries;
 
-	FSeek(startPosition + EdgesOffset);
-	struct NavWorldEdge
+	FSeek(startof(this) + EdgesOffset);
+	struct NavigationGraphEdgeDesc06
 	{
-		ushort Weight;
-		ushort Subsection5Index;
+		ushort Weight <read = Str("%f", (float)this / Header.WeightDenominator)>;
+		ushort SegmentIndex : 12;
+		ushort Kind : 2; Assert(Kind == 0);
+		ushort Unknown : 2; Assert(Unknown == 0);
 
-		IndexPair8 EdgeIndices; // These are indicies into the points array but need to add the number of vertexes in previous "chunks"
-	} Edges[EdgeCount] <bgcolor = COLOR_NAVWORLD_SS4>;
+		byte NodeIndex0;
+		byte NodeIndex1;
+	} Edges[EdgeCount] <optimize = false, bgcolor = COLOR_NAVIGATIONGRAPH_SS4>;
 
-	FSeek(startPosition + Subsection5Offset);
-	struct NavWorldSubsection5Entry
-	{
-		ushort Flags; // probably?
-	} Subsection5Entries[Subsection5Count] <bgcolor = COLOR_NAVWORLD_SS5>; // This is the same as the number of "chunks" in the file
+	FSeek(startof(this) + AttributesOffset);
+	ushort Attributes[AttributeCount] <bgcolor = COLOR_NAVIGATIONGRAPH_SS5>; // This is the same as the number of "chunks" in the file
 
-	FSeek(startPosition + Subsection6Offset);
-	struct NavWorldSubsection6Entry
-	{
-		// Index into NavmeshChunk subsection 2.
-		ushort NavmeshChunkSubsection2Index;
-	} Subsection6Entries[VertexCount] <bgcolor = COLOR_NAVWORLD_SS6>;
+	FSeek(startof(this) + NavmeshIndicesOffset);
+	ushort NodeNavmeshIndices[NodeCount] <bgcolor = COLOR_NAVIGATIONGRAPH_SS6>; // GetNodeNavmeshHandle
 };
 
-struct NavmeshChunk
+struct NavmeshChunkHeader
 {
-	local uint startPosition = FTell();
+	uint PositionsOffset;
 
-	uint subsection1Offset;
-	Assert(subsection1Offset == 32);
-
-	uint subsection2Offset;
-	uint subsection3Offset;
+	uint MeshesOffset;
+	uint MeshDataOffset;
 	
 	ushort uu1;
 	ushort uu2;
@@ -258,134 +260,82 @@ struct NavmeshChunk
 	ushort uu5;
 	ushort uu6;
 
-	ushort numFaces;
-	ushort numVertices;
+	ushort MeshCount;
+	ushort PositionCount;
 
 	ushort u4;
 	ushort u5;
 
-	FSeek(startPosition + subsection1Offset);
+	FSeek(startof(this) + PositionsOffset);
+	FixedDenominator3 Positions[PositionCount] <bgcolor = COLOR_NAVMESHCHUNK_SS1>;
 
-	Vertex vertices[numVertices]<bgcolor = COLOR_NAVMESHCHUNK_SS1>;
+	FSeek(startof(this) + MeshesOffset);
+    struct
+    {
+        local uint i = 0;
+		for (i = 0; i < MeshCount; i++)
+		{
+			FSeek(startof(this) + i * 4); // sizeof(NavmeshDesc06) == 4; Could also write this line as startof(parentof(this)) + MeshesOffset + i * sizeof(NavmeshDesc06)
+			struct NavmeshDesc06
+			{
+				uint DataOffset : 18;
+				uint NeighborInfoCount : 1;
+				uint NodeCount : 1;
+				uint SegmentIndex : 12;
 
-	FSeek(startPosition + subsection2Offset);
+				FSeek(startof(parentof(parentof(this))) + parentof(parentof(this)).MeshDataOffset + DataOffset * 2);
+				struct NeighborNavmeshInfo06
+				{
+					ushort NavigationGraphMeshIndex : 14;
+					ushort Type : 2;
+				} NeighborNavmeshInfo[NeighborInfoCount != 0 ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_SS3>;
 
-	uint faceOffsets[numFaces]<bgcolor = COLOR_NAVMESHCHUNK_SS2>;
+				byte NodePositionIndices[NeighborInfoCount != 0 ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_SS3>;
 
-	FSeek(startPosition + subsection3Offset);
+				byte NodeIndices[NodeCount != 0 ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_SS3>;
 
-	struct NavmeshChunkFaces
-	{
-		local uint i = 0;
-		for (i = 0; i < numFaces; i++) {
-			FSeek(startPosition + subsection3Offset + (faceOffsets[i] & 0x3ffff) * 2);
-			struct NavmeshChunkSubsection3Entry {
-				if (faceOffsets[i] >> 0x12 & 1 > 0) {
-					short adjacentFaces[4];
-				} else {
-					short adjacentFaces[3];
-				}
+				ushort DataChunkIds[NeighborInfoCount != 0 ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_SS3>;
 
-				byte v1;
-				byte v2;
-				byte v3;
-				if (faceOffsets[i] >> 0x12 & 1 > 0) {
-					byte v4;
-				}
-
-				if (faceOffsets[i] >> 0x12 & 1 > 0) {
-					byte edgeIndices[4];
-				} else {
-					byte edgeIndices[3];
-				}
-			} entries;
+				ushort TileIds[NeighborInfoCount != 0 ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_SS3>;
+			} MeshDesc <bgcolor = COLOR_NAVMESHCHUNK_SS2>;
 		}
-	} faces<bgcolor = COLOR_NAVMESHCHUNK_SS3>;
+    } MeshDescs;
 };
 
-struct SegmentChunk
+struct SegmentGraphChunkHeader
 {
-	local uint startPosition = FTell();
-
-	uint subsection1Offset;
-	Assert(subsection1Offset == 16);
-
-	uint subsection2Offset;
-
-	uint totalSize;
-	uint entryCount;
-
-	struct SegmentChunkSubsection1
-	{
-		struct SegmentChunkSubsection1Entry
-		{
-			Vertex a;
-			Vertex b;
-		} entries[entryCount];
-	} subsection1<bgcolor = COLOR_SEGMENTCHUNK_SS1>;
-
-	FSeek(startPosition + subsection2Offset);
-	struct SegmentChunkSubsection2
-	{
-		struct SegmentChunkSubsection2Entry
-		{
-			short vertexIndexOffset;
-			short navmeshChunkSubsection2EntryIndex;
-			short u3;
-			short u4;
-			byte verts;
-			byte faces;
-			byte u7; // faces * 3 ?
-			byte edges;
-		} entries[entryCount];
-	} subsection1<bgcolor = COLOR_SEGMENTCHUNK_SS2>;
-};
-
-struct NavWorldSegmentGraph
-{
-	local uint startPosition = FTell();
-
-	uint subsection1Offset;
-	Assert(subsection1Offset == 32);
-
-	uint subsection2Offset;
+	uint VerticesOffset;
+	uint NodesOffset;
 	uint subsection3Offset;
 
 	uint uu1;
 	uint totalSize;     // Total size of the entry in bytes
-	uint subsection1EntryCount;
+	ushort NodeCount;
+	ushort padding1;
 	ushort uu3;
-	uint totalEdges; // Probably?
-	ushort padding;
+	ushort totalEdges; // Probably?
+	uint padding;
 
-	FSeek(startPosition + subsection1Offset);
-	struct NavWorldSegmentGraphSubsection1
+	FSeek(startof(this) + VerticesOffset);
+	FixedDenominator3 Vertices[NodeCount] <bgcolor = COLOR_SEGMENTGRAPH_VERTICES>;
+
+	FSeek(startof(this) + NodesOffset);
+	struct SegmentGraphNodeDesc07
 	{
-		struct NavWorldSegmentGraphSubsection1Entry
-		{
-			Vertex position;
-		} entries[subsection1EntryCount];
-	} subsection1<bgcolor = COLOR_SEGMENTGRAPH_SS1>;
+		TWENTYFOURBITUINT subsection3Index;
+		ubyte nEdges;
+		ushort IslandNodeIndex;
+		ushort u4;
+		byte u5;
+		byte u6;
+		byte offGroupEdges;
+		byte offMeshEdges;
+	} Nodes[NodeCount] <bgcolor = COLOR_SEGMENTGRAPH_NODES>;
 
-	FSeek(startPosition + subsection2Offset);
-	struct NavWorldSegmentGraphSubsection2
-	{
-		struct NavWorldSegmentGraphSubsection2Entry
-		{
-			TWENTYFOURBITUINT subsection3Index;
-			ubyte nEdges;
-			short u3;
-			ushort u4;
-			byte u5;
-			byte u6;
-			byte offGroupEdges;
-			byte offMeshEdges;
-		} entries[subsection1EntryCount];
-	} subsection2<bgcolor = COLOR_SEGMENTGRAPH_SS2>;
-
+	// GetSegmentGraphCrossingTileLinkToNode07
 	if (subsection3Offset != totalSize)
 	{
-		FSeek(startPosition + subsection3Offset);
+		FSeek(startof(this) + subsection3Offset);
 
 		struct NavWorldSegmentGraphSubsection3 {
 
@@ -393,31 +343,31 @@ struct NavWorldSegmentGraph
 			local int j = 0;
 			local int offset = 0;
 			local TWENTYFOURBITUINT n;
-			for (i = 0; i < subsection1EntryCount; i++) {
-				n = subsection2.entries[i].subsection3Index;
+			for (i = 0; i < NodeCount; i++) {
+				n = Nodes[i].subsection3Index;
 				offset = (uint)(n[0]) + (((uint)n[1]) << 8) + (((uint)n[2]) << 16);
-				FSeek (startPosition + subsection3Offset + offset*2);
+				FSeek (startof(parentof(this)) + subsection3Offset + offset*2);
 				struct NavWorldSegmentGraphSubsection3Entry {
-					if (subsection2.entries[i].nEdges > 0) {
+					if (Nodes[i].nEdges > 0) {
 						struct NavWorldSegmentType1Edges {
 							ushort weight;
 							ushort adjacentNode;
 							ubyte adjacentEdgeCount;
 							ubyte u1;
-						}type1Edges[subsection2.entries[i].nEdges];
+						}type1Edges[Nodes[i].nEdges];
 					}
 
-					if (subsection2.entries[i].offGroupEdges > 0) {
+					if (Nodes[i].offGroupEdges > 0) {
 						struct NavWorldSegmentType2Edges {
 							ushort groupId;
 							ushort weight;
 							ushort adjacentNode;
 							ubyte adjacentEdgeCount;
 							ubyte u5;
-						}type2Edges[subsection2.entries[i].offGroupEdges];
+						}type2Edges[Nodes[i].offGroupEdges];
 					}
 
-					if (subsection2.entries[i].offMeshEdges > 0) {
+					if (Nodes[i].offMeshEdges > 0) {
 						struct NavWorldSegmentType3Edges {
 							ushort u1;
 							ushort groupId;
@@ -425,27 +375,27 @@ struct NavWorldSegmentGraph
 							ushort u4;
 							ubyte adjacentEdgeCount;
 							ubyte u6;
-						}type3Edges[subsection2.entries[i].offMeshEdges];
+						}type3Edges[Nodes[i].offMeshEdges];
 					}
 
-					if (subsection2.entries[i].nEdges > 0) {
-						for (j = 0; j < subsection2.entries[i].nEdges; j++) {
+					if (Nodes[i].nEdges > 0) {
+						for (j = 0; j < Nodes[i].nEdges; j++) {
 							struct NavWorldSegmentType1EdgeAdjacentEdges {
 								ubyte adjacentEdges[type1Edges[j].adjacentEdgeCount];
 							}type1AdjacentEdges;
 						}
 					}
 
-					if (subsection2.entries[i].offGroupEdges > 0) {
-						for (j = 0; j < subsection2.entries[i].offGroupEdges; j++) {
+					if (Nodes[i].offGroupEdges > 0) {
+						for (j = 0; j < Nodes[i].offGroupEdges; j++) {
 							struct NavWorldSegmentType2EdgeAdjacentEdges {
 								ubyte adjacentEdges[type2Edges[j].adjacentEdgeCount];
 							}type2AdjacentEdges;
 						}
 					}
 
-					if (subsection2.entries[i].offMeshEdges > 0) {
-						for (j = 0; j < subsection2.entries[i].offMeshEdges; j++) {
+					if (Nodes[i].offMeshEdges > 0) {
+						for (j = 0; j < Nodes[i].offMeshEdges; j++) {
 							struct NavWorldSegmentType3EdgeAdjacentEdges {
 								ubyte adjacentEdges[type3Edges[j].adjacentEdgeCount];
 							}type3AdjacentEdges;
@@ -457,127 +407,151 @@ struct NavWorldSegmentGraph
 	}
 };
 
-struct Entry
+struct SegmentChunkHeader
 {
-	local long startOffset = FTell();
+	uint BoundsOffset;
+	uint SegmentsOffset;
+	uint SegmentGraphOffset;
+	uint SegmentCount;
 
-	ENTRY_TYPE entryType; Assert(entryType < 5); 
+	FSeek(startof(this) + BoundsOffset);
+	BoundingDesc Bounds[SegmentCount] <bgcolor = COLOR_SEGMENTCHUNK_BOUNDS>;
 
-	uint nextEntryRelativeOffset;
-	uint payloadRelativeOffset;
-	
-	FileUid Coordinate;
-	 
-	switch(entryType)
+	FSeek(startof(this) + SegmentsOffset);
+	struct SegmentDesc06
 	{
-		case NAVWORLD:
-			FSeek(startOffset + payloadRelativeOffset);
-			NavWorld world <bgcolor = COLOR_NAVWORLD>;
+		short BasePositionIndex;
+		short BaseNavigationGraphMeshIndex;
+		short BaseNavigationGraphNodeIndex;
+		short BaseNavigationGraphEdgeIndex;
+		byte PositionCount;
+		byte MeshCount;
+		byte EdgeCount;
+		byte NodeCount;
+	} Segments[SegmentCount] <bgcolor = COLOR_SEGMENTCHUNK_SEGMENTS>;
+};
+
+struct
+{
+	CHUNK_TYPE Type; Assert(Type < 5); 
+
+	uint NextChunkOffset;
+	uint DataOffset;
+	
+	ChunkUid _ChunkUid;
+	 
+	switch(Type)
+	{
+		case CHUNK_TYPE_NAVIGATION_GRAPH:
+			FSeek(startof(this) + DataOffset);
+			NavigationGraphChunkHeader Chunk <bgcolor = COLOR_NAVIGATIONGRAPH>;
 			break;
-		case NAVMESH_CHUNK:
-			FSeek(startOffset + payloadRelativeOffset);
-			NavmeshChunk chunk <bgcolor = COLOR_NAVMESHCHUNK>;
+		case CHUNK_TYPE_NAVMESH_CHUNK:
+			FSeek(startof(this) + DataOffset);
+			NavmeshChunkHeader Chunk <bgcolor = COLOR_NAVMESHCHUNK>;
 			break;
-		case NAVWORLD_SEGMENT_GRAPH:
-			FSeek(startOffset + payloadRelativeOffset);
-			NavWorldSegmentGraph navWorldSegmentGraph <bgcolor = COLOR_SEGMENTGRAPH>;
+		case CHUNK_TYPE_SEGMENT_GRAPH:
+			FSeek(startof(this) + DataOffset);
+			SegmentGraphChunkHeader Chunk <bgcolor = COLOR_SEGMENTGRAPH>;
 			break;
-		case SEGMENT_CHUNK:
-			FSeek(startOffset + payloadRelativeOffset);
-			SegmentChunk segmentChunk <bgcolor = COLOR_SEGMENTCHUNK>;
+		case CHUNK_TYPE_SEGMENT_CHUNK:
+			FSeek(startof(this) + DataOffset);
+			SegmentChunkHeader Chunk <bgcolor = COLOR_SEGMENTCHUNK>;
 			break;
 	};
 
-	FSeek(startOffset + nextEntryRelativeOffset);
-} entry[header.entryCount] <read = Str("%s, id: %u", EnumToString(entryType), Coordinate.FileIndex), optimize = false, bgcolor = 0x5B1ED8>;
+	FSeek(startof(this) + NextChunkOffset);
+} Chunks [Header.ChunkCount] <read = Str("%s, uid: {tileId: %u, chunkId: %u}", EnumToString(Type), _ChunkUid.TileId, _ChunkUid.Index), optimize = false, bgcolor = 0x5B1ED8>;
 
-if (header.section2Offset)
+if (Header.IslandGraphsOffset)
 {
-	FSeek(header.section2Offset);
-
-	local long startOffset = 0;
-	local int remainingEntries = header.section2EntryCount;
-	do
+	struct 
 	{
-		startOffset = FTell();
-		struct Section2Entry
+		FSeek(Header.IslandGraphsOffset);
+
+		local uint i = 0;
+		for (i = 0; i < Header.IslandGraphCount; i++)
 		{
-			ushort nextEntryRelativeOffset;
-			ushort subsection1RelativeOffset;
-			ushort subEntryCount;
-			ushort subsection2RelativeOffset;
-			ushort subsection3RelativeOffset;
-			ushort subsection4RelativeOffset;
-			ushort subsection5RelativeOffset;
-			ushort subsection6RelativeOffset;
-
-			FSeek(startOffset + subsection1RelativeOffset);
-			struct Section2Subsection1
+			struct IslandGraphHeader
 			{
-				Vertex position;
-				ushort flags; // Maybe? Seems to match NavWorld flags
-				ushort subsection2Offset;
-				ushort countB;
-				ushort countA;
-			} subsection1Entries[subEntryCount];
+				ushort NextGraphOffset;
+				ushort subsection1RelativeOffset;
+				ushort subEntryCount;
+				ushort subsection2RelativeOffset;
+				ushort LowGraphNodeHandlesOffset;
+				ushort subsection4RelativeOffset;
+				ushort subsection5RelativeOffset;
+				ushort subsection6RelativeOffset;
 
-			FSeek(startOffset + subsection2RelativeOffset);
+				FSeek(startof(this) + subsection1RelativeOffset);
+				struct Section2Subsection1
+				{
+					FixedDenominator3 position;
+					ushort Attributes;
+					ushort subsection2Offset;
+					ushort countB;
+					byte countA;
+					byte Padding0;
+				} subsection1Entries[subEntryCount];
 
-			local int i = 0;
-			local int shorts;
-			local int ints;
-			struct Section2Subsection2 {
-				for (i = 0; i < subEntryCount; i++) {
-					struct Section2Subsection2Entry {
-						if (subsection1Entries[i].countA > 0) {
-							struct AEntries {
-								ushort weight; // Possibly ?
-								ushort adjacentNodeIndex;
-							} aEntries[subsection1Entries[i].countA];
-						}
+				FSeek(startof(this) + subsection2RelativeOffset);
 
-						if (subsection1Entries[i].countB > 0) {
-							struct BEntries {
-								ushort u3;
-							} bEntries[subsection1Entries[i].countB];
-						}
-					} entries;
-				}
-			} subsection2Entries;
+				local int i = 0;
+				local int shorts;
+				local int ints;
+				struct Section2Subsection2 {
+					for (i = 0; i < subEntryCount; i++) {
+						struct Section2Subsection2Entry {
+							if (subsection1Entries[i].countA > 0) {
+								struct AEntries {
+									ushort weight; // Possibly ?
+									ushort adjacentNodeIndex;
+								} aEntries[subsection1Entries[i].countA];
+							}
 
-			FSeek(startOffset + subsection3RelativeOffset);
-			struct Section2Subsection3
-			{
-				uint u1;
-				ushort u5;
-				ushort u7;
-			} subsection3Entries[subEntryCount];
+							if (subsection1Entries[i].countB > 0) {
+								struct BEntries {
+									ushort u3;
+								} bEntries[subsection1Entries[i].countB];
+							}
+						} entries;
+					}
+				} subsection2Entries;
 
-			FSeek(startOffset + subsection4RelativeOffset);
-			struct Section2Subsection4
-			{
-				// Some kind of count or index. Not unique values.
-				ushort n1;
-			} subsection4Entries[subEntryCount];
+				FSeek(startof(this) + LowGraphNodeHandlesOffset);
+				struct IslandGraphLowGraphNodeHandle
+				{
+					FileUid _FileUid;
+					ushort u5;
+					ushort u7;
+				} LowGraphNodeHandles[subEntryCount] <optimize = false>;
 
-			Assert (subsection6RelativeOffset - subsection5RelativeOffset == 24);
+				FSeek(startof(this) + subsection4RelativeOffset);
+				struct Section2Subsection4
+				{
+					// Some kind of count or index. Not unique values.
+					ushort n1;
+				} subsection4Entries[subEntryCount];
 
-			struct Section2Subsection5
-			{
-				ubyte u1[24];
-			} subsection5Entries;
+				Assert (subsection6RelativeOffset - subsection5RelativeOffset == 24);
 
-			// TODO: Subsection 6?
-		} section2Entry <bgcolor = COLOR_SECTION2>;
+				struct Section2Subsection5
+				{
+					ubyte u1[24];
+				} subsection5Entries;
 
-		FSeek(startOffset + section2Entry.nextEntryRelativeOffset);
-		remainingEntries--;
-	} while(remainingEntries != 0);
+				// TODO: Subsection 6?
+
+				if (NextGraphOffset != 0)
+					FSeek(startof(this) + NextGraphOffset);
+			} IslandGraph <bgcolor = COLOR_ISLANDGRAPH>;
+		}
+	} IslandGraphs;
 }
 
-if (header.SearchSpaceOffset != 0)
+if (Header.SearchSpaceOffset != 0)
 {
-	FSeek(header.SearchSpaceOffset);
+	FSeek(Header.SearchSpaceOffset);
 	struct SearchSpace
 	{
 		local long selfOffset = startof(this);
@@ -595,9 +569,9 @@ if (header.SearchSpaceOffset != 0)
 		uint BucketDescsOffset; Assert(BucketDescsOffset == 48);
 
 		uint BucketEntriesOffset;
-		uint NextSectionOffset;
+		uint ConnectTileInfosOffset;
 
-		FSeek(selfOffset + BucketDescsOffset);
+		FSeek(startof(this) + BucketDescsOffset);
 		struct SearchBucketDesc
 		{
 			uint StartOffset;
@@ -606,9 +580,10 @@ if (header.SearchSpaceOffset != 0)
 			ubyte u3_MaxY; // ""
 		} BucketDescs[BlockCountX * BlockCountY * BlockCountZ] < bgcolor = COLOR_SEARCHSPACE_BUCKETDESC>;
 
-		Assert(FTell() == selfOffset + BucketEntriesOffset);
+		Assert(FTell() == startof(this) + BucketEntriesOffset);
 
-		struct {
+		struct
+		{
 			local int i;
 			local int j;
 			for (i = 0; i < BlockCountX * BlockCountY * BlockCountZ; i++) {
@@ -619,30 +594,29 @@ if (header.SearchSpaceOffset != 0)
 					{
 						FileUid Uid; // Is this a full Uid?
 						uint IndexCount;
-						ushort Indices[IndexCount]; // SegmentChunks apparently
+						ushort SegmentIndices[IndexCount]; // SegmentChunks apparently
 					} BucketEntry;
 				}
 			}
 		} BucketEntries <bgcolor = COLOR_SEARCHSPACE_BUCKET>;
 
         FAlign(16);
-		Assert(FTell() == selfOffset + NextSectionOffset);
-
+		Assert(FTell() == selfOffset + ConnectTileInfosOffset);
 	} _SearchSpace <bgcolor = COLOR_SEARCHSPACE>;
 }
 
-if (header.ConnectTileInfosOffset != 0)
+if (Header.ConnectTileInfosOffset != 0)
 {
-	FSeek(header.ConnectTileInfosOffset);
+	FSeek(Header.ConnectTileInfosOffset);
 
 	// See fox::nav::service::WorldService::ResolveConnectTileInfosWithName
 	struct ConnectTileInfosHeader
 	{
-		local long selfOffset = startof(this);
+		local long infosOffset = startof(this);
 		
-		ushort GroupsOffset_Indices;
-		ushort InfosOffset_Indices;
-		ushort NodesOffset_Indices;
+		ushort GroupsOffset;
+		ushort InfosOffset;
+		ushort NodesOffset;
 		ushort GroupCount;
 
 		struct ConnectTileInfoNodeDesc
@@ -653,11 +627,11 @@ if (header.ConnectTileInfosOffset != 0)
 
 		struct ConnectTileInfoDesc
 		{
-			ushort DataChunkIndex;
+			ushort DataChunkId;
 			ushort Count : 5 <hidden = true>;
-			ushort StartOffset_Indices : 11 <hidden = true>;
+			ushort StartOffset : 11 <hidden = true>;
 
-			FSeek(selfOffset + (2 * NodesOffset_Indices) + (4 * StartOffset_Indices)); // 4 == sizeof(this)
+			FSeek(infosOffset + (2 * NodesOffset) + (4 * StartOffset)); // 4 == sizeof(this)
 			for (k = 0; k < Count; k++)
 			{
 				ConnectTileInfoNodeDesc Node;
@@ -668,16 +642,16 @@ if (header.ConnectTileInfosOffset != 0)
 		{
 			StrCode32 Name;
 			ushort Count : 5 <hidden = true>;
-			ushort StartOffset_Indices : 11 <hidden = true>;
+			ushort StartOffset : 11 <hidden = true>;
 
-			FSeek(selfOffset + (2 * InfosOffset_Indices) + (4 * StartOffset_Indices)); // 4 == sizeof(this)
+			FSeek(infosOffset + (2 * InfosOffset) + (4 * StartOffset)); // 4 == sizeof(this)
 			for (j = 0; j < Count; j++)
 			{
 				ConnectTileInfoDesc Info;
 			}
 		};
 
-		FSeek(selfOffset + 2 * GroupsOffset_Indices);
+		FSeek(infosOffset + 2 * GroupsOffset);
 		struct
 		{
 			local int i;
