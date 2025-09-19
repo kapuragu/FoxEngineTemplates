@@ -612,7 +612,7 @@ if (Header.ConnectTileInfosOffset != 0)
 	// See fox::nav::service::WorldService::ResolveConnectTileInfosWithName
 	struct ConnectTileInfosHeader
 	{
-		local long infosOffset = startof(this);
+		local long headerOffset = startof(this);
 		
 		ushort GroupsOffset;
 		ushort InfosOffset;
@@ -628,12 +628,13 @@ if (Header.ConnectTileInfosOffset != 0)
 		struct ConnectTileInfoDesc
 		{
 			ushort DataChunkId;
-			ushort Count : 5 <hidden = true>;
-			ushort StartOffset : 11 <hidden = true>;
+			ushort Count : 5;// <hidden = true>;
+			ushort StartOffset : 11;// <hidden = true>;
 
-			FSeek(infosOffset + (2 * NodesOffset) + (4 * StartOffset)); // 4 == sizeof(this)
+			local int k;
 			for (k = 0; k < Count; k++)
 			{
+				FSeek(headerOffset + (2 * NodesOffset) + (4 * StartOffset) + (k * 4)); // 4 == sizeof(ConnectTileInfoNodeDesc)
 				ConnectTileInfoNodeDesc Node;
 			}
 		};
@@ -641,24 +642,23 @@ if (Header.ConnectTileInfosOffset != 0)
 		struct ConnectTileInfoGroupDesc
 		{
 			StrCode32 Name;
-			ushort Count : 5 <hidden = true>;
-			ushort StartOffset : 11 <hidden = true>;
+			ushort Count : 5;// <hidden = true>;
+			ushort StartOffset : 11;// <hidden = true>;
 
-			FSeek(infosOffset + (2 * InfosOffset) + (4 * StartOffset)); // 4 == sizeof(this)
+			local int j;
 			for (j = 0; j < Count; j++)
 			{
+				FSeek(headerOffset + (2 * InfosOffset) + (4 * StartOffset) + (j * 4)); // 4 == sizeof(ConnectTileInfoDesc)
 				ConnectTileInfoDesc Info;
 			}
 		};
 
-		FSeek(infosOffset + 2 * GroupsOffset);
 		struct
 		{
 			local int i;
-			local int j;
-			local int k;
 			for (i = 0; i < GroupCount; i++)
 			{
+				FSeek(headerOffset + (2 * GroupsOffset) + (i * 6)); // 6 == sizeof(ConnectTileInfoGroupDesc)
 				ConnectTileInfoGroupDesc Group;
 			}
 		} Groups;
