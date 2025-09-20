@@ -23,7 +23,7 @@ string ResolveHashFunc32(StrCode32& hash)
 	case 504469101: return "StepFence";
 	case 0: return "0";
 	case 3205930904: return "";
-	case 504835594: return "SubstanceVowelCourseStepFence";
+	case 504835594:
 	default:
         Printf(Str("\n%u",hash.hash));
         return "Unknown";
