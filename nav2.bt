@@ -519,8 +519,6 @@ if (Header.IslandGraphsOffset)
 				FSeek(startof(this) + subsection2RelativeOffset);
 
 				local int i = 0;
-				local int shorts;
-				local int ints;
 				struct Section2Subsection2 {
 					for (i = 0; i < NodeCount; i++) {
 						struct Section2Subsection2Entry {
