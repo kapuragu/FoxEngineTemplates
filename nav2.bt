@@ -8,21 +8,20 @@ LittleEndian();
 #define COLOR_NAVIGATIONGRAPH 0x4F54F0
 #define COLOR_NAVIGATIONGRAPH_POSITIONS 0x5F63F1
 #define COLOR_NAVIGATIONGRAPH_NODES 0x6F73F2
-#define COLOR_NAVIGATIONGRAPH_INSIDELINKS 0x7F82F4
 #define COLOR_NAVIGATIONGRAPH_LINKS 0x878AF5
 #define COLOR_NAVIGATIONGRAPH_EDGES 0x8F92F5
 #define COLOR_NAVIGATIONGRAPH_ATTRIBUTES 0x9FA1F6
 #define COLOR_NAVIGATIONGRAPH_NAVMESHINDICES 0xAFB1F8
 
 #define COLOR_NAVMESHCHUNK 0xEBC05B
-#define COLOR_NAVMESHCHUNK_SS1 0xECC569
+#define COLOR_NAVMESHCHUNK_POSITIONS 0xECC569
 #define COLOR_NAVMESHCHUNK_MESHES 0xEECB78
 #define COLOR_NAVMESHCHUNK_NEIGHBORINFO 0xF0D187
 
 #define COLOR_SEGMENTGRAPH 0x3DC59B
-#define COLOR_SEGMENTGRAPH_VERTICES 0x4ECAA4
+#define COLOR_SEGMENTGRAPH_POSITIONS 0x4ECAA4
 #define COLOR_SEGMENTGRAPH_NODES 0x60CFAD
-#define COLOR_SEGMENTGRAPH_SS3 0x71D4B6
+#define COLOR_SEGMENTGRAPH_LINKS 0x71D4B6
 
 #define COLOR_SEGMENTCHUNK 0xB844B7
 #define COLOR_SEGMENTCHUNK_BOUNDS 0xC979A3
@@ -34,35 +33,12 @@ LittleEndian();
 #define COLOR_SEARCHSPACE_BUCKETDESC 0xB58536
 #define COLOR_SEARCHSPACE_BUCKET 0xE6AA89
 
-enum <ubyte> NAV2_FEATURE_FLAGS
-{
-	A = 1 << 0,
-	B = 1 << 1,
-	C = 1 << 2,
-	D = 1 << 7,
-};
-
 enum <uint> CHUNK_TYPE
 {
 	CHUNK_TYPE_NAVIGATION_GRAPH = 0,
 	CHUNK_TYPE_NAVMESH_CHUNK = 1,
 	CHUNK_TYPE_SEGMENT_GRAPH = 3,
 	CHUNK_TYPE_SEGMENT_CHUNK = 4
-};
-
-enum <ubyte> CHUNK_TYPE_UINT8
-{
-	CHUNK_TYPE_NAVIGATION_GRAPH_UINT8 = 0,
-	CHUNK_TYPE_NAVMESH_CHUNK_UINT8 = 1,
-	CHUNK_TYPE_SEGMENT_GRAPH_UINT8 = 3,
-	CHUNK_TYPE_SEGMENT_CHUNK_UINT8 = 4
-};
-
-// NavigationGraphKind
-enum <uint> NAVIGATION_GRAPH_KIND
-{
-	NAVIGATION_GRAPH_KIND_STATIC = 0,
-	NAVIGATION_GRAPH_KIND_DYNAMIC = 1,
 };
 
 typedef struct
@@ -73,10 +49,19 @@ typedef struct
 } FixedDenominator3 <read = ReadFixedDenominator3String>;
 string ReadFixedDenominator3String(FixedDenominator3& fixed)
 {
-    return Str("%f, %f, %f", (float)fixed.x / Header.Denominator.x, (float)fixed.y / Header.Denominator.x, (float)fixed.z / Header.Denominator.x);
+    return Str("%f, %f, %f", (float)fixed.x / Header.Denominator.x, (float)fixed.y / Header.Denominator.y, (float)fixed.z / Header.Denominator.z);
 }
 
 typedef struct
+{
+	ushort x;
+} FixedScalar <read = ReadFixedScalarString>;
+string ReadFixedScalarString(FixedScalar& fixed)
+{
+    return Str("%f", (float)fixed.x / Header.WeightDenominator.x);
+}
+
+typedef struct // Custom name
 {
 	FixedDenominator3 Min;
 	FixedDenominator3 Max;
@@ -96,8 +81,13 @@ typedef struct
     uint Padding : 1 <hidden = true>; Assert(Padding == 0);
 } DataChunkUid <optimize = false, read = Str("Index: %u, TileId: %u", Index, TileId)>;
 
-// 141af60e3 - need to be super careful here
-// 141af9250
+enum <ubyte> NAV2_FEATURE_FLAGS
+{
+	A = 1 << 0,
+	B = 1 << 1,
+	C = 1 << 2,
+	D = 1 << 7,
+};
 
 struct FileHeader
 {
@@ -122,7 +112,7 @@ struct FileHeader
 	uint Padding2 <hidden = true>; Assert(Padding2 == 0); 
 
 	FixedDenominator3 Denominator;
-	ushort WeightDenominator; // Unknown, often 127 (possibly a divisor for Vector4 values?) - weight denominator
+	FixedScalar WeightDenominator;
 
 	NAV2_FEATURE_FLAGS FeatureFlags; // 141b16b8a
 	ubyte IslandGraphCount;
@@ -149,6 +139,13 @@ struct
 	} TypedChunkDescs[3] <optimize = false>;
 } ChunkDescs <bgcolor = COLOR_CHUNKDESC>;
 
+// fox::nav::NavigationGraphKind
+enum <uint> NAVIGATION_GRAPH_KIND
+{
+	NAVIGATION_GRAPH_KIND_STATIC = 0,
+	NAVIGATION_GRAPH_KIND_DYNAMIC = 1,
+};
+
 FSeek(Header.ChunksOffset);
 struct NavigationGraphChunkHeader
 {
@@ -166,7 +163,7 @@ struct NavigationGraphChunkHeader
 
 	uint Padding2 <hidden = true>; Assert(Padding2 == 0);
 
-	uint NavmeshIndicesOffset; // 141b1f44e
+	uint NavmeshIndicesOffset;
 
 	ushort NodeCount;
 	ushort EdgeCount;
@@ -180,70 +177,66 @@ struct NavigationGraphChunkHeader
 	FixedDenominator3 Positions[NodeCount] <bgcolor = COLOR_NAVIGATIONGRAPH_POSITIONS>;
 	
 	FSeek(startof(this) + NodesOffset);
-    struct
-    {
-        local uint i = 0;
-		for (i = 0; i < NodeCount; i++)
-		{			
-			FSeek(startof(this) + i * 6); // sizeof(NavigationGraphNodeDesc06) == 6; Could also write this line as startof(parentof(this)) + NodesOffset + i * sizeof(NavigationGraphNodeDesc06)
-			struct NavigationGraphNodeDesc06
+	struct NavigationGraphNodeDesc06
+	{
+		local long rewindPos = FTell();
+
+		ushort LinkDataOffset;
+		ushort SegmentIndex : 12;
+		ushort LinkDataOffsetUpper : 4;
+		ubyte InsideLinkCount;
+		BitfieldDisablePadding();
+		ubyte HasSegmentLink : 1;
+		ubyte HasDataChunkLink : 1;
+		ubyte HasTileLink : 1;
+		NAVIGATION_GRAPH_KIND Kind : 2; Assert(Kind == NAVIGATION_GRAPH_KIND_STATIC);
+		ubyte Padding : 3 <hidden = true>; Assert(Padding == 0);
+		BitfieldEnablePadding();
+
+		Assert(((HasSegmentLink + HasDataChunkLink + HasTileLink) & (~1)) == 0); // Asserts that exactly one or zero of the links are present
+		// Printf("%d, %d, %d, %d\n", InsideLinkCount, HasSegmentLink, HasDataChunkLink, HasTileLink);
+		
+		FSeek(startof(parentof(this)) + parentof(this).LinkDataOffset + (LinkDataOffsetUpper * 16 + LinkDataOffset * 2));
+		struct NavigationGraphInsideLinkDesc
+		{
+			ushort NodeIndex;
+			ushort EdgeIndex;
+		} InsideLinks[InsideLinkCount] <bgcolor = COLOR_NAVIGATIONGRAPH_LINKS>;
+
+		if (HasSegmentLink)
+		{
+			struct NavigationGraphCrossingSegmentLinkDesc // Custom name
 			{
-				ushort LinkDataOffset;
-				ushort SegmentIndex : 12; // 141ae373d
-				ushort LinkDataOffsetUpper : 4; Assert(LinkDataOffsetUpper == 0);
-				ubyte InsideLinkCount;
-				BitfieldDisablePadding();
-				ubyte HasSegmentLink : 1;
-				ubyte HasDataChunkLink : 1;
-				ubyte HasTileLink : 1;
-				NAVIGATION_GRAPH_KIND Kind : 2; Assert(Kind == NAVIGATION_GRAPH_KIND_STATIC);
-				ubyte Padding : 3 <hidden = true>; Assert(Padding == 0);
-				BitfieldEnablePadding();
-
-				Assert(((HasSegmentLink + HasDataChunkLink + HasTileLink) & (~1)) == 0); // Asserts that exactly one or zero of the links are present
-				// Printf("%d, %d, %d, %d\n", InsideLinkCount, HasSegmentLink, HasDataChunkLink, HasTileLink);
-				
-				FSeek(startof(parentof(parentof(this))) + parentof(parentof(this)).LinkDataOffset + (LinkDataOffsetUpper * 16 + LinkDataOffset * 2));
-				struct NavigationGraphInsideLinkDesc
-				{
-					ushort NodeIndex;
-					ushort EdgeIndex;
-				} InsideLinks[InsideLinkCount] <bgcolor = COLOR_NAVIGATIONGRAPH_INSIDELINKS>;
-
-				if (HasSegmentLink)
-				{
-					struct NavigationGraphCrossingSegmentLinkDesc // Custom name
-					{
-						ushort NodeIndex;
-					} CrossingSegmentLinkDesc <bgcolor = COLOR_NAVIGATIONGRAPH_LINKS>;
-				}
-
-				if (HasDataChunkLink)
-				{
-					struct NavigationGraphCrossingDataChunkLinkDesc // Custom name
-					{
-						ushort DataChunkId;
-						ushort NodeIndex;
-					} CrossingDataChunkLinkDesc <bgcolor = COLOR_NAVIGATIONGRAPH_LINKS>;;
-				}
-
-				if (HasTileLink)
-				{
-					struct NavigationGraphCrossingTileLinkDesc
-					{
-						ushort TileId;
-						ushort DataChunkId;
-						ushort NodeIndex; Assert(NodeIndex == 0xFFFF);
-					} CrossingTileLinkDesc <bgcolor = COLOR_NAVIGATIONGRAPH_LINKS>;
-				}
-			} Node <bgcolor = COLOR_NAVIGATIONGRAPH_NODES>;
+				ushort NodeIndex;
+			} CrossingSegmentLinkDesc <bgcolor = COLOR_NAVIGATIONGRAPH_LINKS>;
 		}
-	} Nodes;
+
+		if (HasDataChunkLink)
+		{
+			struct NavigationGraphCrossingDataChunkLinkDesc // Custom name
+			{
+				ushort DataChunkId;
+				ushort NodeIndex;
+			} CrossingDataChunkLinkDesc <bgcolor = COLOR_NAVIGATIONGRAPH_LINKS>;
+		}
+
+		if (HasTileLink)
+		{
+			struct NavigationGraphCrossingTileLinkDesc
+			{
+				ushort TileId;
+				ushort DataChunkId;
+				ushort NodeIndex; Assert(NodeIndex == 0xFFFF); // Game patches index at runtime when resolving tile links
+			} CrossingTileLinkDesc <bgcolor = COLOR_NAVIGATIONGRAPH_LINKS>;
+		}
+
+		FSeek(rewindPos + 6); // sizeof(NavigationGraphNodeDesc06) == 6
+	} Nodes[NodeCount] <optimize = false, bgcolor = COLOR_NAVIGATIONGRAPH_NODES>;
 
 	FSeek(startof(this) + EdgesOffset);
 	struct NavigationGraphEdgeDesc06
 	{
-		ushort Weight <read = Str("%f", (float)this / Header.WeightDenominator)>;
+		FixedScalar Weight;
 		BitfieldDisablePadding();
 		ushort SegmentIndex : 12;
 		NAVIGATION_GRAPH_KIND Kind : 2; Assert(Kind == NAVIGATION_GRAPH_KIND_STATIC);
@@ -267,6 +260,7 @@ enum <uint> NAVMESH_NEIGHBOR_TYPE
 	NAVMESH_NEIGHBOR_TYPE_CROSSING_DATACHUNK = 1,
 	NAVMESH_NEIGHBOR_TYPE_CROSSING_TILE = 2,
 	NAVMESH_NEIGHBOR_TYPE_DYNAMIC = 3,
+	NAVMESH_NEIGHBOR_TYPE_INVALID = 0xF,
 };
 
 struct NavmeshChunkHeader
@@ -285,161 +279,146 @@ struct NavmeshChunkHeader
 	uint Padding2 <hidden = true>; Assert(Padding2 == 0);
 
 	FSeek(startof(this) + PositionsOffset);
-	FixedDenominator3 Positions[PositionCount] <bgcolor = COLOR_NAVMESHCHUNK_SS1>;
+	FixedDenominator3 Positions[PositionCount] <bgcolor = COLOR_NAVMESHCHUNK_POSITIONS>;
 
 	FSeek(startof(this) + MeshesOffset);
-    struct
-    {
-        local uint i = 0;
-		for (i = 0; i < MeshCount; i++)
+	struct NavmeshDesc06
+	{
+		local long rewindPos = FTell();
+
+		uint DataOffset : 18;
+		uint Use4NeighborInfos : 1; // TODO; These have to be dynamic or something; the actual tests are always with triangles
+		uint Use4NavigationGraphNodes : 1;
+		uint SegmentIndex : 12;
+
+		FSeek(startof(parentof(this)) + parentof(this).MeshDataOffset + DataOffset * 2);
+		struct NeighborNavmeshInfo06
 		{
-			FSeek(startof(this) + i * 4); // sizeof(NavmeshDesc06) == 4; Could also write this line as startof(parentof(this)) + MeshesOffset + i * sizeof(NavmeshDesc06)
-			struct NavmeshDesc06
-			{
-				uint DataOffset : 18;
-				uint Use4NeighborInfos : 1; // TODO; These have to be dynamic or something; the actual tests are always with triangles
-				uint Use4NavigationGraphNodes : 1;
-				uint SegmentIndex : 12;
+			// Invalid if packed 16 bits are 0xFFFF
+			BitfieldDisablePadding();
+			ushort NavmeshIndex : 14;
+			NAVMESH_NEIGHBOR_TYPE Type : 2;
+			BitfieldEnablePadding();
+		} NeighborNavmeshInfos[Use4NeighborInfos ? 4 : 3] <optimize = false, bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
 
-				FSeek(startof(parentof(parentof(this))) + MeshDataOffset + DataOffset * 2);
-				struct NeighborNavmeshInfo06
-				{
-					BitfieldDisablePadding();
-					ushort NavmeshIndex : 14;
-					NAVMESH_NEIGHBOR_TYPE Type : 2;
-					BitfieldEnablePadding();
-				} NeighborNavmeshInfo[Use4NeighborInfos ? 4 : 3] <optimize = false, bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
+		ubyte NeighborPositionIndices[Use4NeighborInfos ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
 
-				ubyte NeighborPositionIndices[Use4NeighborInfos ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
+		ubyte NavigationGraphNodeIndices[Use4NavigationGraphNodes ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
 
-				ubyte NavigationGraphNodeIndices[Use4NavigationGraphNodes ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
+		ushort NeighborDataChunkIds[Use4NeighborInfos ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
 
-				ushort NeighborDataChunkIds[Use4NeighborInfos ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
+		ushort NeighborTileIds[Use4NeighborInfos ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
 
-				ushort NeighborTileIds[Use4NeighborInfos ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
-			} MeshDesc <bgcolor = COLOR_NAVMESHCHUNK_MESHES>;
-		}
-    } MeshDescs;
+		FSeek(rewindPos + 4); // sizeof(NavmeshDesc06) == 4
+	} Meshes[MeshCount] <optimize = false, bgcolor = COLOR_NAVMESHCHUNK_MESHES>;
 };
 
 struct SegmentGraphChunkHeader
 {
-	uint VerticesOffset;
+	uint PositionsOffset;
 	uint NodesOffset;
-	uint subsection3Offset;
+	uint LinkDataOffset;
 
-	uint uu1;
-	uint totalSize;     // Total size of the entry in bytes
+	uint Padding0 <hidden = true>; Assert(Padding0 == 0);
+	uint SelfSize;
 	ushort NodeCount;
-	ushort padding1;
-	ushort uu3;
-	ushort totalEdges; // Probably?
-	uint padding;
+	uint Padding1 <hidden = true>; Assert(Padding1 == 0);
+	ushort TotalNavigationGraphNodeIndexCount; // Sum of all NavigationGraphNodeIndexCounts below
+	uint Padding2 <hidden = true>; Assert(Padding2 == 0);
 
-	FSeek(startof(this) + VerticesOffset);
-	FixedDenominator3 Vertices[NodeCount] <bgcolor = COLOR_SEGMENTGRAPH_VERTICES>;
+	FSeek(startof(this) + PositionsOffset);
+	FixedDenominator3 Positions[NodeCount] <bgcolor = COLOR_SEGMENTGRAPH_POSITIONS>;
 
 	FSeek(startof(this) + NodesOffset);
-	struct SegmentGraphNodeDesc07
-	{
-		uint subsection3Index : 24;
-		uint nEdges : 8;
+    struct SegmentGraphNodeDesc07
+    {
+		local long rewindPos = FTell();
+
+		uint LinkDataOffset : 20;
+		uint Unknown : 4; Assert(Unknown == 0);
+		uint InsideLinkCount : 8;
 		ushort IslandGraphNodeIndices[3]; // 3 == Header.IslandGraphCount - hardcoded, see 141b144b0
-		ubyte offGroupEdges;
-		ubyte offMeshEdges;
-	} Nodes[NodeCount] <optimize = true, bgcolor = COLOR_SEGMENTGRAPH_NODES>;
+		ubyte CrossingDataChunkLinkCount;
+		ubyte CrossingTileLinkCount;
 
-	// GetSegmentGraphCrossingTileLinkToNode07
-	if (subsection3Offset != totalSize)
-	{
-		FSeek(startof(this) + subsection3Offset);
+		local long baseLinkDataOffset = startof(parentof(this)) + parentof(this).LinkDataOffset + (LinkDataOffset * 2);
+		local long nodeIndicesOffset = baseLinkDataOffset + (InsideLinkCount * 6) + (CrossingDataChunkLinkCount * 8) + (CrossingTileLinkCount * 10); // Skip to end of the three link arrays; the node indices array is shared between all three link types
+		FSeek(baseLinkDataOffset);
+		struct SegmentGraphInsideLinkDesc // Custom name
+		{
+			local long rewindPos2 = startof(this);
 
-		struct NavWorldSegmentGraphSubsection3 {
+			FixedScalar Weight;
+			ushort NodeIndex;
+			ubyte NavigationGraphNodeIndexCount;
+			ubyte LinkIndex;
 
-			local int i = 0;
-			local int j = 0;
-			local int offset = 0;
-			for (i = 0; i < NodeCount; i++) {
-				FSeek (startof(parentof(this)) + subsection3Offset + Nodes[i].subsection3Index*2);
-				struct NavWorldSegmentGraphSubsection3Entry {
-					if (Nodes[i].nEdges > 0) {
-						struct NavWorldSegmentType1Edges {
-							ushort weight;
-							ushort adjacentNode;
-							ubyte adjacentEdgeCount;
-							ubyte u1;
-						}type1Edges[Nodes[i].nEdges];
-					}
+			FSeek(nodeIndicesOffset);
+			ubyte NavigationGraphNodeIndices[NavigationGraphNodeIndexCount];
+			nodeIndicesOffset += NavigationGraphNodeIndexCount;
 
-					if (Nodes[i].offGroupEdges > 0) {
-						struct NavWorldSegmentType2Edges {
-							ushort groupId;
-							ushort weight;
-							ushort adjacentNode;
-							ubyte adjacentEdgeCount;
-							ubyte u5;
-						}type2Edges[Nodes[i].offGroupEdges];
-					}
+			FSeek(rewindPos2 + 6); // sizeof(SegmentGraphInsideLinkDesc) == 6
+		} InsideLinks[InsideLinkCount] <optimize = false, bgcolor = COLOR_SEGMENTGRAPH_LINKS>;
 
-					if (Nodes[i].offMeshEdges > 0) {
-						struct NavWorldSegmentType3Edges {
-							ushort u1;
-							ushort groupId;
-							ushort adjacentNode;
-							ushort u4;
-							ubyte adjacentEdgeCount;
-							ubyte u6;
-						}type3Edges[Nodes[i].offMeshEdges];
-					}
+		struct SegmentGraphCrossingDataChunkLinkDesc // Custom name
+		{
+			local long rewindPos2 = startof(this);
 
-					if (Nodes[i].nEdges > 0) {
-						for (j = 0; j < Nodes[i].nEdges; j++) {
-							struct NavWorldSegmentType1EdgeAdjacentEdges {
-								ubyte adjacentEdges[type1Edges[j].adjacentEdgeCount];
-							}type1AdjacentEdges;
-						}
-					}
+			ushort DataChunkId;
+			FixedScalar Weight;
+			ushort NodeIndex;
+			ubyte NavigationGraphNodeIndexCount;
+			ubyte LinkIndex;
 
-					if (Nodes[i].offGroupEdges > 0) {
-						for (j = 0; j < Nodes[i].offGroupEdges; j++) {
-							struct NavWorldSegmentType2EdgeAdjacentEdges {
-								ubyte adjacentEdges[type2Edges[j].adjacentEdgeCount];
-							}type2AdjacentEdges;
-						}
-					}
+			FSeek(nodeIndicesOffset);
+			ubyte NavigationGraphNodeIndices[NavigationGraphNodeIndexCount];
+			nodeIndicesOffset += NavigationGraphNodeIndexCount;
 
-					if (Nodes[i].offMeshEdges > 0) {
-						for (j = 0; j < Nodes[i].offMeshEdges; j++) {
-							struct NavWorldSegmentType3EdgeAdjacentEdges {
-								ubyte adjacentEdges[type3Edges[j].adjacentEdgeCount];
-							}type3AdjacentEdges;
-						}
-					}
-				} entries;
-			}
-		}subsection3<bgcolor = COLOR_SEGMENTGRAPH_SS3>;
-	}
+			FSeek(rewindPos2 + 8); // sizeof(SegmentGraphCrossingDataChunkLinkDesc) == 8
+		} CrossingDataChunkLinkDescs[CrossingDataChunkLinkCount] <optimize = false, bgcolor = COLOR_SEGMENTGRAPH_LINKS>;
+
+		struct SegmentGraphCrossingTileLinkDesc06
+		{
+			local long rewindPos2 = startof(this);
+
+			ushort TileId;
+			ushort DataChunkId;
+			FixedScalar Weight;
+			ushort NodeIndex; Assert(NodeIndex == 0xFFF); // Game patches index at runtime when resolving tile links
+			ubyte NavigationGraphNodeIndexCount;
+			ubyte LinkIndex;
+
+			FSeek(nodeIndicesOffset);
+			ubyte NavigationGraphNodeIndices[NavigationGraphNodeIndexCount];
+			nodeIndicesOffset += NavigationGraphNodeIndexCount;
+
+			FSeek(rewindPos2 + 10); // sizeof(SegmentGraphCrossingTileLinkDesc06) == 10
+		} CrossingTileLinkDescs[CrossingTileLinkCount] <optimize = false, bgcolor = COLOR_SEGMENTGRAPH_LINKS>;
+
+		FSeek(rewindPos + 12); // sizeof(SegmentGraphNodeDesc07) == 12
+	} Nodes[NodeCount] <optimize = false, bgcolor = COLOR_SEGMENTGRAPH_NODES>;
 };
 
 struct SegmentChunkHeader
 {
 	uint BoundsOffset;
 	uint SegmentsOffset;
-	uint SegmentGraphOffset;
+	uint SelfSize;
 	uint SegmentCount;
 
 	FSeek(startof(this) + BoundsOffset);
 	BoundingDesc Bounds[SegmentCount] <bgcolor = COLOR_SEGMENTCHUNK_BOUNDS>;
 
 	FSeek(startof(this) + SegmentsOffset);
+	// Defines foundation for references to NavigationGraph and NavmeshChunk sections - indices can be 'serial' or 'local' ('serial' = 'local' + base index)
 	struct SegmentDesc06
 	{
-		short BasePositionIndex;
-		short BaseNavigationGraphMeshIndex;
-		short BaseNavigationGraphNodeIndex;
+		short BaseNavmeshPositionIndex;
+		short BaseNavmeshIndex;
 		short BaseNavigationGraphEdgeIndex;
-		ubyte PositionCount;
-		ubyte NavigationGraphMeshCount;
+		short BaseNavigationGraphNodeIndex;
+		ubyte NavmeshPositionCount;
+		ubyte NavmeshCount;
 		ubyte NavigationGraphEdgeCount;
 		ubyte NavigationGraphNodeCount;
 	} Segments[SegmentCount] <bgcolor = COLOR_SEGMENTCHUNK_SEGMENTS>;
@@ -499,93 +478,82 @@ if (Header.IslandGraphsOffset)
 				ushort NextGraphOffset;
 				ushort NodesOffset;
 				ushort NodeCount;
-				ushort subsection2RelativeOffset;
-				ushort LowGraphNodeDescsOffset;
-				ushort CountsOffset;
+				ushort LinkDataOffset;
+				ushort LowGraphNodeHandlesOffset;
+				ushort SegmentCountsOffset;
+				ushort ConnectSideInfoGroupsOffset;
 				ushort ConnectSideInfosOffset;
-				ushort OffsetsOffset;
 
 				FSeek(startof(this) + NodesOffset);
 				struct IslandGraphNodeDesc
 				{
-					FixedDenominator3 position;
+					local long rewindPos = FTell();
+
+					FixedDenominator3 Position;
 					ushort Attributes;
-					ushort subsection2Offset;
-					ushort CountC;
-					ubyte CountB;
-					ubyte CountA;
+					ushort LinkDataOffset;
+					ushort CrossingTileLinkCount;
+					ubyte InsideLinkCount;
+					ubyte CrossingDataChunkLinkCount;
+
+					FSeek(startof(parentof(this)) + parentof(this).LinkDataOffset + LinkDataOffset);
+
+					struct IslandGraphCrossingDataChunkLinkDesc // Custom name
+					{
+						DataChunkUid _DataChunkUid;
+						FixedScalar Weight;
+						ushort NodeIndex;
+					} CrossingDataChunkLinkDescs[CrossingDataChunkLinkCount];
+
+					struct IslandGraphInsideLinkDesc // Custom name
+					{
+						FixedScalar Weight;
+						ushort NodeIndex;
+					} InsideLinks[InsideLinkCount];
+					
+					struct IslandGraphCrossingTileLinkDesc  // Custom name
+					{
+						BitfieldDisablePadding();
+						ushort ConnectSideInfoIndex : 14;
+						ISLAND_GRAPH_CONNECT_SIDE_INDEX ConnectSideIndex : 2;
+						BitfieldEnablePadding();
+					} CrossingTileLinkDescs[CrossingTileLinkCount] <optimize = true>;
+
+					FSeek(rewindPos + 14); // sizeof(IslandGraphNodeDesc) == 14
 				} Nodes[NodeCount] <optimize = false>;
 
-				FSeek(startof(this) + subsection2RelativeOffset);
-
-				local int i = 0;
-				struct Section2Subsection2 {
-					for (i = 0; i < NodeCount; i++) {
-						struct Section2Subsection2Entry {
-
-							if (Nodes[i].CountA > 0)
-							{
-								struct AEntries
-								{
-									DataChunkUid _DataChunkUid; // I think it's a chunk index? Could be file, technically
-									ushort Weight  <read = Str("%f", (float)this / Header.WeightDenominator)>;
-									ushort NodeIndex;
-								} aEntries[Nodes[i].CountA];
-							}
-
-							if (Nodes[i].CountB > 0) {
-								struct BEntries 
-								{
-									ushort Weight  <read = Str("%f", (float)this / Header.WeightDenominator)>; // Possibly ?
-									ushort NodeIndex;
-								} bEntries[Nodes[i].CountB];
-							}
-							
-							if (Nodes[i].CountC > 0) {
-								struct CEntries 
-								{
-									BitfieldDisablePadding();
-									ushort ConnectSideInfoUnknownIndex : 14;
-									ISLAND_GRAPH_CONNECT_SIDE_INDEX ConnectSideIndex : 2;
-									BitfieldEnablePadding();
-								} cEntries[Nodes[i].CountC] <optimize = true>;
-							}
-
-						} entries;
-					}
-				} subsection2Entries;
-
-				FSeek(startof(this) + LowGraphNodeDescsOffset);
-				struct IslandGraphLowGraphNodeDesc
+				FSeek(startof(this) + LowGraphNodeHandlesOffset);
+				struct IslandGraphLowGraphNodeHandle
 				{
 					DataChunkUid _DataChunkUid;
 					ushort SegmentGraphNodeIndex;
 					ushort NavigationGraphNodeIndex;
-				} LowGraphNodeDescs[NodeCount] <optimize = false>;
+				} LowGraphNodeHandles[NodeCount] <optimize = false>;
 
-				FSeek(startof(this) + CountsOffset);
-				ushort Counts[NodeCount];
+				FSeek(startof(this) + SegmentCountsOffset);
+				// Seemingly unused in EXE. Each is the number of SegmentGraph nodes that reference the given IslandGraph node
+				ushort SegmentCounts[NodeCount];
 
-				// Reversed and named the old-fashioned way first
-				FSeek(startof(this) + ConnectSideInfosOffset);
-				struct IslandGraphConnectSideInfoDesc
+				local long baseConnectSideInfoGroupsOffset = startof(this) + ConnectSideInfoGroupsOffset;
+				local long baseConnectSideInfosOffset = startof(this) + ConnectSideInfosOffset;
+				FSeek(baseConnectSideInfoGroupsOffset);
+				struct IslandGraphConnectSideInfoGroupDesc // Custom name
 				{
-					local long rewindPos = FTell(); // TODO: Either get rid of this or make all loops use rewindPos pattern
+					local long rewindPos = FTell();
 
 					ushort TileId;
 					ushort StartIndex;
 					ushort Count;
 
-					FSeek(startof(parentof(this)) + parentof(this).OffsetsOffset + StartIndex * sizeof(uint));
-
-					struct IslandGraphUnknown
+					FSeek(baseConnectSideInfosOffset + StartIndex * 4); // sizeof(IslandGraphConnectSideInfoDesc) == 4
+					struct IslandGraphConnectSideInfoDesc // Custom name
 					{
-						ushort Weight <read = Str("%f", (float)this / Header.WeightDenominator)>;
+						FixedScalar Weight;
 						ushort NodeIndex;
-					} Unknown[Count];
+					} ConnectSideInfos[Count];
 
-					FSeek(rewindPos + 6); // sizeof(IslandGraphConnectSideInfoDesc)
-				} ConnectSideInfos[4] <optimize = false>;
+					FSeek(rewindPos + 6); // sizeof(IslandGraphConnectSideInfoGroupDesc) == 6
+				} ConnectSideInfoGroups[4] <optimize = false>;
 
 				if (NextGraphOffset != 0)
 					FSeek(startof(this) + NextGraphOffset);
@@ -601,9 +569,9 @@ if (Header.SearchSpaceOffset != 0)
 	{
 		local long selfOffset = startof(this);
 
-		Vector3 Position; 
-		ushort RangeY;
-		ushort Padding0 <hidden = true>; Assert(Padding0 == 0); // Assumed to be padding
+		Vector3 Origin; 
+		FixedScalar RangeY <read = Str("%f", (float)this.x / Header.Denominator.y)>;
+		ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
 
 		uint BlockCountX;
 		uint BlockCountY;
@@ -621,8 +589,8 @@ if (Header.SearchSpaceOffset != 0)
 		{
 			uint StartOffset;
 			ushort Count;
-			ubyte u2_MinY; // fox::nav::SearchSpace::GetBucketActualRangeY
-			ubyte u3_MaxY; // ""
+			ubyte MinY <read = Str("%f", (float)this * 256.0f / Header.Denominator.y + parentof(parentof(this)).Origin.y)>; // fox::nav::SearchSpace::GetBucketActualRangeY
+			ubyte MaxY <read = Str("%f", (float)this * 256.0f / Header.Denominator.y + (1 / Header.Denominator.y) + parentof(parentof(this)).Origin.y)>; // ""
 		} BucketDescs[BlockCountX * BlockCountY * BlockCountZ] < bgcolor = COLOR_SEARCHSPACE_BUCKETDESC>;
 
 		Assert(FTell() == startof(this) + BucketEntriesOffset);
@@ -637,9 +605,9 @@ if (Header.SearchSpaceOffset != 0)
 				for (j = 0; j < BucketDescs[i].Count; j++) {
 					struct SearchBucketEntry
 					{
-						FileUid Uid; // Is this a full Uid?
+						DataChunkUid _DataChunkUid;
 						uint IndexCount;
-						ushort SegmentIndices[IndexCount]; // SegmentChunks apparently
+						ushort SegmentIndices[IndexCount];
 					} BucketEntry;
 				}
 			}
@@ -666,8 +634,9 @@ if (Header.ConnectTileInfosOffset != 0)
 
 		struct ConnectTileInfoNodeDesc
 		{
-			ushort A;
-			ushort B;
+			ushort NavigationGraphNodeIndex;
+			ushort NavmeshIndex : 14;
+			ushort NavmeshNeighborIndex : 2;
 		};
 
 		struct ConnectTileInfoDesc
