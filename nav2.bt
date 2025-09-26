@@ -434,10 +434,10 @@ struct SegmentChunkHeader
 	// Defines foundation for references to NavigationGraph and NavmeshChunk sections - indices can be 'serial' or 'local' ('serial' = 'local' + base index)
 	struct SegmentDesc06
 	{
-		short BaseNavmeshPositionIndex;
-		short BaseNavmeshIndex;
-		short BaseNavigationGraphEdgeIndex;
-		short BaseNavigationGraphNodeIndex;
+		ushort BaseNavmeshPositionIndex;
+		ushort BaseNavmeshIndex;
+		ushort BaseNavigationGraphEdgeIndex;
+		ushort BaseNavigationGraphNodeIndex;
 		ubyte NavmeshPositionCount;
 		ubyte NavmeshCount;
 		ubyte NavigationGraphEdgeCount;
