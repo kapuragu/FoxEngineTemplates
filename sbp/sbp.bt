@@ -771,7 +771,7 @@ struct Hierarchy
 	int sectionSize;
 	int objectCount;
 
-	local long startObjectPos = FTell();
+	local int64 startObjectPos = FTell();
 	local int curObj;
 
 	// HWL i renamed this to curObj instead of i, because 010 is
@@ -1051,7 +1051,7 @@ struct Section0 {
 
 struct Sections
 {
-	local long startOfSection = FTell();
+	local int64 startOfSection = FTell();
     
 	Assert(soundBankHeader.sectionDefinition[currentSection].offsetToSection==FTell(),"Offset to start of Section is incorrect!!!!");
 

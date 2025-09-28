@@ -102,7 +102,7 @@ enum <ubyte> NAV2_FEATURE_FLAGS
 
 struct FileHeader
 {
-	uint Version; Assert(Version == 201403241 || Version == 201403242);
+	uint Version; // Assert(Version == 201403241 || Version == 201403242);
 	uint FileSize;
 	uint ChunksOffset;
 	uint ChunkCount;
@@ -181,7 +181,7 @@ struct NavigationGraphChunkHeader
 	uint Padding3 <hidden = true>; Assert(Padding3 == 0);
 	ushort Padding4 <hidden = true>; Assert(Padding4 == 0);
 
-	ushort AttributeCount;
+	ushort AttributesCount;
 
 	FSeek(startof(this) + PositionsOffset);
 	FixedDenominator3 Positions[NodeCount] <bgcolor = COLOR_NAVIGATIONGRAPH_POSITIONS>;
@@ -189,7 +189,7 @@ struct NavigationGraphChunkHeader
 	FSeek(startof(this) + NodesOffset);
 	struct NavigationGraphNodeDesc06
 	{
-		local long rewindPos = FTell();
+		local int64 rewindPos = FTell();
 
 		ushort LinkDataOffset;
 		ushort SegmentIndex : 12;
@@ -257,7 +257,7 @@ struct NavigationGraphChunkHeader
 	} Edges[EdgeCount] <optimize = false, bgcolor = COLOR_NAVIGATIONGRAPH_EDGES>;
 
 	FSeek(startof(this) + AttributesOffset);
-	ushort Attributes[AttributeCount] <bgcolor = COLOR_NAVIGATIONGRAPH_ATTRIBUTES>;
+	ushort Attributes[AttributesCount] <bgcolor = COLOR_NAVIGATIONGRAPH_ATTRIBUTES>;
 
 	FSeek(startof(this) + NavmeshIndicesOffset);
 	ushort NavmeshIndices[NodeCount] <bgcolor = COLOR_NAVIGATIONGRAPH_NAVMESHINDICES>; // GetNodeNavmeshHandle
@@ -293,7 +293,7 @@ struct NavmeshChunkHeader
 	FSeek(startof(this) + MeshesOffset);
 	struct NavmeshDesc06
 	{
-		local long rewindPos = FTell();
+		local int64 rewindPos = FTell();
 
 		uint DataOffset : 18;
 		uint Use4NeighborInfos : 1; // TODO; These have to be dynamic or something; the actual tests are always with triangles - check IntersectTriangleAABB
@@ -336,10 +336,10 @@ struct SegmentGraphChunkHeader
 	uint Padding2 <hidden = true>; Assert(Padding2 == 0);
 
 	// For assertions
-	local long totalInsideLinkCount = 0;
-	local long totalCrossingDataChunkLinkCount = 0;
-	local long totalCrossingTileLinkCount = 0;
-	local long totalNavigationGraphNodeIndexCount = 0;
+	local int64 totalInsideLinkCount = 0;
+	local int64 totalCrossingDataChunkLinkCount = 0;
+	local int64 totalCrossingTileLinkCount = 0;
+	local int64 totalNavigationGraphNodeIndexCount = 0;
 
 	FSeek(startof(this) + PositionsOffset);
 	FixedDenominator3 Positions[NodeCount] <bgcolor = COLOR_SEGMENTGRAPH_POSITIONS>;
@@ -347,7 +347,7 @@ struct SegmentGraphChunkHeader
 	FSeek(startof(this) + NodesOffset);
     struct SegmentGraphNodeDesc07
     {
-		local long rewindPos = FTell();
+		local int64 rewindPos = FTell();
 
 		uint LinkDataOffset : 20;
 		uint Unknown : 4; Assert(Unknown == 0);
@@ -356,12 +356,12 @@ struct SegmentGraphChunkHeader
 		ubyte CrossingDataChunkLinkCount; totalCrossingDataChunkLinkCount += CrossingDataChunkLinkCount;
 		ubyte CrossingTileLinkCount; totalCrossingTileLinkCount += CrossingTileLinkCount;
 
-		local long baseLinkDataOffset = startof(parentof(this)) + parentof(this).LinkDataOffset + (LinkDataOffset * 2);
-		local long nodeIndicesOffset = baseLinkDataOffset + (InsideLinkCount * 6) + (CrossingDataChunkLinkCount * 8) + (CrossingTileLinkCount * 10); // Skip to end of the three link arrays; the node indices array is shared between all three link types
+		local int64 baseLinkDataOffset = startof(parentof(this)) + parentof(this).LinkDataOffset + (LinkDataOffset * 2);
+		local int64 nodeIndicesOffset = baseLinkDataOffset + (InsideLinkCount * 6) + (CrossingDataChunkLinkCount * 8) + (CrossingTileLinkCount * 10); // Skip to end of the three link arrays; the node indices array is shared between all three link types
 		FSeek(baseLinkDataOffset);
 		struct SegmentGraphInsideLinkDesc // Custom name
 		{
-			local long rewindPos2 = startof(this);
+			local int64 rewindPos2 = startof(this);
 
 			FixedScalar Weight;
 			ushort NodeIndex;
@@ -377,7 +377,7 @@ struct SegmentGraphChunkHeader
 
 		struct SegmentGraphCrossingDataChunkLinkDesc // Custom name
 		{
-			local long rewindPos2 = startof(this);
+			local int64 rewindPos2 = startof(this);
 
 			ushort DataChunkId;
 			FixedScalar Weight;
@@ -394,7 +394,7 @@ struct SegmentGraphChunkHeader
 
 		struct SegmentGraphCrossingTileLinkDesc06
 		{
-			local long rewindPos2 = startof(this);
+			local int64 rewindPos2 = startof(this);
 
 			ushort TileId;
 			ushort DataChunkId;
@@ -512,7 +512,7 @@ if (Header.IslandGraphsOffset)
 				FSeek(startof(this) + NodesOffset);
 				struct IslandGraphNodeDesc
 				{
-					local long rewindPos = FTell();
+					local int64 rewindPos = FTell();
 
 					FixedDenominator3 Position;
 					ushort Attributes;
@@ -559,12 +559,12 @@ if (Header.IslandGraphsOffset)
 				// Seemingly unused in EXE. Each is the number of SegmentGraph nodes that reference the given IslandGraph node
 				ushort SegmentCounts[NodeCount] <bgcolor = COLOR_ISLANDGRAPH_SEGMENTCOUNTS>;
 
-				local long baseConnectSideInfoGroupsOffset = startof(this) + ConnectSideInfoGroupsOffset;
-				local long baseConnectSideInfosOffset = startof(this) + ConnectSideInfosOffset;
+				local int64 baseConnectSideInfoGroupsOffset = startof(this) + ConnectSideInfoGroupsOffset;
+				local int64 baseConnectSideInfosOffset = startof(this) + ConnectSideInfosOffset;
 				FSeek(baseConnectSideInfoGroupsOffset);
 				struct IslandGraphConnectSideInfoGroupDesc // Custom name
 				{
-					local long rewindPos = FTell();
+					local int64 rewindPos = FTell();
 
 					ushort TileId;
 					ushort StartIndex;
@@ -607,13 +607,13 @@ if (Header.SearchSpaceOffset != 0)
 		uint SelfSize;
 
 		// For assertions
-		local long totalBucketEntryCount = 0;
-		local long totalSegmentIndexCount = 0;
+		local int64 totalBucketEntryCount = 0;
+		local int64 totalSegmentIndexCount = 0;
 
 		FSeek(startof(this) + BucketDescsOffset);
 		struct SearchBucketDesc
 		{
-			local long rewindPos = FTell();
+			local int64 rewindPos = FTell();
 
 			uint StartOffset;
 			ushort Count; totalBucketEntryCount += Count;
@@ -644,7 +644,7 @@ if (Header.ConnectTileInfoOffset != 0)
 	FSeek(Header.ConnectTileInfoOffset);
 	struct ConnectTileInfoHeader // Custom name
 	{
-		local long baseOffset = startof(this);
+		local int64 baseOffset = startof(this);
 		
 		ushort GroupsOffset;
 		ushort InfosOffset;
@@ -653,12 +653,12 @@ if (Header.ConnectTileInfoOffset != 0)
 		ushort InfoCount;
 		ushort NodeCount;
 
-		local long baseGroupsOffset = baseOffset + (2 * GroupsOffset);
-		local long baseInfosOffset = baseOffset + (2 * InfosOffset);
+		local int64 baseGroupsOffset = baseOffset + (2 * GroupsOffset);
+		local int64 baseInfosOffset = baseOffset + (2 * InfosOffset);
 		FSeek(baseGroupsOffset);
 		struct ConnectTileInfoGroupDesc
 		{
-			local long rewindPos = FTell();
+			local int64 rewindPos = FTell();
 
 			StrCode32 Name;
 			ushort Count : 5;
@@ -667,7 +667,7 @@ if (Header.ConnectTileInfoOffset != 0)
 			FSeek(baseOffset + (2 * InfosOffset) + (StartIndex * 4)); // sizeof(ConnectTileInfoDesc) == 4
 			struct ConnectTileInfoDesc
 			{
-				local long rewindPos2 = FTell();
+				local int64 rewindPos2 = FTell();
 
 				ushort DataChunkId;
 				ushort Count : 5;

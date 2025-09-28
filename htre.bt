@@ -5,7 +5,7 @@ typedef struct
 {
 	local uint flags = parentof(this).Flags;
 
-	local string name = ReadFoxDataString(parentof(this).Name);
+	local string name = ReadFoxDataName(parentof(this).Name);
 	local uint dataSize = parentof(this).DataSize;
 
 	// In V3 files, the file structure is completely mangled. It starts with editParam, which has a sane NextNodeOffset and a ChildOffset that points all the way to the end at configrationIds.
@@ -95,7 +95,7 @@ typedef struct
 			uint64 UnknownA;
 			uint64 UnknownB;
 
-			uint HeightFormat; Assert(HeightFormat == 1); // Very likely a third copy of heightFormat but I can't confirm that.
+			uint UnknownC; Assert(UnknownC == 1);
 			
 			uint PatchOffset <hidden = true>;
 

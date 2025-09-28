@@ -63,7 +63,7 @@ string ResolveHashFunc(StrCode32& hash)
 	}
 }
 
-enum <uint> FxLocatorHeaderFlags
+enum <uint> FX_LOCATOR_HEADER_FLAGS
 {
 	FX_LOCATOR_HEADER_FLAGS_BLOCK_MEMORY_ALLOCATION		= 0x1, //blockMemoryAllocation
 	FX_LOCATOR_HEADER_FLAGS_804179602  = 0x2,
@@ -98,7 +98,7 @@ typedef struct
 {
 	PathCode64 VfxFile <fgcolor = 0x000007>;
 
-	FxLocatorHeaderFlags Flags; Assert(Flags < 0x10000);
+	FX_LOCATOR_HEADER_FLAGS Flags; Assert(Flags < 0x10000);
 
 	uint Padding <hidden=true>; Assert(Padding == 0);
 	

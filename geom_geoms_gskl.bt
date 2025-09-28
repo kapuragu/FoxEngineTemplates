@@ -12,7 +12,7 @@ LittleEndian();
 
 typedef struct
 {
-	//local long SelfStartPos = FTell();
+	//local int64 SelfStartPos = FTell();
 
 	GeoGeomHeader Header;
 

@@ -165,7 +165,7 @@ typedef struct
 
 void FAlign(int alignment)
 {
-	local long alignmentRequired = FTell() % alignment;
+	local int64 alignmentRequired = FTell() % alignment;
 	if (alignmentRequired > 0)
 		FSeek(FTell() + alignment - alignmentRequired);
 }

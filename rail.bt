@@ -67,7 +67,7 @@ else
 		ushort VertexCount;
 		ushort NoteCount;
 		
-        local ulong resumePos = FTell();
+        local int64 resumePos = FTell();
 		FSeek(PathOffset);
 
         // Hermite Spline vertices

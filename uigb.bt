@@ -544,7 +544,7 @@ if (header.section4Offset>0)
             uint n8;
             uint section2EntryOffset;
     
-            local ulong position = FTell();
+            local int64 position = FTell();
             FSeek(section2EntryOffset);
             Section2Entry section2Entry;
             FSeek(position);
@@ -729,14 +729,14 @@ string GetNodeTypeComment(ushort hashIndex)
 }
 
 /* Get the hash at a given index. */
-ulong GetStrCode(ushort hashIndex)
+uint64 GetStrCode(ushort hashIndex)
 {
     local uint hashTableOffset = header.BuffersSectionOffset + header.StrCodesRelativeOffset;
-    local ulong currentPosition = FTell();
+    local int64 currentPosition = FTell();
 
-    FSeek(hashTableOffset + sizeof(ulong) * hashIndex);
+    FSeek(hashTableOffset + sizeof(uint64) * hashIndex);
 
-    local ulong hash = ReadUInt64();
+    local uint64 hash = ReadUInt64();
     FSeek(currentPosition);
 
     return hash;
@@ -745,7 +745,7 @@ ulong GetStrCode(ushort hashIndex)
 /* Get the string at a given index. */
 string GetString(ushort stringIndex)
 {
-    local ulong currentPosition = FTell();
+    local int64 currentPosition = FTell();
     
     FSeek(header.StringsRelativeOffset + (8 * stringIndex));
     
@@ -764,7 +764,7 @@ string GetString(ushort stringIndex)
 uint GetStrCode32(ushort hashIndex)
 {
     local uint hashTableOffset = header.BuffersSectionOffset + header.StrCode32sRelativeOffset;
-    local ulong currentPosition = FTell();
+    local int64 currentPosition = FTell();
 
     FSeek(hashTableOffset + sizeof(uint) * hashIndex);
 
@@ -775,14 +775,14 @@ uint GetStrCode32(ushort hashIndex)
 }
 
 /* Get the uilb hash at a given index. */
-ulong GetPathCode64(ushort hashIndex)
+uint64 GetPathCode64(ushort hashIndex)
 {
     local uint hashTableOffset = header.BuffersSectionOffset + header.PathCode64sRelativeOffset;
-    local ulong currentPosition = FTell();
+    local int64 currentPosition = FTell();
 
     FSeek(hashTableOffset + (sizeof(uint64) * hashIndex));
 
-    local uint hash = ReadUInt64();
+    local uint64 hash = ReadUInt64();
     FSeek(currentPosition);
 
     return hash;

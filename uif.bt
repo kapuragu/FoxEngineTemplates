@@ -178,7 +178,7 @@ struct UiModelMesh
 
 	int BillboardLimitsOffset;
 	
-	local long rewindPos = FTell();
+	local int64 rewindPos = FTell();
 
 	if (SubEntry0Count != 0)
 	{
@@ -311,7 +311,7 @@ struct UiModelNodeHeader
 	UI_MODEL_NODE_TYPE Type;
 	uint DataOffset;
 	
-	local long rewindPos = FTell();
+	local int64 rewindPos = FTell();
 
 	FSeek(DataOffset);
 
@@ -387,7 +387,7 @@ if (Header.version==GZ)
         struct StringEntry {
             uint stringSize <hidden=true>;
             uint stringRelativeOffset <hidden=true>;
-            local ulong continuePosition = FTell();
+            local int64 continuePosition = FTell();
             FSeek(Header.BuffersSectionOffset+stringRelativeOffset);
             char str[stringSize];
             FSeek(continuePosition);

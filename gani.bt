@@ -1,104 +1,19 @@
-// GANI - GameAnimation
-// By RLC, based on templates by MrDev/JohnHudeski/NewStudent
-// https://metalgearmodding.fandom.com/wiki/GANI
-// Me: Remove this comment when you actually start having to use those templates^
-
 #include "common/common.bt"
 #include "common/anim_common.bt"
 
 #ifndef FILE_TYPE_MTAR
-#define COLOR_HEADER 0x4F93FF
+#define FILE_TYPE_GANI
 #endif
 
-string ResolveHashFunc(StrCode32& hash)
+enum <uint> GANI_HEADER_FLAGS
 {
-	switch (hash.hash)
-	{
-	case 3933341002: return "ROOT";
-	case 3254096966: return "DEMO";
-	case 2620425302: return "CAMERA";
-	case 3150281601: return "MOVE";
-	case 2862912361: return "CameraParam";
-	case 1885607306: return "SI Frame";
-	case 1889896775: return "SKEL";
-	case 2454300086: return "MESH_EVENT";
-	case 143688520: return "MOTION";
-	case 3337172921: return "UNIT";
-	case 2215748180: return "MODEL";
-	case 3736262940: return "SKELINFO";
-	case 917055795: return "MTPINFO";
-	case 2846912397: return "MTEV";
-	case 494270195: return "MTP";
-	case 371357229: return "EVP";
-	case 2250865118: return "SHADER";
-	case 3937479969: return "MTP_LIST";
-	case 4042487769: return "MTP_PARENT_LIST";
-	case 2447659851: return "SKL_LIST";
-	case 3187573380: return "LOCATOR";
-	case 2036377104: return "GLOBALSRT";
-	case 2053459263: return "FRAGMENT"; 
-
-	// Parameter names
-	case 2570203771: return "TARGET_NAME";
-	case 3426329078: return "SLOPE_DIR";
-	case 35201703: return "SLOPE_ANGLE";
-
-	// Shader nodes
-	case 1097923221: return "TENSION_CHEEKL";
-	case 890100143: return "TENSION_CHEEKR";
-	case 2155534022: return "TENSION_NECK";
-
-	default: return "";
-	}
-}
-
-struct GANI
-{
-	switch (ResolveHashFunc(parentof(this).Name.Hash))
-	{
-	case "MOVE":
-	case "CameraParam":
-	case "SI Frame":
-	case "SKEL":
-	case "MTP":
-	case "CAMERA":
-	case "MOTION":
-	case "UNIT":
-	case "FRAGMENT":
-		TrackHeader Tracks;
-		break;
-	case "MTP_LIST":
-	case "MTP_PARENT_LIST":
-	case "SKL_LIST":
-		StringList List <bgcolor = 0xF38ADE>;
-		break;
-	case "EVP":
-		// Node.Flags == 3
-		EvpHeader MotionEvents;
-		break;
-	default:
-		{
-			// Each keyframed shader property is a child node of SHADER with the name of the property 
-			if (parentof(this).ParentNodeOffset != 0)
-			{
-				if (ReadUInt(startof(parentof(this)) + parentof(this).ParentNodeOffset) == 2250865118 /*SHADER*/)
-				{
-					TrackHeader Tracks;
-				}
-			}
-		}
-	}
+	GANI_HEADER_FLAGS_NO_SKEL_LIST = 1,
 };
 
-#define FOX_DATA_FLAG_IS_HAS_PAYLOAD
-#define FOX_DATA_RESOLVE_HASH_FUNC ResolveHashFunc
+#include "common/anim_FoxData.bt"
 
-#define FOX_DATA_PAYLOAD GANI
-
-#include "common/FoxData_common.bt"
-
-#ifndef FILE_TYPE_MTAR
-FoxDataHeader Header<bgcolor = COLOR_HEADER>;
+#ifdef FILE_TYPE_GANI
+FoxDataHeader Header<bgcolor = 0x4F93FF>;
 
 FSeek(Header.NodesOffset);
 

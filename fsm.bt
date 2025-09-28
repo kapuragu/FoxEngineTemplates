@@ -1,294 +1,54 @@
-// FSM - FoxStreamMotion
-// By RLC, based on documentation from BobDoleOwndU - inspired by other FOX templates by the researchers of Modders' Heaven!
-// https://metalgearmodding.fandom.com/wiki/FSM
-
-// Can be run on .fsm files and per-chunk output of FsmTool by BobDoleOwndU!
-// https://github.com/BobDoleOwndU/FsmTool
-
-//Joey's FoxDataNodes and etc:
 #include "common/common.bt"
 #include "common/anim_common.bt"
 
-string ResolveHashFunc(StrCode32& hash)
+#include "common/anim_FoxData.bt"
+
+local byte hasReadSoundPacketHeader = false;
+
+struct CHUNK
 {
-	switch (hash.hash)
+	if (Type == "OMED" || Type == " SYS" || Type == " DNS" || Type == " DNE")
 	{
-	case 3933341002: return "ROOT";
-	case 3254096966: return "DEMO";
-	case 2620425302: return "CAMERA";
-	case 3150281601: return "MOVE";
-	case 2862912361: return "CameraParam";
-	case 1885607306: return "SI Frame";
-	case 1889896775: return "SKEL";
-	case 2454300086: return "MESH_EVENT";
-	case 143688520: return "MOTION";
-	case 2215748180: return "MODEL";
-	case 3736262940: return "SKELINFO";
-	case 917055795: return "MTPINFO";
-	case 2846912397: return "MTEV";
-	case 494270195: return "MTP";
-	case 2250865118: return "SHADER";
-	case 3937479969: return "MTP_LIST";
-	case 4042487769: return "MTP_PARENT_LIST";
-	case 3187573380: return "LOCATOR";
-	case 2036377104: return "GLOBALSRT";
-	case 2053459263: return "FRAGMENT";
-
-	// Parameter names
-	case 2570203771: return "TARGET_NAME";
-	case 3426329078: return "SLOPE_DIR";
-	case 35201703: return "SLOPE_ANGLE";
-
-	default: return "";
+		BigEndian();
+		BitfieldRightToLeft();
 	}
-}
 
-struct FoxDataString;
-struct SAND
-{
-	switch (ResolveHashFunc(parentof(this).Name.Hash))
+	switch (Type)
 	{
-	case "MOVE":
-	case "CameraParam":
-	case "SI Frame":
-	case "SKEL":
-	case "FRAGMENT":
-	case "MOTION":
-	case "GLOBALSRT":
-	case "MTP":
-		TrackHeader Tracks;
+	case "DEMO":
+	case "OMED":
+		// This gets messy because TPP uses a TrackStream and older versions of Fox use nodes and event packets
+		local PACKET_TYPE Type = ReadUInt();
+		switch (Type)
+		{
+			case PACKET_TYPE_STREAM:
+				TrackStream Packet;
+				break;
+			case PACKET_TYPE_NODES:
+			case PACKET_TYPE_EVENTS:
+				PacketHeader Packet;
+		}
 		break;
-	case "MTP_LIST":
-	case "MTP_PARENT_LIST":
-		StringList List <bgcolor = 0xF38ADE>;
+	case "SND ":
+	case " DNS":
+		if (hasReadSoundPacketHeader == false)
+		{
+			struct SoundPacketHeader
+			{
+				uint completeSoundFileLength;
+				uint unknown0;
+				ubyte u0;
+				
+				FAlign(16);
+				
+			} Packet <bgcolor = 0xC04040>;
+
+			hasReadSoundPacketHeader = true;
+		}
 		break;
-	default:
-		{
-			if (parentof(this).ParentNodeOffset != 0)
-			{
-				if (ReadUInt(startof(parentof(this)) + parentof(this).ParentNodeOffset) == 2250865118 /*SHADER*/)
-				{
-					TrackHeader Tracks;
-				}
-			}
-		}
 	}
 };
 
-#define FOX_DATA_FLAG_IS_HAS_PAYLOAD
-#define FOX_DATA_RESOLVE_HASH_FUNC ResolveHashFunc
+#define FS_CHUNK_PAYLOAD CHUNK
 
-#define FOX_DATA_PAYLOAD SAND
-
-#include "common/FoxData_common.bt"
-
-local int passedSoundPacket = 0; // Probably a better way to tell that it's the first SND chunk
-
-local int startOfPacket = FTell(); // In case is run from offset inside .fsm
-
-enum <uint> DEMO_PACKET_TYPE
-{
-    DEMO_PACKET_TYPE_SEGMENTS=0,
-    DEMO_PACKET_TYPE_NODES=1,//GZ/PT/that unused one in TPP only
-    DEMO_PACKET_TYPE_EVENTS=2,
-};
-
-enum <uint> DEMO_PACKET_FLAGS
-{
-    DEMO_PACKET_FLAGS_FLAG_1 = 0x1,//Mostly used in GZ
-    DEMO_PACKET_FLAGS_FLAG_2 = 0x2,//When it's the only flag enabled, the frame count is 1
-    DEMO_PACKET_FLAGS_ROOTPOS = 0x4,//add a vector3 pos before segment flags
-    DEMO_PACKET_FLAGS_HAS_SAND = 0x8,//only appears in tpp fsms with no node chunks
-};
-
-struct DemoPacketHeader
-{
-	DEMO_PACKET_TYPE demoPacketType; //0==motion segments, 1==nodes, 2==events only
-	if (demoPacketType==DEMO_PACKET_TYPE_SEGMENTS)
-	{
-		DEMO_PACKET_FLAGS flags;
-		int frameStart;
-		int frameCount;
-		int segmentCount;
-	}
-				
-	int offsetToPacketEnd <comment="Chunk size starting from demoPacketHeader">;
-	int offsetToEvents <comment="Offset starts from demoPacketHeader">;
-				
-	if (demoPacketType==DEMO_PACKET_TYPE_NODES)
-	{
-		FSkip(0x4);
-	}
-
-};
-
-while (FTell()!=FileSize())
-{
-	struct Packet
-	{
-		startOfPacket = FTell(); // When the chunk needs to get the offset of its start
-
-		struct Header
-		{
-			char packetType[4]; 
-			if (packetType == "OMED" || packetType == " SYS" || packetType == " DNS" || packetType == " DNE")
-			{ 
-				BigEndian();
-				BitfieldRightToLeft();
-			};
-
-			uint packetSize;
-			double packetStartTime;
-		} header <bgcolor = 0x800000>;
-
-		if (header.packetType == "SYS " || header.packetType == " SYS")
-		{
-        }
-		else if (header.packetType == "DEMO" || header.packetType == "OMED")
-		{
-			DemoPacketHeader demoPacketHeader <bgcolor = 0x800080>;
-
-			if (demoPacketHeader.demoPacketType == DEMO_PACKET_TYPE_SEGMENTS)
-            {
-				struct DataSegmentSection
-                {
-					int segmentOffset[demoPacketHeader.segmentCount] <bgcolor = 0x008000, comment = "Offsets start from demoPacketHeader">;
-                    //if (segmentOffset[205]>0) {Printf("\n\n\n%u\n\n\n\n",FTell());}
-					if (demoPacketHeader.flags & DEMO_PACKET_FLAGS_ROOTPOS)
-                    {
-						Vector3 rootPos <bgcolor = 0xC08000, comment = "World translation root of the demo chunk.">;
-					};
-
-					ushort segmentFlags[demoPacketHeader.segmentCount] <bgcolor = 0x0080C0, comment = "Might have something to do with what kinda data is in the Motions">;
-                    struct DataSegments
-                    {
-					    local uint segId = 0;
-                        local uint nextOffset = 0;
-                        local uint nextIndex = 0;
-					    struct DataSegment{
-                            //Endianness difference shows that these are indeed stored as shorts
-                            //However their content seems to be a stream of values that can even be floats
-                            //Or even floats with single bytes between them
-                            if (segmentOffset[segId] > 0)
-                            {
-						        FSeek(startof(demoPacketHeader) + segmentOffset[segId]);
-						        if (segId<demoPacketHeader.segmentCount - 1)
-                                {
-                                    nextIndex = segId + 1;
-                                    nextOffset = segmentOffset[nextIndex];
-                                    if (nextOffset == 0){
-                                        while(nextIndex<demoPacketHeader.segmentCount & nextOffset==0 && nextIndex < demoPacketHeader.segmentCount - 1)
-                                        {
-                                            nextIndex++;
-                                            nextOffset = segmentOffset[nextIndex];
-                                        }
-                                        while (FTell() < startof(demoPacketHeader) + nextOffset)
-                                        {
-                                            ushort motion;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        while (FTell() < startof(demoPacketHeader) + nextOffset)
-                                        {
-                                            ushort motion;
-                                        }    
-                                    }
-						        }
-						        else{
-							        if ((demoPacketHeader.offsetToEvents > 0) && (demoPacketHeader.offsetToEvents < header.packetSize))
-                                    {
-								        while ( (FTell() - startOfPacket) < demoPacketHeader.offsetToEvents + 0x10 )
-                                        {
-									        ushort motion;
-								        }
-							        }
-							        else
-                                    {
-								        while ( (FTell() - startOfPacket) < header.packetSize )
-                                        {
-									        ushort motion;
-								        }
-							        };
-						        }
-                            }
-						    segId++;
-					    } segment[demoPacketHeader.segmentCount] <optimize=false, bgcolor = 0xC080C0, comment="Assuming .sand tells where animation data of what starts and ends.">;
-                    } segments;
-				} segmentSection <optimize=false, bgcolor = 0x008000>;
-			};
-            
-            if (((demoPacketHeader.demoPacketType == DEMO_PACKET_TYPE_EVENTS) || (demoPacketHeader.offsetToEvents > 0)) && (demoPacketHeader.offsetToEvents < header.packetSize))
-			{
-                if (demoPacketHeader.offsetToEvents > 0)
-                {
-				    FSeek(startof(demoPacketHeader) + demoPacketHeader.offsetToEvents);
-                }
-                
-				// The strings are sometimes fox2/sand object name ie HM_mnt0_main0_def. lua messages too, or light functor events from fox2s
-				EvpData EventSection;
-                if (EventSection.CategoryName==Normal)
-                {
-                    local int eventIndex = 0;
-                    for (eventIndex = 0; eventIndex < EventSection.UnitCount; eventIndex++)
-                    {
-                        if (EventSection.Event[eventIndex].EventName == ExecCommand)
-                        {
-                            Printf("%I64u,%I64u\n", EventSection.Event[eventIndex].StringParams[EventSection.Event[eventIndex].StringParamCount-2].param.hash, EventSection.Event[eventIndex].StringParams[EventSection.Event[eventIndex].StringParamCount-3].param.hash);
-                        };  
-                    };
-                };
-			};
-
-			if (FTell() % 16 != 0)
-			{
-				FSkip(16 - (FTell() % 16));
-			}
-
-			// GZ only. Since GZ has no .sand files, it uses this instead. Usually the first chunk, after SYS if that exists.
-			if (demoPacketHeader.demoPacketType == DEMO_PACKET_TYPE_NODES)
-			{
-				FoxDataNodes Nodes <bgcolor = 0x0CC0C0>;
-			}
-			
-		}
-		else if (header.packetType == "SND " || header.packetType == " DNS")
-		{
-			if (passedSoundPacket == 0)
-			{
-				passedSoundPacket = 1; // There's probably a better way to tell that it's the first SND chunk to parse this section.
-				struct SoundData
-				{
-					uint completeSoundFileLength;
-					uint unknown0;
-					ubyte u0;
-					if (FTell() % 16 != 0)
-					{
-						FSkip(16 - (FTell() % 16));
-					}
-					
-				} soundData <bgcolor = 0xC04040>;
-			}
-			
-			struct RiffSection
-			{
-				// I mean, do I reverse .wem files here or what?
-				char riffData[(startOfPacket+header.packetSize)-FTell()];
-				
-			} riffSection <bgcolor = 0xF08040>;
-			
-		}
-		else if (header.packetType == "END " || header.packetType== " DNE")
-		{
-			FSkip(FileSize()-FTell()); // Sometimes there's tons of null lines after the END
-		}
-		else
-		{
-			Assert(2+2 == 5, "Unknown Chunk Type!!!"); // In case something goes very very wrong
-		}
-
-		if (header.packetType != "END " && header.packetType != " DNE")
-			FSeek(startof(header.packetType) + header.packetSize);
-		
-	} packet;
-}
+#include "common/fs_common.bt"
