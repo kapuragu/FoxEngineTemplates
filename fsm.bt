@@ -31,7 +31,7 @@ struct CHUNK
 		break;
 	case "SND ":
 	case " DNS":
-		if (hasReadSoundPacketHeader == false)
+		if (hasReadSoundPacketHeader == false&&parentof(this).Time==0)
 		{
 			struct SoundPacketHeader
 			{

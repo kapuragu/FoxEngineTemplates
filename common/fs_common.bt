@@ -20,5 +20,7 @@ while (true)
 		break;
 
 	FSeek(startof(Chunk) + Chunk.Size);
+    if (FTell()==FileSize())
+        break;
 }
 #endif
