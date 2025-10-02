@@ -515,7 +515,62 @@ typedef struct
 						}
 					}
 				}
-			}
+	            //event string hash dump
+                /*
+                local uint stringIdx;
+	            for (stringIdx = 0; stringIdx < StringParamCount; stringIdx++)
+                {
+                    Printf(Str("%I64u\n",StringParams[stringIdx].param.hash));
+                }
+                */
+                //vfx name dump
+                /*
+                if (EventName==595181585)
+                {
+                    if (StringParamCount>7)
+                    {
+                        if (StringParams[6].param.hash==39224491583389
+                        ||StringParams[6].param.hash==72256544285556
+                        ||StringParams[6].param.hash==32886448170624
+                        ||StringParams[7].param.hash==173102471356897
+                        ||StringParams[6].param.hash==34251201099326)
+                        {
+                            Printf(Str("%I64u\n",StringParams[0].param.hash));
+                        };
+                    };
+                }
+                */
+                //human target hash dump
+                /*if (EventName==1968729831)
+                {
+                    if (StringParamCount!=0)
+                    {
+                        Printf(Str("%I64u\n",StringParams[0].param.hash));
+                    }
+                }*/
+                //mesh group hash dump
+                /*if (EventName==1799953944)
+                {
+                    Printf(Str("target: %I64u mesh group: %I64u\n",StringParams[0].param.hash,StringParams[1].param.hash));
+                }*/
+                //prp_ hash dump
+                /*if (EventName==2523762371)
+                {
+                    Printf(Str("%I64u\n",StringParams[0].param.hash));
+                }*/
+                //.sani subtitles dump
+                /*if (EventName==595181585)
+                {
+                    if (StringParamCount>6)
+                    {
+                        if (StringParams[5].param.hash==84993817083062) 
+                        {
+                            local float divisor = 0.60075*1000/1001;
+                            Printf(Str("subp: %f,%I64u\n",TimeSections[0].StartFrame/divisor,StringParams[1].param.hash));
+                        }
+                    }
+                }*/
+            }
 		} Event <read = EnumToString(EventName)>;
 	}
 

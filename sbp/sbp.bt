@@ -57,7 +57,7 @@ struct BankHeader
 	int sectionSize;
 	local int startOfSection = FTell();
 	int soundBankVersion <comment="TPP is 88">;
-	uint soundBankId <comment="FNV132 hash of the .sbp name">; 
+	uint soundBankId <comment="FNV132 hash of the .sbp name">; Printf("HASH-soundBankId=%u\n",soundBankId);
 	int unknown0 <comment="12 in TPP/MGO vox/SSD, 0 in MGO bgm/GZ/PT?">;
 	int unknown1 <comment="Usually 1?">;
 	int unknown2 <comment="Varies?">;
@@ -68,7 +68,7 @@ struct Object
 {
 	ObjectType objectType <bgcolor = 0xffab00>;
 	int objectSize;
-	uint objectId <comment="FNV132 hash", bgcolor = 0xabff00>;
+	uint objectId <comment="FNV132 hash", bgcolor = 0xabff00>; Printf("HASH-%u-objectId=%u\n",objectType,objectId);
 
 	// HWL for printing useful info at the console
 	printType(objectType);
@@ -265,8 +265,8 @@ struct Object
 		case SwitchContainer:
 			SoundStructure soundstructure;
             uint isStateGroup;
-            uint groupName;
-            uint defaultStateName;
+            uint groupName; Printf("HASH-stateGroup=%u\n",groupName);
+            uint defaultStateName; Printf("HASH-state=%u\n",defaultStateName);
             ContainerPlayMode playMode;
 			uint childrenCount;
 			uint children[childrenCount];
@@ -364,7 +364,7 @@ struct Object
 	
 				struct GroupDefinition
 				{
-					uint groupName;
+					uint groupName; Printf("HASH-stateGroup=%u\n",groupName);
 					ushort firstEntryIndex <comment="Minus the amount of groups">;
 					ushort childrenCount;
 					ushort weight;
@@ -378,7 +378,7 @@ struct Object
 	
 				struct Path
 				{
-					uint stateId;
+					uint stateId; Printf("HASH-state=%u\n",stateId);
 					uint soundObjectId;
 					ushort weight;
 					ushort probability;
@@ -900,7 +900,7 @@ struct STMG_struct
 	{
 		struct stateGroup
 		{
-			uint state_group_ID;
+			uint state_group_ID; Printf("HASH-stateGroup=%u\n",state_group_ID);
 
 			Printf("State Group ID: %u", state_group_ID);
 			//Printf(%u, stateGroup);
@@ -915,8 +915,8 @@ struct STMG_struct
 			{
 				struct customTransitionTimes_struct
 				{
-					uint ID_of_from_state;
-					uint ID_of_to_state;
+					uint ID_of_from_state; Printf("HASH-state=%u\n",ID_of_from_state);
+					uint ID_of_to_state; Printf("HASH-state=%u\n",ID_of_to_state);
 					uint transition_time <comment="in milliseconds">;
 				} customTransition_times_struct;
 			}
@@ -931,12 +931,12 @@ struct STMG_struct
 	{
 		struct switchGroup
 		{
-			uint switchGroup_ID;
+			uint switchGroup_ID; Printf("HASH-stateGroup=%u\n",switchGroup_ID);
 
 			Printf("Switch Group ID: %u", switchGroup_ID);
 			Printf("\n");
 
-			uint game_parameter <comment="this game parameter determines currently set Switch">;
+			uint game_parameter <comment="this game parameter determines currently set Switch">; Printf("HASH-rtpc=%u\n",game_parameter);
 			uint num_of_points;
 
 			// again the same ugly 'hack' as before
@@ -945,7 +945,7 @@ struct STMG_struct
 				struct switchGroupPoint
 				{
 					float value_of_game_param;
-					uint switch_ID <comment="id of Switch that is set when Game Parameter >= given value">;
+					uint switch_ID <comment="id of Switch that is set when Game Parameter >= given value">; Printf("HASH-state=%u\n",switch_ID);
 					uint shape_of_curve <comment="always set to 9">;
 				} switchGroupPoints;
 			}
@@ -959,7 +959,7 @@ struct STMG_struct
 	{
 		struct gameParameter
 		{
-			uint game_param_ID;
+			uint game_param_ID; Printf("HASH-rtpc=%u\n",game_param_ID);
 
 			Printf("Game Parameter ID: %u", game_param_ID);
 			Printf("\n");
