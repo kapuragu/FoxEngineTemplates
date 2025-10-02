@@ -628,7 +628,7 @@ struct PacketHeader
 	PACKET_TYPE Type;
 				
 	uint NextPacketOffset;
-	uint Padding<hidden=true>; Assert(Padding==0);
+	uint Padding <hidden = true>; Assert(Padding == 0);
 	
 	switch (Type)
 	{
@@ -636,7 +636,7 @@ struct PacketHeader
 		FoxDataNodes Nodes;
 		break;
 	case PACKET_TYPE_EVENTS:
-		EvpData events;
+		EvpData Events;
 		break;
 	}
 };
