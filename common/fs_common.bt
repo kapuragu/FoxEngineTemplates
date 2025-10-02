@@ -15,12 +15,17 @@ while (true)
 {
 	StreamChunk Chunk;
 
-	// END signifies last  chunk
 	if (Chunk.Type == "END " || Chunk.Type == " DNE")
 		break;
 
+	// This check is only used for applying template to single, extracted chunks
+	if (startof(Chunk) + Chunk.Size == FileSize())
+		break;
+
 	FSeek(startof(Chunk) + Chunk.Size);
-    if (FTell()==FileSize())
-        break;
+	
+	// Only 
+	if (FTell() == FileSize())
+		break;
 }
 #endif

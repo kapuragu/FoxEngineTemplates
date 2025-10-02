@@ -1,9 +1,10 @@
 #include "common/common.bt"
 #include "common/anim_common.bt"
+#include "common/sd_common.bt"
 
 #include "common/anim_FoxData.bt"
 
-local byte hasReadSoundPacketHeader = false;
+local byte hasReadSoundStreamHeader = false;
 
 struct CHUNK
 {
@@ -31,19 +32,13 @@ struct CHUNK
 		break;
 	case "SND ":
 	case " DNS":
-		if (hasReadSoundPacketHeader == false&&parentof(this).Time==0)
+		if (hasReadSoundStreamHeader == false)
 		{
-			struct SoundPacketHeader
-			{
-				uint completeSoundFileLength;
-				uint unknown0;
-				ubyte u0;
-				
-				FAlign(16);
-				
-			} Packet <bgcolor = 0xC04040>;
+			Assert(parentof(this).Time == 0.0);
 
-			hasReadSoundPacketHeader = true;
+			SoundStreamHeader Packet <bgcolor = 0xC04040>;
+
+			hasReadSoundStreamHeader = true;
 		}
 		break;
 	}
