@@ -581,7 +581,7 @@ string ReadTrackStreamFlags(TRACK_STREAM_FLAGS flags)
 	local ubyte i;
 	local string enumName;
 	local TRACK_STREAM_FLAGS temp;
-	for (i = 1; i < 0x8; i = i << 1)
+	for (i = 1; i < 0x10; i = i << 1)
 	{
 		temp = flags & i;
 		enumName = EnumToString(temp);
@@ -630,19 +630,13 @@ struct PacketHeader
 	uint NextPacketOffset;
 	uint EventsOffset;
 	
-	uint Padding <hidden = true>; Assert(Padding == 0);
-
 	switch (Type)
 	{
 	case PACKET_TYPE_NODES:
 		FoxDataNodes Nodes;
 		break;
 	case PACKET_TYPE_EVENTS:
-		if (EventsOffset != 0)
-		{
-			FSeek(startof(this) + EventsOffset);
-			EvpData events;
-		}
+		EvpData events;
 		break;
 	}
 };
