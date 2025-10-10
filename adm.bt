@@ -12,16 +12,17 @@ struct AdmHeader
 	ushort CellCountZ <fgcolor = cWhite, bgcolor = 0x2D2E2E>;
 
 													   // Bounds:
-	short MinX <fgcolor = cWhite, bgcolor = 0x696971>; // (MinX, MinX + (CellCountX - 1) * GridSize)
-	short MinZ <fgcolor = cWhite, bgcolor = 0x696971>; // (MinZ, MinZ + (CellCountZ - 1) * GridSize)
+	ushort MinX <fgcolor = cWhite, bgcolor = 0x696971>; // (MinX, MinX + (CellCountX - 1) * GridSize)
+	ushort MinZ <fgcolor = cWhite, bgcolor = 0x696971>; // (MinZ, MinZ + (CellCountZ - 1) * GridSize)
 } Header;
 
 FAlign(16);
 
 struct AdmCell
 {
-	ushort A : 3;
-	ushort B : 3;
-	ushort C : 4;
+	
+	ushort MainAmbientIndex : 3;		// TppSoundWorld.ambientParameter[]
+	ushort PaSecondaryAmbientIndexramIndexB : 3;	// TppSoundWorld.ambientParameter[]
+	ushort SecondaryRtpcValue : 4 <read = ((float)this / (2 * 0xF))>; // MainRtpcValue = 1.0f - SecondaryRtpcValue, seems to be for `ambient_volume` rtpc - see tpp::sd::AmbientSourceBody::ExecAmbientUpdate for more
 	ushort Padding : 6 <hidden = true>; Assert(Padding == 0);
 } Cells[Header.CellCountX * Header.CellCountZ] <optimize = false, bgcolor = 0xAEABBC>;

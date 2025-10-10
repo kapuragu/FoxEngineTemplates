@@ -303,11 +303,17 @@ struct NavmeshChunkHeader
 		FSeek(startof(parentof(this)) + parentof(this).MeshDataOffset + DataOffset * 2);
 		struct NeighborNavmeshInfo06
 		{
-			// Invalid if packed 16 bits are 0xFFFF
-			BitfieldDisablePadding();
-			ushort NavmeshIndex : 14;
-			NAVMESH_NEIGHBOR_TYPE Type : 2;
-			BitfieldEnablePadding();
+			if (ReadUInt16() == 0xFFFF)
+			{
+				ushort Invalid;
+			}
+			else
+			{
+				BitfieldDisablePadding();
+				ushort NavmeshIndex : 14;
+				NAVMESH_NEIGHBOR_TYPE Type : 2;
+				BitfieldEnablePadding();
+			}
 		} NeighborNavmeshInfos[Use4NeighborInfos ? 4 : 3] <optimize = false, bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
 
 		ubyte NeighborPositionIndices[Use4NeighborInfos ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
