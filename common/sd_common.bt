@@ -11,7 +11,7 @@ enum <uint> CODEC_TYPE
 
 struct SoundStreamHeader // custom name
 {
-    uint DataSize;
+    uint DataSize; //Full size of the .wem file - the uint at 0x4 of the .wem, +8
     CODEC_TYPE CodecType;
     uint64 Padding <hidden = true>; Assert(Padding == 0);
 };
