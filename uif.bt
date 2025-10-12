@@ -11,7 +11,7 @@ enum <ushort> MODEL_HEADER_FLAGS
 {
 	MODEL_HEADER_FLAGS_UNK1 = 0x1,
 	MODEL_HEADER_FLAGS_USE_PATHIDS = 0x2,
-}
+};
 
 struct ModelHeader
 {
@@ -29,6 +29,8 @@ struct ModelHeader
     {
         Assert(Flags == MODEL_HEADER_FLAGS_USE_PATHIDS);
     };
+
+    Assert((Flags & MODEL_HEADER_FLAGS_UNK1) == 0);
 
 	ushort NodeCount;
 	ushort StrCode32Count;
