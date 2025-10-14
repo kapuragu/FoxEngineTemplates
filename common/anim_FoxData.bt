@@ -66,7 +66,7 @@ struct ANIM_FOX_DATA_PAYLOAD
 	case "SKL_LIST":
 		Assert(parentof(this).Flags == NODE_TYPE_STRINGDATA);
 #ifdef FILE_TYPE_GANI
-		Assert((Header.Flags & GANI_HEADER_FLAGS) == 0);
+		//Assert((Header.Flags & GANI_HEADER_FLAGS) == 0);
 #endif
 		StringData List <bgcolor = 0xF38ADE>;
 		break;

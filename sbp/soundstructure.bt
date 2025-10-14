@@ -361,6 +361,7 @@ struct SoundStructure
 					{
 						uint state_object_ID; Printf("HASH-state=%u\n",state_object_ID);
 						uint settings_object_ID;
+                        //Printf("objectId=%u,stateGroup=%u,stateObjectId=%u,settingsId=%u\n",parentof(parentof(parentof(this))).objectId,state_group_ID,state_object_ID,settings_object_ID);
 					} state;
 				}
 			} state_group;
