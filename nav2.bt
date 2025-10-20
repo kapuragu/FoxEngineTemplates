@@ -303,7 +303,7 @@ struct NavmeshChunkHeader
 		FSeek(startof(parentof(this)) + parentof(this).MeshDataOffset + DataOffset * 2);
 		struct NeighborNavmeshInfo06
 		{
-			if (ReadUInt16() == 0xFFFF)
+			if (ReadUShort() == 0xFFFF)
 			{
 				ushort Invalid;
 			}
