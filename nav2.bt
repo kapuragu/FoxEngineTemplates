@@ -618,7 +618,7 @@ if (Header.SearchSpaceOffset != 0)
 			uint StartOffset;
 			ushort Count; totalBucketEntryCount += Count;
 			ubyte MinY <read = Str("%f", (float)this * 256.0f / Header.Denominator.y + parentof(parentof(this)).Origin.y)>; // fox::nav::SearchSpace::GetBucketActualRangeY
-			ubyte MaxY <read = Str("%f", (float)this * 256.0f / Header.Denominator.y + (1 / Header.Denominator.y) + parentof(parentof(this)).Origin.y)>; // ""
+			ubyte MaxY <read = Str("%f", (float)this * 256.0f / Header.Denominator.y + (1.0f / Header.Denominator.y) + parentof(parentof(this)).Origin.y)>; // ""
 
 			FSeek(startof(this) + StartOffset);
 			struct SearchBucketEntry
