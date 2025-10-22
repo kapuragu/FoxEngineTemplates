@@ -135,7 +135,7 @@ typedef struct
 
 struct RigFileHeader
 {
-	FoxDataString Name;
+	FoxDataName Name;
 
 	uint Version; Assert(Version == 102);
 	

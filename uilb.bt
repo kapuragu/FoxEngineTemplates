@@ -126,7 +126,7 @@ if (Header.ModelDataCount > 0)
 
         if (AnimDataNameCount > 0)
         {
-            local long position = FTell();
+            local int64 position = FTell();
 
             FSeek(Header.BuffersSectionOffset + AnimDataNameStrCode32IndicesRelativeOffset);
 
@@ -155,7 +155,7 @@ if (Header.AnimDataCount > 0)
 
         if (NodeCount > 0)
         {
-            local long position = FTell();
+            local int64 position = FTell();
 
             FSeek(Header.BuffersSectionOffset + SrcNodeNameStrCode32IndicesRelativeOffset);
 
@@ -229,7 +229,7 @@ if (Header.version==GZ)
         struct StringEntry {
             uint stringSize <hidden=true>;
             uint stringRelativeOffset <hidden=true>;
-            local ulong continuePosition = FTell();
+            local int64 continuePosition = FTell();
             FSeek(Header.BuffersSectionOffset+stringRelativeOffset);
             char str[stringSize];
             FSeek(continuePosition);

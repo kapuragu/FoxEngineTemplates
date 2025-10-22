@@ -199,7 +199,7 @@ struct CurveDefinition
 
 struct RTPCCurve
 {
-    uint x_axis_game_param_name <comment="Fnv132 Hash">;
+    uint x_axis_game_param_name <comment="Fnv132 Hash">;  Printf("HASH-rtpc=%u\n",x_axis_game_param_name);
     //rlc this changes to a different 1-4 enum in effect/custom
     enum <uint> Y_Axis_Effect_Type
     {

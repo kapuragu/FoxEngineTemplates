@@ -1,41 +1,15 @@
 #include "common/common.bt"
 #include "common/anim_common.bt"
 
-string ResolveHashFunc(StrCode32& hash)
+enum <uint> SAND_SECTION_TYPE
 {
-	switch (hash.hash)
-	{
-	case 3933341002: return "ROOT";
-	case 3254096966: return "DEMO";
-	case 2620425302: return "CAMERA";
-	case 3150281601: return "MOVE";
-	case 2862912361: return "CameraParam";
-	case 1885607306: return "SI Frame";
-	case 1889896775: return "SKEL";
-	case 2454300086: return "MESH_EVENT";
-	case 143688520: return "MOTION";
-	case 2215748180: return "MODEL";
-	case 3736262940: return "SKELINFO";
-	case 917055795: return "MTPINFO";
-	case 2846912397: return "MTEV";
-	case 494270195: return "MTP";
-	case 2250865118: return "SHADER";
-	case 3937479969: return "MTP_LIST";
-	case 4042487769: return "MTP_PARENT_LIST";
-	case 3187573380: return "LOCATOR";
-	case 2036377104: return "GLOBALSRT";
-	case 2053459263: return "Unknown";
+	SAND_SECTION_TYPE_TRACK_OFFSETS = 1,
+	SAND_SECTION_TYPE_NODES = 2,
+	SAND_SECTION_TYPE_HASH_TABLES = 3,
+	SAND_SECTION_TYPE_TARGET_NAME_TABLES = 4,
+};
 
-	// Parameter names
-	case 2570203771: return "TARGET_NAME";
-	case 3426329078: return "SLOPE_DIR";
-	case 35201703: return "SLOPE_ANGLE";
-
-	default: return "";
-	}
-}
-
-struct Header
+struct SandHeader
 {
 	uint Version; // June 23rd, 2014 
     if (Version==372703500)
@@ -45,71 +19,33 @@ struct Header
 	}
 
 	uint FileSize; Assert(FileSize == FileSize());
-	uint sectionParamCount; Assert(sectionParamCount == 4);
-	uint objectCount;
+	uint SectionCount; Assert(SectionCount == 4);
+	uint TrackCount;
 		
-	struct SectionParams
+	struct SandSectionDesc
 	{
-		uint sectionId;
-		uint sectionEntriesCount; // Always same as objectCount, amount of Section 2 entry offsets
-		uint sectionStartOffset; // Offset to section start, from the start of the line
-		uint sectionSize;
-	} sectionParams[sectionParamCount] <fgcolor = 0x8694EB>; // ROOT Section Params
-	
-} header <bgcolor = 0xB3A797>;
+		SAND_SECTION_TYPE Type;
+		uint Count;
+		uint Offset;
+		uint DataSize;
+	} SectionDescs[SectionCount] <fgcolor = 0x8694EB>; // ROOT Section Params
+} Header <bgcolor = 0xB3A797>;
 
 // Section #1: Track Offsets
 
 //Offsets to tracks within object nodes in the node tree.
 
-FSeek(startof(header.sectionParams[0]) + header.sectionParams[0].sectionStartOffset);
+FSeek(startof(Header.SectionDescs[0]) + Header.SectionDescs[0].Offset);
 
-uint TrackOffsets[header.sectionParams[0].sectionEntriesCount] <bgcolor = 0x8694EB>;
+uint TrackOffsets[Header.SectionDescs[0].Count] <bgcolor = 0x8694EB>;
 
 // Section #2: Node tree
 
 //The meat of the file - the object node tree with track definitions.
 
-FSeek(startof(header.sectionParams[1]) + header.sectionParams[1].sectionStartOffset);
+FSeek(startof(Header.SectionDescs[1]) + Header.SectionDescs[1].Offset);
 
-struct FoxDataString;
-struct SAND
-{
-	switch (ResolveHashFunc(parentof(this).Name.Hash))
-	{
-	case "MOVE":
-	case "CameraParam":
-	case "SI Frame":
-	case "SKEL":
-	case "FRAGMENT":
-    case "MOTION":
-	case "GLOBALSRT":
-	case "MTP":
-		TrackHeader Tracks;
-		break;
-	case "MTP_LIST":
-	case "MTP_PARENT_LIST":
-		StringList List <bgcolor = 0xF38ADE>;
-		break;
-	default:
-		{
-			if (parentof(this).ParentNodeOffset != 0)
-			{
-				if (ReadUInt(startof(parentof(this)) + parentof(this).ParentNodeOffset) == 2250865118 /*SHADER*/)
-				{
-					TrackHeader Tracks;
-				}
-			}
-		}
-	}
-};
-
-#define FOX_DATA_FLAG_IS_HAS_PAYLOAD
-#define FOX_DATA_RESOLVE_HASH_FUNC ResolveHashFunc
-
-#define FOX_DATA_PAYLOAD SAND
-
-#include "common/FoxData_common.bt"
+#include "common/anim_FoxData.bt"
 
 FoxDataNodes Nodes;
 
@@ -118,21 +54,23 @@ FoxDataNodes Nodes;
 //Names of non-object tracks and their indices. Ex: CameraParam, SI Image, and some shaders.
 //Sorted by name hash ascending order.
 
-FSeek(startof(header.sectionParams[2]) + header.sectionParams[2].sectionStartOffset);
+FSeek(startof(Header.SectionDescs[2]) + Header.SectionDescs[2].Offset);
 
+// Used in fox::anim::SandFile::NodeNameToTrackId
 struct SandHashTable
 {
 	StrCode32 Name; // Hash of the object name, sometimes CameraParam or SI Frame.
 	uint TrackId;
-} HashTable[header.sectionParams[2].sectionEntriesCount] <bgcolor = 0xB9E7CA>;
+} HashTable[Header.SectionDescs[2].Count] <bgcolor = 0xB9E7CA>;
 
 // Section #4: Object Track Sets
 
 //Names of object actors and indices of related tracks, plus the shader track offset.
 //Sorted by name hash ascending order.
 
-FSeek(startof(header.sectionParams[3]) + header.sectionParams[3].sectionStartOffset);
+FSeek(startof(Header.SectionDescs[3]) + Header.SectionDescs[3].Offset);
 
+// Used in fox::anim::SandFile::TargetNameAttributeValueToTrackIds
 struct SandTargetNameTable
 {
 	StrCode32 Name;
@@ -141,4 +79,4 @@ struct SandTargetNameTable
 	short FragmentTrackId;
 	short MotionPointTrackId;
 	uint ShaderOffset; // global offset to shader object
-} TargetNameTable[header.sectionParams[3].sectionEntriesCount] <optimize = false, read = Str("Name: %u", Name.hash), bgcolor = 0x9A7F7E>;
+} TargetNameTable[Header.SectionDescs[3].Count] <optimize = false, read = Str("Name: %u", Name.hash), bgcolor = 0x9A7F7E>;

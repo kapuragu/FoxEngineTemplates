@@ -2,7 +2,7 @@ LittleEndian();
 
 /* Color defines. */
 #define COLOR_HEADER 0x85CFCA
-#define COLOR_FILEHEADER 0x8CBA80
+#define COLOR_LIST 0x8CBA80
 #define COLOR_SECTION_1 0x9C8E65
 #define COLOR_STRCODE32 0x634651
 
@@ -33,98 +33,107 @@ struct MtarHeader
 	{
 		MTAR_FLAGS_NEW = 0x1000,
 
-		MTAR_FLAGS_MTP_IS_BONE = 0x4000,
-	} Flags; Assert((Flags & ~(MTAR_FLAGS_NEW | MTAR_FLAGS_MTP_IS_BONE)) == 0);
+		MTAR_FLAGS_HAS_SKEL_LIST = 0x4000,
+	} Flags; Assert((Flags & ~(MTAR_FLAGS_NEW | MTAR_FLAGS_HAS_SKEL_LIST)) == 0);
 
 	uint CommonInfoOffset;
 
 	uint64 Padding <hidden = true>; Assert(Padding == 0);
 } Header <bgcolor = COLOR_HEADER>;
 
-struct MtarFileHeader
+if (Header.Flags & MTAR_FLAGS_NEW)
 {
-    PathCode64 Path; //Assert(((Path.hash >> 52) == (0xFC50 >> 4)) || ((Path.hash >> 52) == (0x4CB0 >> 4))); // Just confirming that these files are all GANIs by checking the extension
-    uint TracksOffset;
-    ushort TracksDataSize <read = (this << 4)>;
+	struct MtarTableList2
+	{
+		PathCode64 Path; //Assert(((Path.hash >> 52) == (0xFC50 >> 4)) || ((Path.hash >> 52) == (0x4CB0 >> 4))); // Just confirming that these files are all GANIs by checking the extension
+		uint TracksOffset;
+		ushort TracksDataSize <read = (this << 4)>;
 
-    if (Header.Flags & MTAR_FLAGS_NEW)
-    {
-	    ushort MotionPointTracksOffset <read = (this << 4)>;
-	    ushort MotionPointTracksDataSize <read = (this << 4)>;
+		ushort MotionPointTracksOffset <read = (this << 4)>;
+		ushort MotionPointTracksDataSize <read = (this << 4)>;
 		ushort ShaderTracksOffset <read = (this << 4)>; Assert(ShaderTracksOffset == 0);
-        
-        uint Padding0 <hidden = true>; Assert(Padding0 == 0);
+		ushort ShaderTracksDataSize <read = (this << 4)>; Assert(ShaderTracksDataSize == 0); // This one is a guess as a way to justify why there's padding after. The exe does not use this value.
 
-	    uint MotionEventsOffset;
+		ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
 
-	    uint Padding1 <hidden = true>; Assert(Padding1 == 0);
-    }
-    else
-    {
-        ushort Unknown; // 7 in player2_facial_snake_helispace.mtar, sometimes 1 in TppPlayer2Facial
-    }
-} FileHeaders[Header.FileCount] <bgcolor = COLOR_FILEHEADER, optimize = true>;
+		uint MotionEventsOffset;
+
+		uint Padding1 <hidden = true>; Assert(Padding1 == 0);
+	} List[Header.FileCount] <bgcolor = COLOR_LIST, optimize = true>;
+}
+else
+{
+	struct MtarTableList
+	{
+		PathCode64 Path; //Assert(((Path.hash >> 52) == (0xFC50 >> 4)) || ((Path.hash >> 52) == (0x4CB0 >> 4))); // Just confirming that these files are all GANIs by checking the extension
+		uint TracksOffset;
+		ushort TracksDataSize <read = (this << 4)>;
+		ushort Unknown; // 7 in player2_facial_snake_helispace.mtar, sometimes 1 in TppPlayer2Facial
+	} List[Header.FileCount] <bgcolor = COLOR_LIST, optimize = true>;
+}
 
 if (Header.CommonInfoOffset != 0)
 {
     FSeek(Header.CommonInfoOffset);
     
-    typedef struct
-    {
-	    StrCode32 Name;
-    
-	    uint DataSize;
-    
-	    uint NextNodeOffset;
-    
-	    uint Padding <hidden = true>; Assert(Padding == 0);
-    } MtarMiniDataNode <bgcolor = COLOR_HEADER>;
-    
-    struct MtarCommonInfo
-    {
-	    MtarMiniDataNode LayoutTrackNode;
-    
-		disableTrackData = true;
-	    TrackHeader LayoutTrack;
-		disableTrackData = false;
-    
-	    if (LayoutTrackNode.NextNodeOffset != 0)
-	    {
-		    FSeek(startof(LayoutTrackNode) + LayoutTrackNode.NextNodeOffset);
-    
-		    MtarMiniDataNode MotionPointsNode;
-    
-		    struct MotionPointsDef
-		    {
-			    uint Count <hidden = true>;
-    
-			    if (Header.Flags & MTAR_FLAGS_MTP_IS_BONE)
-			    {
-				    enum <uint> BoneName_StrCode32Alias
-				    {
-					    SKL_000_cmon_tree001 = 574143535,
-					    SKL_001_cmon_tree001 = 901474389,
-					    SKL_002_cmon_tree001 = 736358179,
-					    SKL_003_cmon_tree001 = 2266581917,
-					    SKL_004_cmon_tree001 = 260712906,
-				    } BoneName[Count];
-			    }
-			    else
-			    {
-				    local uint bnAIdx;
-				    for (bnAIdx = 0; bnAIdx < Count; bnAIdx++)
-				    {
-					    struct MtarMTPBoneAssociation
-					    {
-						    StrCode32 MTPName;
-    
-						    StrCode32 BoneName;
-					    } MTPBoneAssociation <optimize = true>;
-				    }
-			    }
-		    } MotionPoints;
-	    }
-    } CommonInfo <bgcolor = COLOR_STRCODE32>;
+	struct
+	{
+		typedef struct
+		{
+			StrCode32 Name;
+		
+			uint DataSize;
+		
+			uint NextNodeOffset;
+		
+			uint Padding <hidden = true>; Assert(Padding == 0);
+		} MtarMiniDataNode <read = (Name.hash), bgcolor = COLOR_HEADER>;
+		
+		local int64 nodePos = FTell();
+		local uint mnIdx = 0;
+		do
+		{
+			FSeek(nodePos);
+
+			MtarMiniDataNode Node;
+
+			switch (Node.Name.hash)
+			{
+				case 1337830127:
+					Assert(mnIdx == 0);
+					disableTrackData = true;
+					TrackHeader LayoutTrack;
+					disableTrackData = false;
+					break;
+				case 2447659851:
+					Assert((Header.Flags & MTAR_FLAGS_HAS_SKEL_LIST) != 0);
+					StringData2 SkeletonList;
+					break;
+				case 999978884:
+					Assert(mnIdx == 1);
+					struct MotionPointList2
+					{
+						uint Count <hidden = true>;
+						struct
+						{
+							StrCode32 Name;
+
+							StrCode32 ParentName;
+						} Entry[Count] <optimize = true>;
+					} MotionPointList;
+					break;
+				default:
+					Assert(false);
+					break;
+			}
+
+			if (Node.NextNodeOffset == 0)
+				break;
+
+			nodePos = startof(Node) + Node.NextNodeOffset;
+			mnIdx++;
+		} while (nodePos != 0);
+	} CommonInfo <bgcolor = COLOR_STRCODE32>;
 }
 
 if (Header.Flags & MTAR_FLAGS_NEW)
@@ -132,7 +141,7 @@ if (Header.Flags & MTAR_FLAGS_NEW)
 	local uint flIdx;
 	for (flIdx = 0; flIdx < Header.FileCount; flIdx++)
 	{
-		FSeek(FileHeaders[flIdx].TracksOffset);
+		FSeek(List[flIdx].TracksOffset);
 
 		struct Gani2File
 		{
@@ -160,7 +169,7 @@ if (Header.Flags & MTAR_FLAGS_NEW)
 					} Param <read = Str("%s = %f", EnumToString(Name), Value)>;
 				}
 
-				TrackUnitFlags UnitFlags[Header.UnitCount];
+				TRACK_UNIT_FLAGS UnitFlags[Header.UnitCount];
 
 				FAlign(4);
 
@@ -185,7 +194,7 @@ if (Header.Flags & MTAR_FLAGS_NEW)
 							{
 								FSeek(startof(SegmentHeaders[sgIdx]) + SegmentHeaders[sgIdx].DataOffset);
 
-								TrackDataBlob Data(CommonInfo.LayoutTrack.Track[tkIdx].SegmentHeaders[rlSgIdx].Type, SegmentHeaders[sgIdx].ComponentBitSize, UnitFlags[tkIdx] & TRACK_UNIT_FLAGS_NO_FRAMES);
+								TrackDataBlob Segment(CommonInfo.LayoutTrack.Track[tkIdx].Segments[rlSgIdx].Type, SegmentHeaders[sgIdx].ComponentBitSize, UnitFlags[tkIdx] & TRACK_UNIT_FLAGS_IS_STATIC);
 							}
 						}
 					} Track;
@@ -195,16 +204,16 @@ if (Header.Flags & MTAR_FLAGS_NEW)
 			FAlign(16);
 
 
-			if (FileHeaders[flIdx].MotionPointTracksOffset != 0)
+			if (List[flIdx].MotionPointTracksOffset != 0)
 			{
-				FSeek(startof(this) + FileHeaders[flIdx].MotionPointTracksOffset * 0x10);
+				FSeek(startof(this) + List[flIdx].MotionPointTracksOffset * 0x10);
 
 				TrackHeader MotionPointTracks;
 			}
 
-			if (FileHeaders[flIdx].MotionEventsOffset != 0)
+			if (List[flIdx].MotionEventsOffset != 0)
 			{
-				FSeek(FileHeaders[flIdx].MotionEventsOffset);
+				FSeek(List[flIdx].MotionEventsOffset);
 
 				EvpHeader MotionEvents;
 			}
@@ -216,13 +225,13 @@ else
 	local uint flIdx;
 	for (flIdx = 0; flIdx < Header.FileCount; flIdx++)
 	{
-		FSeek(FileHeaders[flIdx].TracksOffset);
+		FSeek(List[flIdx].TracksOffset);
 
 		struct GaniFile
 		{
 			FoxDataHeader Header<bgcolor = COLOR_HEADER>;
 
-			FSeek(FileHeaders[flIdx].TracksOffset + Header.NodesOffset);
+			FSeek(List[flIdx].TracksOffset + Header.NodesOffset);
 
 			FoxDataNodes Nodes;
 		} File <bgcolor = COLOR_SECTION_1>;

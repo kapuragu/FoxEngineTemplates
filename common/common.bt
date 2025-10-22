@@ -47,6 +47,13 @@ typedef struct
 
 typedef struct
 {
+	float x;
+	float y;
+	uint64 Padding <hidden = true>;
+} Vector2W <read = Str("(%g, %g)", x, y)>;
+
+typedef struct
+{
 	half x;
 	half y;
 } VectorH2 <read = Str("(%s, %s)", ReadHalf(x), ReadHalf(y))>;
@@ -63,7 +70,7 @@ typedef struct
 	float x;
 	float y;
 	float z;
-	uint Padding <hidden = true>; Assert(Padding == 0);
+	uint Padding <hidden = true>;
 } Vector3W <read = Str("(%g, %g, %g)", x, y, z)>;
 
 typedef struct
@@ -165,7 +172,7 @@ typedef struct
 
 void FAlign(int alignment)
 {
-	local long alignmentRequired = FTell() % alignment;
+	local int64 alignmentRequired = FTell() % alignment;
 	if (alignmentRequired > 0)
 		FSeek(FTell() + alignment - alignmentRequired);
 }

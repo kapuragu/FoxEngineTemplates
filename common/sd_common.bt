@@ -1,0 +1,19 @@
+#ifndef SD_COMMON_BT
+#define SD_COMMON_BT
+
+enum <uint> CODEC_TYPE
+{
+    CODEC_TYPE_PCM = 0,
+    CODEC_TYPE_ADPCM = 1,
+    CODEC_TYPE_VORBIS = 2,
+    CODEC_TYPE_XMA = 3,
+};
+
+struct SoundStreamHeader // custom name
+{
+    uint DataSize; //Full size of the .wem file - the uint at 0x4 of the .wem, +8
+    CODEC_TYPE CodecType;
+    uint64 Padding <hidden = true>; Assert(Padding == 0);
+};
+
+#endif

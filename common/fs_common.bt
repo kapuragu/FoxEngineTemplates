@@ -1,0 +1,31 @@
+#ifndef FS_COMMON_BT
+#define FS_COMMON_BT
+
+struct StreamChunk
+{
+	char Type[4];
+	uint Size;
+	double Time;
+
+	if (Type != "END " && Type != " DNE")
+		FS_CHUNK_PAYLOAD Payload;
+};
+
+while (true)
+{
+	StreamChunk Chunk;
+
+	if (Chunk.Type == "END " || Chunk.Type == " DNE")
+		break;
+
+	// This check is only used for applying template to single, extracted chunks
+	if (startof(Chunk) + Chunk.Size == FileSize())
+		break;
+
+	FSeek(startof(Chunk) + Chunk.Size);
+	
+	// Only 
+	if (FTell() == FileSize())
+		break;
+}
+#endif

@@ -47,8 +47,8 @@ struct FtexHeader
     char Signature[4] <hidden = true>;
     float Version;
     FTEX_PIXEL_FORMAT PixelFormat;
-    ushort Height;
     ushort Width;
+    ushort Height;
     ushort Depth;
     byte MipmapCount;
 

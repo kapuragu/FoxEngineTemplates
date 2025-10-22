@@ -2,420 +2,561 @@ LittleEndian();
 
 /* Color defines. */
 #define COLOR_HEADER 0x85CFCA
-#define COLOR_UIMODELDATA 0x8CBA80
-#define COLOR_SECTION_1 0x9C8E65
+#define COLOR_NODES 0x9C8E65
 #define COLOR_STRCODE32 0x634651
 
 #include "common/common.bt"
 
-local uint MaterialParamOffsetArray[4] = 
+enum <ushort> MODEL_HEADER_FLAGS
 {
-	8u,
-	12u,
-	16u,
-	20u
+	MODEL_HEADER_FLAGS_UNK1 = 0x1,
+	MODEL_HEADER_FLAGS_USE_PATHIDS = 0x2,
 };
 
-struct UiModelFileHeader
+struct ModelHeader
 {
 	char Signature[4] <hidden=true>;
 	
-	ubyte Unknown0;
-	enum <ubyte> Version
+	enum <uint> VERSION
     {
-        GZ=1,
-        TPP=2,
-    } version;
+        VERSION_102 = 0x102,
+        VERSION_202 = 0x202,
+    } Version;
 
-	ushort Unknown2;
-
-	ubyte ReferencesResolutionFlags; 
+	MODEL_HEADER_FLAGS Flags; 
     
-    if (version==TPP)
+    if (Version == VERSION_202)
     {
-        Assert(ReferencesResolutionFlags == 2); // 2 == No preload
+        Assert(Flags == MODEL_HEADER_FLAGS_USE_PATHIDS);
     };
-	ubyte Unknown4;
+
+    Assert((Flags & MODEL_HEADER_FLAGS_UNK1) == 0);
 
 	ushort NodeCount;
 	ushort StrCode32Count;
-	ushort PathCode64Count;
+	ushort PathIdCount;
 
-	int NodesOffset;
+	uint NodesOffset;
 
-	int StrCode32sRelativeOffset;
-	int PathCode64sRelativeOffset;
+	uint StrCode32sBufferRelativeOffset;
+	uint PathIdsBufferRelativeOffset;
 
-	int BuffersSectionOffset;
+	uint BuffersOffset;
 		  
-    if (version==TPP)
+    if (Version == VERSION_202)
     {
-	    int VerticesRelativeOffset;    // Relative offset from footer
-	    int VertexAttributesRelativeOffset;               // Relative offset from footer
-	    int IndicesRelativeOffset;
-	    int StrCodesRelativeOffset;   // From footer; StrCode hashes used for meshes (examples: fox_2d_Basic_LyBL)
+	    uint VerticesBufferRelativeOffset;
+	    uint UVsBufferRelativeOffset;
+	    uint ColorsBufferRelativeOffset;
+	    uint StrCodesBufferRelativeOffset;
     };
 } Header <bgcolor = COLOR_HEADER>;
 
-enum <ushort> UI_MODEL_NODE_TYPE
+enum <ushort> MODEL_NODE_TYPE
 {
-	UI_MODEL_NODE_TYPE_DUMMY = 0,
-	UI_MODEL_NODE_TYPE_NULL = 1,
-	UI_MODEL_NODE_TYPE_MESH = 2,
-	UI_MODEL_NODE_TYPE_TEXT = 3,
-	UI_MODEL_NODE_TYPE_STENCIL = 4,
-	UI_MODEL_NODE_TYPE_LINE = 5,
-	UI_MODEL_NODE_TYPE_INVALID = 6
+	MODEL_NODE_TYPE_NULL = 0,	
+	MODEL_NODE_TYPE_COMMON = 1,
+	MODEL_NODE_TYPE_MESH = 2,
+	MODEL_NODE_TYPE_TEXT = 3,
+	MODEL_NODE_TYPE_STENCIL = 4,
+	MODEL_NODE_TYPE_LINE = 5,
+	MODEL_NODE_TYPE_INVALID = 6
 };
 
-enum <uint> UI_MODEL_NODE_BLEND
+enum <uint> MODEL_NODE_BLEND
 {
-	UI_MODEL_NODE_BLEND_OFF = 0,
-	UI_MODEL_NODE_BLEND_ALPHA = 1,
-	UI_MODEL_NODE_BLEND_ADD = 2,
+	MODEL_NODE_BLEND_OFF = 0,
+	MODEL_NODE_BLEND_ALPHA = 1,
+	MODEL_NODE_BLEND_ADD = 2,
 };
 
-struct UI_MODEL_NODE_FLAGS
+enum <uint> MODEL_NODE_INFO_FLAGS // TODO: "_INFO"
 {
-	uint UI_MODEL_NODE_FLAGS_USE_PALETTE : 1;
-	UI_MODEL_NODE_BLEND UI_MODEL_NODE_FLAGS_BLEND_MODE : 2 <read = EnumToString(this)>;
-	uint UI_MODEL_NODE_FLAGS_AAAA : 1; // DefaultCulling
+	// Common
+	MODEL_NODE_INFO_FLAGS_USE_PALETTE = 0x1,
+	MODEL_NODE_INFO_FLAGS_BLEND_MODE_A = 0x2,
+	MODEL_NODE_INFO_FLAGS_BLEND_MODE_B = 0x4,
+	MODEL_NODE_INFO_FLAGS_CULL_MODE = 0x8, // DefaultCulling
 
-	uint UI_MODEL_NODE_FLAGS_BILLBOARD : 1;
-	uint UI_MODEL_NODE_FLAGS_ENABLE_SCALE_INHERITANCE : 1;
-	uint UI_MODEL_NODE_FLAGS_BILLBOARD_LIMITS : 1;
-	uint UI_MODEL_NODE_FLAGS_ENABLE_ROTATION_INHERITANCE : 1;
+	MODEL_NODE_INFO_FLAGS_BILLBOARD = 0x10,
+	MODEL_NODE_INFO_FLAGS_ENABLE_SCALE_INHERITANCE = 0x20,
+	MODEL_NODE_INFO_FLAGS_BILLBOARD_LIMITS = 0x40,
+	MODEL_NODE_INFO_FLAGS_ENABLE_ROTATION_INHERITANCE = 0x80,
+	
+	MODEL_NODE_INFO_FLAGS_ROTATION_TYPE_QUAT = 0x100,
+	MODEL_NODE_INFO_FLAGS_DISABLE_COLOR_INHERITANCE = 0x200,
+	MODEL_NODE_INFO_FLAGS_DISABLE_ALPHA_INHERITANCE = 0x400,
 
-	uint UI_MODEL_NODE_FLAGS_ROTATION_TYPE_QUAT : 1;
-	uint UI_MODEL_NODE_FLAGS_DISABLE_COLOR_INHERITANCE : 1;
-	uint UI_MODEL_NODE_FLAGS_DISABLE_ALPHA_INHERITANCE : 1;
+	// Specialized
+	MODEL_NODE_INFO_FLAGS_mesh_stencil_HAS_VERTICES_line_HAS_VERTEX_COLOR = 0x10000,
+	MODEL_NODE_INFO_FLAGS_mesh_UNK20000_text_USE_CUSTOM_FONT_AND_COLOR = 0x20000,
+	MODEL_NODE_INFO_FLAGS_mesh_HAS_VERTEX_COLOR_text_USE_CUSTOM_FONT_INFO = 0x40000,
+	MODEL_NODE_INFO_FLAGS_UNKNOWN80000 = 0x80000,
 
-	uint UI_MODEL_NODE_FLAGS_U1 : 5;
+	MODEL_NODE_INFO_FLAGS_text_TEXT_LEFT_line_USE_VERTEX_ANIM = 0x100000,
+	MODEL_NODE_INFO_FLAGS_text_TEXT_CENTER = 0x200000,
+	MODEL_NODE_INFO_FLAGS_text_TEXT_RIGHT = 0x400000,
+	MODEL_NODE_INFO_FLAGS_text_VERTICAL_TOP = 0x800000,
 
-	uint UI_MODEL_NODE_FLAGS_MESH_UV_AND_COLOR : 1;
+	MODEL_NODE_INFO_FLAGS_mesh_stencil_USE_VERTEX_ANIM_text_VERTICAL_MIDDLE = 0x1000000,
+	MODEL_NODE_INFO_FLAGS_mesh_USE_SHADER_ANIM_text_VERTICAL_BOTTOM = 0x2000000,
+	MODEL_NODE_INFO_FLAGS_text_BOX_LEFT = 0x4000000,
+	MODEL_NODE_INFO_FLAGS_text_BOX_CENTER = 0x8000000,
 
-	uint UI_MODEL_NODE_FLAGS_U2 : 7;
-
-	uint UI_MODEL_NODE_FLAGS_NO_USE_VERTEX_ANIM: 1;
-	uint UI_MODEL_NODE_FLAGS_NO_USE_SHADER_ANIM : 1;
+	MODEL_NODE_INFO_FLAGS_text_BOX_RIGHT = 0x10000000,
+	MODEL_NODE_INFO_FLAGS_text_BOX_NONE = 0x20000000,
 };
 
-struct UiModelNodeBase
+struct ModelNodeNullInfo
+{
+};
+
+struct ModelNodeCommonInfo
 {
 	short NameStrCode32Index;
 
 	short Priority;
 
-	UI_MODEL_NODE_FLAGS Flags;
+	MODEL_NODE_INFO_FLAGS Flags;
 
-	Vector3 Scale; 
-	float UnknownScaleW; Assert(UnknownScaleW == 1);
+	Vector3 Scale; float ScalePadding <hidden = true>; Assert(ScalePadding == 1);
 
-	if ((Flags.UI_MODEL_NODE_FLAGS_ROTATION_TYPE_QUAT) != 0)
+	if (Flags & MODEL_NODE_INFO_FLAGS_ROTATION_TYPE_QUAT)
 	{
 		Quaternion RotationQuaterion;
 	}
 	else
 	{
-		Vector3 RotationEuler; 
-		float UnknownRotationEulerW; Assert(UnknownRotationEulerW == 1);
+		Vector3 RotationEuler; float RotationPadding <hidden = true>; Assert(RotationPadding == 1);
 	}
     
-    if (Header.version==GZ)
+    if (Header.Version == VERSION_102)
     {
         float unknownGZ;
         float unknownGZ2;
 	    Vector3 Translate;
     }
-    else if (Header.version==TPP)
+    else if (Header.Version == VERSION_202)
     {
-	    Vector3 Translate;
-	    float UnknownTranslateW; Assert(UnknownTranslateW == 0);
+	    Vector3 Translate; float TranslatePadding <hidden = true>; Assert(TranslatePadding == 0);
     };
 
 	Vector4 Color;
     
-	short UnknownSecondaryNameStrCode32Index; // Probably a name; no exe hits. Examples: "mb" (UI_mb_cmn_pop_cmn_body)
-	short PaletteColorNameStrCode32Index;     // Examples: "cmn-mb-txt-base"
+	ushort UnknownSecondaryNameStrCode32Index; // Probably a name; no exe hits. Examples: "mb" (UI_mb_cmn_pop_cmn_body)
+	ushort PaletteColorNameStrCode32Index;     // Examples: "cmn-mb-txt-base"
 };
 
-struct UiModelDummy
+enum <ubyte> VERTEX_CONTROL_TYPE
 {
+	VERTEX_CONTROL_TYPE_COLOR = 0,
+	VERTEX_CONTROL_TYPE_VERTEX = 1,
 };
 
-struct UiModelNull
+typedef struct
 {
-	UiModelNodeBase Base;
-};
+	ushort NameStrCode32Index;
+	VERTEX_CONTROL_TYPE Type;
+	ubyte Count;
+	uint IndicesOffset;
 
-struct UiModelMesh
+	local int64 rewindPos = FTell();
+	FSeek(Header.BuffersOffset + IndicesOffset);
+	ushort Indices[Count] <bgcolor = 0xAB862E>;
+	FSeek(rewindPos);
+
+	if (Type == VERTEX_CONTROL_TYPE_VERTEX)
+		Vector4 Origin;
+} VertexControlInfo <optimize = false>;
+
+struct ModelNodeMeshInfo
 {
-	UiModelNodeBase Base;
+	ModelNodeCommonInfo Base;
 
-	ushort VertexCountA;
+	ushort VertexCount;
 
-	short VertexCountB;
+	ushort TriangleCount;
 	
-	int VertexIndicesOffset	;
+	uint VertexRemapTableOffset;
+	uint UVRemapTableOffset;
 
-	int VertexIndicesRelativeOffsetA;
-	int AttributeIndicesRelativeOffsetA;
+	uint ColorIndicesOffset;
+	uint UVIndicesOffset;
 
-	int VertexIndicesRelativeOffsetB;
-	int AttributeIndicesRelativeOffsetB;
+	uint TriangleIndicesOffset;
 
-	short SubEntry0Count;
-	short SubEntry1Count; // Assert(SubEntry1Count == 0);
-	int SubEntry0Offset;
-	int SubEntry1Offset;
+	ushort VertexColorControlCount;
+	ushort VertexControlCount;
+	uint VertexColorControlsOffset;
+	uint VertexControlsOffset;
 
-	short MaterialInstanceNameStrCode32Index;
-	short ShaderTechniqueNameStrCodeIndex;
-	short TextureParamCount;
-	short MaterialParamCount;
-	int TextureParamsOffset;
-	int MaterialParamsOffset;
+	ushort MaterialInstanceNameStrCode32Index;
+	ushort ShaderTechniqueNameStrCodeIndex;
+	ushort TextureParamCount;
+	ushort ShaderParamCount;
+	uint TextureParamsOffset;
+	uint ShaderParamsOffset;
 
-	int BillboardLimitsOffset;
+	uint BillboardLimitsOffset;
 	
-	local long rewindPos = FTell();
+	local int64 rewindPos = FTell();
 
-	if (SubEntry0Count != 0)
+	if (Base.Flags & MODEL_NODE_INFO_FLAGS_mesh_stencil_HAS_VERTICES_line_HAS_VERTEX_COLOR)
 	{
-		FSeek(SubEntry0Offset);
-		struct SubEntry0
+		// Vertices remap table - maps vertex index to index in vertex buffer
+		if (VertexCount != 0 && VertexRemapTableOffset != -1)
 		{
-			short UnknownStrCode32Index;
-			ubyte uu1;
-			ubyte uu2;
-			int IndicesRelativeOffset;
-		} SubEntry0s[SubEntry0Count];
+			FSeek(Header.BuffersOffset + VertexRemapTableOffset);
+
+			ushort VertexRemapTable[VertexCount] <bgcolor = 0xAB862E>;
+		}
+		
+		// UVs remap table - maps vertex index to index in UV buffer
+		if (VertexCount != 0 && UVRemapTableOffset != -1)
+		{
+			FSeek(Header.BuffersOffset + UVRemapTableOffset);
+
+			ushort UVRemapTable[VertexCount] <bgcolor = 0xAB862E>;
+		}
+		
+		// UVs
+		if (VertexCount != 0 && UVIndicesOffset != -1)
+		{
+			FSeek(Header.BuffersOffset + UVIndicesOffset);
+			
+			// Vector2W* UVs = (byte*)Header + Header->BuffersOffset + Header->UVsBufferRelativeOffset
+			// Vector2W uv = UVs[UVRemapTable[UVIndices[index]]]
+			ushort UVIndices[VertexCount] <bgcolor = 0xAB862E>;
+		}
+		
+		// Colors
+		if (Base.Flags & MODEL_NODE_INFO_FLAGS_mesh_HAS_VERTEX_COLOR_text_USE_CUSTOM_FONT_INFO)
+		{
+			if (VertexCount != 0 && ColorIndicesOffset != -1)
+			{
+				FSeek(Header.BuffersOffset + ColorIndicesOffset);
+				
+				// Color* Colors = (byte*)Header + Header->BuffersOffset + Header->ColorsBufferRelativeOffset
+				// Color color = Colors[ColorIndices[index]]
+				ushort ColorIndices[VertexCount] <bgcolor = 0xAB862E>;
+			}
+		}
+		
+		// Triangles
+		if (TriangleCount != 0 && TriangleIndicesOffset != -1)
+		{
+			FSeek(Header.BuffersOffset + TriangleIndicesOffset);
+			
+			// Vector3* Vertices = (byte*)Header + Header->BuffersOffset + Header->VerticesBufferRelativeOffset
+			// Vector3 v0, v1, v2 = Vertices[VertexRemapTable[TriangleIndices[index + (0, 1, 2)]]]
+			ushort TriangleIndices[TriangleCount * 3] <bgcolor = 0xAB862E>;
+		}
+
+		if (VertexColorControlCount != 0 && VertexColorControlsOffset != -1)
+		{
+			FSeek(VertexColorControlsOffset);
+
+			VertexControlInfo VertexColorControls[VertexColorControlCount] <optimize = false>;
+		}
+
+		if (VertexControlCount != 0 && VertexControlsOffset != -1)
+		{
+			FSeek(VertexControlsOffset);
+
+			VertexControlInfo VertexControls[VertexControlCount] <optimize = false>;
+		}
 	}
 
-	if (SubEntry1Count != 0)
-	{
-		FSeek(SubEntry1Offset);
-		struct SubEntry1
-		{
-			short UnknownStrCode32Index;
-			ubyte uu1;
-			ubyte uu2;
-			int IndicesRelativeOffset;
-			Vector4 v1;
-		} SubEntry1s [SubEntry1Count];
-	}
-
-	if (TextureParamsOffset != -1)
+	if (TextureParamCount != 0 && TextureParamsOffset != -1)
 	{
 		FSeek(TextureParamsOffset);
-		struct TextureParam
+		struct ModelNodeTextureParameterInfo
 		{
-			// Examples: Base_Texture, Mask_Texture, Screen_Texture
-			short TypeHashIndex;
-			// Index into the textures list
-			short NamePathCode64Index;
+			ushort TypeHashIndex;
+			ushort PathIdIndex;
 		} TextureParams[TextureParamCount];
 	}
 
-	if (MaterialParamsOffset != -1)
+	if (ShaderParamCount != 0 && ShaderParamsOffset != -1)
 	{
-		FSeek(MaterialParamsOffset);
-		struct MaterialParam
+		FSeek(ShaderParamsOffset);
+		struct ModelNodeShaderParameterInfo
 		{
-			// indexes into MaterialParamOffsetArray to skip to next section (is it a float, float2, float3, etc.) but we just use an array of floats instead and hack this exe array index into a counter
-			ushort MaterialParamOffsetArrayIndex <hidden = true>; Assert(MaterialParamOffsetArrayIndex >= 0 && MaterialParamOffsetArrayIndex < 4);
+			enum <ushort> SHADER_PARAM_TYPE
+			{
+				SHADER_PARAM_TYPE_FLOAT = 0,
+				SHADER_PARAM_TYPE_VECTOR2 = 1,
+				SHADER_PARAM_TYPE_VECTOR3 = 2,
+				SHADER_PARAM_TYPE_VECTOR4 = 3,
+			} Type;
 
 			// Examples: UCenter_BaseTex, VCenter_BaseTex, UShift_BaseTex
 			short NameStrCode32HashIndex;
 
-			float Values[MaterialParamOffsetArrayIndex + 1];
-		} MaterialParams[MaterialParamCount] <optimize = false>;
+			float Values[Type + 1];
+		} ShaderParams[ShaderParamCount] <optimize = false>;
 	}
 
-	if (Base.Flags.UI_MODEL_NODE_FLAGS_BILLBOARD_LIMITS != 0 && (BillboardLimitsOffset != -1 && BillboardLimitsOffset != 0))
+	if ((Base.Flags & MODEL_NODE_INFO_FLAGS_BILLBOARD_LIMITS) && (BillboardLimitsOffset != -1 && BillboardLimitsOffset != 0))
 	{
 		FSeek(BillboardLimitsOffset);
 
-		float billboardMin;
-		float billboardMax;
+		float BillboardMin;
+		float BillboardMax;
 	}
 
 	FSeek(rewindPos);
 };
 
-struct UiModelText
+struct ModelNodeTextInfo
 {
-	UiModelNodeBase Base;
+	ModelNodeCommonInfo Base;
 
-	// if (base.Flags != 0)
-	// {
-	// 	Vector4 v1;
-	// 	Vector4 v2;
-	// 	Vector4 scale2;
-	// 	ushort colorHashIndex2;         // Examples: "cmn-sys-txt-base", "hud", "cmn"
-	// 	ushort fontNameHashIndex;       // Examples: "cmn-mb-sys-L", "cmn-hud-art-M"
+	BoundingBox Bounds;
+	Vector4 Scale;
+
+	// Used if USE_CUSTOM_FONT_AND_COLOR
+	ushort ColorNameStrCode32Index; // Examples: "cmn-sys-txt-base", "hud", "cmn"
+	ushort FontNameStrCode32Index; // Examples: "cmn-mb-sys-L", "cmn-hud-art-M"
+	
+	// Used if USE_CUSTOM_FONT_INFO
+	// See UiFontDataElement for more
+	ubyte FontWidth;
+	ubyte TextHeight;
+	ubyte TextSpace;
+	ubyte LineSpace;
+	
+	uint BillboardLimitsOffset;
+
+	if ((Base.Flags & MODEL_NODE_INFO_FLAGS_BILLBOARD_LIMITS) && (BillboardLimitsOffset != -1 && BillboardLimitsOffset != 0))
+	{
+		FSeek(BillboardLimitsOffset);
+
+		float BillboardMin;
+		float BillboardMax;
+	}
+};
+
+struct ModelNodeStencilInfo
+{
+	ModelNodeMeshInfo Base;
+
+	Assert(Base.VertexColorControlCount == 0);
+};
+
+typedef struct
+{
+	ushort VertexCount;
+	ushort Padding <hidden = true>; Assert(Padding == 0);
+
+	uint IndicesOffset;
+
+	local int64 rewindPos = FTell();
+	FSeek(Header.BuffersOffset + IndicesOffset);
+	ushort Indices[Count] <bgcolor = 0xAB862E>;
+	FSeek(rewindPos);
+} LineDrawInfo <optimize = false>;
+
+struct ModelNodeLineInfo
+{
+	ModelNodeMeshInfo Base;
+	
+	ushort LineCount;
+	ushort VertexCount;
+	
+	uint LinesOffset;
+
+	uint VerticesOffset;
+	uint ColorsOffset;
+
+	ushort VertexColorControlCount;
+	ushort VertexControlCount;
+	uint VertexColorControlsOffset;
+	uint VertexControlsOffset;
+
+	uint BillboardLimitsOffset;
+
+	if (LineCount != 0 && LinesOffset != -1)
+	{
+		FSeek(LinesOffset);
+
+		// Edge count = Line.VertexCount - 1
+		LineDrawInfo Lines[LineCount] <optimize = false>;
+	}
+
+	// Vertices
+	if (VertexCount != 0 && VerticesOffset != -1)
+	{
+		FSeek(Header.BuffersOffset + VerticesOffset);
+
+		// Vector3W* Vertices = (byte*)Header + Header->BuffersOffset + VerticesOffset
+		// Vector3 vertex = Vertices[index]
+		Vector3W Vertices[VertexCount];
+	}
 		
-	// 	ubyte n3;
-	// 	ubyte n4;
-	// }
+	// Colors
+	if (Base.Flags & MODEL_NODE_INFO_FLAGS_mesh_stencil_HAS_VERTICES_line_HAS_VERTEX_COLOR)
+	{
+		// Colors
+		if (VertexCount != 0 && ColorIndicesOffset != -1)
+		{
+			FSeek(Header.BuffersOffset + ColorsOffset);
+			
+			// Color* Colors = (byte*)Header + Header->BuffersOffset + ColorsOffset
+			// Color color = Colors[index]
+			Vector4 Colors[VertexCount];
+		}
+	}
+	
+	if (VertexColorControlCount != 0 && VertexColorControlsOffset != -1)
+	{
+		FSeek(VertexColorControlsOffset);
 
-	// if (base.Flags != 0)
-	// {
-	// 	ushort n5;
-	// 	ushort n6;
-	// 	ushort n7;
-	// }
+		VertexControlInfo VertexColorControls[VertexColorControlCount] <optimize = false>;
+	}
+
+	if (VertexControlCount != 0 && VertexControlsOffset != -1)
+	{
+		FSeek(VertexControlsOffset);
+
+		VertexControlInfo VertexControls[VertexControlCount] <optimize = false>;
+	}
+
+	if ((Base.Flags & MODEL_NODE_INFO_FLAGS_BILLBOARD_LIMITS) && (BillboardLimitsOffset != -1 && BillboardLimitsOffset != 0))
+	{
+		FSeek(BillboardLimitsOffset);
+
+		float BillboardMin;
+		float BillboardMax;
+	}
 };
 
-struct UiModelStencil
-{
-	UiModelNodeBase Base;
-
-	ushort n3;
-	ushort n4;
-	uint o5;
-	uint o6;
-	uint o7;
-	uint o8;
-	uint o9;
-
-	ushort n10;
-	ushort n11;
-
-	uint u12;
-	uint o13;
-	ushort n14;
-	ushort n15;
-	uint o16;
-	uint textureTypeHashIndex;  // Examples: "Base_Texture"
-	ushort n18;
-	ubyte n19;
-	ubyte n20;
-	uint n21;
-	uint n22;
-
-	Vector4 v1;
-	Vector4 v2;
-	Vector4 v3;
-	Vector4 v4;
-	Vector4 v5;
-	Vector4 v6;
-	Vector4 v7;
-	Vector4 v8;
-};
-
-struct UiModelNodeHeader
+struct
 {
 	// Not fully unique; some files share them
-	short NameStrCode32Index;
-	UI_MODEL_NODE_TYPE Type;
+	ushort NameStrCode32Index;
+	MODEL_NODE_TYPE Type;
 	uint DataOffset;
 	
-	local long rewindPos = FTell();
+	local int64 rewindPos = FTell();
 
 	FSeek(DataOffset);
 
 	switch (Type)
 	{
-	case UI_MODEL_NODE_TYPE_DUMMY:
-		UiModelDummy Node;
+	case MODEL_NODE_TYPE_NULL:
+		ModelNodeNullInfo Node;
 		break;
-	case UI_MODEL_NODE_TYPE_NULL:
-		UiModelNull Node;
+	case MODEL_NODE_TYPE_COMMON:
+		ModelNodeCommonInfo Node;
 		break;
-	case UI_MODEL_NODE_TYPE_MESH:
-		UiModelMesh Node;
+	case MODEL_NODE_TYPE_MESH:
+		ModelNodeMeshInfo Node;
 		break;
-	case UI_MODEL_NODE_TYPE_TEXT:
-		UiModelText Node;
+	case MODEL_NODE_TYPE_TEXT:
+		ModelNodeTextInfo Node;
 		break;
-	case UI_MODEL_NODE_TYPE_STENCIL:
-		UiModelStencil Node;
+	case MODEL_NODE_TYPE_STENCIL:
+		ModelNodeStencilInfo Node;
 		break;
-	case UI_MODEL_NODE_TYPE_LINE:
-		Assert(false);
+	case MODEL_NODE_TYPE_LINE:
+		ModelNodeLineInfo Node;
 		break;
-	case UI_MODEL_NODE_TYPE_INVALID:
+	case MODEL_NODE_TYPE_INVALID:
 		Assert(false);
 		break;
 	}
 
+	// Debugging
+	switch (Type)
+	{
+	case MODEL_NODE_TYPE_NULL:
+		break;
+	case MODEL_NODE_TYPE_COMMON:
+		Assert((Node.Flags & MODEL_NODE_INFO_FLAGS_UNKNOWN80000) == 0);
+        break;
+	case MODEL_NODE_TYPE_MESH:
+		Assert((Node.Base.Flags & MODEL_NODE_INFO_FLAGS_mesh_UNK20000_text_USE_CUSTOM_FONT_AND_COLOR) == 0);
+		// Fall through
+	default:
+		Assert((Node.Base.Flags & MODEL_NODE_INFO_FLAGS_UNKNOWN80000) == 0);
+	}
+
 	FSeek(rewindPos);
-} Nodes[Header.NodeCount] <read = EnumToString(this.Type), bgcolor = COLOR_SECTION_1, optimize = false>;
+} Nodes[Header.NodeCount] <read = EnumToString(this.Type), bgcolor = COLOR_NODES, optimize = false>;
 
-FSeek(Header.BuffersSectionOffset);
+// The following buffers section is a 'hack' to attempt to generate buffers but it can't be done perfectly. Always refer to the nodes above.
+FSeek(Header.BuffersOffset);
 
-if (Header.version==TPP)
+if (Header.Version == VERSION_202)
 {
-    if (Header.VerticesRelativeOffset != -1)
+    if (Header.VerticesBufferRelativeOffset != -1)
     {
-	    Assert(FTell() == Header.BuffersSectionOffset + Header.VerticesRelativeOffset);
-	    Vector4 Vertices[(Header.VertexAttributesRelativeOffset - Header.VerticesRelativeOffset) / sizeof(Vector4)] <bgcolor = 0xAB862E>;
+	    Assert(FTell() == Header.BuffersOffset + Header.VerticesBufferRelativeOffset);
+	    Vector4 Vertices[(Header.UVsBufferRelativeOffset - Header.VerticesBufferRelativeOffset) / sizeof(Vector4)] <bgcolor = 0xAB862E>;
     }
     
-    if (Header.VertexAttributesRelativeOffset != -1)
+    if (Header.UVsBufferRelativeOffset != -1)
     {
-	    Assert(FTell() == Header.BuffersSectionOffset + Header.VertexAttributesRelativeOffset);
-	    Vector4 VertexAttributes[(Header.IndicesRelativeOffset - Header.VertexAttributesRelativeOffset) / sizeof(Vector4)] <bgcolor = COLOR_STRCODE32>;
+	    Assert(FTell() == Header.BuffersOffset + Header.UVsBufferRelativeOffset);
+	    Vector4 UVs[(Header.ColorsBufferRelativeOffset - Header.UVsBufferRelativeOffset) / sizeof(Vector4)] <bgcolor = COLOR_STRCODE32>;
     }
     
-    if (Header.IndicesRelativeOffset != -1)
-    {
-	    Assert(FTell() == Header.BuffersSectionOffset + Header.IndicesRelativeOffset);
-	    ushort Indices[(Header.StrCode32sRelativeOffset - Header.IndicesRelativeOffset) / sizeof(ushort)] <bgcolor = 0xAB862E>;
-    }
+    // if (Header.ColorsBufferRelativeOffset != -1)
+    // {
+	//     Assert(FTell() == Header.BuffersOffset + Header.ColorsBufferRelativeOffset);
+	//     ushort Indices[(Header.StrCode32sBufferRelativeOffset - Header.ColorsBufferRelativeOffset) / sizeof(ushort)] <bgcolor = 0xAB862E>;
+    // }
     
     /* The first hash is the filename without extension (e.g., for UI_sys_end_layout.uif,
     the first hash is UI_sys_end_layout. */
     
-    if (Header.StrCode32sRelativeOffset != -1)
+    if (Header.StrCode32Count != 0 && Header.StrCode32sBufferRelativeOffset != -1)
     {
-        //Assert(FTell() == Header.BuffersSectionOffset + Header.StrCode32sRelativeOffset);
-        FSeek(Header.BuffersSectionOffset + Header.StrCode32sRelativeOffset);
+        //Assert(FTell() == Header.BuffersOffset + Header.StrCode32sBufferRelativeOffset);
+        FSeek(Header.BuffersOffset + Header.StrCode32sBufferRelativeOffset);
         StrCode32 StrCode32s[Header.StrCode32Count] <bgcolor = COLOR_STRCODE32, fgcolor = 0xFFFFFF>;
     }
 };
     
-/* The first hash is the filename without extension (e.g., for UI_sys_end_layout.uif,
-the first hash is UI_sys_end_layout. */
 
-if (Header.version==GZ)
+if (Header.Version == VERSION_102)
 {
-    if (Header.PathCode64sRelativeOffset != -1)
+    if (Header.PathIdsBufferRelativeOffset != -1)
     {
-	    FSeek(Header.PathCode64sRelativeOffset);
+	    FSeek(Header.PathIdsBufferRelativeOffset);
         struct StringEntry {
             uint stringSize <hidden=true>;
             uint stringRelativeOffset <hidden=true>;
-            local ulong continuePosition = FTell();
-            FSeek(Header.BuffersSectionOffset+stringRelativeOffset);
+            local int64 continuePosition = FTell();
+            FSeek(Header.BuffersOffset+stringRelativeOffset);
             char str[stringSize];
             FSeek(continuePosition);
-        } stringEntry[Header.PathCode64Count] <optimize=false, bgcolor = COLOR_STRCODE32, fgcolor = 0xFFFFFF>;
+        } stringEntry[Header.PathIdCount] <optimize=false, bgcolor = COLOR_STRCODE32, fgcolor = 0xFFFFFF>;
     }
     
-    if (Header.StrCode32sRelativeOffset != -1)
+    if (Header.StrCode32sBufferRelativeOffset != -1)
     {
-        //Assert(FTell() == Header.BuffersSectionOffset + Header.StrCode32sRelativeOffset);
-        FSeek(Header.BuffersSectionOffset + Header.StrCode32sRelativeOffset);
+        //Assert(FTell() == Header.BuffersOffset + Header.StrCode32sBufferRelativeOffset);
+        FSeek(Header.BuffersOffset + Header.StrCode32sBufferRelativeOffset);
         StrCode StrCodes[Header.StrCode32Count] <bgcolor = COLOR_STRCODE32, fgcolor = 0xFFFFFF>;
     }
 }
 
 FAlign(8);
 
-if (Header.version==TPP)
+if (Header.Version == VERSION_202)
 {
-    if (Header.StrCodesRelativeOffset != -1)
+    if (Header.StrCodesBufferRelativeOffset != -1)
     {
-        Assert(FTell() == Header.BuffersSectionOffset + Header.StrCodesRelativeOffset);
-        while (FTell() < (Header.BuffersSectionOffset + Header.PathCode64sRelativeOffset) && ReadUInt64() != 0)
+        Assert(FTell() == Header.BuffersOffset + Header.StrCodesBufferRelativeOffset);
+        while (FTell() < (Header.BuffersOffset + Header.PathIdsBufferRelativeOffset) && ReadUInt64() != 0)
 	        StrCode StrCodes <bgcolor = 0x866A66, fgcolor = 0xFFFFFF>;
     }
 
-    if (Header.PathCode64sRelativeOffset != -1)
+    if (Header.PathIdsBufferRelativeOffset != -1)
     {
-	    Assert(FTell() == Header.BuffersSectionOffset + Header.PathCode64sRelativeOffset);
-	    PathCode64 PathCode64s[Header.PathCode64Count] <bgcolor = COLOR_STRCODE32, fgcolor = 0xFFFFFF>;
+	    Assert(FTell() == Header.BuffersOffset + Header.PathIdsBufferRelativeOffset);
+	    PathCode64 PathCode64s[Header.PathIdCount] <bgcolor = COLOR_STRCODE32, fgcolor = 0xFFFFFF>;
     }
 }

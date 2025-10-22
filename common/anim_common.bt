@@ -7,10 +7,10 @@ typedef struct
 } AnimHalf <read = ReadAnimHalf>;
 string ReadAnimHalf(AnimHalf& animHalf)
 {
-    local uint num1 = (animHalf.value & 0x7C00);
-    if (num1 > 0)
-        num1 = (num1 + 0x1A400) << 13;      
-    num1 |= ((animHalf.value & 0x8000) << 16) | ((animHalf.value & 0x3FF) << 13);
+	local uint num1 = (animHalf.value & 0x7C00);
+	if (num1 > 0)
+		num1 = (num1 + 0x1A400) << 13;      
+	num1 |= ((animHalf.value & 0x8000) << 16) | ((animHalf.value & 0x3FF) << 13);
 
 	local ubyte value[4];
 	value[0] = (ubyte)((num1 >> 0) & 0xFF);
@@ -23,15 +23,15 @@ string ReadAnimHalf(AnimHalf& animHalf)
 	return Str("%f", result);
 }
 
-enum <ubyte> TrackType
+enum <ubyte> SEGMENT_TYPE
 {
-	TRACK_TYPE_QUAT = 0,
-	TRACK_TYPE_FLOAT = 1,
-	TRACK_TYPE_VECTOR2 = 2,
-	TRACK_TYPE_VECTOR3 = 3,
-	TRACK_TYPE_VECTOR4 = 4,
-	TRACK_TYPE_QUAT_DIFF = 5,
-	TRACK_TYPE_ROOT_POS = 6,
+	SEGMENT_TYPE_QUAT = 0,
+	SEGMENT_TYPE_FLOAT = 1,
+	SEGMENT_TYPE_VECTOR2 = 2,
+	SEGMENT_TYPE_VECTOR3 = 3,
+	SEGMENT_TYPE_VECTOR4 = 4,
+	SEGMENT_TYPE_QUAT_DIFF = 5,
+	SEGMENT_TYPE_VECTOR_DIFF = 6,
 };
 
 typedef struct
@@ -81,11 +81,11 @@ typedef struct
 	ushort Z_Sign : 1;
 } QuatAnim15;
 
-struct AnimKeyframeData(TrackType type, ubyte componentBitSize)
+struct SegmentKeyframeData(SEGMENT_TYPE type, ubyte componentBitSize)
 {
 	switch (type)
 	{
-		case TRACK_TYPE_QUAT:
+		case SEGMENT_TYPE_QUAT:
 			switch (componentBitSize)
 			{
 			case 12:
@@ -102,7 +102,7 @@ struct AnimKeyframeData(TrackType type, ubyte componentBitSize)
 				break;
 			}
 			break;
-		case TRACK_TYPE_FLOAT:
+		case SEGMENT_TYPE_FLOAT:
 			switch (componentBitSize)
 			{
 			case 16:
@@ -116,7 +116,7 @@ struct AnimKeyframeData(TrackType type, ubyte componentBitSize)
 				break;
 			}
 			break;
-		case TRACK_TYPE_VECTOR3:
+		case SEGMENT_TYPE_VECTOR3:
 			switch (componentBitSize)
 			{
 			case 0:
@@ -132,7 +132,7 @@ struct AnimKeyframeData(TrackType type, ubyte componentBitSize)
 				break;
 			}
 			break;
-		case TRACK_TYPE_VECTOR4:
+		case SEGMENT_TYPE_VECTOR4:
 			switch (componentBitSize)
 			{
 			case 16:
@@ -146,7 +146,7 @@ struct AnimKeyframeData(TrackType type, ubyte componentBitSize)
 				break;
 			}
 			break;
-		case TRACK_TYPE_QUAT_DIFF:
+		case SEGMENT_TYPE_QUAT_DIFF:
 			switch (componentBitSize)
 			{
 			case 12:
@@ -160,7 +160,7 @@ struct AnimKeyframeData(TrackType type, ubyte componentBitSize)
 				break;
 			}
 			break;
-		case TRACK_TYPE_ROOT_POS:
+		case SEGMENT_TYPE_VECTOR_DIFF:
 			switch (componentBitSize)
 			{
 			case 32:
@@ -181,26 +181,26 @@ struct AnimKeyframeData(TrackType type, ubyte componentBitSize)
 	}
 };
 
-struct TrackDataBlob(TrackType type, ubyte componentBitSize, ubyte noFrames)
+struct TrackDataBlob(SEGMENT_TYPE type, ubyte componentBitSize, ubyte isStatic)
 {
 	if (!(componentBitSize == 8 || componentBitSize == 16 || componentBitSize == 32 || componentBitSize == 64))
 		BitfieldDisablePadding();
-	AnimKeyframeData InitFrame(type, componentBitSize);
+	SegmentKeyframeData FirstKey(type, componentBitSize);
 	if (!(componentBitSize == 8 || componentBitSize == 16 || componentBitSize == 32 || componentBitSize == 64))
 		BitfieldEnablePadding();
 
 	if (!(componentBitSize == 8 || componentBitSize == 16 || componentBitSize == 32 || componentBitSize == 64))
 		BitfieldDisablePadding();
-	if (noFrames == 0)
+	if (isStatic == 0)
 	{
 		local uint frameIndex = 0;
 		do
 		{
-			struct AnimKeyframe(TrackType type, ubyte componentBitSize)
+			struct AnimKeyframe(SEGMENT_TYPE type, ubyte componentBitSize)
 			{
 				ubyte FrameCount : 8;
 
-				AnimKeyframeData Data(type, componentBitSize);
+				SegmentKeyframeData Data(type, componentBitSize);
 			} Key(type, componentBitSize);
 
 			frameIndex += Key.FrameCount;
@@ -217,14 +217,14 @@ typedef enum <ubyte>
 {
 	TRACK_UNIT_FLAGS_LOOP = 0x1,
 	TRACK_UNIT_FLAGS_HERMITE_VECTOR_INTERPOLATION = 0x2,
-	TRACK_UNIT_FLAGS_NO_FRAMES = 0x4,
-} TrackUnitFlags <read = ReadTrackUnitFlags>;
-string ReadTrackUnitFlags(TrackUnitFlags flags)
+	TRACK_UNIT_FLAGS_IS_STATIC = 0x4,
+} TRACK_UNIT_FLAGS <read = ReadTrackUnitFlags>;
+string ReadTrackUnitFlags(TRACK_UNIT_FLAGS flags)
 {
 	local string result = flags == 0 ? "" : "| ";
 	local ubyte i;
 	local string enumName;
-	local TrackUnitFlags temp;
+	local TRACK_UNIT_FLAGS temp;
 	for (i = 1; i < 0x8; i = i << 1)
 	{
 		temp = flags & i;
@@ -240,24 +240,23 @@ local int disableTrackData = false;
 
 typedef struct
 {
-	uint UnitCount;
+	int UnitCount;
 
 	uint SegmentCount;
 	
-	ushort HeaderIndex; // Used in SAND. In GANI, 0 for FK, 1 for IK
+	ushort Id;
 
-	ubyte Unknown;
-
-	ubyte Flag;
+	byte UnknownA <hidden = true>; Assert(UnknownA == 0);
+	byte UnknownB; Assert(UnknownB == 1);
 
 	uint FrameCount;
 
-	uint TimeBase;
+	byte FrameRate; FSkip(3);
 
 	uint UnitOffsets[UnitCount] <hidden = true>;
 
 	local uint trkIdx;
-    local uint sgmIdx;
+	local uint sgmIdx;
 	for (trkIdx = 0; trkIdx < UnitCount; trkIdx++)
 	{
 		FSeek(startof(this) + UnitOffsets[trkIdx]);
@@ -272,9 +271,9 @@ typedef struct
 				SCALE           = 2236677358,
 				TRANSLATE       = 2739596730,
 				COLOR           = 1662570759,
-                
-                //IK
-                RIG_ROOT        = 3552837520,
+				
+				//IK
+				RIG_ROOT        = 3552837520,
 
 				// MTAR
 				TensionController = 2275904709,
@@ -283,14 +282,10 @@ typedef struct
 
 				// 
 			} Name;
-            if (HeaderIndex==1)
-            {
-                Printf("%u\n",Name);
-            }
 
 			ubyte SegmentCount; sgmIdx = sgmIdx + SegmentCount;
 
-			TrackUnitFlags Flags;
+			TRACK_UNIT_FLAGS Flags;
 
 			ushort Padding <hidden = true>; Assert(Padding == 0);
 
@@ -298,9 +293,9 @@ typedef struct
 			{
 				int DataOffset;
 
-				short MotionSegmentId; // .fsm DEMO chunk motion segment id
+				short Id; // Segment id
 				
-				TrackType Type : 4;
+				SEGMENT_TYPE Type : 4;
 
 				ubyte NextEntryOffset : 4; Assert(NextEntryOffset == 0 || NextEntryOffset == 8); // The offset to the next entry is (NextEntryOffset & 0x8). since NextEntryOffset is always 0 or 8, this does nothing. 
 
@@ -310,22 +305,47 @@ typedef struct
 				{
 					FSeek(startof(this) + DataOffset);
 
-					TrackDataBlob Data(Type, ComponentBitSize, Flags & TRACK_UNIT_FLAGS_NO_FRAMES);
+					TrackDataBlob Data(Type, ComponentBitSize, Flags & TRACK_UNIT_FLAGS_IS_STATIC);
 
 					FSeek(startof(this) + NextEntryOffset);
 				}
-			} SegmentHeaders[SegmentCount] <read = EnumToString(Type), optimize = false>;
+			} Segments[SegmentCount] <read = EnumToString(Type), optimize = false>;
 		} Track;
 	}
 } TrackHeader <bgcolor = 0x8ADEF3>;
 
+struct FoxDataName;
+struct StringData
+{
+	uint EntryCount <hidden = true>;
+	local int64 strIdx;
+	for (strIdx = 0; strIdx < EntryCount; strIdx++)
+	{
+		FoxDataName Entry <optimize = true>;
+	}
+};
+
+struct StringData2
+{
+	uint EntryCount <hidden = true>;
+	local int64 strIdx;
+	StrCode32 Entries[EntryCount] <optimize = true>;
+};
+
+enum <uint> NODE_TYPE
+{
+	NODE_TYPE_STRINGDATA = 0,
+	NODE_TYPE_TRACKS = 1,
+	NODE_TYPE_EVENTS = 3,
+};
+
 //Hack for PS3 files
 typedef struct
 {
-    uint paramA <hidden=true>;
-    uint paramB <hidden=true>;
+	uint paramA <hidden=true>;
+	uint paramB <hidden=true>;
 	local StrCode param<format=hex>;
-	param.hash = (ulong)paramA|(ulong)paramB*4294967296; //cbf with bitshifting, loops at 32
+	param.hash = (uint64)paramA | ((uint64)paramB << 32);
 } PARAM_STRING <read=Str("%I64u",param.hash)>; 
 
 typedef struct
@@ -342,7 +362,7 @@ typedef struct
 
 	short UnitCount <hidden = true>;
 
-	ushort ExtraSectionOffset;
+	ushort CacheOffset;
 
 	if (UnitCount != 0)
 		uint UnitOffsets[UnitCount] <hidden = true>;
@@ -374,23 +394,23 @@ typedef struct
 				left_foot_leave = 3446064903,
 				rattle_weapon = 2416440354,
 				rattle_suit = 1532442511,
-                
-                // Demo
-                ExecCommand = 595181585,
-                DemoStart = 3541589503,
-                DemoEnd = 3534133658,
-                CreateLocator = 2523762371,
-                CreateModel = 3313525351,
-                VisibleModel = 1040836537,
-                VisibleMesh = 1799953944,
-                DeleteLocator = 826863926,
-                DeleteModel = 1968729831,
-                CreateCamera = 2135789169,
-                DeleteCamera = 4099945744,
-                ClipEnd = 708232468,
+				
+				// Demo
+				ExecCommand = 595181585,
+				DemoStart = 3541589503,
+				DemoEnd = 3534133658,
+				CreateLocator = 2523762371,
+				CreateModel = 3313525351,
+				VisibleModel = 1040836537,
+				VisibleMesh = 1799953944,
+				DeleteLocator = 826863926,
+				DeleteModel = 1968729831,
+				CreateCamera = 2135789169,
+				DeleteCamera = 4099945744,
+				ClipEnd = 708232468,
 			} EventName;
-            
-            //Printf(Str("%u\n",EventName));
+			
+			//Printf(Str("%u\n",EventName));
 
 			byte TimeSectionCount : 6 <hidden = true>;
 			enum <byte> TIME_SECTION_FORMAT
@@ -439,8 +459,62 @@ typedef struct
 				float FloatParams[FloatParamCount];
 
 			if (StringParamCount != 0)
-            {
+			{
 				PARAM_STRING StringParams[StringParamCount] <optimize = false>;
+				//event string hash dump
+				/*
+				local uint stringIdx;
+				for (stringIdx = 0; stringIdx < StringParamCount; stringIdx++)
+				{
+					Printf(Str("%I64u\n",StringParams[stringIdx].param.hash));
+				}
+				*/
+				//vfx name dump
+				/*
+				if (EventName==595181585)
+				{
+					if (StringParamCount>7)
+					{
+						if (StringParams[6].param.hash==39224491583389
+						||StringParams[6].param.hash==72256544285556
+						||StringParams[6].param.hash==32886448170624
+						||StringParams[7].param.hash==173102471356897
+						||StringParams[6].param.hash==34251201099326)
+						{
+							Printf(Str("%I64u\n",StringParams[0].param.hash));
+						};
+					};
+				}
+				*/
+				//human target hash dump
+				/*if (EventName==1968729831)
+				{
+					if (StringParamCount!=0)
+					{
+						Printf(Str("%I64u\n",StringParams[0].param.hash));
+					}
+				}*/
+				//mesh group hash dump
+				/*if (EventName==1799953944)
+				{
+					Printf(Str("target: %I64u mesh group: %I64u\n",StringParams[0].param.hash,StringParams[1].param.hash));
+				}*/
+				//prp_ hash dump
+				/*if (EventName==2523762371)
+				{
+					Printf(Str("%I64u\n",StringParams[0].param.hash));
+				}*/
+				if (EventName==595181585)
+				{
+					if (StringParamCount>6)
+					{
+						if (StringParams[5].param.hash==84993817083062) 
+						{
+							local float divisor = 0.6*1000/1001;
+							Printf(Str("%f,%I64u\n",TimeSections[0].StartFrame/divisor,StringParams[1].param.hash));
+						}
+					}
+				}
 	            //event string hash dump
                 /*
                 local uint stringIdx;
@@ -484,45 +558,49 @@ typedef struct
                 {
                     Printf(Str("%I64u\n",StringParams[0].param.hash));
                 }*/
-                if (EventName==595181585)
+                //.sani subtitles dump
+                /*if (EventName==595181585)
                 {
                     if (StringParamCount>6)
                     {
                         if (StringParams[5].param.hash==84993817083062) 
                         {
-                            local float divisor = 0.6*1000/1001;
-                            Printf(Str("%f,%I64u\n",TimeSections[0].StartFrame/divisor,StringParams[1].param.hash));
+                            local float divisor = 0.60075*1000/1001;
+                            Printf(Str("subp: %f,%I64u\n",TimeSections[0].StartFrame/divisor,StringParams[1].param.hash));
                         }
                     }
-                }
+                }*/
             }
 		} Event <read = EnumToString(EventName)>;
 	}
 
-	if (ExtraSectionOffset != 0)
+	if (CacheOffset != 0)
 	{
-		FSeek(startof(this) + ExtraSectionOffset);
+		FSeek(startof(this) + CacheOffset);
 
-		struct EventExtraInfo
+		struct EventCache
 		{
-			uint IntParamOffset;
+			uint IntParamsOffset;
 			uint IntParamCount;
 
-			uint Unknown0; // Assert(Unknown0 == 0);
-			uint Unknown1; //Assert(Unknown1 == 2);
+			uint FloatParamsOffset;
+			uint FloatParamCount;
 
-			uint StringParamOffset;
+			uint StringParamsOffset;
 			uint StringParamCount;
 
-			if (IntParamOffset != 0) Assert(IntParamCount != 0 && FTell() == startof(IntParamOffset) + IntParamOffset);
+			if (IntParamsOffset != 0) Assert(IntParamCount != 0 && FTell() == startof(IntParamsOffset) + IntParamsOffset);
 			if (IntParamCount != 0)
 				uint IntParams[IntParamCount];
 
-			if (StringParamOffset != 0) Assert(StringParamCount != 0 /*&& FTell() == startof(StringParamOffset) + StringParamOffset*/);
-			FSeek(startof(StringParamOffset) + StringParamOffset);
+			if (FloatParamsOffset != 0) Assert(FloatParamCount != 0 && FTell() == startof(FloatParamsOffset) + FloatParamsOffset);
+			if (FloatParamCount != 0)
+				float FloatParams[FloatParamCount];
+
+			if (StringParamsOffset != 0) Assert(StringParamCount != 0 && FTell() == startof(StringParamsOffset) + StringParamsOffset);
 			if (StringParamCount != 0)
 				StrCode StringParams[StringParamCount];
-		} ExtraInfo;
+		} Cache;
 	}
 } EvpData <read = EnumToString(CategoryName), bgcolor = 0x00C010>;
 
@@ -532,7 +610,7 @@ typedef struct
 
 	short Count <hidden = true>;
 
-	ushort Unknown; Assert(Unknown == 0);
+	ushort Padding; Assert(Padding == 0);
 
 	uint EntryOffsets[Count] <hidden = true>;
 
@@ -545,14 +623,101 @@ typedef struct
 	}
 } EvpHeader <bgcolor = 0x00C000>;
 
-struct FoxDataString;
-struct StringList
+typedef enum <uint>
 {
-	uint EntryCount <hidden = true>;
-	local int64 strIdx;
-	for (strIdx = 0; strIdx < EntryCount; strIdx++)
+	TRACK_STREAM_FLAGS_HAS_EVENT_PACKET = 0x1,
+	TRACK_STREAM_FLAGS_HAS_SEGMENT_FLAGS = 0x2,
+	TRACK_STREAM_FLAGS_HAS_BASE_OFFSET = 0x4,
+	TRACK_STREAM_FLAGS_HAS_EVENTS = 0x8,
+} TRACK_STREAM_FLAGS <read = ReadTrackStreamFlags>;
+string ReadTrackStreamFlags(TRACK_STREAM_FLAGS flags)
+{
+	local string result = flags == 0 ? "" : "| ";
+	local ubyte i;
+	local string enumName;
+	local TRACK_STREAM_FLAGS temp;
+	for (i = 1; i < 0x10; i = i << 1)
 	{
-		FoxDataString Entry <optimize = true>;
+		temp = flags & i;
+		enumName = EnumToString(temp);
+		if (enumName != "")
+			result += " " + enumName + " |";
+	}
+
+	return result;
+}
+
+typedef enum <ushort>
+{
+	TRACK_STREAM_SEGMENT_FLAGS_IS_STATIC = 0x1,
+	TRACK_STREAM_SEGMENT_FLAGS_NO_DATA = 0x2,
+	TRACK_STREAM_SEGMENT_FLAGS_HAS_BASE_OFFSET = 0x4,
+} TRACK_STREAM_SEGMENT_FLAGS <read = ReadTrackStreamSegmentFlags>;
+string ReadTrackStreamSegmentFlags(TRACK_STREAM_SEGMENT_FLAGS flags)
+{
+	local string result = flags == 0 ? "" : "| ";
+	local ubyte i;
+	local string enumName;
+	local TRACK_STREAM_SEGMENT_FLAGS temp;
+	for (i = 1; i < 0x8; i = i << 1)
+	{
+		temp = flags & i;
+		enumName = EnumToString(temp);
+		if (enumName != "")
+			result += " " + enumName + " |";
+	}
+
+	return result;
+}
+
+enum <uint> PACKET_TYPE
+{
+	PACKET_TYPE_STREAM = 0,
+	PACKET_TYPE_NODES = 1, //GZ/PT/that unused FSM in TPP only
+	PACKET_TYPE_EVENTS = 2,
+};
+
+struct FoxDataNodes;
+struct PacketHeader
+{
+	PACKET_TYPE Type;
+				
+	uint NextPacketOffset;
+	uint Padding <hidden = true>; Assert(Padding == 0);
+	
+	switch (Type)
+	{
+	case PACKET_TYPE_NODES:
+		FoxDataNodes Nodes;
+		break;
+	case PACKET_TYPE_EVENTS:
+		EvpData Events;
+		break;
+	}
+};
+
+struct TrackStream
+{
+	PACKET_TYPE Type;
+	TRACK_STREAM_FLAGS Flags;
+	uint StartFrame;
+	uint FrameCount;
+
+	uint SegmentCount;
+	uint NextPacketOffset;
+	uint EventsOffset;
+
+	uint SegmentOffsets[SegmentCount];
+	if ((Flags & TRACK_STREAM_FLAGS_HAS_BASE_OFFSET) != 0)
+		Vector3 BaseOffset;
+
+	if ((Flags & TRACK_STREAM_FLAGS_HAS_SEGMENT_FLAGS) != 0)
+		TRACK_STREAM_SEGMENT_FLAGS SegmentFlags[SegmentCount];
+
+	if ((Flags & TRACK_STREAM_FLAGS_HAS_EVENTS) != 0 && EventsOffset != 0)
+	{
+		FSeek(startof(this) + EventsOffset);
+		EvpData Events;
 	}
 };
 

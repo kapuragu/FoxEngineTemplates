@@ -19,8 +19,8 @@ typedef struct
 {
 	FOX_DATA_HASH_TYPE Hash;
 	uint StringOffset;
-} FoxDataString <read = ReadFoxDataString>;
-string ReadFoxDataString(FoxDataString& str)
+} FoxDataName <read = ReadFoxDataName>;
+string ReadFoxDataName(FoxDataName& str)
 {
 #ifdef FOX_DATA_RESOLVE_HASH_FUNC
 	local string resolvedName = FOX_DATA_RESOLVE_HASH_FUNC(str.Hash);
@@ -42,14 +42,14 @@ typedef struct
 {
 	FOX_DATA_NODE_ENTRY_PARAM_TYPE Type;
 	short NextParameterOffset;
-	FoxDataString Name;
+	FoxDataName Name;
 	switch (Type)
 	{
 	case FOX_DATA_NODE_ENTRY_PARAM_TYPE_UINT:
 		uint Value;
 		break;
 	case FOX_DATA_NODE_ENTRY_PARAM_TYPE_STRING:
-		FoxDataString Value;
+		FoxDataName Value;
 		break;
 	case FOX_DATA_NODE_ENTRY_PARAM_TYPE_FLOAT:
 		float Value;
@@ -64,11 +64,11 @@ string ReadFoxDataNodeParameter(FoxDataNodeParameter& param)
 	switch (param.Type)
 	{
 	case FOX_DATA_NODE_ENTRY_PARAM_TYPE_UINT:
-		return Str("uint %s = %u", ReadFoxDataString(param.Name), param.Value);
+		return Str("uint %s = %u", ReadFoxDataName(param.Name), param.Value);
 	case FOX_DATA_NODE_ENTRY_PARAM_TYPE_STRING:
-		return Str("string %s = %s", ReadFoxDataString(param.Name), ReadFoxDataString(param.Value));
+		return Str("string %s = %s", ReadFoxDataName(param.Name), ReadFoxDataName(param.Value));
 	case FOX_DATA_NODE_ENTRY_PARAM_TYPE_FLOAT:
-		return Str("float %s = %f", ReadFoxDataString(param.Name), param.Value);
+		return Str("float %s = %f", ReadFoxDataName(param.Name), param.Value);
 	default:
 		return "null";
 	}
@@ -84,7 +84,7 @@ typedef struct
 
 	if (Node.NextNodeOffset != 0)
 	{
-		local long nodeStartPos = startof(Node) + Node.NextNodeOffset;
+		local int64 nodeStartPos = startof(Node) + Node.NextNodeOffset;
 		
 		do
 		{
@@ -99,7 +99,7 @@ typedef struct
 
 typedef struct
 {
-	FoxDataString Name <hidden = true>;
+	FoxDataName Name <hidden = true>;
 	uint Flags <hidden = true>; // Unknown. Greatest diversity is in GEOM and HTRE nodes. Most other formats have 0 or 1 (see their asserts for details).
 	int DataOffset <hidden = true>; // 0 means no data
 	uint DataSize <hidden = true>; // 0 means no data
@@ -121,7 +121,7 @@ typedef struct
 #ifndef FOX_DATA_NO_USE_PARAMS // For some reason, TRAP files hack this to use as the entry count
 	if (ParametersOffset != 0)
 	{
-		local long paramStartPos = startof(this) + ParametersOffset;
+		local int64 paramStartPos = startof(this) + ParametersOffset;
 
 		do
 		{
@@ -146,14 +146,14 @@ typedef struct
 		FOX_DATA_PAYLOAD Payload;
 	}
 #endif
-} FoxDataNode <read = Str("%s, Flags: %u", ReadFoxDataString(Name), Flags)>;
+} FoxDataNode <read = Str("%s, Flags: %u", ReadFoxDataName(Name), Flags)>;
 
 int GetFoxDataNodeParamIndex(FoxDataNode& node, string name)
 {
 	local uint pIdx;
 	for (pIdx = 0; exists(node.Parameter[pIdx]); pIdx++)
 	{
-		if (Strcmp(ReadFoxDataString(node.Parameter[pIdx].Name), name) == 0)
+		if (Strcmp(ReadFoxDataName(node.Parameter[pIdx].Name), name) == 0)
 			return pIdx;
 	}
 
@@ -165,7 +165,7 @@ int GetFoxDataNodeIndex(FoxDataNodes& nodes, string name)
 	local uint nIdx;
 	for (nIdx = 0; exists(nodes.Node[nIdx]); nIdx++)
 	{
-		if (Strcmp(ReadFoxDataString(nodes.Node[nIdx].Name), name) == 0)
+		if (Strcmp(ReadFoxDataName(nodes.Node[nIdx].Name), name) == 0)
 			return nIdx;
 	}
 
@@ -200,11 +200,11 @@ typedef struct
 	uint Version;
 	uint NodesOffset;
 	uint FileSize;
-	FoxDataString Name;
+	FoxDataName Name;
 
 	uint Flags;
 
 	FAlign(16);
-} FoxDataHeader <read = Str("Version: %d, Name: %s", Version, ReadFoxDataString(Name)), bgcolor = 0xaaaaaa>;
+} FoxDataHeader <read = Str("Version: %d, Name: %s", Version, ReadFoxDataName(Name)), bgcolor = 0xaaaaaa>;
 
 #endif

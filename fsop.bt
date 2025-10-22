@@ -1,0 +1,11 @@
+while (FTell() != FileSize())
+{
+	byte NameLength;
+	char Name[NameLength];
+
+	uint VertexShaderDataSize;
+	ubyte VertexShader[VertexShaderDataSize];
+
+	uint PixelShaderDataSize;
+	ubyte PixelShader[PixelShaderDataSize];
+}

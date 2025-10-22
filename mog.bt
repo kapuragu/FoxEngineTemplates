@@ -59,15 +59,15 @@ enum <byte> MOTIONGRAPH_BLEND_NODE_TYPE
 	MOTIONGRAPH_BLEND_NODE_TYPE_SINGLE2 = 9, // Unknown
 };
 
-local long rewindPos = 0;
-local long rewindPos2 = 0;
-local long rewindPos3 = 0;
+local int64 rewindPos = 0;
+local int64 rewindPos2 = 0;
+local int64 rewindPos3 = 0;
 local int i = 0;
 for (i = 0; i < Header.GraphCount; i++)
 {
     struct TEMP_MotionGraphFormatGraphHeader
     {
-        local long SelfPos = startof(this);
+        local int64 SelfPos = startof(this);
 
         AnimParamBinaryString MaskName;
 
@@ -242,7 +242,7 @@ if (Header.ParamsOffset != 0)
     GUESS_AnimParamBinary Param;
     if (Param.NextParamOffset != 0)
 	{
-		local long paramStartPos = startof(Param) + Param.NextParamOffset;
+		local int64 paramStartPos = startof(Param) + Param.NextParamOffset;
 		
 		do
 		{
