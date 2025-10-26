@@ -247,7 +247,7 @@ typedef struct
 	ushort Id;
 
 	byte UnknownA <hidden = true>; Assert(UnknownA == 0);
-	byte UnknownB; Assert(UnknownB == 1);
+	byte UnknownB; Assert(UnknownB == 1||UnknownB == 3); //cypr_hall001_rbbl002.mtar, rbbl001, door006_rbbl001 is 3
 
 	uint FrameCount;
 
