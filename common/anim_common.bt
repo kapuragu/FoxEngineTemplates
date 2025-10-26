@@ -594,11 +594,11 @@ typedef struct
 			case ag:
 				struct AnimGraphEventCache
 				{
-					// MotionGrpahFootFitEventCacheData
-					struct MotionGraphFootFitEventCacheData
+					struct MotionGraphFootFitEventCacheData // MotionGrpahFootFitEventCacheData
 					{
-						// MotionGrpahFootFitInfo
-						struct MotionGraphFootFitInfo
+						// Completely derived from MTEV_AG_SYNC_L and MTEV_AG_SYNC_R events. Frames list is from respective event time sections sorted in order by StartFrame.
+						// If animation is loop, Info.StartFrame = -(first event in order).Section.StartFrame, else 0.
+						struct MotionGraphFootFitInfo // MotionGrpahFootFitInfo
 						{
 							uint FramesOffset;
 							uint FrameCount;
@@ -620,8 +620,7 @@ typedef struct
 						FSeek(startof(Info) + 0x10); // sizeof(MotionGraphFootFitInfo)
 					} FootFitData;
 
-					// A list of hashes which matches the StringParams used in event named 3487515216.
-					// Calls MotionGraphControl::AddCurrentNodeTag and MotionGraphControl::RemoveCurrentNodeTag
+					// A list of hashes which is seemingly unused but matches the StringParams used in event named 3487515216 (add anim graph tag).
 					uint TagsOffset;
 					uint TagCount;
 					
