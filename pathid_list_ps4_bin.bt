@@ -1,7 +1,7 @@
 //------------------------------------------------
 //--- 010 Editor v13.0.2 Binary Template
 //
-//      File: pathid_list_ps3.bin
+//      File: pathid_list_ps4.bin
 //   Authors: rlc
 //   Version: 
 //   Purpose: 
@@ -12,7 +12,7 @@
 //------------------------------------------------
 #include "common/common.bt"
 
-BigEndian();
+LittleEndian();
 
 struct Header
 {
