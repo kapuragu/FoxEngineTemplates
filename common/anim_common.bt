@@ -9,7 +9,7 @@ string ReadAnimHalf(AnimHalf& animHalf)
 {
 	local uint num1 = (animHalf.value & 0x7C00);
 	if (num1 > 0)
-		num1 = (num1 + 0x1A400) << 13;      
+		num1 = (num1 + 0x1dc00) << 13;      
 	num1 |= ((animHalf.value & 0x8000) << 16) | ((animHalf.value & 0x3FF) << 13);
 
 	local ubyte value[4];
@@ -85,111 +85,111 @@ struct SegmentKeyframeData(SEGMENT_TYPE type, ubyte componentBitSize)
 {
 	switch (type)
 	{
-		case SEGMENT_TYPE_QUAT:
-			switch (componentBitSize)
-			{
-			case 12:
-				QuatAnim12 Value;
-				break;
-			case 13:
-				QuatAnim13 Value;
-				break;
-			case 15:
-				QuatAnim15 Value;
-				break;
-			default:
-				Assert(false);
-				break;
-			}
+	case SEGMENT_TYPE_QUAT:
+		switch (componentBitSize)
+		{
+		case 12:
+			QuatAnim12 Value;
 			break;
-		case SEGMENT_TYPE_FLOAT:
-			switch (componentBitSize)
-			{
-			case 16:
-				AnimHalf Value;
-				break;
-			case 32:
-				float Value;
-				break;
-			default:
-				Assert(false);
-				break;
-			}
+		case 13:
+			QuatAnim13 Value;
 			break;
-		case SEGMENT_TYPE_VECTOR3:
-			switch (componentBitSize)
-			{
-			case 0:
-				break;
-			case 16:
-				VectorAnimH3 Value;
-				break;
-			case 32:
-				Vector3 Value;
-				break;
-			default:
-				Assert(false);
-				break;
-			}
-			break;
-		case SEGMENT_TYPE_VECTOR4:
-			switch (componentBitSize)
-			{
-			case 16:
-				VectorAnimH4 Value;
-				break;
-			case 32:
-				Vector4 Value;
-				break;
-			default:
-				Assert(false);
-				break;
-			}
-			break;
-		case SEGMENT_TYPE_QUAT_DIFF:
-			switch (componentBitSize)
-			{
-			case 12:
-				QuatAnim12 Value;
-				break;
-			case 15:
-				QuatAnim15 Value;
-				break;
-			default:
-				Assert(false);
-				break;
-			}
-			break;
-		case SEGMENT_TYPE_VECTOR_DIFF:
-			switch (componentBitSize)
-			{
-			case 32:
-				Vector3 Value;
-				break;
-			case 16:
-				VectorAnimH3 Value;
-				break;
-			default:
-				Assert(false);
-				break;
-			}
+		case 15:
+			QuatAnim15 Value;
 			break;
 		default:
-			Printf("@%Lx Unknown component bit size: %u\n", FTell(), componentBitSize);
 			Assert(false);
 			break;
+		}
+		break;
+	case SEGMENT_TYPE_FLOAT:
+		switch (componentBitSize)
+		{
+		case 16:
+			AnimHalf Value;
+			break;
+		case 32:
+			float Value;
+			break;
+		default:
+			Assert(false);
+			break;
+		}
+		break;
+	case SEGMENT_TYPE_VECTOR3:
+		switch (componentBitSize)
+		{
+		case 0:
+			break;
+		case 16:
+			VectorAnimH3 Value;
+			break;
+		case 32:
+			Vector3 Value;
+			break;
+		default:
+			Assert(false);
+			break;
+		}
+		break;
+	case SEGMENT_TYPE_VECTOR4:
+		switch (componentBitSize)
+		{
+		case 16:
+			VectorAnimH4 Value;
+			break;
+		case 32:
+			Vector4 Value;
+			break;
+		default:
+			Assert(false);
+			break;
+		}
+		break;
+	case SEGMENT_TYPE_QUAT_DIFF:
+		switch (componentBitSize)
+		{
+		case 12:
+			QuatAnim12 Value;
+			break;
+		case 15:
+			QuatAnim15 Value;
+			break;
+		default:
+			Assert(false);
+			break;
+		}
+		break;
+	case SEGMENT_TYPE_VECTOR_DIFF:
+		switch (componentBitSize)
+		{
+		case 32:
+			Vector3 Value;
+			break;
+		case 16:
+			VectorAnimH3 Value;
+			break;
+		default:
+			Assert(false);
+			break;
+		}
+		break;
+	default:
+		Printf("@%Lx Unknown component bit size: %u\n", FTell(), componentBitSize);
+		Assert(false);
+		break;
 	}
 };
 
 struct TrackDataBlob(SEGMENT_TYPE type, ubyte componentBitSize, ubyte isStatic)
 {
-	if (!(componentBitSize == 8 || componentBitSize == 16 || componentBitSize == 32 || componentBitSize == 64))
+	if (!(componentBitSize == 16 || componentBitSize == 32))
 		BitfieldDisablePadding();
 	SegmentKeyframeData FirstKey(type, componentBitSize);
-	if (!(componentBitSize == 8 || componentBitSize == 16 || componentBitSize == 32 || componentBitSize == 64))
+	if (!(componentBitSize == 16 || componentBitSize == 32))
 		BitfieldEnablePadding();
 
-	if (!(componentBitSize == 8 || componentBitSize == 16 || componentBitSize == 32 || componentBitSize == 64))
+	if (!(componentBitSize == 16 || componentBitSize == 32))
 		BitfieldDisablePadding();
 	if (isStatic == 0)
 	{
@@ -207,7 +207,7 @@ struct TrackDataBlob(SEGMENT_TYPE type, ubyte componentBitSize, ubyte isStatic)
 		}
 		while (frameIndex < FrameCount);
 	}
-	if (!(componentBitSize == 8 || componentBitSize == 16 || componentBitSize == 32 || componentBitSize == 64))
+	if (!(componentBitSize == 16 || componentBitSize == 32))
 		BitfieldEnablePadding();
 
 	FAlign(2);
@@ -247,70 +247,77 @@ typedef struct
 	ushort Id;
 
 	byte UnknownA <hidden = true>; Assert(UnknownA == 0);
-	byte UnknownB; Assert(UnknownB == 1);
+	byte UnknownB; Assert(UnknownB == 1||UnknownB == 3); //cypr_hall001_rbbl002.mtar, rbbl001, door006_rbbl001 is 3
 
 	uint FrameCount;
 
 	byte FrameRate; FSkip(3);
 
-	uint UnitOffsets[UnitCount] <hidden = true>;
-
-	local uint trkIdx;
-	local uint sgmIdx;
-	for (trkIdx = 0; trkIdx < UnitCount; trkIdx++)
+	if (UnitCount > 0)
 	{
-		FSeek(startof(this) + UnitOffsets[trkIdx]);
+		uint UnitOffsets[UnitCount] <hidden = true>;
 
-		struct TrackUnit
+		local uint trkIdx;
+		local uint sgmIdx;
+		for (trkIdx = 0; trkIdx < UnitCount; trkIdx++)
 		{
-			// For SAND, hash of the sub object, like a bone, ie SKL_000_WAIST. For GANI, it's the name of a Motion Point.
-			enum <uint> TrackName_StrCode32Alias
+			FSeek(startof(this) + UnitOffsets[trkIdx]);
+
+			struct TrackUnit
 			{
-				// CANI, UIA, etc.
-				ROTATE          = 283103795,
-				SCALE           = 2236677358,
-				TRANSLATE       = 2739596730,
-				COLOR           = 1662570759,
-				
-				//IK
-				RIG_ROOT        = 3552837520,
-
-				// MTAR
-				TensionController = 2275904709,
-				TensionShift = 2003538961,
-				TensionRate = 853304191,
-
-				// 
-			} Name;
-
-			ubyte SegmentCount; sgmIdx = sgmIdx + SegmentCount;
-
-			TRACK_UNIT_FLAGS Flags;
-
-			ushort Padding <hidden = true>; Assert(Padding == 0);
-
-			struct TrackData
-			{
-				int DataOffset;
-
-				short Id; // Segment id
-				
-				SEGMENT_TYPE Type : 4;
-
-				ubyte NextEntryOffset : 4; Assert(NextEntryOffset == 0 || NextEntryOffset == 8); // The offset to the next entry is (NextEntryOffset & 0x8). since NextEntryOffset is always 0 or 8, this does nothing. 
-
-				ubyte ComponentBitSize;
-				
-				if (DataOffset != 0 && !disableTrackData)
+				// For SAND, hash of the sub object, like a bone, ie SKL_000_WAIST. For GANI, it's the name of a Motion Point.
+				enum <uint> TrackName_StrCode32Alias
 				{
-					FSeek(startof(this) + DataOffset);
+					// CANI, UIA, etc.
+					ROTATE          = 283103795,
+					SCALE           = 2236677358,
+					TRANSLATE       = 2739596730,
+					COLOR           = 1662570759,
+					
+					//IK
+					RIG_ROOT        = 3552837520,
 
-					TrackDataBlob Data(Type, ComponentBitSize, Flags & TRACK_UNIT_FLAGS_IS_STATIC);
+					// MTAR
+					TensionController = 2275904709,
+					TensionShift = 2003538961,
+					TensionRate = 853304191,
 
-					FSeek(startof(this) + NextEntryOffset);
+					// 
+				} Name;
+
+				ubyte SegmentCount; sgmIdx = sgmIdx + SegmentCount;
+
+				TRACK_UNIT_FLAGS Flags;
+
+				ushort Padding <hidden = true>; Assert(Padding == 0);
+
+				if (SegmentCount != 0)
+				{
+					struct TrackData
+					{
+						int DataOffset;
+
+						short Id; // Segment id
+						
+						SEGMENT_TYPE Type : 4;
+
+						ubyte NextEntryOffset : 4; Assert(NextEntryOffset == 0 || NextEntryOffset == 8); // The offset to the next entry is (NextEntryOffset & 0x8). since NextEntryOffset is always 0 or 8, this does nothing. 
+
+						ubyte ComponentBitSize;
+						
+						if (DataOffset != 0 && !disableTrackData)
+						{
+							FSeek(startof(this) + DataOffset);
+
+							TrackDataBlob Data(Type, ComponentBitSize, Flags & TRACK_UNIT_FLAGS_IS_STATIC);
+
+							if (NextEntryOffset != 0)
+								FSeek(startof(this) + NextEntryOffset);
+						}
+					} Segments[SegmentCount] <read = EnumToString(Type), optimize = false>;
 				}
-			} Segments[SegmentCount] <read = EnumToString(Type), optimize = false>;
-		} Track;
+			} Track;
+		}
 	}
 } TrackHeader <bgcolor = 0x8ADEF3>;
 
@@ -360,7 +367,7 @@ typedef struct
 		vo = 1455888052,
 	} CategoryName;
 
-	short UnitCount <hidden = true>;
+	ushort UnitCount <hidden = true>;
 
 	ushort CacheOffset;
 
@@ -374,7 +381,7 @@ typedef struct
 		
 		struct EventUnitInfo
 		{
-			enum <uint> EventUnitInfoEventName_StrCode32Alias
+			enum <uint> EventUnitInfoName_StrCode32Alias
 			{
 				// fx
 				FX_CREATE_EFFECT_WITH_SKL = 312449893,
@@ -408,9 +415,11 @@ typedef struct
 				CreateCamera = 2135789169,
 				DeleteCamera = 4099945744,
 				ClipEnd = 708232468,
-			} EventName;
 			
-			//Printf(Str("%u\n",EventName));
+				// 3487515216 - List of StringParams passed to MotionGraphControl::AddCurrentNodeTag (and seemingly removes them at the end with MotionGraphControl::RemoveCurrentNodeTag)
+			} Name;
+			
+			//Printf(Str("%u\n",Name));
 
 			byte TimeSectionCount : 6 <hidden = true>;
 			enum <byte> TIME_SECTION_FORMAT
@@ -471,7 +480,7 @@ typedef struct
 				*/
 				//vfx name dump
 				/*
-				if (EventName==595181585)
+				if (Name==595181585)
 				{
 					if (StringParamCount>7)
 					{
@@ -487,7 +496,7 @@ typedef struct
 				}
 				*/
 				//human target hash dump
-				/*if (EventName==1968729831)
+				/*if (Name==1968729831)
 				{
 					if (StringParamCount!=0)
 					{
@@ -495,83 +504,83 @@ typedef struct
 					}
 				}*/
 				//mesh group hash dump
-				/*if (EventName==1799953944)
+				/*if (Name==1799953944)
 				{
 					Printf(Str("target: %I64u mesh group: %I64u\n",StringParams[0].param.hash,StringParams[1].param.hash));
 				}*/
 				//prp_ hash dump
-				/*if (EventName==2523762371)
+				/*if (Name==2523762371)
 				{
 					Printf(Str("%I64u\n",StringParams[0].param.hash));
 				}*/
-				if (EventName==595181585)
+				// if (Name==595181585)
+				// {
+				// 	if (StringParamCount>6)
+				// 	{
+				// 		if (StringParams[5].param.hash==84993817083062) 
+				// 		{
+				// 			local float divisor = 0.6*1000/1001;
+				// 			Printf(Str("%f,%I64u\n",TimeSections[0].StartFrame/divisor,StringParams[1].param.hash));
+				// 		}
+				// 	}
+				// }
+				//event string hash dump
+				/*
+				local uint stringIdx;
+				for (stringIdx = 0; stringIdx < StringParamCount; stringIdx++)
+				{
+					Printf(Str("%I64u\n",StringParams[stringIdx].param.hash));
+				}
+				*/
+				//vfx name dump
+				/*
+				if (Name==595181585)
+				{
+					if (StringParamCount>7)
+					{
+						if (StringParams[6].param.hash==39224491583389
+						||StringParams[6].param.hash==72256544285556
+						||StringParams[6].param.hash==32886448170624
+						||StringParams[7].param.hash==173102471356897
+						||StringParams[6].param.hash==34251201099326)
+						{
+							Printf(Str("%I64u\n",StringParams[0].param.hash));
+						};
+					};
+				}
+				*/
+				//human target hash dump
+				/*if (Name==1968729831)
+				{
+					if (StringParamCount!=0)
+					{
+						Printf(Str("%I64u\n",StringParams[0].param.hash));
+					}
+				}*/
+				//mesh group hash dump
+				/*if (Name==1799953944)
+				{
+					Printf(Str("target: %I64u mesh group: %I64u\n",StringParams[0].param.hash,StringParams[1].param.hash));
+				}*/
+				//prp_ hash dump
+				/*if (Name==2523762371)
+				{
+					Printf(Str("%I64u\n",StringParams[0].param.hash));
+				}*/
+				//.sani subtitles dump
+				/*if (Name==595181585)
 				{
 					if (StringParamCount>6)
 					{
 						if (StringParams[5].param.hash==84993817083062) 
 						{
-							local float divisor = 0.6*1000/1001;
-							Printf(Str("%f,%I64u\n",TimeSections[0].StartFrame/divisor,StringParams[1].param.hash));
+							local float divisor = 0.60075*1000/1001;
+							Printf(Str("subp: %f,%I64u\n",TimeSections[0].StartFrame/divisor,StringParams[1].param.hash));
 						}
 					}
-				}
-	            //event string hash dump
-                /*
-                local uint stringIdx;
-	            for (stringIdx = 0; stringIdx < StringParamCount; stringIdx++)
-                {
-                    Printf(Str("%I64u\n",StringParams[stringIdx].param.hash));
-                }
-                */
-                //vfx name dump
-                /*
-                if (EventName==595181585)
-                {
-                    if (StringParamCount>7)
-                    {
-                        if (StringParams[6].param.hash==39224491583389
-                        ||StringParams[6].param.hash==72256544285556
-                        ||StringParams[6].param.hash==32886448170624
-                        ||StringParams[7].param.hash==173102471356897
-                        ||StringParams[6].param.hash==34251201099326)
-                        {
-                            Printf(Str("%I64u\n",StringParams[0].param.hash));
-                        };
-                    };
-                }
-                */
-                //human target hash dump
-                /*if (EventName==1968729831)
-                {
-                    if (StringParamCount!=0)
-                    {
-                        Printf(Str("%I64u\n",StringParams[0].param.hash));
-                    }
-                }*/
-                //mesh group hash dump
-                /*if (EventName==1799953944)
-                {
-                    Printf(Str("target: %I64u mesh group: %I64u\n",StringParams[0].param.hash,StringParams[1].param.hash));
-                }*/
-                //prp_ hash dump
-                /*if (EventName==2523762371)
-                {
-                    Printf(Str("%I64u\n",StringParams[0].param.hash));
-                }*/
-                //.sani subtitles dump
-                /*if (EventName==595181585)
-                {
-                    if (StringParamCount>6)
-                    {
-                        if (StringParams[5].param.hash==84993817083062) 
-                        {
-                            local float divisor = 0.60075*1000/1001;
-                            Printf(Str("subp: %f,%I64u\n",TimeSections[0].StartFrame/divisor,StringParams[1].param.hash));
-                        }
-                    }
-                }*/
-            }
-		} Event <read = EnumToString(EventName)>;
+				}*/
+			}
+		} Event <read = EnumToString(Name)>;
 	}
 
 	if (CacheOffset != 0)
@@ -580,26 +589,77 @@ typedef struct
 
 		struct EventCache
 		{
-			uint IntParamsOffset;
-			uint IntParamCount;
+			switch (parentof(this).CategoryName)
+			{
+			case ag:
+				struct AnimGraphEventCache
+				{
+					struct MotionGraphFootFitEventCacheData // MotionGrpahFootFitEventCacheData
+					{
+						// Completely derived from MTEV_AG_SYNC_L and MTEV_AG_SYNC_R events. Frames list is from respective event time sections sorted in order by StartFrame.
+						// If animation is loop, Info.StartFrame = -(first event in order).Section.StartFrame, else 0.
+						struct MotionGraphFootFitInfo // MotionGrpahFootFitInfo
+						{
+							uint FramesOffset;
+							uint FrameCount;
+							int StartFrame;
+							enum FOOT_FIT_INFO_FLAGS
+							{
+								FOOT_FIT_INFO_FLAGS_IS_LOOP = 0x1,
+								FOOT_FIT_INFO_FLAGS_START_LEFT = 0x2, // Left foot first
+							} Flags;
 
-			uint FloatParamsOffset;
-			uint FloatParamCount;
+							if (FramesOffset != 0)
+							{
+								FSeek(startof(FramesOffset) + FramesOffset);
+		
+								uint Frames[FrameCount];
+							}
+						} Info;
+							
+						FSeek(startof(Info) + 0x10); // sizeof(MotionGraphFootFitInfo)
+					} FootFitData;
 
-			uint StringParamsOffset;
-			uint StringParamCount;
+					// A list of hashes which is seemingly unused but matches the StringParams used in event named 3487515216 (add anim graph tag).
+					uint TagsOffset;
+					uint TagCount;
+					
+					if (TagCount != 0)
+					{
+						FSeek(startof(TagsOffset) + TagsOffset);
 
-			if (IntParamsOffset != 0) Assert(IntParamCount != 0 && FTell() == startof(IntParamsOffset) + IntParamsOffset);
-			if (IntParamCount != 0)
-				uint IntParams[IntParamCount];
+						enum <uint64> TagString_StrCodeAlias
+						{
+							Hold = 10946689085138,
+							Cqc = 15970714994597,
+							Left = 168562599339607,
+							Right = 186371849431182,
+							Start = 256657689349378,
+							Carry = 274098151722498,
+							Damage = 43102718049991,
+							DisableGunHold = 46337489715398,
+							Idle = 61907898383491,
+							DisableMove = 7660441078150,
+							Cliff = 94765518158100,
+							Stand = 134474105696778,
+							Crawl = 167621566807970,
+							AttachWeaponToLHand = 171276586778105,
+							Supine = 207439181639403,
+							Hung = 236773365968224,
+							Squat = 80979382735191,
+						} Tags[TagCount];
+					}
+				} Cache;
+				break;
+			default:
+				Assert(false);
+				break;
+			}
 
-			if (FloatParamsOffset != 0) Assert(FloatParamCount != 0 && FTell() == startof(FloatParamsOffset) + FloatParamsOffset);
-			if (FloatParamCount != 0)
-				float FloatParams[FloatParamCount];
-
-			if (StringParamsOffset != 0) Assert(StringParamCount != 0 && FTell() == startof(StringParamsOffset) + StringParamsOffset);
-			if (StringParamCount != 0)
-				StrCode StringParams[StringParamCount];
+			// Debug
+			// local uint tgIdx = 0;
+			// for (tgIdx = 0; tgIdx < TagCount; tgIdx++)
+			// 	Printf("%Lu\n", Tags[tgIdx]);
 		} Cache;
 	}
 } EvpData <read = EnumToString(CategoryName), bgcolor = 0x00C010>;
@@ -610,7 +670,7 @@ typedef struct
 
 	short Count <hidden = true>;
 
-	ushort Padding; Assert(Padding == 0);
+	ushort Padding <hidden = true>; Assert(Padding == 0);
 
 	uint EntryOffsets[Count] <hidden = true>;
 
