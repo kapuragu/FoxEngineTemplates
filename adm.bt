@@ -22,7 +22,7 @@ struct AdmCell
 {
 	
 	ushort MainAmbientIndex : 3;		// TppSoundWorld.ambientParameter[]
-	ushort PaSecondaryAmbientIndexramIndexB : 3;	// TppSoundWorld.ambientParameter[]
+	ushort SecondaryAmbientIndex : 3;	// TppSoundWorld.ambientParameter[]
 	ushort SecondaryRtpcValue : 4 <read = ((float)this / (2 * 0xF))>; // MainRtpcValue = 1.0f - SecondaryRtpcValue, seems to be for `ambient_volume` rtpc - see tpp::sd::AmbientSourceBody::ExecAmbientUpdate for more
 	ushort Padding : 6 <hidden = true>; Assert(Padding == 0);
 } Cells[Header.CellCountX * Header.CellCountZ] <optimize = false, bgcolor = 0xAEABBC>;
