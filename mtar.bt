@@ -31,17 +31,17 @@ struct MtarHeader
 
 	enum <ushort> MTAR_FLAGS
 	{
-		MTAR_FLAGS_NEW = 0x1000,
+		MTAR_FLAGS_USE_MINI = 0x1000,
 
 		MTAR_FLAGS_HAS_SKEL_LIST = 0x4000,
-	} Flags; Assert((Flags & ~(MTAR_FLAGS_NEW | MTAR_FLAGS_HAS_SKEL_LIST)) == 0);
+	} Flags; Assert((Flags & ~(MTAR_FLAGS_USE_MINI | MTAR_FLAGS_HAS_SKEL_LIST)) == 0);
 
 	uint CommonInfoOffset;
 
 	uint64 Padding <hidden = true>; Assert(Padding == 0);
 } Header <bgcolor = COLOR_HEADER>;
 
-if (Header.Flags & MTAR_FLAGS_NEW)
+if (Header.Flags & MTAR_FLAGS_USE_MINI)
 {
 	struct MtarTableList2
 	{
@@ -136,7 +136,7 @@ if (Header.CommonInfoOffset != 0)
 	} CommonInfo <bgcolor = COLOR_STRCODE32>;
 }
 
-if (Header.Flags & MTAR_FLAGS_NEW)
+if (Header.Flags & MTAR_FLAGS_USE_MINI)
 {
 	local uint flIdx;
 	for (flIdx = 0; flIdx < Header.FileCount; flIdx++)
