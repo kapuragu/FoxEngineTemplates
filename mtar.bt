@@ -46,8 +46,8 @@ if (Header.Flags & MTAR_FLAGS_NEW)
 	struct MtarTableList2
 	{
 		PathCode64 Path; //Assert(((Path.hash >> 52) == (0xFC50 >> 4)) || ((Path.hash >> 52) == (0x4CB0 >> 4))); // Just confirming that these files are all GANIs by checking the extension
-		uint TracksOffset;
-		ushort TracksDataSize <read = (this << 4)>;
+		uint UnitTracksOffset;
+		ushort UnitTracksDataSize <read = (this << 4)>;
 
 		ushort MotionPointTracksOffset <read = (this << 4)>;
 		ushort MotionPointTracksDataSize <read = (this << 4)>;
@@ -141,7 +141,7 @@ if (Header.Flags & MTAR_FLAGS_NEW)
 	local uint flIdx;
 	for (flIdx = 0; flIdx < Header.FileCount; flIdx++)
 	{
-		FSeek(List[flIdx].TracksOffset);
+		FSeek(List[flIdx].UnitTracksOffset);
 
 		struct Gani2File
 		{
