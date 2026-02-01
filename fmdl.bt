@@ -1,27 +1,30 @@
 LittleEndian();
 
+local string LOGFILE_NAME = GetFileName() + ".txt";
+local int LOGFILE_NUM = FileNew();
+
 #include "common/common.bt"
 
 #define COLOR_Header 0xDFEFAA
 #define COLOR_FeatureHeader 0x7DE39E
 #define COLOR_BufferHeader 0x00AAFF
-#define COLOR_FmdlBoneDef 0xAED2E8
-#define COLOR_FmdlMeshGroupHeader 0xB9E8DD
-#define COLOR_FmdlMeshGroupDef 0xF7F205
-#define COLOR_FmdlMeshDef 0x763765
-#define COLOR_FmdlMaterialInstanceHeader 0x3C8D86
+#define COLOR_FmdlBoneUnit 0xAED2E8
+#define COLOR_FmdlUnitHeader 0xB9E8DD
+#define COLOR_FmdlUnitDef 0xF7F205
+#define COLOR_FmdlPacketDef 0x763765
+#define COLOR_FmdlMaterialInstance 0x3C8D86
 #define COLOR_FmdlBoneGroup 0x8A9872
 #define COLOR_FmdlTextureRefUnit 0xED688E
 #define COLOR_FmdlMaterialParameter 0x7C706F
-#define COLOR_FmdlShaderPlatformAliasUnit 0x939FC8
-#define COLOR_FmdlMeshDataLayoutDesc 0x000080
+#define COLOR_FmdlMaterialPlatformAliasUnit 0x939FC8
+#define COLOR_FmdlPacketDataLayoutDesc 0x000080
 #define COLOR_FmdlMeshBufferHeader 0x008000
 #define COLOR_FmdlMeshBufferFormatElement 0x008080
 #define COLOR_FmdlStringHeader 0x800000
-#define COLOR_FmdlAABB 0x800080
+#define COLOR_FmdlBoundingBox 0x800080
 #define COLOR_FmdlFileMeshBufferHeader 0x808000
-#define COLOR_FmdlLodInfo 0x808080
-#define COLOR_FmdlIBufferSlice 0x000040
+#define COLOR_FmdlPacketsLodDesc 0x808080
+#define COLOR_FmdlPacketLod 0x000040
 #define COLOR_FmdlType18 0x0000c0
 #define COLOR_FmdlType20 0x008040
 #define COLOR_PathCode64 0x0080c0
@@ -45,11 +48,11 @@ LittleEndian();
 
 enum <ubyte> FMDL_FEATURE_TYPE
 {
-	FMDL_FEATURE_TYPE_BONE_DEFS = 0,
-	FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_HEADERS = 1,
+	FMDL_FEATURE_TYPE_BONE_DEFS = 0, // SkeletonInfos
+	FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_HEADERS = 1, // MeshInfos
 	FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_DEFS = 2,
 	FMDL_FEATURE_TYPE_MESH_DEFS = 3,
-	FMDL_FEATURE_TYPE_MATERIAL_INSTANCE_HEADERS = 4,
+	FMDL_FEATURE_TYPE_MATERIAL_INSTANCE_HEADERS = 4, // MaterialInfos
 	FMDL_FEATURE_TYPE_BONE_GROUPS = 5,
 	FMDL_FEATURE_TYPE_TEXTURE_REFS = 6,
 	FMDL_FEATURE_TYPE_MATERIAL_PARAMS = 7,
@@ -58,8 +61,8 @@ enum <ubyte> FMDL_FEATURE_TYPE
 	FMDL_FEATURE_TYPE_MESH_BUFFER_HEADERS = 10,
 	FMDL_FEATURE_TYPE_MESH_BUFFER_FORMAT_ELEMENTS = 11,
 	FMDL_FEATURE_TYPE_STRING_HEADER = 12,
-	FMDL_FEATURE_TYPE_AABBS = 13,
-	FMDL_FEATURE_TYPE_FILE_MESH_BUFFER_HEADERS = 14,
+	FMDL_FEATURE_TYPE_BOUNDING_BOXES = 13,
+	FMDL_FEATURE_TYPE_FILE_MESH_BUFFER_HEADERS = 14, // TODO: BufferInfos
 	FMDL_FEATURE_TYPE_LOD_INFO = 16,
 	FMDL_FEATURE_TYPE_IBUFFER_SLICES = 17,
 	FMDL_FEATURE_TYPE_UNK_18 = 18,
@@ -71,9 +74,9 @@ enum <ubyte> FMDL_FEATURE_TYPE
 
 enum <uint> FMDL_BUFFER_TYPE
 {
-	FMDL_BUFFER_TYPE_MATERIAL_PARAMS = 0,
-	FMDL_BUFFER_TYPE_VERTICES = 2,
-	FMDL_BUFFER_TYPE_STRINGS = 3
+	FMDL_BUFFER_TYPE_VECTOR = 0,
+	FMDL_BUFFER_TYPE_POLY = 2,
+	FMDL_BUFFER_TYPE_STRING = 3
 };
 
 typedef struct
@@ -101,57 +104,57 @@ typedef ushort _PathIndex;
 struct FMDL_BONE_FLAGS
 {
 	ushort HasBoundingBox : 1;
-	ushort B : 1;
-	ushort C : 1;
-	ushort   : 5;
+	ushort B	: 1; if (!(B == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FMDL_BONE_FLAGS.B != 0");
+	ushort C	: 1; if (!(C == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FMDL_BONE_FLAGS.C != 0");
+	ushort Rest	: 5 <hidden = true>; if (!(Rest == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FMDL_BONE_FLAGS.Rest != 0");
 };
 
 typedef struct
 {
-	_NameIndex NameIndex;
+	_NameIndex NameIdIndex;
 	short ParentIndex;
-	ushort AABBIndex;
-	FMDL_BONE_FLAGS Flags; Assert(Flags.B == 0);
+	ushort BoundingBoxIndex;
+	FMDL_BONE_FLAGS Flags;
 
-	FSkip(8);
-	Vector4 LocalPosition;
+	uint64 Padding0 <hidden = true>; if (!(Padding0 == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlBoneUnit.Padding0 != 0");
+	Vector4 Position;
 	Vector4 WorldPosition;
-} FmdlBoneDef <optimize = false, bgcolor = COLOR_FmdlBoneDef>;
+} FmdlBoneUnit <optimize = false, bgcolor = COLOR_FmdlBoneUnit>;
 
-struct FMDL_MESH_GROUP_HEADER_FLAGS
+struct FMDL_UNIT_FLAGS
 {
-	ushort Invisible : 1;
-	ushort A		 : 1;
-	ushort B		 : 1;
-	ushort		   : 5;
+	ushort Invisible 			: 1;
+	ushort HasFragmentOffset	: 1;
+	ushort B					: 1; if (!(B == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FMDL_UNIT_FLAGS.B != 0");
+	ushort Rest					: 5 <hidden = true>; if (!(Rest == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FMDL_UNIT_FLAGS.Rest != 0");
 };
 
 typedef struct
 {
-	_NameIndex NameIndex;
-	FMDL_MESH_GROUP_HEADER_FLAGS Flags; Assert(Flags.B == 0);
+	_NameIndex NameIdIndex;
+	FMDL_UNIT_FLAGS Flags;
 	short ParentIndex;
-	short VectorsIndex; // used for type A
-} FmdlMeshGroupHeader <optimize = false, bgcolor = COLOR_FmdlMeshGroupHeader>;
+	short FragmentOffsetVectorIndex; // used for type A
+} FmdlUnitHeader <optimize = false, bgcolor = COLOR_FmdlUnitHeader>;
 
 typedef struct
 {
-	uint Unknown; Assert(Unknown == 0);
+	uint Unknown; if (!(Unknown == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlUnitDef.Unknown != 0");
 
-	ushort MeshGroupHeaderIndex;
-	ushort MeshCount;
-	ushort MeshesStartIndex;
+	ushort HeaderIndex;
+	ushort PacketCount;
+	ushort PacketsStartIndex;
 
-	ushort AABBIndex;
+	ushort BoundingBoxIndex;
 
-	uint Padding0 <hidden = true>; Assert(Padding0 == 0);
+	uint Padding0 <hidden = true>; if (!(Padding0 == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlUnitDef.Padding0 != 0");
 
-	ushort IBufferSlicesStartIndex;
+	ushort IndexSpansStartIndex;
 
-	ushort Padding1 <hidden = true>; Assert(Padding1 == 0);
-	uint Padding2 <hidden = true>; Assert(Padding2 == 0);
-	uint64 Padding3 <hidden = true>; Assert(Padding3 == 0);
-} FmdlMeshGroupDef <optimize = false, bgcolor = COLOR_FmdlMeshGroupDef>;
+	ushort Padding1 <hidden = true>; if (!(Padding1 == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlUnitDef.Padding1 != 0");
+	uint Padding2 <hidden = true>; if (!(Padding2 == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlUnitDef.Padding2 != 0");
+	uint64 Padding3 <hidden = true>; if (!(Padding3 == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlUnitDef.Padding3 != 0");
+} FmdlUnitDef <optimize = false, bgcolor = COLOR_FmdlUnitDef>;
 
 /*
 enum <uint> TEMP_FINAL_BLENDSTATE
@@ -169,7 +172,7 @@ enum <uint> TEMP_FINAL_BLENDSTATE
 };
 */
 
-struct FMDL_MESH_DEF_FLAGS
+struct FMDL_PACKET_FLAGS
 {
 	// POLY
 	// ModelDecal::Create@14024e656, & 0x6d0 (TODO_USE_DEPTHBIAS, TODO_PD, TODO_PB_01, C, A)
@@ -178,21 +181,21 @@ struct FMDL_MESH_DEF_FLAGS
 	// =========
 
 	// ModelPacketRenderControlBase::GetRenderState@14023d0f9, & 0xF
-	uint TODO_DEPTHBIAS_OR_BLENDMODE : 4;
+	uint BlendMode : 4;
 
 	// ModelPacketRenderControlBase::GetRenderState@14023d0f9, & 0x10, some value = (UseUnknownOffset ? UnknownOffset + 1 : 0);
 	// DrawModelArrayMultiObject@14023966b
-    uint TODO_USE_DEPTHBIAS : 1;
+    uint UseBlendMode : 1;
 
 	// ModelPacketRenderControlBase::GetRenderState@14023d0c7, >> 5
-	uint TODO_CULLING : 1; 
+	uint CullMode : 1; 
 
 	// ModelPacketRenderControlBase::GetRenderState@14023d0e5, >> 6
-	uint TODO_DEPTHTESTMODE : 1;                 
+	uint DepthTestMode : 1;                 
 
 	// ModelPacketRenderControlBase::GetRenderState@14023d0d2, >> 7
 	// 14025b2a3, set in code
-	uint TODO_ALPHATESTMODE_01 : 1;
+	uint AlphaTestModeA : 1;
 
 	// BYTE 1
 	// =========
@@ -201,110 +204,110 @@ struct FMDL_MESH_DEF_FLAGS
 	uint NoShadow : 1; 
 
 	// SEE: ModelDecal::Create above
-    uint C : 1;
+    uint C : 1; if (C) FPrintf(LOGFILE_NUM, "%s = %d\n", "C", C);
 
 	// 14026c5c0, >> 10
-    uint A : 1;
+    uint A : 1; if (A) FPrintf(LOGFILE_NUM, "%s = %d\n", "A", A);
 
-    uint : 2;
+    uint K : 2; if (K) FPrintf(LOGFILE_NUM, "%s = %d\n", "K", K);
 
 	// 14026c5c6, >> 13
-    uint B : 1;
+    uint B : 1; if (B) FPrintf(LOGFILE_NUM, "%s = %d\n", "B", B);
 
 	// ModelPacketRenderControlBase::GetRenderState@14023d0d2, >> 14
-	uint TODO_ALPHATESTMODE_2 : 1;
+	uint AlphaTestModeB : 1;
 
 	// DrawModelArrayMultiObject@1402398fc, >> 0xF
-    uint L: 1;
+    uint L: 1; if (L) FPrintf(LOGFILE_NUM, "%s = %d\n", "L", L);
 
 	// BYTE 3
 	// =========
 
 	// DrawModelArrayMultiObject@140239648, >> 0x10 & 0xF
-    uint D : 4;
+    uint D : 4; if (D) FPrintf(LOGFILE_NUM, "%s = %d\n", "D", D);
 
 	// DrawModelArrayMultiObject@140239912, & 0x7f00000
-	uint M : 7;
+	uint M : 7; if (M) FPrintf(LOGFILE_NUM, "%s = %d\n", "M", M);
 };
 
-struct FmdlIBufferSlice;
+struct FmdlPacketLod;
 typedef struct
 {
-	FMDL_MESH_DEF_FLAGS Flags;
+	FMDL_PACKET_FLAGS Flags;
 
 	ushort MaterialInstanceIndex;
 	ushort BoneGroupIndex;
 
-	ushort DataLayoutIndex;
+	ushort DataLayoutDescIndex;
 
 	ushort VertexCount;
 	ushort VerticesStartIndex;
 
-	ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
+	ushort Padding0 <hidden = true>; if (!(Padding0 == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlPacketDef.Padding0 != 0");
 
-	FmdlIBufferSlice HighLodSlice;
+	FmdlPacketLod HighLodSpan;
 
-	uint IBufferSlicesStartIndex; // Only actually used if some EXE byte says to use multiple slices. Each slice's StartIndex is relative to the main slice.
+	uint IndexSpansStartIndex; // Only actually used if some EXE byte says to use multiple slices. Each slice's StartIndex is relative to the main slice.
 	FSkip(0x14);
-} FmdlMeshDef <optimize = false, bgcolor = COLOR_FmdlMeshDef>;
+} FmdlPacketDef <optimize = false, bgcolor = COLOR_FmdlPacketDef>;
 
 typedef struct
 {
-	_NameIndex NameIndex;
+	_NameIndex NameIdIndex;
 
-	ushort Padding0 <hidden = true>; Assert(Padding0 == 0);
+	ushort Padding0 <hidden = true>; if (!(Padding0 == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlMaterialInstance.Padding0 != 0");
 
-	_NameIndex MaterialIndex;
+	_NameIndex MaterialIdIndex;
 	byte TextureParamCount;
 	byte VectorParamCount;
 	ushort TextureParamsStartIndex;
 	ushort VectorParamsStartIndex;
 	
-	uint Padding1 <hidden = true>; Assert(Padding1 == 0);
-} FmdlMaterialInstanceHeader <optimize = false, bgcolor = COLOR_FmdlMaterialInstanceHeader>;
+	uint Padding1 <hidden = true>; if (!(Padding1 == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlMaterialInstance.Padding1 != 0");
+} FmdlMaterialInstance <optimize = false, bgcolor = COLOR_FmdlMaterialInstance>;
 
 typedef struct
 {
-	ushort UseWeightCount; Assert(UseWeightCount <= 4); // What is the largest number of bones any given vertex referencing this bone group use?
-	ushort BoneCount; Assert(UseWeightCount <= BoneCount);
+	ushort UseWeightCount; if (!(UseWeightCount <= 4)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlBoneGroup.UseWeightCount unexpected"); // What is the largest number of bones any given vertex referencing this bone group use?
+	ushort BoneCount; if (!(UseWeightCount <= BoneCount)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlBoneGroup.BoneCount unexpected");
 	ushort BoneIndices[BoneCount];
 	FSkip(0x40 - BoneCount * sizeof(ushort));
 } FmdlBoneGroup <optimize = false, bgcolor = COLOR_FmdlBoneGroup>;
 
 typedef struct
 {
-	_NameIndex NameIndex; // For "/Assets/path/name.ftex" this is StrCode("name") if TPP or just "name.ext" (ext can be tga, psd, etc.) if GZ
+	_NameIndex NameIdIndex; // For "/Assets/path/name.ftex" this is StrCode("name") if TPP or just "name.ext" (ext can be tga, psd, etc.) if GZ
 	_PathIndex PathIndex; // For "/Assets/path/name.ftex" this is PathCode64("/Assets/path/name.ftex") if TPP or just "/Assets/path/" if GZ
 } FmdlTextureRefUnit <optimize = true, bgcolor = COLOR_FmdlTextureRefUnit>;
 
 typedef struct
 {
-	_NameIndex ParamNameIndex;
+	_NameIndex ParamIdIndex;
 	ushort ReferenceIndex; // Can be either a path index to a .ftex or an index into the material params buffer 
 } FmdlMaterialParameter <optimize = true, bgcolor = COLOR_FmdlMaterialParameter>;
 
 typedef struct
 {
-	_NameIndex ShaderNameIndex;
-	_NameIndex TechniqueNameIndex;
-} FmdlShaderPlatformAliasUnit <optimize = true, bgcolor = COLOR_FmdlShaderPlatformAliasUnit>;
+	_NameIndex ShaderIdIndex;
+	_NameIndex TechniqueIdIndex;
+} FmdlMaterialPlatformAliasUnit <optimize = true, bgcolor = COLOR_FmdlMaterialPlatformAliasUnit>;
 
 typedef struct
 {
 	byte BufferCount;
 	byte FormatElementCount;
-	byte Unknown0; //Assert(Unknown0 == 0); //Possibly the first UV set's index.
+	byte PROBABLE_FirstUvSetIndex; //if (!(Unknown0 == 0)) FPrintf(LOGFILE_NUM, "%s\n", "TODOMESSAGE"); //Possibly the first UV set's index.
 	byte UvCount;
 	ushort BufferHeadersStartIndex;
 	ushort FormatElementsStartIndex;
-} FmdlMeshDataLayoutDesc <optimize = false, bgcolor = COLOR_FmdlMeshDataLayoutDesc>;
+} FmdlPacketDataLayoutDesc <optimize = false, bgcolor = COLOR_FmdlPacketDataLayoutDesc>;
 
 typedef struct
 {
 	byte FileMeshBufferHeaderIndex;
 	byte FormatElementCount;
 	byte Stride;
-	byte BindSlot; Assert(BindSlot <= 3);
+	byte BindSlot; if (!(BindSlot <= 3)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlMeshBufferHeader.BindSlot unexpected");
 	uint Offset;
 } FmdlMeshBufferHeader <optimize = false, bgcolor = COLOR_FmdlMeshBufferHeader>;
 
@@ -340,23 +343,25 @@ enum <ubyte> MESH_BUFFER_FORMAT_ELEMENT_TYPE
 
 typedef struct
 {
-	MESH_BUFFER_FORMAT_ELEMENT_USAGE Usage; Assert(Usage != 4 && Usage != 5 && Usage != 6 && Usage < 15);
-	MESH_BUFFER_FORMAT_ELEMENT_TYPE Type; Assert(Type != 0 && Type != 2 && Type != 3 && Type != 5 && Type < 10); Assert(Usage != 4);
+	MESH_BUFFER_FORMAT_ELEMENT_USAGE Usage; if (!(Usage != 4 && Usage != 5 && Usage != 6 && Usage < 15)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlMeshBufferFormatElement.Usage unexpected");
+	MESH_BUFFER_FORMAT_ELEMENT_TYPE Type; if (!(Type != 0 && Type != 2 && Type != 3 && Type != 5 && Type < 10)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlMeshBufferFormatElement.Type unexpected"); if (!(Usage != 4)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlMeshBufferFormatElement.Type unexpected");
 	ushort Offset;
 } FmdlMeshBufferFormatElement <optimize = false, bgcolor = COLOR_FmdlMeshBufferFormatElement>;
 
 typedef struct
 {
-	ushort BufferType; Assert(BufferType == FMDL_BUFFER_TYPE_STRINGS);
+	DisableBitfieldPacking();
+	FMDL_BUFFER_TYPE BufferType : 16; if (!(BufferType == FMDL_BUFFER_TYPE_STRING)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlStringHeader.BufferType != STRING");
+	EnableBitfieldPacking();
 	ushort Length;
 	uint Offset;
 } FmdlStringHeader <read = ReadString(Header.BuffersDataOffset + BufferHeaders[_BufferIndices[BufferType]].DataOffset + Offset, Length), optimize = false, bgcolor = COLOR_FmdlStringHeader>;
 
 typedef struct
 {
-	Vector4 Min;
-	Vector4 Max;
-} FmdlAABB <bgcolor = COLOR_FmdlAABB>;
+	Vector3W Max;
+	Vector3W Min;
+} FmdlBoundingBox <bgcolor = COLOR_FmdlBoundingBox>;
 
 enum <ushort> FMDL_FILE_MESH_BUFFER_TYPE
 {
@@ -367,42 +372,42 @@ enum <ushort> FMDL_FILE_MESH_BUFFER_TYPE
 typedef struct
 {
 	FMDL_FILE_MESH_BUFFER_TYPE Type;
-	FSkip(2);
+	ushort Padding0 <hidden = true>; if (!(Padding0 == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlFileMeshBufferHeader.Padding0 != 0");
 
 	uint DataSize;
 	uint DataOffset;
 	
-	uint Padding <hidden = true>; Assert(Padding == 0);
+	uint Padding1 <hidden = true>; if (!(Padding1 == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlFileMeshBufferHeader.Padding1 != 0");
 } FmdlFileMeshBufferHeader <optimize = false, bgcolor = COLOR_FmdlFileMeshBufferHeader>;
 
 typedef struct
 {
 	uint StartIndex;
 	uint Count;
-} FmdlIBufferSlice <optimize = true, bgcolor = COLOR_FmdlIBufferSlice>;
+} FmdlPacketLod <optimize = true, bgcolor = COLOR_FmdlPacketLod>;
 
 typedef struct
 {
 	ushort LodCount;
-	FSkip(2);
-	float unknown0;
-	float unknown1;
-	float unknown2;
-} FmdlLodInfo <optimize = true, bgcolor = COLOR_FmdlLodInfo>;
+	ushort Padding; if (!(Padding == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlPacketsLodDesc.Padding != 0");
+	float Unknown0;
+	float Unknown1;
+	float Unknown2;
+} FmdlPacketsLodDesc <optimize = true, bgcolor = COLOR_FmdlPacketsLodDesc>;
 
 typedef struct
 {
-	uint64 unknown0; //Always 0.
+	uint64 Unknown; if (!(Unknown == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlType18.Unknown != 0");
 } FmdlType18 <optimize = true, bgcolor = COLOR_FmdlType18>;
 
 typedef struct
 {
-    uint Unknown0 <hidden = true>; Assert(Unknown0 == 0);
+    uint Unknown0 <hidden = true>; if (!(Unknown0 == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlType20.Unknown0 != 0");
 
-	float unknown0; //Nulling triggers lowest LOD faces.
-	float unknown1;
+	float Unknown1; //Nulling triggers lowest LOD faces.
+	float Unknown2;
 
-	float unknown2;
+	float Unknown3;
 
 	float LodPolygonSize; //Always a whole number?
 	float LodNearSize;
@@ -417,18 +422,18 @@ typedef struct
 
 struct FmdlHeader
 {
-	char Signature[4]; Assert(Signature == "FMDL");
+	char Signature[4]; if (!(Signature == "FMDL")) FPrintf(LOGFILE_NUM, "%s\n", "Signature unexpected");
 
-	float Version; Assert(Version == 2.03f || Version == 2.04f);
+	float Version; if (!(Version == 2.03f || Version == 2.04f)) FPrintf(LOGFILE_NUM, "%s\n", "Version unexpected");
 
 	uint FileDescOffset;
-	uint Padding0 <hidden = true>; Assert(Padding0 == 0);
+	uint Padding0 <hidden = true>; if (!(Padding0 == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlHeader.Padding0 != 0");
 
 	uint FeatureTypes;
-	uint Padding1 <hidden = true>; Assert(Padding1 == 0);
+	uint Padding1 <hidden = true>; if (!(Padding1 == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlHeader.Padding1 != 0");
 
 	uint BufferTypes;
-	uint Padding1 <hidden = true>; Assert(Padding1 == 0);
+	uint Padding1 <hidden = true>; if (!(Padding1 == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FmdlHeader.Padding1 != 0");
 	
 	uint FeatureCount;
 	uint BufferCount;
@@ -463,27 +468,27 @@ for (bIdx = 0, rBIdx = 0, bFit = 1; bIdx < 4; bIdx++, bFit = bFit << 1 | ((int)b
 if (_FeatureIndices[FMDL_FEATURE_TYPE_BONE_DEFS] != -1)
 {
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BONE_DEFS]].DataOffset);
-	FmdlBoneDef BoneDefs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BONE_DEFS]])];
+	FmdlBoneUnit BoneDefs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BONE_DEFS]])];
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_HEADERS] != -1)
 {
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_HEADERS]].DataOffset);
-	FmdlMeshGroupHeader MeshGroupHeaders[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_HEADERS]])];
+	FmdlUnitHeader MeshGroupHeaders[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_HEADERS]])];
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_DEFS] != -1)
 {
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_DEFS]].DataOffset);
-	FmdlMeshGroupDef MeshGroupDefs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_DEFS]])];
+	FmdlUnitDef MeshGroupDefs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS_GROUP_DEFS]])];
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS] != -1)
 {
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS]].DataOffset);
-	FmdlMeshDef MeshDefs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS]])];
+	FmdlPacketDef MeshDefs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DEFS]])];
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_INSTANCE_HEADERS] != -1)
 {
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_INSTANCE_HEADERS]].DataOffset);
-	FmdlMaterialInstanceHeader MaterialInstanceHeaders[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_INSTANCE_HEADERS]])];
+	FmdlMaterialInstance MaterialInstanceHeaders[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_INSTANCE_HEADERS]])];
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_BONE_GROUPS] != -1)
 {
@@ -503,12 +508,12 @@ if (_FeatureIndices[FMDL_FEATURE_TYPE_MATERIAL_PARAMS] != -1)
 if (_FeatureIndices[FMDL_FEATURE_TYPE_SHADER_PLATFORM_ALIASES] != -1)
 {
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_SHADER_PLATFORM_ALIASES]].DataOffset);
-	FmdlShaderPlatformAliasUnit ShaderAliases[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_SHADER_PLATFORM_ALIASES]])];
+	FmdlMaterialPlatformAliasUnit ShaderAliases[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_SHADER_PLATFORM_ALIASES]])];
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DATA_LAYOUT_DESCS] != -1)
 {
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DATA_LAYOUT_DESCS]].DataOffset);
-	FmdlMeshDataLayoutDesc MeshDataLayoutDescs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DATA_LAYOUT_DESCS]])];
+	FmdlPacketDataLayoutDesc MeshDataLayoutDescs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_MESH_DATA_LAYOUT_DESCS]])];
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_MESH_BUFFER_HEADERS] != -1)
 {
@@ -525,10 +530,10 @@ if (_FeatureIndices[FMDL_FEATURE_TYPE_STRING_HEADER] != -1)
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_STRING_HEADER]].DataOffset);
 	FmdlStringHeader StringHeaders[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_STRING_HEADER]])];
 }
-if (_FeatureIndices[FMDL_FEATURE_TYPE_AABBS] != -1)
+if (_FeatureIndices[FMDL_FEATURE_TYPE_BOUNDING_BOXES] != -1)
 {
-	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_AABBS]].DataOffset);
-	FmdlAABB AABBs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_AABBS]])];
+	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BOUNDING_BOXES]].DataOffset);
+	FmdlBoundingBox BoundingBoxes[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BOUNDING_BOXES]])];
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_FILE_MESH_BUFFER_HEADERS] != -1)
 {
@@ -538,22 +543,22 @@ if (_FeatureIndices[FMDL_FEATURE_TYPE_FILE_MESH_BUFFER_HEADERS] != -1)
 if (_FeatureIndices[FMDL_FEATURE_TYPE_LOD_INFO] != -1)
 {
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_LOD_INFO]].DataOffset);
-	FmdlLodInfo LodInfo; Assert(GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_LOD_INFO]]) == 1);
+	FmdlPacketsLodDesc LodInfo; if (!(GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_LOD_INFO]]) == 1)) FPrintf(LOGFILE_NUM, "%s\n", "LodInfo Count != 1");
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_IBUFFER_SLICES] != -1)
 {
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_IBUFFER_SLICES]].DataOffset);
-	FmdlIBufferSlice IBufferSlices[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_IBUFFER_SLICES]])];
+	FmdlPacketLod IBufferSlices[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_IBUFFER_SLICES]])];
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_UNK_18] != -1)
 {
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_UNK_18]].DataOffset);
-	FmdlType18 Type18; Assert(GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_UNK_18]]) == 1);
+	FmdlType18 Type18; if (!(GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_UNK_18]]) == 1)) FPrintf(LOGFILE_NUM, "%s\n", "18 Count != 1");
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_UNK_20] != -1)
 {
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_UNK_20]].DataOffset);
-	FmdlType20 Type20; Assert(GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_UNK_20]]) == 1);
+	FmdlType20 Type20; if (!(GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_UNK_20]]) == 1)) FPrintf(LOGFILE_NUM, "%s\n", "20 Count != 1");
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_PATH_HASHES] != -1)
 {
@@ -565,3 +570,6 @@ if (_FeatureIndices[FMDL_FEATURE_TYPE_NAME_HASHES] != -1)
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_NAME_HASHES]].DataOffset);
 	StrCode Names[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_NAME_HASHES]])] <bgcolor = COLOR_StrCode>;
 }
+
+FileSelect(LOGFILE_NUM);
+FileSave(LOGFILE_NAME);
