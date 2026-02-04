@@ -1,17 +1,25 @@
 #include "common/common.bt"
+#include "common/gr_sh_common.bt"
 
 typedef struct
 {
-	uint Time;
+	uint Time <read=ReadUInt24HTime(this)>;
 
 	VectorB4 Color;
 
-	float Lumen;
-} LightKeyframe <read = Time, bgcolor = cLtGreen, open = false>;
+	float Scale;
+} LightKeyframe <read = Str("%s, %s, %g",ReadUInt24HTime(Time),Str("(%g, %g, %g, %g)", (float)Color.x / 0xFF, (float)Color.y / 0xFF, (float)Color.z / 0xFF, (float)Color.w / 0xFF),Scale), bgcolor = cLtGreen, open = false>;
 
 typedef struct
 {
-	uint SelfIndex <hidden = true>;
+	enum <uint> WeatherType
+    {
+	    Clear=0,
+	    Cloudy=1,
+	    Rainy=2,
+	    Foggy=3,
+	    SandStom=4,//[sic]
+    } weatherType;
 
 	uint KeyframeCount <hidden = true>;
 
@@ -21,7 +29,7 @@ typedef struct
 	local uint i;
 	for(i = 0; i < KeyframeCount; i++)
 		LightKeyframe Keyframes;
-} LightTrackHeader <bgcolor = cLtPurple, open = true, optimize = false>;
+} LightTrackHeader <read = EnumToString(weatherType), bgcolor = cLtPurple, open = true, optimize = false>;
 
 struct BynaryDataHeader
 {
@@ -29,11 +37,11 @@ struct BynaryDataHeader
 
 	uint TotalSize;
 
-	uint TrackCount;
+	uint WeatherCount;
 } Header <hidden = true, bgcolor = cLtBlue>;
 
 local uint i;
-for(i = 0; i < Header.TrackCount; i++)
+for(i = 0; i < Header.WeatherCount; i++)
 {
 	FSeek(startof(Header) + sizeof(Header) + 12 * i);
 	LightTrackHeader Tracks;
