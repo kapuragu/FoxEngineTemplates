@@ -12,14 +12,14 @@ typedef struct
 
 typedef struct
 {
-	enum <uint> WeatherType
+	enum <uint> WEATHER_TYPE
     {
 	    Clear=0,
 	    Cloudy=1,
 	    Rainy=2,
 	    Foggy=3,
 	    SandStom=4,//[sic]
-    } weatherType;
+    } WeatherType;
 
 	uint KeyframeCount <hidden = true>;
 
@@ -29,7 +29,7 @@ typedef struct
 	local uint i;
 	for(i = 0; i < KeyframeCount; i++)
 		LightKeyframe Keyframes;
-} LightTrackHeader <read = EnumToString(weatherType), bgcolor = cLtPurple, open = true, optimize = false>;
+} LightTrackHeader <read = EnumToString(WeatherType), bgcolor = cLtPurple, open = true, optimize = false>;
 
 struct BynaryDataHeader
 {
