@@ -16,7 +16,7 @@ struct LocatorBinaryHeader
 
 struct LocatorBinary
 {
-    Vector3 Translation; FSkip(4);
+    Vector3 Position; FSkip(4);
     Quaternion Rotation;
     if ((Header.Flags & LOCATOR_BINARY_FLAGS_USE_SCALE) != 0)
     {

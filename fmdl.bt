@@ -18,7 +18,7 @@ LittleEndian();
 #define COLOR_FmdlMeshBufferHeader 0x008000
 #define COLOR_FmdlMeshBufferFormatElement 0x008080
 #define COLOR_FmdlStringHeader 0x800000
-#define COLOR_FmdlAABB 0x800080
+#define COLOR_FmdlBoundingBox 0x800080
 #define COLOR_FmdlFileMeshBufferHeader 0x808000
 #define COLOR_FmdlLodInfo 0x808080
 #define COLOR_FmdlIBufferSlice 0x000040
@@ -58,7 +58,7 @@ enum <ubyte> FMDL_FEATURE_TYPE
 	FMDL_FEATURE_TYPE_MESH_BUFFER_HEADERS = 10,
 	FMDL_FEATURE_TYPE_MESH_BUFFER_FORMAT_ELEMENTS = 11,
 	FMDL_FEATURE_TYPE_STRING_HEADER = 12,
-	FMDL_FEATURE_TYPE_AABBS = 13,
+	FMDL_FEATURE_TYPE_BOUNDING_BOXES = 13,
 	FMDL_FEATURE_TYPE_FILE_MESH_BUFFER_HEADERS = 14,
 	FMDL_FEATURE_TYPE_LOD_INFO = 16,
 	FMDL_FEATURE_TYPE_IBUFFER_SLICES = 17,
@@ -354,9 +354,9 @@ typedef struct
 
 typedef struct
 {
-	Vector4 Min;
 	Vector4 Max;
-} FmdlAABB <bgcolor = COLOR_FmdlAABB>;
+	Vector4 Min;
+} FmdlBoundingBox <bgcolor = COLOR_FmdlBoundingBox>;
 
 enum <ushort> FMDL_FILE_MESH_BUFFER_TYPE
 {
@@ -525,10 +525,10 @@ if (_FeatureIndices[FMDL_FEATURE_TYPE_STRING_HEADER] != -1)
 	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_STRING_HEADER]].DataOffset);
 	FmdlStringHeader StringHeaders[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_STRING_HEADER]])];
 }
-if (_FeatureIndices[FMDL_FEATURE_TYPE_AABBS] != -1)
+if (_FeatureIndices[FMDL_FEATURE_TYPE_BOUNDING_BOXES] != -1)
 {
-	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_AABBS]].DataOffset);
-	FmdlAABB AABBs[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_AABBS]])];
+	FSeek(Header.FeaturesDataOffset + FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BOUNDING_BOXES]].DataOffset);
+	FmdlBoundingBox BoundingBoxes[GetFeatureEntryCount(FeatureHeaders[_FeatureIndices[FMDL_FEATURE_TYPE_BOUNDING_BOXES]])];
 }
 if (_FeatureIndices[FMDL_FEATURE_TYPE_FILE_MESH_BUFFER_HEADERS] != -1)
 {
