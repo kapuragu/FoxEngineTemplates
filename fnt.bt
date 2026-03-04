@@ -1,8 +1,8 @@
 struct FntHeader
 {
 	ushort Version; Assert(Version == 0); // Guess
-	ushort CellWidth;
-	ushort CellHeight;
+	ushort TexCellWidth;
+	ushort TexCellHeight;
 	ushort GlyphWidth;
 	ushort GlyphHeight;
 	ushort GlyphCount;
@@ -11,10 +11,10 @@ struct FntHeader
 struct GlyphDesc
 {
 	uint Character;
-	ushort UvBottom;	// Bottom edge of glyph in texture (pixels)
-	ushort UvLeft;		// Left edge of glyph in texture (pixels)
-	ushort PadTop;		// Top padding within cell
-	ushort PadBottom;	// Bottom padding within cell
-	ushort PadLeft;		// Left padding within cell
-	ushort PadRight;	// Right padding within cell
+	ushort TexCellOffsetY;
+	ushort TexCellOffsetX;
+	ushort PaddingTop;
+	ushort PaddingBottom;
+	ushort PaddingLeft;
+	ushort PaddingRight;
 } Glyphs[Header.GlyphCount];
