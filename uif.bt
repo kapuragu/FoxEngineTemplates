@@ -322,7 +322,7 @@ struct ModelNodeTextInfo
 	// Used if USE_CUSTOM_FONT_INFO
 	// See UiFontDataElement for more
 	ubyte FontWidth;
-	ubyte TextHeight;
+	ubyte FontHeight;
 	ubyte TextSpace;
 	ubyte LineSpace;
 	
