@@ -124,7 +124,7 @@ typedef struct
 struct FMDL_UNIT_FLAGS
 {
 	ushort Invisible 			: 1;
-	ushort HasFragmentOffset	: 1;
+	ushort IsFragment			: 1;
 	ushort B					: 1; if (!(B == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FMDL_UNIT_FLAGS.B != 0");
 	ushort Rest					: 5 <hidden = true>; if (!(Rest == 0)) FPrintf(LOGFILE_NUM, "%s\n", "FMDL_UNIT_FLAGS.Rest != 0");
 };
@@ -134,7 +134,7 @@ typedef struct
 	_NameIndex NameIdIndex;
 	FMDL_UNIT_FLAGS Flags;
 	short ParentIndex;
-	short FragmentOffsetVectorIndex; // used for type A
+	short FragmentPositionVectorIndex;
 } FmdlUnitHeader <optimize = false, bgcolor = COLOR_FmdlUnitHeader>;
 
 typedef struct
@@ -183,7 +183,7 @@ struct FMDL_PACKET_FLAGS
 	// ModelPacketRenderControlBase::GetRenderState@14023d0f9, & 0xF
 	uint BlendMode : 4;
 
-	// ModelPacketRenderControlBase::GetRenderState@14023d0f9, & 0x10, some value = (UseUnknownOffset ? UnknownOffset + 1 : 0);
+	// ModelPacketRenderControlBase::GetRenderState@14023d0f9, & 0x10, some value = (UseBlendMode ? BlendMode + 1 : 0);
 	// DrawModelArrayMultiObject@14023966b
     uint UseBlendMode : 1;
 
