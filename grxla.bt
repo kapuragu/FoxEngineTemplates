@@ -162,7 +162,7 @@ typedef struct
 
 	GrxString Name;
 
-	uint localFlags;
+	uint localFlags; // 1- enable
 	
 	ushort shapeType;
 
