@@ -146,12 +146,12 @@ if (header.version == 3) // if TPP
 				
 		// Byte 0
         //tpp::gm::radio::impl::RadioManagerImpl::IsRadioGroupStopValid
-		ubyte FLAGS_1 : 1; Assert(FLAGS_1==0); // never on
+		ubyte FLAGS_1 : 1; // never on. On in GZ. External save flag???
 		ubyte FLAGS_2 : 1; // most always on in more than half of cases
 		ubyte FLAGS_4 : 1; // not on with the rest in 3838406372, Set_s0082_oprg0020, s0082 //related to IsSuitableForPhase
 		ubyte FLAGS_8 : 1; // not on with the rest in 3368279276, s0040 and s0240_rtrg5000
         
-		ubyte FLAGS_10 : 1 <hidden=true>; Assert(FLAGS_10==0); //unused? not checked for in the exe, but is part of the mask
+		ubyte FLAGS_10 : 1 <hidden=true>; //unused? not checked for in the exe, but is part of the mask. On in GZ. External save flag???
 				
         //tpp::gm::radio::RadioGroup2::GetRadioType	
 		RadioType radioType : 3;
