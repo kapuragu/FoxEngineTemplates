@@ -13,7 +13,7 @@ struct Header
         BigEndian();
     }
     ushort sequenceCount;
-    FSkip(8 * header.labelCount);    // 8 bytes of padding per label entry. Was it ever used? Who knows!
+    FSkip(8 * header.sequenceCount);    // 8 bytes of padding per label entry. Was it ever used? Who knows!
 } header <bgcolor = 0x5B507A>;         // coolor
 
 struct SpeechSequence
