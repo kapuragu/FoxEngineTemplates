@@ -12,7 +12,7 @@ struct Header
     {
         BigEndian();
     }
-    ushort labelCount;
+    ushort sequenceCount;
     FSkip(8 * header.labelCount);    // 8 bytes of padding per label entry. Was it ever used? Who knows!
 } header <bgcolor = 0x5B507A>;         // coolor
 
@@ -23,11 +23,11 @@ struct SpeechSequence
     uint speechPartCount; // Number of voice clip entries in this label.
     struct SpeechPart
     {
-        uint characterName;     // StrCode32, speaker's voice type.
-        uint condition;      // FNV132, "condition" state group's state name for the sound 
-        uint animationAct;   // StrCode32 hashes of an animation to do.
-        FSkip(4);
+        StrCode32 speaker; // speaker's voice type.
+        uint voiceParam; // FNV132, "condition" state group's state name for the voice clip 
+        StrCode32 action; // hashes of an animation to do. See singleActionStrCode32s, loopActionStrCode32s, SPEECH_ACTION_STRCODE32S
+        StrCode32 facial; // hash of a facial animation. See facialTypeStrCode32s
         float afterPauseSeconds;  // [says line] [pause this long before next line is said]
 			
     } speechParts[speechPartCount] <optimize=false>;
-} speechSequence[header.labelCount] <optimize=false,bgcolor = 0x5B618A>;
+} speechSequence[header.sequenceCount] <optimize=false,bgcolor = 0x5B618A>;
