@@ -18,7 +18,7 @@ struct Header
 
 struct SpeechSequence
 {
-    uint labelName;  // StrCode32 hash of the label's name, used by .lua and .frt.
+    StrCode32 labelName;  // hash of the label's name, used by .lua and .frt.
     uint dialogueEvent;      // FNV132, Dynamic Dialogue event name 
     uint speechPartCount; // Number of voice clip entries in this label.
     struct SpeechPart
