@@ -52,6 +52,8 @@ string ResolveHashFunc(StrCode32& hash)
 	case 3545218756: return "areaLevelThreshold";
 	case 3862311135: return "vfxInstanceName";
 	case 804179602: return "enableImmediateUpdate";
+ case 3612282275: return "splitFrame";
+ case 1594808049: return "startFrame";
     //String value
 	case 4250587280: return "SEND_CHILD_MATRIX";
 	case 2304335147: return "TPP_WEATHER_CONTROL";
@@ -136,8 +138,7 @@ typedef struct
 	if (Flags & FX_LOCATOR_HEADER_FLAGS_PARAMETERS)
 	{
 		uint dynamicPropertyCount <hidden = true>;
-
-		// Notable ones: 804179602, 3612282275, or 1594808049
+
 		StrCode32 dynamicPropertyName[dynamicPropertyCount] <read=ResolveHashFunc(this)>;
 		
 		struct FxVfxInstanceParameterDesc
@@ -151,10 +152,7 @@ typedef struct
 
 		local uint pmIdx <hidden=true>;
 		for (pmIdx = 0; pmIdx < dynamicPropertyCount; pmIdx++)
-		{
-			if (dynamicPropertyName[pmIdx].hash == 3612282275 || dynamicPropertyName[pmIdx].hash == 1594808049)
-				Assert(false, "There's some sort of weirdness. Take a look at mgsvtpp.exe!141b3d9b7.");
-
+		{
 			FSeek(startof(this) + dynamicPropertyDesc[pmIdx].Offset);
 			
 				switch (dynamicPropertyDesc[pmIdx].Type)
