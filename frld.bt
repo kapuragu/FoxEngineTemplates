@@ -1,0 +1,15 @@
+#include "common/common.bt"
+LittleEndian();
+
+struct
+{
+	char Signature[4] <hidden=true>;
+	ushort Version <hidden=true>;
+	if (Version!=2)
+	{
+		BigEndian();
+	}
+	ushort RailsCount;
+} Header <bgcolor = 0x8694EB>;
+
+StrCode32 Ids[Header.RailsCount]<bgcolor = 0xB9E7CA>;

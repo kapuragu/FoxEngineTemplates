@@ -1,0 +1,53 @@
+#include "common/common.bt"
+LittleEndian();
+
+struct
+{
+	char Signature[4] <hidden=true>;
+	ushort Version <hidden=true>;
+	if (Version!=2)
+	{
+		BigEndian();
+	}
+	ushort RailsCount;
+} Header <bgcolor = 0x8694EB>;
+
+FSkip(8);
+
+local uint railIndex = 0;
+
+struct
+{
+	Vector3W StartPoint;
+	Vector3W EndPoint;
+	uint PathOffset;
+	uint NotesOffset;
+	uint ExtensionsOffset;
+	ushort VertexCount;
+	ushort NoteCount;
+	
+	local int64 resumePos = FTell();
+	FSeek(PathOffset);
+
+	// Cubic Hermite Spline
+	struct RailVertex
+	{
+		Vector3 Position; float ArcLength; // Length of curve
+		Vector3 Tangent; float TangentLength; // TangentLength == length(Tangent) == sqrt(Tangent.x^2 + Tangent.y^2 + Tangent.z^2)
+		// Printf("%f, %f\n", -Tangent.x, Tangent.z);
+	} Vertices[VertexCount] <bgcolor = 0x8ADEF3, optimize=false>; 
+	
+	FSeek(NotesOffset);
+	struct RailNote
+	{
+		float Distance;
+		ushort ExtensionStartIndex;
+		ubyte ConditionType;
+		ubyte Type;
+	} Notes[NoteCount] <bgcolor = 0x00AAFF, optimize=true>;
+	
+	// FSeek(ExtensionsOffset);
+	// uint Extensions[NoteCount/2] <bgcolor = 0xB3A797, optimize=true>;
+	
+	FSeek(resumePos);
+} Rail[Header.RailsCount] <bgcolor = 0x7DE39E, optimize=false>;
