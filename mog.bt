@@ -131,7 +131,7 @@ for (i = 0; i < Header.GraphCount; i++)
 
                     ubyte MemPaddingA <hidden = true>; Assert(MemPaddingA == 0xA7);
                     ushort MemPaddingB <hidden = true>; Assert(MemPaddingB == 0xA7A7);
-                } BlendNode <bgcolor = C_FOOTER>;
+                } BlendNode[Maybe_ConnectNodeCount] <bgcolor = C_FOOTER, optimize=false>;
                 FSeek(rewindPos2);
             }
 

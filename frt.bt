@@ -255,7 +255,7 @@ struct Event
 			    Printf("node eventType: %u\n", eventType);
         }
 		RouteAimTargetType aimPointType;
-		FSkip(0x1);
+		byte bodySection; if (bodySection!=0) { Printf("bodySection: %u\n",bodySection); }
 		IsLoop isLoop; //Assumption that this bool is responsible for soldiers looping on an event node of a route, like searchlights
 		//"Param1" in TPP
 		ushort time; //A common wait time is 479 or 299.
@@ -349,6 +349,7 @@ struct Header
     char ROUT[4] <bgcolor = 0xFCE7A3, hidden=true>;
     ushort version; if (version==768) {BigEndian();}
     ushort routeCount;
+    if (version==2) { FSkip(0x8); Vector3 origin; FSkip(0x4); };
     uint routeIdsOffset;
     uint routeDefinitionsOffset;
     uint routeNodesOffset;
