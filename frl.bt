@@ -18,16 +18,16 @@ local uint railIndex = 0;
 
 struct
 {
-	Vector3W StartPoint;
-	Vector3W EndPoint;
-	uint PathOffset;
+	BoundingBox Bounds;
+
+	uint VerticesOffset;
 	uint NotesOffset;
 	uint ExtensionsOffset;
 	ushort VertexCount;
 	ushort NoteCount;
 	
 	local int64 resumePos = FTell();
-	FSeek(PathOffset);
+	FSeek(VerticesOffset);
 
 	// Cubic Hermite Spline
 	struct RailVertex
