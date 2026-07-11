@@ -620,7 +620,8 @@ typedef struct
 						FSeek(startof(Info) + 0x10); // sizeof(MotionGraphFootFitInfo)
 					} FootFitData;
 
-					// A list of hashes which is seemingly unused but matches the StringParams used in event named 3487515216 (add anim graph tag).
+					// A list of hashes which matches the StringParams used in event named 3487515216.
+					// Calls MotionGraphControl::AddCurrentNodeTag and MotionGraphControl::RemoveCurrentNodeTag
 					uint TagsOffset;
 					uint TagCount;
 					
