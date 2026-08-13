@@ -8,6 +8,21 @@ typedef struct
 	uint hash <format = hex>;
 } GeoNameHash <read = (hash)>;
 
+string ResolveHashFunc(GeoNameHash& hash)
+{
+	switch (hash.hash)
+	{
+        //Bone name
+	    case 7050094: return "GEOM";
+	    case 279943692: return "BLOCK";
+	    default: 
+            Printf("Unknown hash: %u\n",hash.hash);
+            return "";
+	}
+}
+
+#define FOX_DATA_RESOLVE_HASH_FUNC ResolveHashFunc
+
 #define COLOR_BG_TAGS 0xFF00FF
 #define COLOR_FG_TAGS 0x00FF00
 

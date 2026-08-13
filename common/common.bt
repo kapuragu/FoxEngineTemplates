@@ -154,8 +154,8 @@ typedef struct
 
 typedef struct
 {
-	Vector4 Min;
-	Vector4 Max;
+	Vector3W Min;
+	Vector3W Max;
 } BoundingBox;
 
 typedef struct

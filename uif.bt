@@ -113,7 +113,7 @@ struct ModelNodeNullInfo
 
 struct ModelNodeCommonInfo
 {
-	short ParentNameStrCode32Index;
+	ushort ParentNameStrCode32Index;
 
 	short Priority;
 
