@@ -41,7 +41,7 @@ struct
 	struct RailNote
 	{
 		float Distance;
-		ushort ExtensionStartIndex;
+		ushort ExtensionsStartIndex;
 		ubyte ConditionType;
 		ubyte Type;
 	} Notes[NoteCount] <bgcolor = 0x00AAFF, optimize=true>;

@@ -319,9 +319,22 @@ struct NavmeshChunkHeader
 
 		ubyte NavigationGraphNodeIndices[Use4NavigationGraphNodes ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
 
-		ushort NeighborDataChunkIds[Use4NeighborInfos ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
+		// Ugly hack to avoid invalid access to NeighborNavmeshInfos[i].Invalid when not invalid or vice versa
+		local ushort navmeshInfo0 = ReadUShort(startof(parentof(this)) + parentof(this).MeshDataOffset + DataOffset * 2 + 0);
+		local ushort navmeshInfo1 = ReadUShort(startof(parentof(this)) + parentof(this).MeshDataOffset + DataOffset * 2 + 2);
+		local ushort navmeshInfo2 = ReadUShort(startof(parentof(this)) + parentof(this).MeshDataOffset + DataOffset * 2 + 4);
+		local ushort navmeshInfo3 = ReadUShort(startof(parentof(this)) + parentof(this).MeshDataOffset + DataOffset * 2 + 6);
+		if (
+			navmeshInfo0 != 0xFFFF && (NeighborNavmeshInfos[0].Type != NAVMESH_NEIGHBOR_TYPE_INSIDE)
+			|| navmeshInfo1 != 0xFFFF && (NeighborNavmeshInfos[1].Type != NAVMESH_NEIGHBOR_TYPE_INSIDE)
+			|| navmeshInfo2 != 0xFFFF && (NeighborNavmeshInfos[2].Type != NAVMESH_NEIGHBOR_TYPE_INSIDE)
+			|| Use4NeighborInfos && navmeshInfo3 != 0xFFFF && (NeighborNavmeshInfos[3].Type != NAVMESH_NEIGHBOR_TYPE_INSIDE)
+		)
+		{
+			ushort NeighborDataChunkIds[Use4NeighborInfos ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
 
-		ushort NeighborTileIds[Use4NeighborInfos ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
+			ushort NeighborTileIds[Use4NeighborInfos ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
+		}
 
 		FSeek(rewindPos + 4); // sizeof(NavmeshDesc06) == 4
 	} Meshes[MeshCount] <optimize = false, bgcolor = COLOR_NAVMESHCHUNK_MESHES>;
