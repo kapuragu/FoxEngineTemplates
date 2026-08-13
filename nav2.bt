@@ -319,16 +319,13 @@ struct NavmeshChunkHeader
 
 		ubyte NavigationGraphNodeIndices[Use4NavigationGraphNodes ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
 
-		// Ugly hack to avoid invalid access to NeighborNavmeshInfos[i].Invalid when not invalid or vice versa
-		local ushort navmeshInfo0 = ReadUShort(startof(parentof(this)) + parentof(this).MeshDataOffset + DataOffset * 2 + 0);
-		local ushort navmeshInfo1 = ReadUShort(startof(parentof(this)) + parentof(this).MeshDataOffset + DataOffset * 2 + 2);
-		local ushort navmeshInfo2 = ReadUShort(startof(parentof(this)) + parentof(this).MeshDataOffset + DataOffset * 2 + 4);
-		local ushort navmeshInfo3 = ReadUShort(startof(parentof(this)) + parentof(this).MeshDataOffset + DataOffset * 2 + 6);
-		if (
-			navmeshInfo0 != 0xFFFF && (NeighborNavmeshInfos[0].Type != NAVMESH_NEIGHBOR_TYPE_INSIDE)
-			|| navmeshInfo1 != 0xFFFF && (NeighborNavmeshInfos[1].Type != NAVMESH_NEIGHBOR_TYPE_INSIDE)
-			|| navmeshInfo2 != 0xFFFF && (NeighborNavmeshInfos[2].Type != NAVMESH_NEIGHBOR_TYPE_INSIDE)
-			|| Use4NeighborInfos && navmeshInfo3 != 0xFFFF && (NeighborNavmeshInfos[3].Type != NAVMESH_NEIGHBOR_TYPE_INSIDE)
+		// Data chunk and tile ID arrays only generated if one or more neighbors need them.
+		// The reads are a hack to avoid invalid access to NeighborNavmeshInfos[i].Invalid when not invalid or vice versa by reading them again as raw ushorts
+		local int64 infosOffset = startof(parentof(this)) + parentof(this).MeshDataOffset + DataOffset * 2;
+		if (ReadUShort(infosOffset + 0) != 0xFFFF && (NeighborNavmeshInfos[0].Type != NAVMESH_NEIGHBOR_TYPE_INSIDE)
+			|| ReadUShort(infosOffset + 2) != 0xFFFF && (NeighborNavmeshInfos[1].Type != NAVMESH_NEIGHBOR_TYPE_INSIDE)
+			|| ReadUShort(infosOffset + 4) != 0xFFFF && (NeighborNavmeshInfos[2].Type != NAVMESH_NEIGHBOR_TYPE_INSIDE)
+			|| Use4NeighborInfos && ReadUShort(infosOffset + 6) != 0xFFFF && (NeighborNavmeshInfos[3].Type != NAVMESH_NEIGHBOR_TYPE_INSIDE)
 		)
 		{
 			ushort NeighborDataChunkIds[Use4NeighborInfos ? 4 : 3] <bgcolor = COLOR_NAVMESHCHUNK_NEIGHBORINFO>;
