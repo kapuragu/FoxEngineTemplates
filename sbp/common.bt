@@ -47,8 +47,20 @@ enum <uint> Curve_ShapeInvert
 struct SourceInfo
 {
 	uint pluginID <comment="Unknown purpose">; // pluginID according to the integration demo
-	ObjectSoundEmbedOrStream embedOrStream;
+    local ObjectSoundEmbedOrStream isStreamOrEmbed;
+    if (BankVer<118){
+        ObjectSoundEmbedOrStream embedOrStream <hidden=true>;
+        isStreamOrEmbed=embedOrStream;
+    }
+    else{
+        ubyte isStream;
+        isStreamOrEmbed=isStream;
+    };
 	uint sourceID <fgcolor = 0x00FF00>;
+    if (BankVer>=118){
+        FSkip(6);
+        return;
+    }
 	uint uFileID <comment="If streamed, same as sourceID. If embedded, the soundBankId.">;
 
 	local uint pluginIDFlag15 = pluginID & 0xF;

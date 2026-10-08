@@ -73,7 +73,11 @@ struct SoundStructure
 	// for printing to console
 	Printf("Parent ID: %u\n", parentObjectId);
 	Printf("Output Bus ID: %u\n", outputBusId);
-	
+    
+    if (BankVer>=118){
+        return;
+    };
+    
 	Boolean overrideSettingsForPlaybackPriority;
 	Boolean activateOffsetPriorityByDistanceSetting;
 	ubyte additionalParametersCount;

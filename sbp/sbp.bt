@@ -88,7 +88,7 @@ struct Object
 			break;
 
 		case Sound:
-			SourceInfo sourceinfo <read=Str("%s %s, id: %u",EnumToString(this.embedOrStream),EnumToString(this.soundType),this.sourceID)>;
+			SourceInfo sourceinfo <read=Str("%s %s, id: %u",EnumToString(this.isStreamOrEmbed),EnumToString(this.soundType),this.sourceID)>;
 			SoundStructure soundStructure <optimize=false>;
 			break;
 
@@ -208,7 +208,13 @@ struct Object
 
 		// as of v2.5
 		case SequenceContainer:
+            if (BankVer>=118){
+                FSkip(1);
+            };
 			SoundStructure soundstructure;
+            if (BankVer>=118){
+                break;
+            };
             short NoOfLoops;
             short loop_mod_min;
             short loop_mod_max;
@@ -260,6 +266,9 @@ struct Object
 		// as of v2.5
 		case SwitchContainer:
 			SoundStructure soundstructure;
+            if (BankVer>=118){
+                break;
+            };
             uint isStateGroup;
             uint groupName; Printf("HASH-stateGroup=%u\n",groupName);
             uint defaultStateName; Printf("HASH-state=%u\n",defaultStateName);
@@ -285,7 +294,13 @@ struct Object
 			break;
 
 		case ActorMixer: // HWL According to PS3 files. This is ugly.
+            if (BankVer>=118){
+                FSkip(1);
+            };
 			SoundStructure soundstructure;
+            if (BankVer>=118){
+                break;
+            };
             if (FTell()<startof(objectId)+objectSize)
             {
 			    uint childrenCount;
@@ -337,6 +352,9 @@ struct Object
 			break;
 
 		case BlendContainer:
+            if (BankVer>=118){
+                break;
+            };
 			SoundStructure soundstructure;
 			uint childrenCount;
 			uint children[childrenCount];
@@ -423,6 +441,9 @@ struct Object
             break;
 
 		case MusicSegment:
+            if (BankVer>=118){
+                break;
+            };
 			SoundStructure soundstructure;
 			MusicNodeParams musicnodeparams;
 			double duration;
@@ -433,6 +454,9 @@ struct Object
 			break;
 	
 		case MusicTrack:
+            if (BankVer>=118){
+                break;
+            };
 			uint count;
 			// there's a weird for loop for the count in the integration demo code, apparently there can
 			// be multiple sourceinfo objects??
@@ -519,6 +543,9 @@ struct Object
 			//FSkip(decisionTreeArgument1);
 			break;
 		case MusicPlaylistContainer: // early implementation
+            if (BankVer>=118){
+                break;
+            };
 			SoundStructure soundstructure;
 			MusicNodeParams musicnodeparams;
 			Transitions transitions;
@@ -640,6 +667,13 @@ struct Object
             AttenCurveType LowPassFilter;
             AttenCurveType Spread;
             AttenCurveType OutputBusVolume;
+            
+            if (BankVer>=118)
+            {
+                AttenCurveType NewCurveTypeA;
+                AttenCurveType NewCurveTypeB;
+            };
+            
             if (OutputBusVolume>0)
             {
                 CurveDefinition OutputBusVolumeCurve;
@@ -659,6 +693,18 @@ struct Object
             if (Spread>0)
             {
                 CurveDefinition SpreadCurve;
+            };
+            
+            if (BankVer>=118)
+            {
+                if (NewCurveTypeA>0)
+                {
+                    CurveDefinition NewCurveA;
+                };
+                if (NewCurveTypeB>0)
+                {
+                    CurveDefinition NewCurveB;
+                };
             };
             RTPC rtpc;
             break;
