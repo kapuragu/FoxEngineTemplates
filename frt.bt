@@ -148,12 +148,28 @@ struct EventExtensions_Hovering
 	FSkip(sizeof(uint) * 3);
 };
 
-enum<int> HeliDoorFlags
+enum<uint> DoorState
 {
-	CLOSE_LEFT=0,
-	OPEN_LEFT=1,
-	CLOSE_RIGHT=2,
-	OPEN_RIGHT=3,
+    Default = 0, // Unreferenced
+    Open = 1,
+    Closed = 2,
+    // _ = 3, // Unreferenced
+};
+
+enum<uint> DirectionType
+{
+    None = 0,
+    World = 1,
+    Local = 2,
+    AimPointLocal = 3,
+};
+
+enum<uint> DoorSide
+{
+    DoorSideDefault = 0, // Unreferenced
+    DoorSideLeft = 1, // SetDefaultDoorSideLeft
+    DoorSideRight = 2, // SetDefaultDoorSideRight
+    // _ = 3, // Unreferenced
 };
 
 struct EventExtensions_Normal
@@ -162,16 +178,40 @@ struct EventExtensions_Normal
 	int unknown1;
 	int speed;
 	int unknown3;
-	if (flags!=0||unknown1!=0||speed!=0||unknown3!=0)
+    /*
+    DoorState LeftDoorState : 2;
+    DoorState RightDoorState : 2;
+    DoorState typeC : 2;
+    DirectionType DirectionType : 2;
+    DoorSide DefaultDoorSide : 2;
+    bool SetTargetSpeed; // value ? (speed = extensions[2] * KPH_TO_MPS, field127_0x84 = (float)extensions[2]) : (field126_0x80 = -1.0f)
+	*/
+    if (flags!=0||unknown1!=0||speed!=0||unknown3!=0)
 		Printf("\nparam6: %u\nparam7: %u\nparam8: %u\nparam9: %u",flags,unknown1,speed,unknown3);
 	if (flags & 1)
-		local HeliDoorFlags heliDoorFlags1 = CLOSE_LEFT;
+		local int heliDoorFlagsCLOSE_LEFT = 1;
 	if (flags & 2)
-		local HeliDoorFlags heliDoorFlags3 = OPEN_LEFT;
+		local int heliDoorFlagsOPEN_LEFT = 1;
 	if (flags & 4)
-		local HeliDoorFlags heliDoorFlags2 = CLOSE_RIGHT;
+		local int heliDoorFlagsCLOSE_RIGHT = 1;
     if (flags & 8)
-		local HeliDoorFlags heliDoorFlags4 = OPEN_RIGHT;
+		local int heliDoorFlagsOPEN_RIGHT = 1;
+    if (flags & 16)
+		local int heliTypeC = 1;
+    if (flags & 32)
+		local int heliTypeC2 = 1;
+    if (flags & 64)
+		local int DirectionTypeNone = 1;
+    if (flags & 128)
+		local int DirectionTypeWorld = 1;
+    if (flags & 256)
+		local int DirectionTypeLocal = 1;
+    if (flags & 512)
+		local int DirectionTypeAimPointLocal = 1;
+	if (flags & 1024)
+		local int defaultDoorSideLeft = 1;
+	if (flags & 2048)
+		local int defaultDoorSide2Right= 1;
 	//There's more flags, but no idea.
 };
 
@@ -296,10 +336,9 @@ struct Event
 			EventExtensions_DropPoint extensions;
 		else if (eventType==Hovering)
 			EventExtensions_Hovering extensions;
-		else if (eventType==Normal)
+		else if (eventType==Normal||
+                eventType==PermitGettingOff)
 			EventExtensions_Normal extensions;
-		else if (eventType==PermitGettingOff)
-			EventExtensions_PermitGettingOff extensions;
 		else if (eventType==PutHostageInVehicle
 				||eventType==TakeHostageOutOfVehicle)
 			EventExtensions_Common_HostageVehicle extensions;
