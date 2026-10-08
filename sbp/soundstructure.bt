@@ -142,7 +142,7 @@ struct SoundStructure
 	*/
 	
 	//Boolean overrideParentSettingsForGameDefinedAuxillarySends;
-	Boolean overridePositioningSettings;
+	//Boolean overridePositioningSettings;
 	
 	//byte howToLimitSoundInstances;
 	
