@@ -52,15 +52,17 @@ enum <byte> ObjectType {
 // creating your own sound banks.
 local Boolean is_game_soundbank = true;	   
 
+local uint BankVer = 88;
+
 struct BankHeader
 {
 	int sectionSize;
 	local int startOfSection = FTell();
-	int soundBankVersion <comment="TPP is 88">;
+	int soundBankVersion <comment="TPP is 88">; BankVer=soundBankVersion;
 	uint soundBankId <comment="FNV132 hash of the .sbp name">; Printf("HASH-soundBankId=%u\n",soundBankId);
-	int unknown0 <comment="12 in TPP/MGO vox/SSD, 0 in MGO bgm/GZ/PT?">;
-	int unknown1 <comment="Usually 1?">;
-	int unknown2 <comment="Varies?">;
+	int languageId <comment="12 in TPP/MGO vox/SSD, 0 in MGO bgm/GZ/PT?">;
+	int feedbackPresent <comment="Usually 1?">; is_game_soundbank=((feedbackPresent&1)!=0);
+	int projectId <comment="Varies?">;
 	FSkip( (sectionSize + startOfSection) - FTell() ); // Different with more padding in PS3 vox_hideo? Unreasonably huge padding size in PT/sh soundbanks
 };
 
@@ -93,11 +95,14 @@ struct Object
 		case EventAction:
 			//ScopeEventAction scope_of_event_action;
 			ActionType action_type;
+            
+            local ActionKind action_kind=(action_type>>8);
+            local ScopeEventAction eventActionScope=(action_type);
 
 			printActionType(action_type);
 			uint id_of_game_obj_referenced_above <comment="This is zero if there is no game object." , bgcolor = 0xD8C5EA>;
 			// Always zero, according to the wiki
-			ubyte unknown;
+			Boolean target_id_is_bus;
 			ubyte additional_params;
 
 			// AkPropBundle<AkPropValue>::SetInitialParams() 
@@ -119,79 +124,71 @@ struct Object
 				    uint max;
 			    } randomizerminmax[randomizerCount];
 			}
-
-			if (action_type == AkActionType_Play || action_type == AkActionType_PlayAndContinue)
-			{
-				ubyte curveType; // sets up some unknown flags again
-				uint fileID;
-			}
+            
+            
 			// Resume or pause action types
-			else if (action_type >= 514 && action_type <= 777)
-			{
-				// NOTE: in the place of this ubyte is actually a uint if we're changing the state or switch
-				// or a state/switch group. but i can't find the code that differentiates those cases...
-				// EDIT: it's the virtual function that does it
-				ubyte unknown_count <hidden=true>; // some unknown flags are updated based on this value
-				ubyte resume_or_pause_unknown;
-				ExceptionParams exceptionparams;
-			}
-			else if (action_type == AkActionType_SetState || action_type == AkActionType_SetSwitch)
+			if (action_kind<=RESET_VOICE_LOWPASS_FILTER||action_kind==SET_GAME_PARAMETER
+            ||action_kind==0x20||action_kind==0x30)
+            {
+                ubyte curveType; // sets up some unknown flags again
+            }
+            
+            if (action_kind == SET_STATE || action_kind == SET_SWITCH)
 			{
 				uint state_switch_group_ID; Printf("HASH-stateGroup=%u\n",state_switch_group_ID);
 				uint target_switch_state_ID; Printf("HASH-state=%u\n",target_switch_state_ID);
 			}
+            
 			// set pitch and set volume, based on my own observations
-			else if (action_type == AkActionType_SetPitch_M || action_type == AkActionType_SetPitch_O ||
-				action_type == AkActionType_SetVolume_M || action_type == AkActionType_SetVolume_O)
+			if ((action_kind>=SET_VOICE_PITCH&&action_kind<=RESET_VOICE_LOWPASS_FILTER)
+            ||action_kind==0x20||action_kind==0x30||action_kind==SET_GAME_PARAMETER||action_kind==RESET_GAME_PARAMETER)
 			{
-				ubyte unknown;
 				// not sure if this is what it actually means
+                //enum <ubyte> AkValueMeaning
 				enum <ubyte> AbsoluteOrRelative
 				{
 					Relative=2,
 					Absolute=1
+					//AkValueMeaning_Default,
+					//AkValueMeaning_Indepentent,
+					//AkValueMeaning_Offset
 				} absoluteorrelative;
-				float valueSetting;
-			}
-			else if (action_type == AkActionType_SetGameParameter || action_type == AkActionType_SetGameParameter_O)
+				float value1;
+				float value2;
+				float value3;
+            }
+            
+            if (action_kind == SET_STATE || action_kind == SET_SWITCH)
 			{
-				FSkip(1); // appears to be more correct this way? this weird 0x4 appears very frequently after propsCount
-				enum <ubyte> AkValueMeaning
-				{
-					AkValueMeaning_Default,
-					AkValueMeaning_Indepentent,
-					AkValueMeaning_Offset
-				} valueMeaning;
-				Vector3 position;
+				uint state_switch_group_ID; Printf("HASH-stateGroup=%u\n",state_switch_group_ID);
+				uint target_switch_state_ID; Printf("HASH-state=%u\n",target_switch_state_ID);
 			}
-			else if (action_type == AkActionType_BypassFX_M || action_type == AkActionType_BypassFX_O)
+            
+            if (action_kind == ENABLE_BYPASS_OR_DISABLE_BYPASS || action_kind == RESET_BYPASS_EFFECT)
 			{
 				Boolean is_bypass;
-				uint targetMask;
-
-				// breaks parsing, commented out for now
-				//ExceptionParams exceptionparams;
+				ubyte targetMask;
 			}
+            
 			// seek action types
-			else if (action_type >= 7682 && action_type <= 7689)
-			{
+			if (action_kind==SEEK)
+            {
 				Boolean isSeekRelativeToDuration;
 				Vector3 position;
 				Boolean snapToNearestMarker;
-				ExceptionParams exceptionparams;
-			}
-
-			/*
-			if (action_type == SET_STATE || action_type == SET_SWITCH)
-			{
-				uint state_group_id;
-				uint state_id;
-			}
-			else // HWL as of v2.6.3
-			{
-				Curve_Shape_Byte csb;
-			}
-			*/
+            }
+            
+			if (action_kind==ACTION_PLAY||action_kind==TRIGGER)
+            {
+                uint bank_id;
+            }
+            
+			if (action_kind<=RESUME||action_kind==MUTE||action_kind==UNMUTE||action_kind==SET_GAME_PARAMETER
+            ||(action_kind>=SET_VOICE_PITCH&&action_kind<=RESET_VOICE_LOWPASS_FILTER)
+            ||action_kind==ENABLE_BYPASS_OR_DISABLE_BYPASS||action_kind==RESET_BYPASS_EFFECT||action_kind==SEEK)
+            {
+                ExceptionParams exceptions;
+            }
 			break;
 
 		case Event:
@@ -213,9 +210,8 @@ struct Object
 		case SequenceContainer:
 			SoundStructure soundstructure;
             short NoOfLoops;
-            ubyte unk2;
-            ubyte unk3;
-            short unknown;
+            short loop_mod_min;
+            short loop_mod_max;
             float transitionDuration;
             float transitionDuration_randomMin;
             float transitionDuration_randomMax;
@@ -239,8 +235,8 @@ struct Object
                 CONTAINER_RANDOM=0x0,    
                 CONTAINER_SEQUENCE=0x1,
             } playType;
-            ubyte unknown6;
-            ubyte unknown7;
+            Boolean using_weight;
+            Boolean reset_playlist_each_play;
             enum <ubyte> ContainerAtEndOfPlaylist
             {
                 CONTAINER_END_Restart=0x0,
@@ -253,12 +249,12 @@ struct Object
                 CONTAINER_SCOPE_GLOBAL=0x1,
             } scope;
 			uint childrenCount;
-			/*uint children[childrenCount];
+			uint children[childrenCount];
             ushort childPrioritiesCount;
             struct ChildPriority{
                 uint childId;
                 int priority;    
-            } childPriority[childPrioritiesCount];*/
+            } childPriority[childPrioritiesCount];
 			break;
 	
 		// as of v2.5
@@ -282,8 +278,7 @@ struct Object
                 uint childId;
                 ubyte FirstOnly;
                 ubyte ContinueToPlay;
-                short unknown2; //1
-                short unknown3;
+                uint on_switch_mode; //1
                 uint fadeOut;
                 uint fadeIn;
             } childSwitchProperty[childrenCount];
@@ -294,7 +289,7 @@ struct Object
             if (FTell()<startof(objectId)+objectSize)
             {
 			    uint childrenCount;
-			    //uint children[childrenCount];
+			    uint children[childrenCount];
             };
 			break;
 
@@ -337,18 +332,31 @@ struct Object
 			// what the hell WWise??
 			RTPC rtpc;
 			States states;
-
+            if (is_game_soundbank)
+                uint feedback_bus_id;
 			break;
 
 		case BlendContainer:
 			SoundStructure soundstructure;
 			uint childrenCount;
 			uint children[childrenCount];
+            uint layersCount;
+            struct BlendLayer{
+                uint layerId;
+			    RTPC rtpc;
+                uint crossfadeRtpcId;
+                uint associationsCount;
+                struct Association{
+                    uint childId;
+                    uint pointsCount;
+                    ArrayGraphPoints points[pointsCount];
+                }associations[associationsCount];
+            } blendLayer[layersCount];
 			break;
 
 		case DialogueEvent:
 			struct DialogueEventObject{
-				byte unknown0;
+				byte probability;
 				uint argumentsCount;
 	
 				uint arguments[argumentsCount] <comment="Definitely an object ID, so an FNV132 hash">;
@@ -360,7 +368,7 @@ struct Object
 	
 				uint sizeOfEntryArray;
 	
-				byte unknown7;
+				ubyte mode;
 	
 				struct GroupDefinition
 				{
@@ -403,6 +411,15 @@ struct Object
 			break;
             
         case MotionFX:
+            uint sourcesCount;
+            struct FeedbackSource{
+                ushort company_id;
+                ushort device_id;
+                float volume_offset;
+                SourceInfo sourceinfo <read=Str("%s %s, id: %u",EnumToString(this.embedOrStream),EnumToString(this.soundType),this.sourceID)>;
+            } feedbackSource[sourcesCount];
+			SoundStructure soundstructure;
+            
             break;
 
 		case MusicSegment:
@@ -503,9 +520,37 @@ struct Object
 			break;
 		case MusicPlaylistContainer: // early implementation
 			SoundStructure soundstructure;
-
-			uint unknown_count;
-			uint unknown_array[unknown_count];
+			MusicNodeParams musicnodeparams;
+			Transitions transitions;
+            
+            uint playlist_item_count;
+            struct MusicPlaylistNode{
+                uint segment_id;
+                uint item_id;
+                uint child_count;
+                enum <uint> MusicPlaylistType{
+                    ContinuousSequence = 0, 
+                    StepSequence = 1, 
+                    ContinuousRandom = 2, 
+                    StepRandom = 3, 
+                    None = 0xFFFFFFFF,    
+                } type;
+                short loop;
+                uint weight;
+                ushort avoid_repeat_count;
+                Boolean using_weight;
+                Boolean shuffle;
+            };
+            struct MusicPlaylistNodes{
+                MusicPlaylistNode node;
+                local uint childCount=node.child_count;
+                do {
+                    childCount--;
+                    MusicPlaylistNode childNode;
+                    childCount+=childNode.child_count;
+                }while(childCount>0);
+            };
+            MusicPlaylistNodes nodes;
 
 			// HWL adding this FSkip as of v2.4
 			// HWL 11-NOV-2021 delete this BS below
@@ -619,9 +664,15 @@ struct Object
             break;
         case Effect:
         case Custom:
-            ubyte unknownFlags; //3
-            ubyte unknownFlags2;
-            enum <ushort> EffectPluginId
+            uint fxCodec;
+            local enum <ushort> PluginGroup
+            {
+                PluginFile=1,
+                PluginAk=2,
+                PluginDsp=3,
+                PluginMotion=5,
+            }pluginId = (ushort)fxCodec; //3
+            local enum <ushort> EffectPluginId
             {
                 AkSilence=101,
                 AkTone=102,
@@ -637,9 +688,8 @@ struct Object
                 AkHarmonizer=138,
                 AkGain=139,
                 MotionGenerator=405,
-            } effectPluginId;
-            ushort effectSettingsLength;
-            ushort unknown3;
+            } effectPluginId = fxCodec>>16;
+            uint effectSettingsLength;
             
             //effect settings
             switch (effectPluginId)
@@ -734,29 +784,45 @@ struct Object
                     FSkip(effectSettingsLength);
                     break;
                 case AkPeakLimiter:
-                    if (unknownFlags2==0)
-                    {
-                        float Threshold;
-                        float Ratio;
-                        float LookAheadTime;
-                        float Release;
-                        float OutputGain;
-                        byte ProcessLFE;
-                        byte ChannelLink;
-                    }
-                    else if (unknownFlags2==16)
-                    {
-                        
-                    };
+                    float Threshold;
+                    float Ratio;
+                    float LookAheadTime;
+                    float Release;
+                    float OutputGain;
+                    byte ProcessLFE;
+                    byte ChannelLink;
                     break;
+                case MotionGenerator:
+                    float period;
+                    float period_multiplier;
+                    float duration;
+                    float attack;
+                    float decay;
+                    float sustain_time;
+                    float release;
+                    float sustain_level;
+                    ushort duration_type;
+                    ushort curveCount;
+                    struct MotionGenCurve{
+                        ushort num_of_points;
+                        local uint curNumPoints;
+                        for (curNumPoints = 0; curNumPoints < num_of_points; curNumPoints++)
+                        {
+                            ArrayGraphPoints curve_shape;
+                        }
+                    }curve[curveCount];
                 default:
-                    FSkip(effectSettingsLength);
                     break;
             };
             
-            //byte embeddedSoundCount;
-            //uint embeddedSoundId[embeddedSoundCount];
-            //RTPC rtpc;
+            FSeek(startof(effectSettingsLength)+4+effectSettingsLength);
+                    
+            byte media_count;
+            struct FxMedia{
+                ubyte media_index;
+                uint media[media_count];
+            }media[media_count];
+            RTPC rtpc;
             
             break;
 	}

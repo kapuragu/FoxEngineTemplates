@@ -91,7 +91,7 @@ enum <ushort> ActionType
 	AkActionType_Seek_AE_O=7689	
 };
 
-/*
+
 enum <byte> ScopeEventAction
 {
 	GAMEOBJECT_SWITCH_OR_TRIGGER = 1,
@@ -102,7 +102,7 @@ enum <byte> ScopeEventAction
 	ALL_EXCEPT_OBJ_ID = 9
 };
 
-enum <byte> ActionType
+enum <byte> ActionKind
 {
 	STOP = 1,
 	PAUSE = 2,
@@ -113,12 +113,12 @@ enum <byte> ActionType
 	UNMUTE = 7,
 	SET_VOICE_PITCH = 8,
 	RESET_VOICE_PITCH = 9,
-	SET_VOICE_VOLUME = 0x0A,
-	RESET_VOICE_VOLUME = 0x0B,
-	SET_BUS_VOLUME = 0x0C,
-	RESET_BUS_VOLUME = 0x0D,
-	SET_VOICE_LOWPASS_FILTER = 0x0E,
-	RESET_VOICE_LOWPASS_FILTER = 0x0F,
+	SET_VOICE_VOLUME = 0xA,
+	RESET_VOICE_VOLUME = 0xB,
+	SET_BUS_VOLUME = 0xC,
+	RESET_BUS_VOLUME = 0xD,
+	SET_VOICE_LOWPASS_FILTER = 0xE,
+	RESET_VOICE_LOWPASS_FILTER = 0xF,
 	ENABLE_STATE = 0x10,
 	DISABLE_STATE = 0x11,
 	SET_STATE = 0x12,
@@ -131,11 +131,11 @@ enum <byte> ActionType
 	SEEK = 0x1E
 };
 
-*/
+
 enum <byte> EventParameterType
 {
 	DELAY = 0x0E,
-	PLAY = 0x0F, // Fade in time, given as uint32 in millisecs.
+	FADE = 0x0F, // Fade in time, given as uint32 in millisecs.
 	PROBABILITY = 0x10 // Given as float.
 };
 

@@ -128,6 +128,8 @@ enum <byte> SoundStrctureParameterType
 	Window_TopOutput_GameParameter_ID = 29,
 	Window_TopOutput_GameParameter_Min = 30,
 	Window_TopOutput_GameParameter_Max = 31,
+    
+    ContentsEditor_MakeUpGain = 33,
 };
 
 struct ArrayGraphPoints

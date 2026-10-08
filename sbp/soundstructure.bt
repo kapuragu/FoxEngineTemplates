@@ -146,37 +146,22 @@ struct SoundStructure
 	
 	//byte howToLimitSoundInstances;
 	
+    ubyte bits;
+    local Boolean override_Positioning_parent = (bits&1)!=0;
+    local Boolean listener_relative_routing = (bits&2)!=0;
+    
 	struct Positioning
 	{
-		enum <byte> SoundPositioningType
-		{
-			Three_Dimensional = 0,
-			Two_Dimensional = 1
-		} soundpositioningtype;
+        Boolean has_2d;
+        Boolean has_3d;
 		
-		// BIG NOTE: when you set Wwise to have an RTPC effect of 'Positioning
-		// type' (aka when you want the sound to switch between 2D and 3D), then
-		// the sound bank will always set the SoundPositioningType to 2D and this
-		// boolean will be set to 1! but the important fact is: when this happens,
-		// the structure will be in the 3D form, even though the SoundPositioningType
-		// is set to 2D!
-		Boolean uses_RTPC_if_2D <comment="This one ONLY matters if the sound positioning type is also 2D!">;
-		//Boolean overrideParentSettingsForUserDefinedAuxillarySends;
-		// this got swapped with isUserDefinedAuxillarySends
-		
-		if (soundpositioningtype == Two_Dimensional && !uses_RTPC_if_2D)
+		if (has_2d==is_true)
 		{
 			Boolean enable_panner;
 		}
-		else // 3D
-		{
-			// this is only true if we're using an RTPC that changes the positioning
-			// type!
-			if (uses_RTPC_if_2D && soundpositioningtype != Three_Dimensional)
-			{
-				Boolean enable_panner_when_set_to_2D;
-			}
-			
+        
+        if (has_3d==is_true)
+        {
 			enum <int> PositionSourceTypee
 			{
 				User_Defined = 0,
@@ -184,8 +169,12 @@ struct SoundStructure
 			} positionsourcetype;
 			uint attenuationObjectId;
 			Boolean enableSpatialization;
-			
-			if (positionsourcetype == User_Defined)
+            
+			if ((positionsourcetype & 3) == 1)
+			{
+				Boolean updateAtEachFrame;
+			}
+            else if (positionsourcetype == User_Defined)
 			{
 				PlayType playType;
 				Boolean isLoop <comment="only when Play Type is Continuous, otherwise ignore value of this field -Xentax">;
@@ -199,16 +188,20 @@ struct SoundStructure
 					struct TwoDimensionalPoint
 					{
 						float X_coordinate;
-						uint maybe_zero;
 						float Y_coordinate;
-						uint seperator;
+						float Z_coordinate;
+						uint duration_ms;
 					} twodimensionalpoint;
 				}
 				
-				uint num_of_paths;
-				uint who_knows[num_of_paths * 2];
+				uint item_count;
+                struct VertexItem{
+                    uint vertex_offset;
+                    uint vertex_count;
+                }vertexItem[item_count];
+                
 				local uint curNumOfPaths;
-				for (curNumOfPaths = 0; curNumOfPaths < num_of_paths; curNumOfPaths++)
+				for (curNumOfPaths = 0; curNumOfPaths < item_count; curNumOfPaths++)
 				{
 					struct Random_Range_Of_Path
 					{
@@ -219,15 +212,37 @@ struct SoundStructure
 					} random_range_of_path;
 				}
 			}
-			else if (positionsourcetype == Game_Defined)
+        }
+        
+		enum <byte> SoundPositioningType
+		{
+			Three_Dimensional = 0,
+			Two_Dimensional = 1
+		};
+		
+		// BIG NOTE: when you set Wwise to have an RTPC effect of 'Positioning
+		// type' (aka when you want the sound to switch between 2D and 3D), then
+		// the sound bank will always set the SoundPositioningType to 2D and this
+		// boolean will be set to 1! but the important fact is: when this happens,
+		// the structure will be in the 3D form, even though the SoundPositioningType
+		// is set to 2D!
+		//Boolean uses_RTPC_if_2D <comment="This one ONLY matters if the sound positioning type is also 2D!">;
+		//Boolean overrideParentSettingsForUserDefinedAuxillarySends;
+		// this got swapped with isUserDefinedAuxillarySends
+		//do // 3D
+		{
+			// this is only true if we're using an RTPC that changes the positioning
+			// type!
+			//if (uses_RTPC_if_2D && soundpositioningtype != Three_Dimensional)
 			{
-				Boolean updateAtEachFrame;
+				//Boolean enable_panner_when_set_to_2D;
 			}
+			
 		}
 		//FSkip(1); // appears to be always zero
 		
 	};
-	if (overridePositioningSettings == is_true) 
+	if (override_Positioning_parent == is_true) 
 		Positioning positioning;
 	
 	
@@ -274,12 +289,11 @@ struct SoundStructure
 		}
 	} general_settings;
 	
-	//Boolean overrideParentSettingsForVirtualVoiceSection;
-	byte unknown;
-	
 	//ushort unknown2;
 	struct Advanced_Settings
 	{
+	    //Boolean overrideParentSettingsForVirtualVoiceSection;
+	    Boolean overrideParentSettingsForVirtualVoiceSection;
 		
 		struct Playback_limit
 		{
@@ -316,17 +330,19 @@ struct SoundStructure
 		
 		Boolean overridePlaybackLimit;
 		Boolean overrideVirtualVoice;
+
+	    // NOTE: there's always 10 empty bytes here, which i guess is for the states section
+	    // EDIT: even after implementing the states section, it looks like a 6-byte skip is
+	    // still needed. wtf WWise?!
+	    // EDIT as of v2.5, turns out you only need to skip 4 bytes. this is common behavior
+	    // with WWise it seems.
+	    
+	    Boolean override_hdr_envelope;
+	    Boolean override_analysis;
+	    Boolean normalize_loudness;
+	    Boolean HDR_enable_envelope;
 		
 	} advanced_settings;
-
-	// NOTE: there's always 10 empty bytes here, which i guess is for the states section
-	// EDIT: even after implementing the states section, it looks like a 6-byte skip is
-	// still needed. wtf WWise?!
-	// EDIT as of v2.5, turns out you only need to skip 4 bytes. this is common behavior
-	// with WWise it seems.
-	
-	FSkip(3);
-	Boolean HDR_enable_envelope;
 	
 	struct States
 	{
@@ -371,7 +387,9 @@ struct SoundStructure
 	
 	RTPC rtpc;
 	// NOTE: we're gonna have a problem here. apparently no read action's performed if CAkBankMgr::BankHasFeedback() returns false...
-	uint bank_feedback_ID <comment="Unknown purpose, it's only used if CAkBankMgr::BankHasFeedback() returns true and this uint is != 0">;
+    // rlc it's Motion!! that's what's responsible for this.
+    if (is_game_soundbank)
+        uint bank_feedback_ID <comment="Unknown purpose, it's only used if CAkBankMgr::BankHasFeedback() returns true and this uint is != 0">;
 };
 
 #endif
