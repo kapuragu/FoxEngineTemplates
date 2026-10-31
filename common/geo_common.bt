@@ -240,7 +240,7 @@ typedef enum <uint>
 
 	GEO_SHAPE_FLAGS_IS_INSERTED_CHILD = 0x10,	// Tpp_main_win64.exe!141a3b1bc // info << 8
 	GEO_SHAPE_FLAGS_DISABLED = 0x20,			// mgsvtpp.exe!141bdc498 // info & 0x200
-	GEO_SHAPE_FLAGS_DOUBLE_SIDED = 0x200,		// Tpp_main_win64.exe141a05b40
+	GEO_SHAPE_FLAGS_DOUBLE_SIDED = 0x200,		// Tpp_main_win64.exe!141a05b40
 	GEO_SHAPE_FLAGS_USE_FMDL_VERTICES = 0x800,	// mgsvtpp.exe!141bd7e30 // info & 0x8000
 	GEO_SHAPE_FLAGS_UNKNOWN10 = 0x1000,			// Tpp_main_win64.exe!141a4b3a2 // info & 0x10000
 	GEO_SHAPE_FLAGS_HAS_CHILD = 0x2000,			// mgsvtpp.exe!141bdc7a7 // info >> 0x11
@@ -376,7 +376,7 @@ typedef struct
 	uint64 Padding0 <hidden = true>; Assert(Padding0 == 0);
 	uint64 Padding1 <hidden = true>; Assert(Padding1 == 0);
 	
-	Matrix4 transform;
+	Matrix4 _Transform;
 } GeoPrimBox; // Name taken from PES RTTI
 
 typedef struct

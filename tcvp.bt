@@ -20,7 +20,7 @@ struct
 local uint i;
 for (i = 0; i < Header.EntryCount; i++)
 {
-    struct
+    struct CoverPointLocationData
     {
 	    Vector3 Position <bgcolor = 0xEB9486>;
     
@@ -31,20 +31,18 @@ for (i = 0; i < Header.EntryCount; i++)
             short z;
         } Direction <read = Str("(%f, %f, %f)", (float)x / 32767, (float)y / 32767, (float)z / 32767)>;
     
+	    ushort isRightOpen : 1;
 	    ushort isLeftOpen : 1;
- 	    ushort isRightOpen : 1;
 	    ushort isUpOpen : 1;
-	    ushort isStandable : 1; //gz only in dataset, bit space seems to need to exist
+	    ushort isStandable : 1; // GZ only in dataset, bit space seems to need to exist
 	    ushort isUnVaultable : 1;
 	    ushort isUseVip : 1;
 	    ushort isUseSniper : 1;
+        ushort Padding0 : 4 <hidden = true>; Assert(Padding0 == 0);
 	    ushort isBreakDisable : 1;
 	    ushort isBreakEnable : 1;
-        ushort Padding0 : 2 <hidden = true>; Assert(Padding0 == 0);
-        ushort PresumptiveisCheckFulton : 1; // The first spot I checked was the corner of a cargo crate. It's likely for CoverPoints that can literally disappear.
-        ushort Unknown1 : 1 <hidden = true>; Assert(Unknown1 == 0); // 0x1000; mgsvtpp.exe!145256e37
         ushort Padding1 : 3 <hidden = true>; Assert(Padding1 == 0);
-    } CoverPoint <bgcolor = 0xF3DE8A>;
+    } Point <bgcolor = 0xF3DE8A>;
 }
 
 Assert(FTell() == FileSize(), "Failed to reach EoF.");
