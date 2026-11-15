@@ -92,6 +92,15 @@ typedef struct
     uint Padding : 1 <hidden = true>; Assert(Padding == 0);
 } DataChunkUid <optimize = false, read = Str("Index: %u, TileId: %u", Index, TileId)>;
 
+// Defined per world using NavxWorldGenerateParameter.parameters. Note: there are no bound checks to protect IsSwitchable if parameters.Count > 15.
+typedef struct
+{
+	ushort NavigableParameters : 15;
+	
+	// Toggleable by SwitchBounder, used with breakable gimmicks, SwitchBounderData, etc. 141af87a7
+	ushort IsSwitchable : 1;
+} Attributes_Generic <read = Str("Parameters: 0x%04X, Switchable: %u", NavigableParameters, IsSwitchable)>;
+
 enum <ubyte> NAV2_FEATURE_FLAGS
 {
 	A = 1 << 0,
@@ -257,7 +266,7 @@ struct NavigationGraphChunkHeader
 	} Edges[EdgeCount] <optimize = false, bgcolor = COLOR_NAVIGATIONGRAPH_EDGES>;
 
 	FSeek(startof(this) + AttributesOffset);
-	ushort Attributes[AttributesCount] <bgcolor = COLOR_NAVIGATIONGRAPH_ATTRIBUTES>;
+	Attributes_Generic Attributes[AttributesCount] <bgcolor = COLOR_NAVIGATIONGRAPH_ATTRIBUTES>; // One entry per segment (indexed by SegmentIndex)
 
 	FSeek(startof(this) + NavmeshIndicesOffset);
 	ushort NavmeshIndices[NodeCount] <bgcolor = COLOR_NAVIGATIONGRAPH_NAVMESHINDICES>; // GetNodeNavmeshHandle
@@ -530,7 +539,7 @@ if (Header.IslandGraphsOffset)
 					local int64 rewindPos = FTell();
 
 					FixedDenominator3 Position;
-					ushort Attributes;
+					Attributes_Generic Attributes;
 					ushort LinkDataOffset;
 					ushort CrossingTileLinkCount;
 					ubyte InsideLinkCount;
