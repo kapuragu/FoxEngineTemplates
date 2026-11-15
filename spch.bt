@@ -27,6 +27,8 @@ struct SpeechSequence
         uint voiceParam; // FNV132, "condition" state group's state name for the voice clip 
         StrCode32 action; // hashes of an animation to do. See singleActionStrCode32s, loopActionStrCode32s, SPEECH_ACTION_STRCODE32S
         StrCode32 facial; // hash of a facial animation. See facialTypeStrCode32s
+        if (facial.hash>0)
+            Printf(Str("%u\n",facial));
         float afterPauseSeconds;  // [says line] [pause this long before next line is said]
 			
     } speechParts[speechPartCount] <optimize=false>;

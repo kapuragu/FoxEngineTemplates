@@ -196,6 +196,7 @@ struct EventExtensions_Normal
 		local int heliDoorFlagsCLOSE_RIGHT = 1;
     if (flags & 8)
 		local int heliDoorFlagsOPEN_RIGHT = 1;
+
     if (flags & 16)
 		local int heliTypeC = 1;
     if (flags & 32)
@@ -204,6 +205,7 @@ struct EventExtensions_Normal
 		local int DirectionTypeNone = 1;
     if (flags & 128)
 		local int DirectionTypeWorld = 1;
+		
     if (flags & 256)
 		local int DirectionTypeLocal = 1;
     if (flags & 512)

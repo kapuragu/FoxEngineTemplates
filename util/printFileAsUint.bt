@@ -1,0 +1,4 @@
+while (FTell()<FileSize())
+{
+    uint hash; Printf(Str("%u\n",hash));    
+}
